@@ -86,7 +86,7 @@ export default function (/* { ssrContext } */) {
             return state.activeChatAddr
           },
           getLatestMessageBody: (state) => (addr) => {
-            return state.data[addr].messages[0].body
+            return state.data[addr].messages[state.data[addr].messages.length - 1].body
           },
           getAllMessages: (state) => (addr) => {
             return state.data[addr].messages
