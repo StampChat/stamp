@@ -14,15 +14,6 @@
             v-bind:key="index"
             :message="message"
           />
-          <!-- <q-chat-message
-              class="q-py-sm"
-              avatar="https://cdn.quasar.dev/img/avatar4.jpg"
-              v-for="(message, index) in messages"
-              v-bind:key="index"
-              :text="[message.body]"
-              :sent="message.outbound"
-              :stamp="unixToStamp(message.timestamp)"
-            /> -->
         </q-scroll-area>
       </div>
 

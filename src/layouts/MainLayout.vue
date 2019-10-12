@@ -1,6 +1,7 @@
 <template>
-  <q-layout view="hHh Lpr lff">
-    <drawer />
+  <q-layout view="hHr LpR lff">
+    <my-drawer />
+    <contact-drawer />
     <main-header />
     <q-page-container>
       <q-splitter
@@ -25,7 +26,8 @@
 <script>
 import Chat from '../pages/Chat.vue'
 import ChatList from '../components/ChatList.vue'
-import Drawer from '../components/Drawer.vue'
+import MyDrawer from '../components/MyDrawer.vue'
+import ContactDrawer from '../components/ContactDrawer.vue'
 import MainHeader from '../components/MainHeader.vue'
 import { mapActions, mapGetters } from 'vuex'
 
@@ -34,7 +36,8 @@ export default {
   components: {
     Chat,
     ChatList,
-    Drawer,
+    ContactDrawer,
+    MyDrawer,
     MainHeader
   },
   methods: {

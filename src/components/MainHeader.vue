@@ -10,7 +10,7 @@
             flat
             dense
             round
-            @click="toggleDrawerOpen"
+            @click="toggleMyDrawerOpen"
             icon="menu"
             aria-label="Menu"
           />
@@ -59,6 +59,7 @@
             flat
             dense
             color="white"
+            @click="toggleContactDrawerOpen"
             icon="face"
           />
           <q-btn
@@ -86,7 +87,8 @@ export default {
       getActiveChat: 'chats/getActiveChat'
     }),
     ...mapActions({
-      toggleDrawerOpen: 'drawer/toggleDrawerOpen'
+      toggleMyDrawerOpen: 'myDrawer/toggleDrawerOpen',
+      toggleContactDrawerOpen: 'contactDrawer/toggleDrawerOpen'
     })
   },
   computed: {

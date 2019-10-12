@@ -19,7 +19,7 @@
           </q-item-section>
 
           <q-item-section>
-            New Channel
+            New Thread
           </q-item-section>
         </q-item>
         <q-item
@@ -74,11 +74,11 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
   methods: {
-    ...mapActions({ setDrawerOpen: 'drawer/setDrawerOpen' })
+    ...mapActions({ setDrawerOpen: 'myDrawer/setDrawerOpen' })
   },
   computed: {
     ...mapGetters({
-      getDrawerOpen: 'drawer/getDrawerOpen',
+      getDrawerOpen: 'myDrawer/getDrawerOpen',
       getMyProfile: 'myProfile/getMyProfile'
     }),
     drawerOpen: {
