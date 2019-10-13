@@ -1,5 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import client from '../keyserver/client'
+import addressmetadata from '../keyserver/addressmetadata_pb'
 
 Vue.use(Vuex)
 
@@ -68,10 +70,10 @@ export default function (/* { ssrContext } */) {
       chats: {
         namespaced: true,
         state: {
-          order: ['qrkvs8hd56s5q8ryw44yfqn2fyhjruvpru9f0renmd', 'qqk9ahcesacaymnvptwszq4hmn5u57jthqnegsdenw'],
-          activeChatAddr: 'qqk9ahcesacaymnvptwszq4hmn5u57jthqnegsdenw',
+          order: ['qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g', 'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs'],
+          activeChatAddr: 'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g',
           data: {
-            'qqk9ahcesacaymnvptwszq4hmn5u57jthqnegsdenw': {
+            'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g': {
               messages: [
                 {
                   'outbound': false,
@@ -87,7 +89,7 @@ export default function (/* { ssrContext } */) {
                 }
               ]
             },
-            'qrkvs8hd56s5q8ryw44yfqn2fyhjruvpru9f0renmd': {
+            'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
               messages: [
                 {
                   'outbound': true,
@@ -149,14 +151,29 @@ export default function (/* { ssrContext } */) {
           }
         }
       },
+      keyserverHandler: {
+        state: {
+          handler: new client.Handler()
+        },
+        mutations: {
+          setHandler (state, handler) {
+            state.handler = handler
+          }
+        },
+        actions: {
+          setHandler ({ commit }, handler) {
+            commit('setHandler', handler)
+          }
+        }
+      },
       contacts: {
         namespaced: true,
         state: {
           profiles: {
-            'qqk9ahcesacaymnvptwszq4hmn5u57jthqnegsdenw': {
+            'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
               'name': 'Shammah'
             },
-            'qrkvs8hd56s5q8ryw44yfqn2fyhjruvpru9f0renmd': {
+            'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g': {
               'name': 'Calin'
             }
           }
@@ -164,6 +181,33 @@ export default function (/* { ssrContext } */) {
         getters: {
           getProfile: (state) => (addr) => {
             return state.profiles[addr]
+          }
+        },
+        mutations: {
+          updateProfile (state, { addr, profile }) {
+            state.profiles[addr] = profile
+          }
+        },
+        actions: {
+          startProfileUpdater ({ commit }) {
+            setInterval(() => {
+              for (let addr in this.state.contacts.profiles) {
+                // Make this generic over networks
+                // Batch this
+                this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`).then(function (metadata) {
+                  let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
+
+                  // TODO: Proper parsing
+                  let firstEntry = payload.getEntriesList()[0]
+                  let name = new TextDecoder().decode(firstEntry.getEntryData())
+
+                  let profile = {
+                    'name': name
+                  }
+                  commit('updateProfile', { addr, profile })
+                })
+              }
+            }, 1000)
           }
         }
       },
