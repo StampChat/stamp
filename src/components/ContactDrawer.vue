@@ -7,6 +7,40 @@
     :width="300"
     :breakpoint="400"
   >
+    <!-- Delete dialog -->
+    <q-dialog
+      v-model="confirm"
+      persistent
+      @click="clearChat(getActiveProfile.address)"
+    >
+      <q-card>
+        <q-card-section class="row items-center">
+          <q-avatar
+            icon="delete"
+            color="red"
+            text-color="white"
+          />
+          <span class="q-ml-sm">Are you sure you want to clear this conversation?</span>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn
+            flat
+            label="Cancel"
+            color="primary"
+            v-close-popup
+          />
+          <q-btn
+            flat
+            label="Delete"
+            color="primary"
+            v-close-popup
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Scroll area -->
     <q-scroll-area style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd">
       <q-list padding>
         <q-item
@@ -39,6 +73,7 @@
         <q-item
           clickable
           v-ripple
+          @click="confirm = true"
         >
           <q-item-section avatar>
             <q-icon name="clear_all" />
@@ -65,32 +100,35 @@
         </q-item>
       </q-list>
     </q-scroll-area>
-    <q-img
-      class="absolute-top"
-      src="https://cdn.quasar.dev/img/material.png"
-      style="height: 150px"
-    >
-      <div class="absolute-bottom bg-transparent">
-        <q-avatar
-          size="56px"
-          class="q-mb-sm"
-        >
-          <img src="https://cdn.quasar.dev/img/boy-avatar.png">
-        </q-avatar>
-        <div class="text-weight-bold">{{ getActiveProfile.name }}</div>
-        <div>{{ getActiveProfile.address.slice(0,16) }}...</div>
-      </div>
-    </q-img>
+
+    <!-- Contact card -->
+    <profile-card
+      :address="getActiveProfile.address"
+      :name="getActiveProfile.name"
+    />
   </q-drawer>
 </template>
 
 <script>
+import Vue from 'vue'
 import { mapGetters, mapActions } from 'vuex'
+import ProfileCard from './ProfileCard.vue'
+
+Vue.filter('truncate', function (text, length, clamp) {
+  clamp = clamp || '...'
+  var node = document.createElement('div')
+  node.innerHTML = text
+  var content = node.textContent
+  return content.length > length ? content.slice(0, length) + clamp : content
+})
 
 export default {
+  components: {
+    ProfileCard
+  },
   methods: {
     ...mapGetters({ getProfile: 'contacts/getProfile', getActiveChat: 'chats/getActiveChat' }),
-    ...mapActions({ setDrawerOpen: 'contactDrawer/setDrawerOpen' })
+    ...mapActions({ setDrawerOpen: 'contactDrawer/setDrawerOpen', clearChat: 'chats/clearChat' })
   },
   computed: {
     ...mapGetters({
@@ -113,7 +151,8 @@ export default {
   },
   data: function () {
     return {
-      notifications: false
+      notifications: false,
+      confirm: false
     }
   }
 }

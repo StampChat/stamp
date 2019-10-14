@@ -16,6 +16,7 @@
     "axios": "^0.18.1",
     "google-protobuf": "^3.10.0",
     "quasar": "^1.0.0",
+    "vcf": "^2.0.6",
     "vue-i18n": "^8.0.0"
   },
   "devDependencies": {

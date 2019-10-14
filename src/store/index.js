@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import client from '../keyserver/client'
 import addressmetadata from '../keyserver/addressmetadata_pb'
+import VCard from 'vcf'
 
 Vue.use(Vuex)
 
@@ -137,6 +138,9 @@ export default function (/* { ssrContext } */) {
           switchOrder (state, addr) {
             state.order.splice(state.order.indexOf(addr), 1)
             state.order.unshift(addr)
+          },
+          clearChat (state, addr) {
+            state.data[addr].messages = []
           }
         },
         actions: {
@@ -148,6 +152,9 @@ export default function (/* { ssrContext } */) {
           },
           switchOrder ({ commit }, addr) {
             commit('switchOrder', addr)
+          },
+          clearChat ({ commit }, addr) {
+            commit('clearChat', addr)
           }
         }
       },
@@ -197,12 +204,20 @@ export default function (/* { ssrContext } */) {
                 this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`).then(function (metadata) {
                   let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
 
-                  // TODO: Proper parsing
-                  let firstEntry = payload.getEntriesList()[0]
-                  let name = new TextDecoder().decode(firstEntry.getEntryData())
+                  function isVCard (entry) {
+                    return entry.getKind() === 'vcard'
+                  }
+
+                  let entryList = payload.getEntriesList()
+
+                  let rawCard = entryList.find(isVCard).getEntryData()
+                  let strCard = new TextDecoder().decode(rawCard)
+
+                  let vCard = new VCard().parse(strCard)
+                  console.log(vCard)
 
                   let profile = {
-                    'name': name
+                    'name': vCard.data.fn._data
                   }
                   commit('updateProfile', { addr, profile })
                 })

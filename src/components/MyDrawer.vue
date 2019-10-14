@@ -49,30 +49,21 @@
         </q-item>
       </q-list>
     </q-scroll-area>
-
-    <q-img
-      class="absolute-top"
-      src="https://cdn.quasar.dev/img/material.png"
-      style="height: 150px"
-    >
-      <div class="absolute-bottom bg-transparent">
-        <q-avatar
-          size="56px"
-          class="q-mb-sm"
-        >
-          <img src="https://cdn.quasar.dev/img/boy-avatar.png">
-        </q-avatar>
-        <div class="text-weight-bold">{{ getMyProfile.name }}</div>
-        <div>{{ getMyProfile.address.slice(0,16) }}...</div>
-      </div>
-    </q-img>
+    <profile-card
+      :address="getMyProfile.address"
+      :name="getMyProfile.name"
+    />
   </q-drawer>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import ProfileCard from './ProfileCard.vue'
 
 export default {
+  components: {
+    ProfileCard
+  },
   methods: {
     ...mapActions({ setDrawerOpen: 'myDrawer/setDrawerOpen' })
   },
