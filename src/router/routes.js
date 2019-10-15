@@ -1,3 +1,15 @@
+import store from '../store/index'
+
+async function redirectIfNoProfile (to, from, next) {
+  localStorage.clear()
+  let address = await store.getters['myProfile/getMyProfile'].address
+  console.log(address)
+  if (address !== null) {
+    next()
+  } else {
+    next('/setup')
+  }
+}
 
 const routes = [
   {
@@ -5,6 +17,14 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('pages/Chat.vue') }
+    ],
+    beforeEnter: redirectIfNoProfile
+  },
+  {
+    path: '/setup',
+    component: () => import('layouts/SetupLayout.vue'),
+    children: [
+      { path: '', component: () => import('pages/Setup.vue') }
     ]
   }
 ]

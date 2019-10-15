@@ -17,7 +17,8 @@
     "google-protobuf": "^3.10.0",
     "quasar": "^1.0.0",
     "vcf": "^2.0.6",
-    "vue-i18n": "^8.0.0"
+    "vue-i18n": "^8.0.0",
+    "vuex-persist": "^2.1.0"
   },
   "devDependencies": {
     "@quasar/app": "^1.0.0",
