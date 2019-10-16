@@ -156,7 +156,7 @@
 <script>
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-
+import bip39 from 'bip39'
 import { mapActions } from 'vuex'
 
 Vue.use(VueRouter)
@@ -174,7 +174,6 @@ export default {
       if (this.step !== 4) {
         this.$refs.stepper.next()
       } else {
-        console.log('got here')
         let profile = {
           'name': 'Harry Barber',
           'address': 'pp8skudq3x5hzw8ew7vzsw8tn4k8wxsqsv0lt0mf3g'
@@ -182,6 +181,9 @@ export default {
         this.setProfile(profile)
         this.$router.push('/')
       }
+    },
+    generateMnemonic () {
+      bip39.generateMnemonic()
     }
   }
 }
