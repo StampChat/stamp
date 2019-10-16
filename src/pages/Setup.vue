@@ -13,7 +13,6 @@
           title="Welcome"
           icon="settings"
           :done="step > 1"
-          style="min-height: 300px;"
         >
           <p>It seems you don't have any accounts setup right now. We'll guide you through the account creation process.</p>
         </q-step>
@@ -23,21 +22,79 @@
           title="Create/Import a Key"
           icon="vpn_key"
           :done="step > 2"
-          style="min-height: 300px;"
         >
           <q-list>
             <div class="q-pb-sm">
+
               <q-expansion-item
                 class="shadow-1 overflow-hidden"
                 style="border-radius: 30px"
                 icon="new_releases"
-                label="Create a Key"
+                label="New Key"
                 header-class="bg-primary text-white"
                 expand-icon-class="text-white"
+                v-model="generateExpanded"
+                @show="importExpanded=false"
               >
                 <q-card>
+                  <q-slide-transition>
+                    <q-banner
+                      class="bg-primary text-white"
+                      v-show="generatedWarning"
+                    >
+                      <span class="text-bold">Warning:</span> Forgetting this seed phrase will result in the bitcoin wallet and any contained money being lost.
+                      Do not overestimate your ability to remember passphrases especially when you may not use it very often.
+                      <template v-slot:action>
+                        <q-btn
+                          flat
+                          color="white"
+                          label="Dismiss"
+                          @click="generatedWarning = false"
+                        />
+                      </template>
+                    </q-banner>
+                  </q-slide-transition>
+
                   <q-card-section>
-                    TODO: Form for creating key
+                    <q-input
+                      class="text-bold text-h6"
+                      v-model="generatedSeed"
+                      filled
+                      type="textarea"
+                      readonly
+                      rows="1"
+                    >
+                      <q-menu
+                        touch-position
+                        context-menu
+                      >
+                        <q-list
+                          dense
+                          style="min-width: 100px"
+                        >
+                          <q-item
+                            clickable
+                            v-close-popup
+                            @click="copyGenerated"
+                          >
+                            <q-item-section>Copy</q-item-section>
+                          </q-item>
+                        </q-list>
+                      </q-menu>
+                    </q-input>
+                    <div class="q-pa-md float-right">
+                      <q-btn
+                        color="primary"
+                        flat
+                        icon="content_copy"
+                        @click="copyGenerated"
+                      />
+                      <q-btn
+                        color="primary"
+                        label="Generate"
+                        @click="nextMnemonic"
+                      />
+                    </div>
                   </q-card-section>
                 </q-card>
               </q-expansion-item>
@@ -51,10 +108,51 @@
                 label="Import a Key"
                 header-class="bg-primary text-white"
                 expand-icon-class="text-white"
+                v-model="importExpanded"
+                @show="generateExpanded=false"
               >
                 <q-card>
                   <q-card-section>
-                    TODO: Form for importing key
+                    <q-input
+                      class="text-bold text-h6"
+                      v-model="importedSeed"
+                      filled
+                      type="textarea"
+                      rows="1"
+                    >
+                      <q-menu
+                        touch-position
+                        context-menu
+                      >
+                        <q-list
+                          dense
+                          style="min-width: 100px"
+                        >
+                          <q-item
+                            clickable
+                            v-close-popup
+                            @click="pasteImported"
+                          >
+                            <q-item-section>Paste</q-item-section>
+                          </q-item>
+                        </q-list>
+                      </q-menu>
+                      <template v-slot:after>
+                        <q-icon
+                          v-show="!isImportedValid"
+                          name="warning"
+                          class="text-red"
+                          size="lg"
+                        />
+                        <q-icon
+                          v-show="isImportedValid"
+                          name="check"
+                          class="text-green"
+                          size="lg"
+                        />
+                      </template>
+                    </q-input>
+
                   </q-card-section>
                 </q-card>
               </q-expansion-item>
@@ -101,9 +199,7 @@
                 :max-total-size="4096"
               />
             </q-item>
-
           </q-list>
-
         </q-step>
 
         <template v-slot:navigation>
@@ -111,6 +207,7 @@
             <q-btn
               @click="next()"
               color="primary"
+              :disable="!canProceedSeed"
               :label="step === 4 ? 'Finish' : 'Continue'"
             />
             <q-btn
@@ -156,8 +253,8 @@
 <script>
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import bip39 from 'bip39'
 import { mapActions } from 'vuex'
+const bip39 = require('bip39')
 
 Vue.use(VueRouter)
 
@@ -165,7 +262,12 @@ export default {
   data () {
     return {
       step: 1,
-      name: ''
+      name: '',
+      generatedWarning: true,
+      generatedSeed: '',
+      generateExpanded: false,
+      importExpanded: false,
+      importedSeed: ''
     }
   },
   methods: {
@@ -182,9 +284,58 @@ export default {
         this.$router.push('/')
       }
     },
-    generateMnemonic () {
-      bip39.generateMnemonic()
+    nextMnemonic () {
+      this.generatedSeed = bip39.generateMnemonic()
+    },
+    copyGenerated () {
+      this.$q.notify({
+        message: '<div class="text-center"> Seed copied to clipboard </div>',
+        html: true,
+        color: 'purple'
+      })
+      var dummy = document.createElement('textarea')
+      // to avoid breaking orgain page when copying more words
+      // cant copy when adding below this code
+      // dummy.style.display = 'none'
+      document.body.appendChild(dummy)
+      // Be careful if you use texarea. setAttribute('value', value), which works with "input" does not work with "textarea". – Eduard
+      dummy.value = this.generatedSeed
+      dummy.select()
+      document.execCommand('copy')
+      document.body.removeChild(dummy)
+    },
+    pasteImported () {
+      var el = document.createElement('textarea')
+      document.body.appendChild(el)
+      el.focus()
+      document.execCommand('paste')
+      this.importedSeed = el.value
+      document.body.removeChild(el)
     }
+  },
+  computed: {
+    seed () {
+      if (this.generateExpanded) {
+        return this.generatedSeed
+      } else if (this.importExpanded & this.isImportedValid) {
+        return this.importedSeed
+      } else {
+        return null
+      }
+    },
+    isImportedValid () {
+      return bip39.validateMnemonic(this.importedSeed)
+    },
+    canProceedSeed () {
+      if (this.step === 2) {
+        return (this.seed !== null)
+      } else {
+        return true
+      }
+    }
+  },
+  created () {
+    this.nextMnemonic()
   }
 }
 </script>
