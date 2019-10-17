@@ -12,8 +12,12 @@ export default {
   methods: {
     ...mapActions(['startClock']),
     ...mapActions({
-      startProfileUpdater: 'contacts/startProfileUpdater'
+      startProfileUpdater: 'contacts/startProfileUpdater',
+      setProfile: 'myProfile/setMyProfile'
     })
+  },
+  mounted () {
+    this.setProfile({ 'name': null, 'address': null })
   },
   created () {
     this.startClock()

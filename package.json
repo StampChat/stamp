@@ -12,13 +12,16 @@
     "test": "echo \"No test specified\" && exit 0"
   },
   "dependencies": {
+    "@chenfengyuan/vue-qrcode": "^1.0.1",
     "@quasar/extras": "^1.0.0",
     "axios": "^0.18.1",
     "bip39": "^3.0.2",
     "google-protobuf": "^3.10.0",
+    "hdkey": "^1.1.1",
     "quasar": "^1.0.0",
     "secp256k1": "^3.7.1",
     "vcf": "^2.0.6",
+    "vue": "^2.6.10",
     "vue-i18n": "^8.0.0",
     "vuex-persist": "^2.1.0"
   },

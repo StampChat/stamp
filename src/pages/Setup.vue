@@ -30,7 +30,7 @@
                 class="shadow-1 overflow-hidden"
                 style="border-radius: 30px"
                 icon="new_releases"
-                label="New Key"
+                label="New Seed"
                 header-class="bg-primary text-white"
                 expand-icon-class="text-white"
                 v-model="generateExpanded"
@@ -105,7 +105,7 @@
                 class="shadow-1 overflow-hidden"
                 style="border-radius: 30px"
                 icon="import_export"
-                label="Import a Key"
+                label="Import Seed"
                 header-class="bg-primary text-white"
                 expand-icon-class="text-white"
                 v-model="importExpanded"
@@ -119,6 +119,7 @@
                       filled
                       type="textarea"
                       rows="1"
+                      placeholder="Enter a seed phrase..."
                     >
                       <q-menu
                         touch-position
@@ -169,7 +170,76 @@
           style="min-height: 300px;"
           :done="step > 3"
         >
-          TODO: QRCode and address
+          <div class="row">
+            <div class="col">
+              <div class="row">
+                <q-btn
+                  style="margin-left: auto; margin-right: auto;"
+                  color="primary"
+                  label="Generate New"
+                  @click="nextMnemonic"
+                />
+              </div>
+              <div class="row">
+                <qrcode
+                  style="margin-left: auto; margin-right: auto;"
+                  :value="paymentAddress"
+                  :options="{width: 300}"
+                ></qrcode>
+              </div>
+              <div class="row">
+                <q-input
+                  style="margin-left: auto; margin-right: auto;"
+                  filled
+                  v-model="paymentAddress"
+                  readonly
+                >
+                  <template v-slot:after>
+                    <q-btn
+                      dense
+                      color="primary"
+                      flat
+                      icon="content_copy"
+                      @click="copyGenerated"
+                    />
+                  </template>
+                </q-input>
+              </div>
+            </div>
+            <q-separator
+              vertical
+              inset
+            />
+            <div class="col">
+              <div class="row">
+                <p
+                  class="text-h4"
+                  style="margin: auto; "
+                >Current Balance </p>
+              </div>
+
+              <div class="row">
+                <q-circular-progress
+                  style="margin-left: auto; margin-right: auto; margin-top: 50px;"
+                  show-value
+                  :value="walletBalance / 100"
+                  size="225px"
+                  :thickness="0.25"
+                  color="green"
+                  track-color="grey"
+                >
+                  <span class="text-h4">{{ walletBalance / 10 }} sats </span>
+                </q-circular-progress>
+              </div>
+              <div class="row">
+                <p
+                  class="q-pt-lg text-subtitle1"
+                  style="margin: auto;"
+                >Recommended 2000 satoshi </p>
+              </div>
+            </div>
+          </div>
+
         </q-step>
 
         <q-step
@@ -254,8 +324,10 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { mapActions } from 'vuex'
+import VueQrcode from '@chenfengyuan/vue-qrcode'
 const bip39 = require('bip39')
 
+Vue.component(VueQrcode.name, VueQrcode)
 Vue.use(VueRouter)
 
 export default {
@@ -267,7 +339,8 @@ export default {
       generatedSeed: '',
       generateExpanded: false,
       importExpanded: false,
-      importedSeed: ''
+      importedSeed: '',
+      walletBalance: 2000
     }
   },
   methods: {
@@ -277,7 +350,7 @@ export default {
         this.$refs.stepper.next()
       } else {
         let profile = {
-          'name': 'Harry Barber',
+          'name': this.name,
           'address': 'pp8skudq3x5hzw8ew7vzsw8tn4k8wxsqsv0lt0mf3g'
         }
         this.setProfile(profile)
@@ -288,21 +361,17 @@ export default {
       this.generatedSeed = bip39.generateMnemonic()
     },
     copyGenerated () {
+      var dummy = document.createElement('textarea')
+      document.body.appendChild(dummy)
+      dummy.value = this.generatedSeed
+      dummy.select()
+      document.execCommand('copy')
+      document.body.removeChild(dummy)
       this.$q.notify({
         message: '<div class="text-center"> Seed copied to clipboard </div>',
         html: true,
         color: 'purple'
       })
-      var dummy = document.createElement('textarea')
-      // to avoid breaking orgain page when copying more words
-      // cant copy when adding below this code
-      // dummy.style.display = 'none'
-      document.body.appendChild(dummy)
-      // Be careful if you use texarea. setAttribute('value', value), which works with "input" does not work with "textarea". – Eduard
-      dummy.value = this.generatedSeed
-      dummy.select()
-      document.execCommand('copy')
-      document.body.removeChild(dummy)
     },
     pasteImported () {
       var el = document.createElement('textarea')
@@ -312,6 +381,7 @@ export default {
       this.importedSeed = el.value
       document.body.removeChild(el)
     }
+
   },
   computed: {
     seed () {
@@ -332,6 +402,9 @@ export default {
       } else {
         return true
       }
+    },
+    paymentAddress () {
+      return '1F3sAm6ZtwLAUnj7d38pGFxtP3RVEvtsbV'
     }
   },
   created () {
