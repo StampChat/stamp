@@ -229,7 +229,11 @@ export default new Vuex.Store({
       namespaced: true,
       state: {
         name: null,
-        address: null
+        address: null,
+        wallet: {
+          xPrivKey: null,
+          seqNum: 0
+        }
       },
       getters: {
         getMyProfile (state) {
@@ -241,17 +245,31 @@ export default new Vuex.Store({
         },
         getMyAddress (state) {
           return state.address
+        },
+        getPaymentAddress: (state) => (seqNum) => {
+          if (state.wallet.xPrivKey !== null) {
+            let privkey = state.wallet.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(seqNum, true)
+            return privkey.toAddress()
+          } else {
+            return null
+          }
         }
       },
       mutations: {
         setMyProfile (state, profile) {
           state.name = profile.name
           state.address = profile.address
+        },
+        setXPrivKey (state, newXPrivKey) {
+          state.wallet.xPrivKey = newXPrivKey
         }
       },
       actions: {
         setMyProfile ({ commit }, profile) {
           commit('setMyProfile', profile)
+        },
+        setXPrivKey ({ commit }, newXPrivKey) {
+          commit('setXPrivKey', newXPrivKey)
         }
       }
     },
@@ -301,8 +319,5 @@ export default new Vuex.Store({
       }
     }
   },
-  plugins: [vuexLocal.plugin],
-  // enable strict mode (adds overhead!)
-  // for dev mode only
-  strict: process.env.DEV
+  plugins: [vuexLocal.plugin]
 })

@@ -47,7 +47,7 @@ module.exports = function (ctx) {
       directives: [],
 
       // Quasar plugins
-      plugins: ['Notify']
+      plugins: ['Notify', 'Loading']
     },
 
     // https://quasar.dev/quasar-cli/cli-documentation/supporting-ie
@@ -73,6 +73,11 @@ module.exports = function (ctx) {
           options: {
             formatter: require('eslint').CLIEngine.getFormatter('stylish')
           }
+        })
+        cfg.module.rules.push({
+          test: /\.xpriv_generate\.js$/,
+          loader: 'worker-loader',
+          exclude: /node_modules/
         })
       }
     },

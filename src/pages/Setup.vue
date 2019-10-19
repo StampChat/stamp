@@ -25,7 +25,6 @@
         >
           <q-list>
             <div class="q-pb-sm">
-
               <q-expansion-item
                 class="shadow-1 overflow-hidden"
                 style="border-radius: 30px"
@@ -160,7 +159,6 @@
             </div>
 
           </q-list>
-
         </q-step>
 
         <q-step
@@ -173,25 +171,25 @@
           <div class="row">
             <div class="col">
               <div class="row">
-                <q-btn
-                  style="margin-left: auto; margin-right: auto;"
-                  color="primary"
-                  label="Generate New"
-                  @click="nextMnemonic"
-                />
+                <p
+                  class="text-h4"
+                  style="margin: auto; "
+                >Deposit Address</p>
               </div>
+
               <div class="row">
                 <qrcode
                   style="margin-left: auto; margin-right: auto;"
-                  :value="paymentAddress"
+                  :value="currentAddress"
                   :options="{width: 300}"
                 ></qrcode>
               </div>
               <div class="row">
                 <q-input
-                  style="margin-left: auto; margin-right: auto;"
+                  style="margin-left: auto; margin-right: auto; min-width: 500px"
                   filled
-                  v-model="paymentAddress"
+                  auto-grow
+                  v-model="currentAddress"
                   readonly
                 >
                   <template v-slot:after>
@@ -200,7 +198,14 @@
                       color="primary"
                       flat
                       icon="content_copy"
-                      @click="copyGenerated"
+                      @click="copyAddress"
+                    />
+                    <q-btn
+                      dense
+                      color="primary"
+                      flat
+                      icon="refresh"
+                      @click="nextAddress"
                     />
                   </template>
                 </q-input>
@@ -325,6 +330,10 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { mapActions } from 'vuex'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import Worker from 'worker-loader!../workers/xpriv_generate.js'
+const cashlib = require('bitcore-lib-cash')
+
 const bip39 = require('bip39')
 
 Vue.component(VueQrcode.name, VueQrcode)
@@ -340,25 +349,60 @@ export default {
       generateExpanded: false,
       importExpanded: false,
       importedSeed: '',
-      walletBalance: 2000
+      walletBalance: 2000,
+      paymentAddrCounter: 0,
+      xPrivKey: null,
+      currentAddress: null
     }
   },
   methods: {
     ...mapActions({ setProfile: 'myProfile/setMyProfile' }),
     next () {
-      if (this.step !== 4) {
-        this.$refs.stepper.next()
-      } else {
-        let profile = {
-          'name': this.name,
-          'address': 'pp8skudq3x5hzw8ew7vzsw8tn4k8wxsqsv0lt0mf3g'
-        }
-        this.setProfile(profile)
-        this.$router.push('/')
+      switch (this.step) {
+        case 2:
+          this.$q.loading.show({
+            delay: 100,
+            message: 'Generating wallet...'
+          })
+
+          // Setup worker
+          let worker = new Worker()
+          worker.onmessage = (event) => {
+            let xPrivKeyObj = event.data
+            this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
+
+            let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(0, true)
+
+            this.currentAddress = privKey.privateKey.toAddress()
+
+            this.$q.loading.hide()
+            this.$refs.stepper.next()
+          }
+
+          // Send seed
+          worker.postMessage(this.seed)
+
+          break
+        case 4:
+          let identityAddr = this.xPrivKey.deriveChild(20102019).deriveChild(0, true)
+          let profile = {
+            'name': this.name,
+            'address': identityAddr
+          }
+          this.setProfile(profile)
+          this.$router.push('/')
+          break
+        default:
+          this.$refs.stepper.next()
       }
     },
     nextMnemonic () {
       this.generatedSeed = bip39.generateMnemonic()
+    },
+    nextAddress () {
+      this.paymentAddrCounter += 1
+      let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(this.paymentAddrCounter, true)
+      this.currentAddress = privKey.privateKey.toAddress()
     },
     copyGenerated () {
       var dummy = document.createElement('textarea')
@@ -373,6 +417,19 @@ export default {
         color: 'purple'
       })
     },
+    copyAddress () {
+      var dummy = document.createElement('textarea')
+      document.body.appendChild(dummy)
+      dummy.value = this.currentAddress
+      dummy.select()
+      document.execCommand('copy')
+      document.body.removeChild(dummy)
+      this.$q.notify({
+        message: '<div class="text-center"> Address copied to clipboard </div>',
+        html: true,
+        color: 'purple'
+      })
+    },
     pasteImported () {
       var el = document.createElement('textarea')
       document.body.appendChild(el)
@@ -381,7 +438,6 @@ export default {
       this.importedSeed = el.value
       document.body.removeChild(el)
     }
-
   },
   computed: {
     seed () {
@@ -402,9 +458,6 @@ export default {
       } else {
         return true
       }
-    },
-    paymentAddress () {
-      return '1F3sAm6ZtwLAUnj7d38pGFxtP3RVEvtsbV'
     }
   },
   created () {
