@@ -1,0 +1,44 @@
+syntax = "proto3";
+package models;
+
+// Basic key/value used to store header data.
+message Header {
+    string name = 1;
+    string value = 2;
+}
+
+// Entry is an indidual piece of structured data provided by wallet authors.
+message Entry {
+    // Kind is a hint to wallets as to what type of data to deserialize from the metadata field.
+    string kind = 1;
+    // The headers is excess metadata that may be useful to a wallet.
+    repeated Header headers = 2;
+    // Body of the metadata field.
+    bytes entry_data = 3;
+}
+
+// Payload is the user-specified data section of a AddressMetadata that is covered by the users signature.
+message Payload {
+    // Timestamp allows servers to determine which version of the data is the most recent.
+    int64 timestamp = 1;
+    // TTL tells us how long this entry should exist before being considered invalid.
+    int64 ttl = 2;
+    // User specified data.  Presumably some conventional data determined by wallet authors.
+    repeated Entry entries = 3;
+}
+
+// AddressMetadata is the basic unit of the keyserver.  It is used in both PUT and GET requests.
+message AddressMetadata  {
+    // Serialized version of the XPubKey.  The *hash* of this XPub should correspond to the `key` in the kv store.
+    bytes pub_key = 1;
+    // Signature is the signature of the metadata by XPubKey.
+    bytes signature = 2;
+    // Signature scheme provided.  Default is Schnorr, but can be ecdsa.
+    enum SignatureScheme {
+        SCHNORR = 0;
+        ECDSA = 1;
+    }
+    SignatureScheme scheme = 3;
+    // Payload is the metadata set by the user, and covered by the signature.
+    bytes serialized_payload = 4;
+}

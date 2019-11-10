@@ -1,0 +1,48 @@
+{
+  "name": "ircash",
+  "version": "0.0.1",
+  "description": "IRCash is a Bitcoin Cash powered internet relay chat",
+  "productName": "IRCash",
+  "cordovaId": "org.cordova.ircash",
+  "capacitorId": "",
+  "author": "Harry Barber",
+  "private": true,
+  "scripts": {
+    "lint": "eslint --ext .js,.vue src",
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "dependencies": {
+    "@chenfengyuan/vue-qrcode": "^1.0.1",
+    "@quasar/extras": "^1.0.0",
+    "axios": "^0.18.1",
+    "bip39": "^3.0.2",
+    "bitcore-lib-cash": "^8.9.0",
+    "google-protobuf": "^3.10.0",
+    "quasar": "^1.0.0",
+    "vcf": "^2.0.6",
+    "vue": "^2.6.10",
+    "vue-i18n": "^8.0.0",
+    "vuex-persist": "^2.1.0"
+  },
+  "devDependencies": {
+    "@quasar/app": "^1.0.0",
+    "@vue/eslint-config-standard": "^4.0.0",
+    "babel-eslint": "^10.0.1",
+    "devtron": "^1.4.0",
+    "electron": "^5.0.11",
+    "electron-debug": "^3.0.1",
+    "electron-devtools-installer": "^2.2.4",
+    "eslint": "^5.10.0",
+    "eslint-loader": "^2.1.1",
+    "eslint-plugin-vue": "^5.0.0",
+    "worker-loader": "^2.0.0"
+  },
+  "engines": {
+    "node": ">= 8.9.0",
+    "npm": ">= 5.6.0",
+    "yarn": ">= 1.6.0"
+  },
+  "browserslist": [
+    "last 1 version, not dead, ie >= 11"
+  ]
+}
