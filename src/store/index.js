@@ -1,24 +1,24 @@
+import VCard from 'vcf'
 import Vue from 'vue'
 import Vuex from 'vuex'
-import client from '../keyserver/client'
+
 import addressmetadata from '../keyserver/addressmetadata_pb'
-import VCard from 'vcf'
+import keyserverClient from '../keyserver/client'
+import photon from '../photon'
+
+const grpc = require('@grpc/grpc-js')
 
 Vue.use(Vuex)
 
 import VuexPersistence from 'vuex-persist'
 
-const vuexLocal = new VuexPersistence({
-  storage: window.localStorage
-})
+const vuexLocal = new VuexPersistence({ storage: window.localStorage })
 
 export default new Vuex.Store({
   modules: {
     myDrawer: {
       namespaced: true,
-      state: {
-        drawerOpen: false
-      },
+      state: { drawerOpen: false },
       mutations: {
         toggleDrawerOpen (state) {
           state.drawerOpen = !state.drawerOpen
@@ -43,9 +43,7 @@ export default new Vuex.Store({
     },
     contactDrawer: {
       namespaced: true,
-      state: {
-        drawerOpen: false
-      },
+      state: { drawerOpen: false },
       mutations: {
         toggleDrawerOpen (state) {
           state.drawerOpen = !state.drawerOpen
@@ -71,7 +69,10 @@ export default new Vuex.Store({
     chats: {
       namespaced: true,
       state: {
-        order: ['qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g', 'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs'],
+        order: [
+          'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g',
+          'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs'
+        ],
         activeChatAddr: 'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g',
         data: {
           'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g': {
@@ -116,7 +117,9 @@ export default new Vuex.Store({
           return state.activeChatAddr
         },
         getLatestMessageBody: (state) => (addr) => {
-          return state.data[addr].messages[state.data[addr].messages.length - 1].body
+          return state.data[addr]
+            .messages[state.data[addr].messages.length - 1]
+            .body
         },
         getAllMessages: (state) => (addr) => {
           return state.data[addr].messages
@@ -133,7 +136,9 @@ export default new Vuex.Store({
             'body': text,
             'timestamp': Math.floor(Date.now() / 1000)
           }
-          state.data[addr].messages.push(newMsg)
+
+          state.data[addr]
+            .messages.push(newMsg)
         },
         switchOrder (state, addr) {
           state.order.splice(state.order.indexOf(addr), 1)
@@ -159,9 +164,7 @@ export default new Vuex.Store({
       }
     },
     keyserverHandler: {
-      state: {
-        handler: new client.Handler()
-      },
+      state: { handler: new keyserverClient.Handler() },
       mutations: {
         setHandler (state, handler) {
           state.handler = handler
@@ -177,12 +180,8 @@ export default new Vuex.Store({
       namespaced: true,
       state: {
         profiles: {
-          'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
-            'name': 'Shammah'
-          },
-          'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g': {
-            'name': 'Calin'
-          }
+          'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': { 'name': 'Shammah' },
+          'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g': { 'name': 'Calin' }
         }
       },
       getters: {
@@ -201,25 +200,27 @@ export default new Vuex.Store({
             for (let addr in this.state.contacts.profiles) {
               // Make this generic over networks
               // Batch this
-              this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`).then(function (metadata) {
-                let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
+              this.state.keyserverHandler.handler
+                .uniformSample(`bchtest:${addr}`)
+                .then(function (metadata) {
+                  let payload = addressmetadata.Payload.deserializeBinary(
+                    metadata.getSerializedPayload())
 
-                function isVCard (entry) {
-                  return entry.getKind() === 'vcard'
-                }
+                  function isVCard (entry) {
+                    return entry.getKind() === 'vcard'
+                  }
 
-                let entryList = payload.getEntriesList()
+                  let entryList = payload.getEntriesList()
 
-                let rawCard = entryList.find(isVCard).getEntryData()
-                let strCard = new TextDecoder().decode(rawCard)
+                  let rawCard = entryList.find(isVCard).getEntryData()
+                  let strCard = new TextDecoder().decode(rawCard)
 
-                let vCard = new VCard().parse(strCard)
+                  let vCard = new VCard().parse(strCard)
 
-                let profile = {
-                  'name': vCard.data.fn._data
-                }
-                commit('updateProfile', { addr, profile })
-              })
+                  let profile = { 'name': vCard.data.fn._data }
+
+                  commit('updateProfile', { addr, profile })
+                })
             }
           }, 1000)
         }
@@ -227,20 +228,14 @@ export default new Vuex.Store({
     },
     myProfile: {
       namespaced: true,
-      state: {
-        name: null,
-        address: null,
-        wallet: {
-          xPrivKey: null,
-          seqNum: 0
-        }
-      },
+      state: { name: null, address: null, wallet: { xPrivKey: null, seqNum: 0 } },
       getters: {
         getMyProfile (state) {
           let profile = {
             'name': state.name,
             'address': state.address
           }
+
           return profile
         },
         getMyAddress (state) {
@@ -248,7 +243,10 @@ export default new Vuex.Store({
         },
         getPaymentAddress: (state) => (seqNum) => {
           if (state.wallet.xPrivKey !== null) {
-            let privkey = state.wallet.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(seqNum, true)
+            let privkey = state.wallet.xPrivKey.deriveChild(44)
+              .deriveChild(0)
+              .deriveChild(0)
+              .deriveChild(seqNum, true)
             return privkey.toAddress()
           } else {
             return null
@@ -274,9 +272,7 @@ export default new Vuex.Store({
       }
     },
     splitter: {
-      state: {
-        splitterRatio: 40
-      },
+      state: { splitterRatio: 40 },
       mutations: {
         setSplitterRatio (state, ratio) {
           state.splitterRatio = ratio
@@ -294,9 +290,7 @@ export default new Vuex.Store({
       }
     },
     clock: {
-      state: {
-        now: Date.now()
-      },
+      state: { now: Date.now() },
       mutations: {
         updateClock (state) {
           state.now = Date.now()
@@ -304,9 +298,7 @@ export default new Vuex.Store({
       },
       actions: {
         startClock ({ commit }) {
-          setInterval(() => {
-            commit('updateClock')
-          }, 1000)
+          setInterval(() => { commit('updateClock') }, 1000)
         },
         updateClock ({ commit }) {
           commit('updateClock')
@@ -315,6 +307,35 @@ export default new Vuex.Store({
       getters: {
         getUnixTime (state) {
           return state.now
+        }
+      }
+    },
+    photonHandler: {
+      namespaced: true,
+      state: { txStub: null, scriptHashStub: null },
+      getters: {
+        getTxStub (state) {
+          return state.txStub
+        },
+        getScriptHashStub (state) {
+          return state.scriptHashStub
+        }
+      },
+      mutations: {
+        setStubs (state, stubs) {
+          state.txStub = stubs.txStub
+          state.scripHashStub = stubs.scripHashStub
+        }
+      },
+      actions: {
+        new ({ commit }, addr) {
+          let insecureChannel = grpc.credentials.createInsecure()
+          let txStub = new photon.transaction.Transaction(addr, insecureChannel)
+          let scripHashStub =
+              new photon.scriptHash.ScriptHash(addr, insecureChannel)
+          let stubs = { 'txStub': txStub, 'scripHashStub': scripHashStub }
+
+          commit('setStubs', stubs)
         }
       }
     }

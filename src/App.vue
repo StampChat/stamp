@@ -13,7 +13,8 @@ export default {
     ...mapActions(['startClock']),
     ...mapActions({
       startProfileUpdater: 'contacts/startProfileUpdater',
-      setProfile: 'myProfile/setMyProfile'
+      setProfile: 'myProfile/setMyProfile',
+      newPhotonClient: 'photonHandler/new'
     })
   },
   mounted () {
@@ -22,6 +23,8 @@ export default {
   created () {
     this.startClock()
     this.startProfileUpdater()
+
+    this.newPhotonClient('localhost:50051')
   }
 }
 </script>
