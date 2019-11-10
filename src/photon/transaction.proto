@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package transaction;
+
+message BroadcastRequest {
+  // The raw transaction.
+  bytes raw_tx = 1;
+}
+
+message BroadcastResponse {
+  // The transaction hash as a byte array.
+  bytes tx_hash = 1;
+}
+
+message TransactionRequest {
+  // The transaction hash as a byte array.
+  bytes tx_hash = 1;
+  // Height of the block containing the transaction to aid lookup (optional).
+  uint32 height = 2;
+  // Whether a merkle proof should also be returned.
+  bool merkle = 3;
+}
+
+message TransactionResponse {
+  // The raw transaction.
+  bytes raw_tx = 1;
+
+  message TxMerkleInfo {
+    // The height of the block the transaction was confirmed in.
+    uint32 block_height = 1;
+    // A list of transaction hashes the current hash is paired with,
+    // recursively, in order to trace up to obtain merkle root of the block,
+    // deepest pairing first.
+    repeated bytes merkle = 2;
+    // The 0-based index of the position of the transaction in the ordered list
+    // of transactions in the block.
+    uint32 pos = 3;
+  }
+  // If the TransactionRequest.merkle field was set to true, this will contain
+  // the merkle information for the transaction in question, otherwise it will
+  // be empty.
+  TxMerkleInfo merkle = 2;
+}
+
+message MerkleBranchRequest {
+  // The transaction hash as a byte array.
+  bytes tx_hash = 1;
+}
+
+message MerkleBranchResponse {
+  // The height of the block the transaction was confirmed in.
+  uint32 block_height = 1;
+  // A list of transaction hashes the current hash is paired with, recursively,
+  // in order to trace up to obtain merkle root of the block, deepest pairing
+  // first.
+  repeated bytes merkle = 2;
+  // The 0-based index of the position of the transaction in the ordered list of
+  // transactions in the block.
+  uint32 pos = 3;
+}
+
+message IdFromPosRequest {
+  // The block height.
+  uint32 height = 1;
+  // A zero-based index of the transaction in the given block.
+  uint32 tx_pos = 2;
+  // Whether a merkle proof should also be returned.
+  bool merkle = 3;
+}
+
+message IdFromPosResponse {
+  // The transaction hash as a byte array.
+  bytes tx_hash = 1;
+  // A list of transaction hashes the current hash is paired with,
+  // recursively, in order to trace up to obtain merkle root of the block,
+  // deepest pairing first.
+  repeated bytes merkle = 2;
+}
+
+service Transaction {
+  // Broadcast a transaction to the network.
+  rpc Broadcast(BroadcastRequest) returns (BroadcastResponse);
+  // Return a raw transaction.
+  rpc Transaction(TransactionRequest) returns (TransactionResponse);
+  // Return the merkle branch of a confirmed transaction given its hash.
+  rpc MerkleBranch(MerkleBranchRequest) returns (MerkleBranchResponse);
+  // Return a transaction hash and optionally a merkle proof, given a block
+  // height and a position in the block.
+  rpc IdFromPos(IdFromPosRequest) returns (IdFromPosResponse);
+}

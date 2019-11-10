@@ -1,0 +1,161 @@
+syntax = "proto3";
+
+package script_hash;
+
+message BalanceRequest {
+  // The script hash as bytes
+  bytes script_hash = 1;
+}
+
+message BalanceResponse {
+  // Confirmed balance in satoshis
+  uint64 confirmed = 1;
+  // Unconfirmed balance in satoshis
+  uint64 unconfirmed = 2;
+}
+
+message HistoryRequest {
+  // The script hash as bytes
+  bytes script_hash = 1;
+  message Range {
+    // The start height from which to retrieve the history. 0 for the beginning
+    // of time.
+    uint32 start_height = 1;
+    // If set, begin the history download from block number start_height, at
+    // start_pos within the block.  See the explanation of HistoryResponse::ContinuationSpec
+    // below.  Use 0 to begin retrieving at the beginning of the block at start_height.
+    uint32 start_pos = 2;
+    // The offset from start_height at which to end the history retrieval --
+    // exclusive range end; eg [start_height, start_height+end_offset) will be
+    // retrieved. end_offset=0 is a special case which will retrieve all
+    // confirmed_items from start_height up to present.
+    uint32 end_offset = 3;
+  }
+  // If empty, confirmed_items in the HistoryResponse will always be empty.
+  Range range = 2;
+  // If true, then items currently in the mempool will be included in mempool_items
+  // in the HistoryResponse.
+  bool include_mempool_items = 3;
+}
+
+message HistoryResponse {
+  // Each confirmed transaction is a message:
+  message ConfirmedItem {
+    // The integer height of the block the transaction was confirmed in.
+    uint32 height = 1;
+    // The transaction hash as bytes.
+    bytes tx_hash = 2;
+  }
+  message MempoolItem {
+    // The transaction hash as bytes
+    bytes tx_hash = 1;
+    // The transaction fee in satoshis
+    uint64 fee = 2;
+    // If true, the tx in question has at least 1 input that is also in the
+    // mempool (is unconfirmed) If false, all inputs to this tx are confirmed.
+    bool has_unconfirmed_parent = 3;
+  }
+  // If `range` in the request was not empty and there was history for the script_hash in the specified
+  // range, this will be populated, otherwise it will be empty.
+  repeated ConfirmedItem confirmed_items = 1;
+
+  // Used to specify a continuation of the requested history in the case where the result set would
+  // have been too large.
+  message ContinuationSpec {
+    // This field can be used to specify the subsequent continuation of the history download by setting
+    // HistoryRequest.range.start_height with the value contained in this field.
+    uint32 start_height = 1;
+    // This field can be used to specify the subsequent continuation of the history download by setting
+    // HistoryRequest.range.start_pos with the value contained in this field.
+    uint32 start_pos = 2;
+  }
+  // If set, the server truncated the `confirmed_items` result set above because it would have exceeded
+  // the server limits on a single result set's size.  (Conversely, if this field is not set, the result
+  // set is complete for the range specified by the client).
+  //
+  // If this field is set and the client wants more results for the range requested, the client should use
+  // the values in the fields `confirmed_continuation.start_height` and`confirmed_continuation.start_pos`
+  // to continue the history download where it last left off (by issuing a subsequent HistoryRequest starting
+  // from the positions specified in these fields -- thus, pagination of long histories is supported using
+  // this scheme).
+  ContinuationSpec confirmed_continuation = 2;
+
+  // If `include_mempool_items` was set to true in the HistoryRequest, this will be populated with
+  // unconfirmed (mempool) tx's for this script_hash, if any such tx's exist.
+  repeated MempoolItem mempool_items = 3;
+}
+
+message ListUnspentRequest {
+  // The script hash as bytes
+  bytes script_hash = 1;
+}
+
+message ListUnspentResponse {
+  message UnspentItem {
+    // The integer height of the block the transaction was confirmed in. 0 if
+    // the transaction is in the mempool.
+    int32 height = 1;
+    // The output’s transaction hash as bytes
+    bytes tx_hash = 2;
+    message OutputItem {
+      // The zero-based index of the output in the transaction’s list of outputs
+      uint32 pos = 1;
+      // The output’s value in satoshis
+      uint64 value = 2;
+    }
+    // This array usually has 1 item, but it may have more if for some reason
+    // this script_hash appeared in the same tx as multiple outputs (a rare
+    // occurence, but can happen).
+    repeated OutputItem output_items = 3;
+  }
+  repeated UnspentItem items = 1;
+}
+
+message SubscribeRequest {
+  // The script hash as bytes
+  bytes script_hash = 1;
+}
+
+message SubscribeResponse {
+  // The confirmed status of the script hash. This is recursive hash256 of: all
+  // confirmed transaction hashes relevant to this script hash, in height then
+  // lexicographical order.
+  // In Python it would look something like:
+  //
+  // confirmed_status = b'\0'*32
+  // for tx_hash_bytes, height_int32_le_bytes in history:
+  //    confirmed_status = hashlib.sha256(confirmed_status
+  //                                      + tx_hash_bytes
+  //                                      + height_int32_le_bytes
+  //                                      ).digest()
+  //
+  // (where the history list above is in height, then lexographical order).
+  //
+  // This field will be empty if there are no confirmed transactions for this
+  // script_hash.
+  bytes confirmed_status = 1;
+  // The unconfirmed status of the script hash. This is the hash256 of: the
+  // concatenation of mempool transactions in lexicographical order.  Note
+  // that this status hash is *NOT* recursive and is basically (in Python):
+  //
+  // preimage = b''
+  // for tx_hash_bytes in sorted(mempool_for_this_script_hash):
+  //   preimage += tx_hash_bytes
+  //
+  // return hashlib.sha256(preimage).digest()
+  //
+  // This field in the response will be empty if there are no transactions in
+  // the mempool currently for this script_hash.
+  bytes unconfirmed_status = 2;
+}
+
+service ScriptHash {
+  // Return the confirmed and unconfirmed balances of a script hash.
+  rpc Balance(BalanceRequest) returns (BalanceResponse);
+  // Return the confirmed and unconfirmed history of a script hash.
+  rpc History(HistoryRequest) returns (HistoryResponse);
+  // Return an ordered list of UTXOs sent to a script hash.
+  rpc ListUnspent(ListUnspentRequest) returns (ListUnspentResponse);
+  // Subscribe to a script hash.
+  rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse);
+}

@@ -9,15 +9,18 @@
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue src",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No test specified\" && exit 0",
+    "postinstall": "npm rebuild grpc --runtime=electron --target=5.0.2"
   },
   "dependencies": {
     "@chenfengyuan/vue-qrcode": "^1.0.1",
+    "@grpc/proto-loader": "^0.5.3",
     "@quasar/extras": "^1.0.0",
     "axios": "^0.18.1",
     "bip39": "^3.0.2",
     "bitcore-lib-cash": "^8.9.0",
     "google-protobuf": "^3.10.0",
+    "grpc": "^1.24.2",
     "quasar": "^1.0.0",
     "vcf": "^2.0.6",
     "vue": "^2.6.10",
