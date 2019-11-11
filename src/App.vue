@@ -22,7 +22,7 @@ export default {
   },
   created () {
     this.startClock()
-    this.startProfileUpdater()
+    // this.startProfileUpdater()
 
     this.newPhotonClient('localhost:50051')
   }

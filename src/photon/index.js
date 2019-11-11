@@ -1,16 +1,16 @@
 const path = require('path')
 const grpc = require('@grpc/grpc-js')
 
-var PROTO_PATH =
+let PROTO_PATH =
     [
       path.join(__dirname, './transaction.proto'),
       path.join(__dirname, './script_hash.proto')
     ]
 
-var protoLoader = require('@grpc/proto-loader')
+let protoLoader = require('@grpc/proto-loader')
 
 // Suggested options for similarity to existing grpc.load behavior
-var packageDefinition = protoLoader.loadSync(PROTO_PATH, {
+let packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
   longs: String,
   enums: String,
@@ -19,9 +19,9 @@ var packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 })
 
 // The protoDescriptor object has the full package hierarchy
-var protoDescriptor = grpc.loadPackageDefinition(packageDefinition)
-const transaction = protoDescriptor.transaction
-const scriptHash = protoDescriptor.script_hash
+let protoDescriptor = grpc.loadPackageDefinition(packageDefinition)
+let transaction = protoDescriptor.transaction
+let scriptHash = protoDescriptor.script_hash
 
 export default {
   transaction, scriptHash

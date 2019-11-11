@@ -3,18 +3,16 @@
     <q-page-container>
       <router-view />
     </q-page-container>
-
+    <wallet-footer />
   </q-layout>
 </template>
 
 <script>
-export default {
-  // name: 'LayoutName',
+import WalletFooter from '../components/WalletFooter.vue'
 
-  data () {
-    return {
-      leftDrawer: true
-    }
+export default {
+  components: {
+    WalletFooter
   }
 }
 </script>
