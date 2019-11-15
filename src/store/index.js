@@ -1,12 +1,12 @@
 import VCard from 'vcf'
 import Vue from 'vue'
 import Vuex from 'vuex'
+import grpc from 'grpc'
 
 import addressmetadata from '../keyserver/addressmetadata_pb'
 import keyserverClient from '../keyserver/client'
-import photon from '../photon'
-
-const grpc = require('@grpc/grpc-js')
+import transaction from '../photon/transaction_grpc_pb'
+import scriptHash from '../photon/script_hash_grpc_pb'
 
 Vue.use(Vuex)
 
@@ -324,16 +324,16 @@ export default new Vuex.Store({
       mutations: {
         setStubs (state, stubs) {
           state.txStub = stubs.txStub
-          state.scripHashStub = stubs.scripHashStub
+          state.scriptHashStub = stubs.scriptHashStub
         }
       },
       actions: {
         new ({ commit }, addr) {
           let insecureChannel = grpc.credentials.createInsecure()
-          let txStub = new photon.transaction.Transaction(addr, insecureChannel)
-          let scripHashStub =
-              new photon.scriptHash.ScriptHash(addr, insecureChannel)
-          let stubs = { 'txStub': txStub, 'scripHashStub': scripHashStub }
+          let txStub = new transaction.Transaction(addr, insecureChannel)
+          let scriptHashStub =
+            new scriptHash.ScriptHash(addr, insecureChannel)
+          let stubs = { 'txStub': txStub, 'scripHashStub': scriptHashStub }
 
           commit('setStubs', stubs)
         }
