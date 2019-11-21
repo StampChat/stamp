@@ -17,6 +17,7 @@
     "axios": "^0.18.1",
     "bip39": "^3.0.2",
     "bitcore-lib-cash": "^8.9.0",
+    "electrum-client": "0.0.6",
     "google-protobuf": "^3.10.0",
     "quasar": "^1.0.0",
     "vcf": "^2.0.6",

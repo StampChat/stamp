@@ -6,6 +6,7 @@
 
 <script>
 import { mapActions } from 'vuex'
+const ElectrumClient = require('electrum-client')
 
 export default {
   name: 'App',
@@ -13,15 +14,22 @@ export default {
     ...mapActions(['startClock']),
     ...mapActions({
       startProfileUpdater: 'contacts/startProfileUpdater',
-      setProfile: 'myProfile/setMyProfile'
+      setProfile: 'myProfile/setMyProfile',
+      setClient: 'electrumHandler/setClient'
     })
   },
   mounted () {
     this.setProfile({ 'name': null, 'address': null })
   },
   created () {
+    // Start internal timer
     this.startClock()
+
+    // Start profile watcher
     this.startProfileUpdater()
+
+    let ecl = new ElectrumClient(60002, 'blackie.c3-soft.com', 'tls')
+    this.setClient(ecl)
   }
 }
 </script>
