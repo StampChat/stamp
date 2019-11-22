@@ -283,10 +283,10 @@
                 class="bg-primary text-white shadow-2"
                 style="border-radius: 10px 10px 0px 0px"
               >
-                <q-toolbar-title>Upload a Display Picture</q-toolbar-title>
+                <q-toolbar-title>Upload Avatar</q-toolbar-title>
 
                 <q-input
-                  @input="val => { displayPictureFile = val[0] }"
+                  @input="val => { avatar = val[0] }"
                   ref="displayPicker"
                   style="display:none"
                   type="file"
@@ -304,7 +304,7 @@
               </q-toolbar>
               <div>
                 <q-img
-                  :src="displayPicturePreview"
+                  :src="avatarRaw"
                   spinner-color="white"
                 />
               </div>
@@ -377,11 +377,11 @@ Vue.use(VueRouter)
 export default {
   data () {
     return {
-      step: 4,
+      step: 1,
       name: '',
       bio: '',
-      displayPictureFile: null,
-      displayPicturePreview: 'hello',
+      avatar: null,
+      avatarRaw: 'hello',
       generatedWarning: true,
       generatedSeed: '',
       generateExpanded: false,
@@ -398,13 +398,13 @@ export default {
     ...mapActions({ setProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
     ...mapGetters({ getClient: 'electrumHandler/getClient' }),
     parseImage () {
-      if (this.displayPictureFile == null) {
+      if (this.avatar == null) {
         return
       }
       var reader = new FileReader()
-      reader.readAsDataURL(this.displayPictureFile)
+      reader.readAsDataURL(this.avatar)
       reader.onload = () => {
-        this.displayPicturePreview = reader.result
+        this.avatarRaw = reader.result
       }
     },
     next () {
