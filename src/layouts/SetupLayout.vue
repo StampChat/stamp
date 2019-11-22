@@ -4,13 +4,14 @@
       <router-view />
     </q-page-container>
 
+    <status-footer />
   </q-layout>
 </template>
 
 <script>
+import StatusFooter from '../components/StatusFooter.vue'
 export default {
-  // name: 'LayoutName',
-
+  components: { StatusFooter },
   data () {
     return {
       leftDrawer: true

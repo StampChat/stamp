@@ -252,22 +252,33 @@ export default new Vuex.Store({
     electrumHandler: {
       namespaced: true,
       state: {
-        client: null
+        client: null,
+        connected: false
       },
       mutations: {
         setClient (state, client) {
           state.client = client
+        },
+        setConnected (state, connected) {
+          state.connected = connected
         }
       },
       actions: {
-        async setClient ({ commit }, client) {
+        setConnected ({ commit }, connected) {
+          commit('setConnected', connected)
+        },
+        async setClient ({ commit, dispatch }, client) {
           await client.connect()
+          dispatch('setConnected', true)
           commit('setClient', client)
         }
       },
       getters: {
         getClient (state) {
           return state.client
+        },
+        connected (state) {
+          return state.connected
         }
       }
     },
