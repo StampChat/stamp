@@ -227,20 +227,20 @@
                 <q-circular-progress
                   style="margin-left: auto; margin-right: auto; margin-top: 50px;"
                   show-value
-                  :value="walletBalance / 100"
+                  :value="walletBalance / recomendedBalance"
                   size="225px"
                   :thickness="0.25"
                   color="green"
                   track-color="grey"
                 >
-                  <span class="text-h4">{{ walletBalance / 10 }} sats </span>
+                  <span class="text-h4">{{ getBalance }}</span>
                 </q-circular-progress>
               </div>
               <div class="row">
                 <p
                   class="q-pt-lg text-subtitle1"
                   style="margin: auto;"
-                >Recommended 2000 satoshi </p>
+                >Recommended {{ recomendedBalance }} satoshi </p>
               </div>
             </div>
           </div>
@@ -328,12 +328,12 @@
 <script>
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import Worker from 'worker-loader!../workers/xpriv_generate.js'
-const cashlib = require('bitcore-lib-cash')
 
+const cashlib = require('bitcore-lib-cash')
 const bip39 = require('bip39')
 
 Vue.component(VueQrcode.name, VueQrcode)
@@ -349,14 +349,16 @@ export default {
       generateExpanded: false,
       importExpanded: false,
       importedSeed: '',
-      walletBalance: 2000,
+      walletBalance: 0,
+      recomendedBalance: 2000,
       paymentAddrCounter: 0,
       xPrivKey: null,
       currentAddress: null
     }
   },
   methods: {
-    ...mapActions({ setProfile: 'myProfile/setMyProfile' }),
+    ...mapActions({ setProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
+    ...mapGetters({ getClient: 'electrumHandler/getClient' }),
     next () {
       switch (this.step) {
         case 2:
@@ -367,13 +369,24 @@ export default {
 
           // Setup worker
           let worker = new Worker()
-          worker.onmessage = (event) => {
+          worker.onmessage = async (event) => {
             let xPrivKeyObj = event.data
             this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
 
             let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(0, true)
 
-            this.currentAddress = privKey.privateKey.toAddress()
+            this.currentAddress = privKey.privateKey.toAddress('testnet')
+            this.$q.loading.show({
+              delay: 100,
+              message: 'Gathering balances...'
+            })
+            await this.setXPrivKey(this.xPrivKey)
+            await this.updateAddresses()
+            this.$q.loading.show({
+              delay: 100,
+              message: 'Watching wallet...'
+            })
+            await this.startListeners()
 
             this.$q.loading.hide()
             this.$refs.stepper.next()
@@ -381,7 +394,6 @@ export default {
 
           // Send seed
           worker.postMessage(this.seed)
-
           break
         case 4:
           let identityAddr = this.xPrivKey.deriveChild(20102019).deriveChild(0, true)
@@ -400,9 +412,10 @@ export default {
       this.generatedSeed = bip39.generateMnemonic()
     },
     nextAddress () {
+      // Increment address
       this.paymentAddrCounter += 1
       let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(this.paymentAddrCounter, true)
-      this.currentAddress = privKey.privateKey.toAddress()
+      this.currentAddress = privKey.privateKey.toAddress('testnet')
     },
     copyGenerated () {
       var dummy = document.createElement('textarea')
@@ -440,6 +453,20 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({ getBalance: 'wallet/getBalance' }),
+    formatedBalance (balance) {
+      if (this.getBalance < 1_000) {
+        return String(this.getBalance) + ' sats'
+      } else if (this.getBalance < 100_000) {
+        return String(this.getBalance / 100) + ' uBCH'
+      } else if (this.getBalance < 10_000_000) {
+        return String(this.getBalance / 100_000) + ' mBCH'
+      } else if (this.getBalance < 100_000_000) {
+        return String(this.getBalance / 1_000_000) + ' cBCH'
+      } else {
+        return String(this.getBalance / 1_00_000_000) + ' BCH'
+      }
+    },
     seed () {
       if (this.generateExpanded) {
         return this.generatedSeed

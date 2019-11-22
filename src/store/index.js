@@ -173,6 +173,104 @@ export default new Vuex.Store({
         }
       }
     },
+    wallet: {
+      namespaced: true,
+      state: {
+        xPrivKey: null,
+        addresses: {},
+        totalBalance: 0
+      },
+      mutations: {
+        setAddresses (state, addresses) {
+          // TODO: Recalc balance
+          state.addresses = addresses
+        },
+        setAddress (state, pair) {
+          let oldBalance = state.addresses[pair.address]
+          let newBalance = pair.balance
+          state.addresses[pair.address] = newBalance
+          if (oldBalance == null) {
+            state.totalBalance = newBalance
+          } else {
+            state.totalBalance += newBalance - oldBalance
+          }
+        },
+        setXPrivKey (state, xPrivKey) {
+          state.xPrivKey = xPrivKey
+        }
+      },
+      actions: {
+        // TODO: Set callbacks
+        setXPrivKey ({ commit }, xPrivKey) {
+          commit('setXPrivKey', xPrivKey)
+        },
+        async updateBalance ({ commit }, address) {
+          let balanceJson = await this.state.electrumHandler.client.blockchainAddress_getBalance(address)
+          let balance = balanceJson.confirmed + balanceJson.unconfirmed
+          let pair = { 'address': address, 'balance': balance }
+          commit('setAddress', pair)
+        },
+        async updateBalances ({ commit }) {
+          for (var addr in this.addresses) {
+            let balanceJson = await this.state.electrumHandler.client.blockchainAddress_getBalance(addr)
+            let balance = balanceJson.confirmed + balanceJson.unconfirmed
+            let pair = { 'address': addr, 'balance': balance }
+            commit('setAddress', pair)
+          }
+        },
+        async updateAddresses ({ commit }) {
+          let client = this.state.electrumHandler.client
+          var i
+          for (i = 0; i < 16; i++) {
+            let addr = this.state.wallet.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(i, true).privateKey.toAddress('testnet').toLegacyAddress()
+            let balanceJson = await client.blockchainAddress_getBalance(addr)
+            let balance = balanceJson.confirmed + balanceJson.unconfirmed
+            let pair = { 'address': addr, 'balance': balance }
+            commit('setAddress', pair)
+          }
+        },
+        async startListeners ({ commit, dispatch }) {
+          let client = this.state.electrumHandler.client
+          await client.subscribe.on('blockchain.address.subscribe', async (result) => {
+            let address = result[0]
+            await dispatch('updateBalance', address)
+          })
+          for (var addr in this.state.wallet.addresses) {
+            await client.blockchainAddress_subscribe(addr)
+          }
+        },
+        clearWallet ({ commit }) {
+          commit('setAddresses', {})
+        }
+      },
+      getters: {
+        getBalance (state) {
+          return state.totalBalance
+        }
+      }
+    },
+    electrumHandler: {
+      namespaced: true,
+      state: {
+        client: null
+      },
+      mutations: {
+        setClient (state, client) {
+          state.client = client
+        }
+      },
+      actions: {
+        async setClient ({ commit }, client) {
+          await client.connect()
+          commit('setClient', client)
+        }
+      },
+      getters: {
+        getClient (state) {
+          return state.client
+        }
+      }
+    },
     contacts: {
       namespaced: true,
       state: {
