@@ -286,11 +286,12 @@
                 <q-toolbar-title>Upload a Display Picture</q-toolbar-title>
 
                 <q-input
+                  @input="val => { displayPictureFile = val[0] }"
                   ref="displayPicker"
                   style="display:none"
-                  v-model="diplayPicture"
                   type="file"
                   label="Standard"
+                  @change="parseImage"
                 />
                 <q-btn
                   type="file"
@@ -303,9 +304,8 @@
               </q-toolbar>
               <div>
                 <q-img
-                  :src="diplayPicture"
+                  :src="displayPicturePreview"
                   spinner-color="white"
-                  style="height: 140px; max-width: 150px"
                 />
               </div>
             </div>
@@ -380,7 +380,8 @@ export default {
       step: 4,
       name: '',
       bio: '',
-      diplayPicture: null,
+      displayPictureFile: null,
+      displayPicturePreview: 'hello',
       generatedWarning: true,
       generatedSeed: '',
       generateExpanded: false,
@@ -396,6 +397,16 @@ export default {
   methods: {
     ...mapActions({ setProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
     ...mapGetters({ getClient: 'electrumHandler/getClient' }),
+    parseImage () {
+      if (this.displayPictureFile == null) {
+        return
+      }
+      var reader = new FileReader()
+      reader.readAsDataURL(this.displayPictureFile)
+      reader.onload = () => {
+        this.displayPicturePreview = reader.result
+      }
+    },
     next () {
       switch (this.step) {
         case 2:
