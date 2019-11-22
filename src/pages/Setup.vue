@@ -227,13 +227,14 @@
                 <q-circular-progress
                   style="margin-left: auto; margin-right: auto; margin-top: 50px;"
                   show-value
-                  :value="walletBalance / recomendedBalance"
+                  :max="recomendedBalance"
+                  :value="getBalance"
                   size="225px"
                   :thickness="0.25"
                   color="green"
                   track-color="grey"
                 >
-                  <span class="text-h4">{{ getBalance }}</span>
+                  <span class="text-h4">{{ formatedBalance }}</span>
                 </q-circular-progress>
               </div>
               <div class="row">
@@ -253,28 +254,62 @@
           icon="person"
           style="min-height: 300px;"
         >
-          <q-list>
-            <q-item>
-              <q-input
-                filled
-                v-model="name"
-                label="Your name *"
-                hint="Name and surname"
-                lazy-rules
-                style="width:90vw"
-                :rules="[ val => val && val.length > 0 || 'Please type something']"
-              />
-            </q-item>
+          <div class="row">
+            <div class="col">
+              <div class="row q-pa-md">
+                <q-input
+                  outlined
+                  v-model="name"
+                  label="Name *"
+                  hint="Name displayed to others"
+                  lazy-rules
+                  style="width:100%"
+                  :rules="[ val => val && val.length > 0 || 'Please type something']"
+                />
+              </div>
+              <div class="row q-pa-md">
+                <q-input
+                  v-model="bio"
+                  label="Bio"
+                  hint="Short biolography displayed to others"
+                  outlined
+                  style="width:100%"
+                  autogrow
+                />
+              </div>
+            </div>
+            <div class="col-4 q-pa-md">
+              <q-toolbar
+                class="bg-primary text-white shadow-2"
+                style="border-radius: 10px 10px 0px 0px"
+              >
+                <q-toolbar-title>Upload a Display Picture</q-toolbar-title>
 
-            <q-item>
-              <q-uploader
-                url="http://localhost:4444/upload"
-                label="Upload profile picture"
-                style="width:90vw"
-                :max-total-size="4096"
-              />
-            </q-item>
-          </q-list>
+                <q-input
+                  ref="displayPicker"
+                  style="display:none"
+                  v-model="diplayPicture"
+                  type="file"
+                  label="Standard"
+                />
+                <q-btn
+                  type="file"
+                  flat
+                  round
+                  dense
+                  icon="add_a_photo"
+                  @click="$refs.displayPicker.$el.click()"
+                />
+              </q-toolbar>
+              <div>
+                <q-img
+                  :src="diplayPicture"
+                  spinner-color="white"
+                  style="height: 140px; max-width: 150px"
+                />
+              </div>
+            </div>
+          </div>
         </q-step>
 
         <template v-slot:navigation>
@@ -342,8 +377,10 @@ Vue.use(VueRouter)
 export default {
   data () {
     return {
-      step: 1,
+      step: 4,
       name: '',
+      bio: '',
+      diplayPicture: null,
       generatedWarning: true,
       generatedSeed: '',
       generateExpanded: false,
@@ -453,8 +490,8 @@ export default {
     }
   },
   computed: {
-    ...mapGetters({ getBalance: 'wallet/getBalance' }),
-    formatedBalance (balance) {
+    ...mapGetters({ getBalance: 'wallet/getBalance', connected: 'electrumHandler/connected' }),
+    formatedBalance () {
       if (this.getBalance < 1_000) {
         return String(this.getBalance) + ' sats'
       } else if (this.getBalance < 100_000) {
@@ -481,7 +518,7 @@ export default {
     },
     canProceedSeed () {
       if (this.step === 2) {
-        return (this.seed !== null)
+        return (this.seed !== null) && this.connected
       } else {
         return true
       }
