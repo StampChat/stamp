@@ -227,8 +227,7 @@
                 <q-circular-progress
                   style="margin-left: auto; margin-right: auto; margin-top: 50px;"
                   show-value
-                  :max="recomendedBalance"
-                  :value="getBalance"
+                  :value="percentageBalance"
                   size="225px"
                   :thickness="0.25"
                   color="green"
@@ -366,7 +365,7 @@ import VueRouter from 'vue-router'
 import { mapActions, mapGetters } from 'vuex'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import Worker from 'worker-loader!../workers/xpriv_generate.js'
+import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
 const cashlib = require('bitcore-lib-cash')
 const bip39 = require('bip39')
@@ -416,20 +415,20 @@ export default {
           })
 
           // Setup worker
-          let worker = new Worker()
+          let worker = new WalletGenWorker()
           worker.onmessage = async (event) => {
-            let xPrivKeyObj = event.data
-            this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
-
-            let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(0, true)
-
-            this.currentAddress = privKey.privateKey.toAddress('testnet')
             this.$q.loading.show({
               delay: 100,
               message: 'Gathering balances...'
             })
+
+            let xPrivKeyObj = event.data
+            this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
+            let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(0, true)
+            this.currentAddress = privKey.privateKey.toAddress('testnet')
             await this.setXPrivKey(this.xPrivKey)
             await this.updateAddresses()
+
             this.$q.loading.show({
               delay: 100,
               message: 'Watching wallet...'
@@ -444,12 +443,20 @@ export default {
           worker.postMessage(this.seed)
           break
         case 4:
-          let identityAddr = this.xPrivKey.deriveChild(20102019).deriveChild(0, true)
+          // Set profile
           let profile = {
             'name': this.name,
-            'address': identityAddr
+            'bio': this.bio
           }
           this.setProfile(profile)
+
+          this.$q.loading.show({
+            delay: 100,
+            message: 'Uploading Profile...'
+          })
+
+          this.$q.loading.hide()
+
           this.$router.push('/')
           break
         default:
@@ -502,6 +509,10 @@ export default {
   },
   computed: {
     ...mapGetters({ getBalance: 'wallet/getBalance', connected: 'electrumHandler/connected' }),
+    percentageBalance () {
+      let percentage = 100 * Math.min(this.getBalance / this.recomendedBalance, 1)
+      return percentage
+    },
     formatedBalance () {
       if (this.getBalance < 1_000) {
         return String(this.getBalance) + ' sats'

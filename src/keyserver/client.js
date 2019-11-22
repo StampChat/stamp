@@ -1,32 +1,50 @@
 import axios from 'axios'
 import addressmetadata from './addressmetadata_pb'
+import paymentrequest from './paymentrequest_pb'
 
 class Handler {
-    trustedServers = ['http://34.67.137.105']
-    constructor (defaultSampleSize, keyservers) {
-      this.keyservers = keyservers || this.trustedServers
-      this.defaultSampleSize = defaultSampleSize || 3
-    }
+  trustedServers = ['http://34.67.137.105']
+  constructor (defaultSampleSize, keyservers) {
+    this.keyservers = keyservers || this.trustedServers
+    this.defaultSampleSize = defaultSampleSize || 3
+  }
 
-    static async fetchMetadata (keyserver, addr) {
-      let url = `${keyserver}/keys/${addr}`
-      let response = await axios(
-        {
-          method: 'get',
-          url: url,
-          responseType: 'arraybuffer'
-        }
-      )
-      if (response.status === 200) {
-        let metadata = addressmetadata.AddressMetadata.deserializeBinary(response.data)
-        return metadata
+  static async fetchMetadata (keyserver, addr) {
+    let url = `${keyserver}/keys/${addr}`
+    let response = await axios(
+      {
+        method: 'get',
+        url: url,
+        responseType: 'arraybuffer'
       }
+    )
+    if (response.status === 200) {
+      let metadata = addressmetadata.AddressMetadata.deserializeBinary(response.data)
+      return metadata
     }
+  }
 
-    async uniformSample (addr) {
-      // TODO: Sample
-      return Handler.fetchMetadata(this.keyservers[0], addr)
+  chooseServer () {
+    // TODO: Sample correctly
+    return this.keyservers[0]
+  }
+
+  async uniformSample (addr) {
+    // TODO: Sample correctly
+    let server = this.chooseServer()
+    return Handler.fetchMetadata(server, addr)
+  }
+
+  async getPaymentRequest (addr) {
+    // TODO: Sample correctly
+    let server = this.chooseServer()
+
+    let response = await axios.put(server + '/keys/' + addr)
+    if (response.status === 402) {
+      let metadata = paymentrequest.PaymentRequest.deserializeBinary(response.data)
+      return { metadata, server }
     }
+  }
 }
 
 export default {

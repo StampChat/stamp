@@ -177,6 +177,7 @@ export default new Vuex.Store({
       namespaced: true,
       state: {
         xPrivKey: null,
+        identityPrivKey: null,
         addresses: {},
         totalBalance: 0
       },
@@ -197,6 +198,7 @@ export default new Vuex.Store({
         },
         setXPrivKey (state, xPrivKey) {
           state.xPrivKey = xPrivKey
+          state.identityPrivKey = xPrivKey.deriveChild(20102019).deriveChild(0, true) // TODO: Proper path for this
         }
       },
       actions: {
@@ -246,6 +248,9 @@ export default new Vuex.Store({
       getters: {
         getBalance (state) {
           return state.totalBalance
+        },
+        getIdentityPrivKey (state) {
+          return state.identityPrivKey
         }
       }
     },
