@@ -277,8 +277,6 @@ export default new Vuex.Store({
           }
         },
         getMyAddress (state) {
-          console.log('priv key')
-          console.log(state.identityPrivKey)
           return state.identityPrivKey.toAddress('testnet')
         }
       }
@@ -354,13 +352,25 @@ export default new Vuex.Store({
 
                 let entryList = payload.getEntriesList()
 
+                // Get vCard
                 let rawCard = entryList.find(isVCard).getEntryData()
                 let strCard = new TextDecoder().decode(rawCard)
 
                 let vCard = new VCard().parse(strCard)
 
+                let name = vCard.data.fn._data
+                let bio = vCard.data.bio._data
+
+                // Get avatar
+                function isAvatar (entry) {
+                  return entry.getKind() === 'avatar'
+                }
+                let rawAvatar = entryList.find(isAvatar).getEntryData()
+
                 let profile = {
-                  'name': vCard.data.fn._data
+                  'name': name,
+                  'bio': bio,
+                  'avatar': rawAvatar
                 }
                 commit('updateProfile', { addr, profile })
               })

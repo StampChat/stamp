@@ -369,6 +369,7 @@ import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
 const cashlib = require('bitcore-lib-cash')
 const bip39 = require('bip39')
+var keyserverClient = require('../keyserver/client')
 
 Vue.component(VueQrcode.name, VueQrcode)
 Vue.use(VueRouter)
@@ -449,7 +450,6 @@ export default {
             'bio': this.bio,
             'avatar': this.avatarRaw
           }
-          this.setProfile(profile)
 
           let ksHandler = this.getKsHandler()
 
@@ -460,15 +460,24 @@ export default {
           })
 
           let idAddress = this.getMyAddress()
-          let result = await ksHandler.getPaymentRequest(idAddress)
-
-          this.$q.loading.hide()
+          let { paymentRequest, server } = await ksHandler.getPaymentRequest(idAddress)
 
           this.$q.loading.show({
             delay: 100,
             message: 'Sending Payment...'
           })
-          console.log(result)
+
+          // Construct payment
+
+          // Send payment and receive token
+          let { paymentReceipt, token } = await ksHandler.sendPayment(idAddress, server, payment)
+
+          // Construct metadata
+          let metadata = keyserverClient.Handler.constructProfileMetadata(profile)
+          await ksHandler.putMetadata(idAddress, server, metadata, token)
+
+          this.setProfile(profile)
+
           this.$q.loading.hide()
 
           this.$router.push('/')
