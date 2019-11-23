@@ -26,7 +26,7 @@ export default {
     this.startClock()
 
     // Start profile watcher
-    this.startProfileUpdater()
+    // this.startProfileUpdater()
 
     let ecl = new ElectrumClient(60002, 'blackie.c3-soft.com', 'tls')
     this.setClient(ecl)

@@ -3,6 +3,7 @@
     <q-bar>
       <q-space />
       <q-btn
+        text-color="white"
         dense
         flat
         :color="connected?'white':'red'"

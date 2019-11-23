@@ -171,6 +171,11 @@ export default new Vuex.Store({
         setHandler ({ commit }, handler) {
           commit('setHandler', handler)
         }
+      },
+      getters: {
+        getHandler (state) {
+          return state.handler
+        }
       }
     },
     wallet: {
@@ -251,6 +256,17 @@ export default new Vuex.Store({
         },
         getIdentityPrivKey (state) {
           return state.identityPrivKey
+        },
+        getPaymentAddress: (state) => (seqNum) => {
+          if (state.xPrivKey !== null) {
+            let privkey = state.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(seqNum, true)
+            return privkey.toAddress()
+          } else {
+            return null
+          }
+        },
+        getMyAddress (state) {
+          return state.identityPrivKey.toAddress()
         }
       }
     },
@@ -258,7 +274,7 @@ export default new Vuex.Store({
       namespaced: true,
       state: {
         client: null,
-        connected: false
+        connected: 'hello'
       },
       mutations: {
         setClient (state, client) {
@@ -272,9 +288,11 @@ export default new Vuex.Store({
         setConnected ({ commit }, connected) {
           commit('setConnected', connected)
         },
-        async setClient ({ commit, dispatch }, client) {
-          await client.connect()
-          dispatch('setConnected', true)
+        setClient ({ commit, dispatch }, client) {
+          client.connect().then(() => {
+            console.log('heloooooooooooooooo')
+            dispatch('setConnected', true)
+          }).catch(() => dispatch('setConnected', false))
           commit('setClient', client)
         }
       },
@@ -343,11 +361,8 @@ export default new Vuex.Store({
       namespaced: true,
       state: {
         name: null,
-        address: null,
-        wallet: {
-          xPrivKey: null,
-          seqNum: 0
-        }
+        bio: null,
+        avatar: null
       },
       getters: {
         getMyProfile (state) {
@@ -356,34 +371,18 @@ export default new Vuex.Store({
             'address': state.address
           }
           return profile
-        },
-        getMyAddress (state) {
-          return state.address
-        },
-        getPaymentAddress: (state) => (seqNum) => {
-          if (state.wallet.xPrivKey !== null) {
-            let privkey = state.wallet.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(seqNum, true)
-            return privkey.toAddress()
-          } else {
-            return null
-          }
         }
       },
       mutations: {
         setMyProfile (state, profile) {
           state.name = profile.name
           state.address = profile.address
-        },
-        setXPrivKey (state, newXPrivKey) {
-          state.wallet.xPrivKey = newXPrivKey
+          state.avatar = profile.avatar
         }
       },
       actions: {
         setMyProfile ({ commit }, profile) {
           commit('setMyProfile', profile)
-        },
-        setXPrivKey ({ commit }, newXPrivKey) {
-          commit('setXPrivKey', newXPrivKey)
         }
       }
     },

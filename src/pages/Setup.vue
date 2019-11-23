@@ -395,7 +395,7 @@ export default {
   },
   methods: {
     ...mapActions({ setProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
-    ...mapGetters({ getClient: 'electrumHandler/getClient' }),
+    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler' }),
     parseImage () {
       if (this.avatar == null) {
         return
@@ -406,7 +406,7 @@ export default {
         this.avatarRaw = reader.result
       }
     },
-    next () {
+    async next () {
       switch (this.step) {
         case 2:
           this.$q.loading.show({
@@ -446,14 +446,20 @@ export default {
           // Set profile
           let profile = {
             'name': this.name,
-            'bio': this.bio
+            'bio': this.bio,
+            'avatar': this.avatarRaw
           }
           this.setProfile(profile)
+
+          let ksHandler = this.getKsHandler()
 
           this.$q.loading.show({
             delay: 100,
             message: 'Uploading Profile...'
           })
+
+          let paymentRequest = await ksHandler.getPaymentRequest()
+          console.log(paymentRequest)
 
           this.$q.loading.hide()
 
