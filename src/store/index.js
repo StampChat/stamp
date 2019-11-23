@@ -3,10 +3,11 @@ import Vuex from 'vuex'
 import client from '../keyserver/client'
 import addressmetadata from '../keyserver/addressmetadata_pb'
 import VCard from 'vcf'
+import VuexPersistence from 'vuex-persist'
+
+const cashlib = require('bitcore-lib-cash')
 
 Vue.use(Vuex)
-
-import VuexPersistence from 'vuex-persist'
 
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage
@@ -159,6 +160,7 @@ export default new Vuex.Store({
       }
     },
     keyserverHandler: {
+      namespaced: true,
       state: {
         handler: new client.Handler()
       },
@@ -203,10 +205,19 @@ export default new Vuex.Store({
         },
         setXPrivKey (state, xPrivKey) {
           state.xPrivKey = xPrivKey
-          state.identityPrivKey = xPrivKey.deriveChild(20102019).deriveChild(0, true) // TODO: Proper path for this
+          state.identityPrivKey = xPrivKey.deriveChild(20102019).deriveChild(0, true).privateKey // TODO: Proper path for this
+        },
+        reinitialize (state) {
+          if (state.xPrivKey != null) {
+            state.xPrivKey = cashlib.HDPrivateKey.fromObject(state.xPrivKey)
+            state.identityPrivKey = cashlib.PrivateKey.fromObject(state.identityPrivKey)
+          }
         }
       },
       actions: {
+        reinitialize ({ commit }) {
+          commit('reinitialize')
+        },
         // TODO: Set callbacks
         setXPrivKey ({ commit }, xPrivKey) {
           commit('setXPrivKey', xPrivKey)
@@ -260,13 +271,15 @@ export default new Vuex.Store({
         getPaymentAddress: (state) => (seqNum) => {
           if (state.xPrivKey !== null) {
             let privkey = state.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(seqNum, true)
-            return privkey.toAddress()
+            return privkey.toAddress('testnet')
           } else {
             return null
           }
         },
         getMyAddress (state) {
-          return state.identityPrivKey.toAddress()
+          console.log('priv key')
+          console.log(state.identityPrivKey)
+          return state.identityPrivKey.toAddress('testnet')
         }
       }
     },
@@ -274,7 +287,7 @@ export default new Vuex.Store({
       namespaced: true,
       state: {
         client: null,
-        connected: 'hello'
+        connected: false
       },
       mutations: {
         setClient (state, client) {
@@ -290,7 +303,6 @@ export default new Vuex.Store({
         },
         setClient ({ commit, dispatch }, client) {
           client.connect().then(() => {
-            console.log('heloooooooooooooooo')
             dispatch('setConnected', true)
           }).catch(() => dispatch('setConnected', false))
           commit('setClient', client)

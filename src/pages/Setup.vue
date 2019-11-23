@@ -376,7 +376,7 @@ Vue.use(VueRouter)
 export default {
   data () {
     return {
-      step: 1,
+      step: 4,
       name: '',
       bio: '',
       avatar: null,
@@ -395,7 +395,7 @@ export default {
   },
   methods: {
     ...mapActions({ setProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
-    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler' }),
+    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler', getMyAddress: 'wallet/getMyAddress' }),
     parseImage () {
       if (this.avatar == null) {
         return
@@ -453,14 +453,22 @@ export default {
 
           let ksHandler = this.getKsHandler()
 
+          // Request Payment
           this.$q.loading.show({
             delay: 100,
-            message: 'Uploading Profile...'
+            message: 'Requesting Payment...'
           })
 
-          let paymentRequest = await ksHandler.getPaymentRequest()
-          console.log(paymentRequest)
+          let idAddress = this.getMyAddress()
+          let result = await ksHandler.getPaymentRequest(idAddress)
 
+          this.$q.loading.hide()
+
+          this.$q.loading.show({
+            delay: 100,
+            message: 'Sending Payment...'
+          })
+          console.log(result)
           this.$q.loading.hide()
 
           this.$router.push('/')

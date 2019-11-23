@@ -39,18 +39,22 @@ class Handler {
     // TODO: Sample correctly
     let server = this.chooseServer()
 
-    let response = await axios.put({
-      method: 'put',
-      url: server + '/keys/' + addr,
-      responseType: 'arraybuffer'
-    })
-    if (response.status === 402) {
-      let metadata = paymentrequest.PaymentRequest.deserializeBinary(response.data)
-      return { metadata, server }
+    let url = `${server}/keys/${addr.toLegacyAddress()}`
+
+    try {
+      await axios({
+        method: 'put',
+        url: url,
+        responseType: 'arraybuffer'
+      })
+    } catch (err) {
+      let response = err.response
+      if (response.status === 402) {
+        let metadata = paymentrequest.PaymentRequest.deserializeBinary(response.data)
+        return { metadata, server }
+      }
     }
   }
-
-  async
 }
 
 export default {

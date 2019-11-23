@@ -15,13 +15,17 @@ export default {
     ...mapActions({
       startProfileUpdater: 'contacts/startProfileUpdater',
       setProfile: 'myProfile/setMyProfile',
-      setClient: 'electrumHandler/setClient'
+      setClient: 'electrumHandler/setClient',
+      walletReinitialize: 'wallet/reinitialize'
     })
   },
   mounted () {
     this.setProfile({ 'name': null, 'address': null })
   },
   created () {
+    // Reinitialize wallet classes
+    this.walletReinitialize()
+
     // Start internal timer
     this.startClock()
 
