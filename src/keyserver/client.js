@@ -1,12 +1,57 @@
 import axios from 'axios'
 import addressmetadata from './addressmetadata_pb'
 import paymentrequest from './paymentrequest_pb'
+import VCard from 'vcf'
+
+const cashlib = require('bitcore-lib-cash')
 
 class Handler {
   trustedServers = ['http://34.67.137.105']
   constructor (defaultSampleSize, keyservers) {
     this.keyservers = keyservers || this.trustedServers
     this.defaultSampleSize = defaultSampleSize || 3
+  }
+
+  static constructProfileMetadata (profile, privKey) {
+    // Construct vCard
+    let vCard = new VCard()
+    vCard.set('fn', profile.name)
+    vCard.set('bio', profile.bio)
+    let rawCard = new TextEncoder().encode(vCard.toString())
+
+    let cardEntry = addressmetadata.Entry({
+      kind: 'vcard',
+      entry_data: rawCard
+    })
+
+    // Construct avatar
+    let imgEntry = addressmetadata.Entry({
+      kind: 'avatar',
+      entry_data: profile.avatar
+    })
+
+    // Construct payload
+    let time = Math.floor(Date.now() / 1000)
+    let ttl = 31556952 // 1 year
+    let entries = [cardEntry, imgEntry]
+    let payload = addressmetadata.Payload({
+      time,
+      ttl,
+      entries
+    })
+
+    let serializedPayload = payload.serializeBinary()
+    let hashbuf = cashlib.Hash.sha256(serializedPayload)
+    let ecdsa = cashlib.ECDSA({ privKey, hashbuf })
+    let sig = ecdsa.sign()
+
+    let metadata = cashlib.AddressMetadata({
+      pub_key: privKey.toPublicKey().toBuffer(),
+      signature: sig.toBuffer(),
+      scheme: 'ECDSA',
+      serializedPayload
+    })
+    return metadata
   }
 
   static async fetchMetadata (keyserver, addr) {
@@ -50,10 +95,40 @@ class Handler {
     } catch (err) {
       let response = err.response
       if (response.status === 402) {
-        let metadata = paymentrequest.PaymentRequest.deserializeBinary(response.data)
-        return { metadata, server }
+        let paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
+        return { paymentRequest, server }
       }
     }
+  }
+
+  async sendPayment (addr, server, payment) {
+    let rawPayment = payment.serializeBinary()
+    let url = `${server}/keys/${addr.toLegacyAddress()}`
+    let response = await axios({
+      method: 'post',
+      url: url,
+      responseType: 'arrayBuffer',
+      data: rawPayment
+    })
+    console.log(response)
+    let token = response.headers['Authorization']
+    let paymentReceipt = response.data
+    return { paymentReceipt, token }
+  }
+
+  async putMetadata (addr, server, metadata, token) {
+    let rawMetadata = metadata.serializeBinary()
+    let url = `${server}/keys/${addr.toLegacyAddress()}`
+    let response = await axios({
+      method: 'post',
+      url: url,
+      headers: {
+        'Authorization': token
+      },
+      responseType: 'arrayBuffer',
+      data: rawMetadata
+    })
+    console.log(response)
   }
 }
 
