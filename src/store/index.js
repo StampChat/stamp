@@ -287,6 +287,9 @@ export default new Vuex.Store({
         getMyAddress (state) {
           return state.identityPrivKey.toAddress('testnet')
         },
+        getMyAddressStr (state) {
+          return state.identityPrivKey.toAddress('testnet')
+        },
         getAddresses (state) {
           return state.addresses
         }
@@ -399,18 +402,14 @@ export default new Vuex.Store({
       },
       getters: {
         getMyProfile (state) {
-          let profile = {
-            'name': state.name,
-            'address': state.address
-          }
-          return profile
+          return state
         }
       },
       mutations: {
-        setMyProfile (state, profile) {
-          state.name = profile.name
-          state.address = profile.address
-          state.avatar = profile.avatar
+        setMyProfile (state, { name, avatar, bio }) {
+          state.name = name
+          state.avatar = avatar
+          state.bio = bio
         }
       },
       actions: {

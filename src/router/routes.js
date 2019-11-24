@@ -1,8 +1,8 @@
 import store from '../store/index'
 
 async function redirectIfNoProfile (to, from, next) {
-  let address = await store.getters['myProfile/getMyProfile'].address
-  if (address !== null) {
+  let name = await store.getters['myProfile/getMyProfile'].name
+  if (name !== null) {
     next()
   } else {
     next('/setup')

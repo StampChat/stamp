@@ -27,7 +27,6 @@
           v-ripple
         >
           <q-item-section avatar>
-            <q-img :src="getMyProfile.avatar" />
             <q-icon name="contacts" />
           </q-item-section>
 
@@ -51,9 +50,10 @@
       </q-list>
     </q-scroll-area>
     <profile-card
-      :address="getMyProfile.address"
+      :address="getMyAddressStr"
       :name="getMyProfile.name"
       :bio="getMyProfile.bio"
+      :avatar="getMyProfile.avatar"
     />
   </q-drawer>
 </template>
@@ -72,7 +72,8 @@ export default {
   computed: {
     ...mapGetters({
       getDrawerOpen: 'myDrawer/getDrawerOpen',
-      getMyProfile: 'myProfile/getMyProfile'
+      getMyProfile: 'myProfile/getMyProfile',
+      getMyAddressStr: 'wallet/getMyAddressStr'
     }),
     drawerOpen: {
       get () {

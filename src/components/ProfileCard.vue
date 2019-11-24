@@ -10,7 +10,7 @@
           avatar
           size="56px"
         >
-          <img src="https://cdn.quasar.dev/img/boy-avatar.png">
+          <q-img :src="avatar" />
         </q-avatar>
       </q-item>
 
@@ -42,6 +42,6 @@
 
 <script>
 export default {
-  props: ['address', 'name']
+  props: ['avatar', 'name', 'bio', 'address']
 }
 </script>

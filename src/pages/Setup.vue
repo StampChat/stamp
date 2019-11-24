@@ -382,7 +382,7 @@ export default {
       name: '',
       bio: '',
       avatar: null,
-      avatarRaw: 'hello',
+      avatarRaw: null,
       generatedWarning: true,
       generatedSeed: '',
       generateExpanded: false,
@@ -396,7 +396,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions({ setProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
+    ...mapActions({ setMyProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
     ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler', getMyAddress: 'wallet/getMyAddress', getClient: 'electrumHandler/getClient', getAddresses: 'wallet/getAddresses', getIdentityPrivKey: 'wallet/getIdentityPrivKey' }),
     parseImage () {
       if (this.avatar == null) {
@@ -543,7 +543,8 @@ export default {
           let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
           await KeyserverHandler.putMetadata(idAddress, server, metadata, token)
 
-          this.setProfile(profile)
+          console.log(profile)
+          this.setMyProfile(profile)
 
           this.$q.loading.hide()
 

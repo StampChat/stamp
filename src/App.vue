@@ -24,7 +24,7 @@ export default {
     this.setProfile({ 'name': null, 'address': null })
   },
   created () {
-    this.walletReset()
+    // this.walletReset()
 
     // Reinitialize wallet classes
     this.walletReinitialize()
