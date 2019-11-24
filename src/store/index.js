@@ -377,13 +377,13 @@ export default new Vuex.Store({
 
           let profile = { 'name': 'Loading...' }
 
-          commit('updateProfile', { addr, profile })
+          commit('updateProfile', { addr: addrTrimmed, profile })
 
           commit('chats/addChatPre', addrTrimmed, { root: true })
 
-          dispatch('refresh', addrTrimmed)
+          await dispatch('refresh', addrTrimmed)
 
-          commit('chats/addChatPre', addrTrimmed, { root: true })
+          commit('chats/addChatPost', addrTrimmed, { root: true })
         },
         refresh ({ commit }, addr) {
           // Make this generic over networks
@@ -404,13 +404,16 @@ export default new Vuex.Store({
             let vCard = new VCard().parse(strCard)
 
             let name = vCard.data.fn._data
-            let bio = vCard.data.bio._data
+
+            // let bio = vCard.data.note._data
+            let bio = ''
 
             // Get avatar
             function isAvatar (entry) {
               return entry.getKind() === 'avatar'
             }
             let rawAvatar = entryList.find(isAvatar).getEntryData()
+            console.log(rawAvatar)
 
             let profile = {
               'name': name,

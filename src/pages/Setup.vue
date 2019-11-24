@@ -535,15 +535,13 @@ export default {
           payment.setMerchantData(paymentDetails.getMerchantData())
           let paymentUrl = paymentDetails.getPaymentUrl()
           let { paymentReceipt, token } = await KeyserverHandler.sendPayment(paymentUrl, payment)
-          console.log('paymentReceipt')
-          console.log(paymentReceipt)
+          console.log(paymentReceipt) // TODO: Logging
 
           // Construct metadata
           let idPrivKey = this.getIdentityPrivKey()
           let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
           await KeyserverHandler.putMetadata(idAddress, server, metadata, token)
 
-          console.log(profile)
           this.setMyProfile(profile)
 
           this.$q.loading.hide()

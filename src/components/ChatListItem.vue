@@ -8,7 +8,7 @@
   >
     <q-item-section avatar>
       <q-avatar rounded>
-        <img src="https://cdn.quasar.dev/img/boy-avatar.png">
+        <img :src="profile.avatar">
       </q-avatar>
     </q-item-section>
     <q-item-section>

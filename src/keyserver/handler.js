@@ -16,7 +16,7 @@ class KeyserverHandler {
     // Construct vCard
     let vCard = new VCard()
     vCard.set('fn', profile.name)
-    vCard.set('bio', profile.bio)
+    vCard.set('note', profile.bio)
     let rawCard = new TextEncoder().encode(vCard.toString())
 
     let cardEntry = new addressmetadata.Entry()
