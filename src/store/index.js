@@ -189,6 +189,12 @@ export default new Vuex.Store({
         totalBalance: 0
       },
       mutations: {
+        reset (state) {
+          state.xPrivKey = null
+          state.identityPrivKey = null
+          state.addresses = {}
+          state.totalBalance = 0
+        },
         setAddress (state, { address, balance, privKey }) {
           if (state.addresses[address] == null) {
             state.totalBalance += balance
@@ -217,6 +223,9 @@ export default new Vuex.Store({
         }
       },
       actions: {
+        reset ({ commit }) {
+          commit('reset')
+        },
         reinitialize ({ commit }) {
           commit('reinitialize')
         },

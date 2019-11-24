@@ -19,38 +19,34 @@ class KeyserverHandler {
     vCard.set('bio', profile.bio)
     let rawCard = new TextEncoder().encode(vCard.toString())
 
-    let cardEntry = addressmetadata.Entry({
-      kind: 'vcard',
-      entry_data: rawCard
-    })
+    let cardEntry = new addressmetadata.Entry()
+    cardEntry.setKind('vcard')
+    cardEntry.setEntryData(rawCard)
 
     // Construct avatar
-    let imgEntry = addressmetadata.Entry({
-      kind: 'avatar',
-      entry_data: profile.avatar
-    })
+    let imgEntry = new addressmetadata.Entry()
+    imgEntry.setKind('avatar')
+    imgEntry.setEntryData(profile.avatar)
 
     // Construct payload
-    let time = Math.floor(Date.now() / 1000)
-    let ttl = 31556952 // 1 year
-    let entries = [cardEntry, imgEntry]
-    let payload = addressmetadata.Payload({
-      time,
-      ttl,
-      entries
-    })
+    let payload = new addressmetadata.Payload()
+    payload.setTimestamp(Math.floor(Date.now() / 1000))
+    payload.setTtl(31556952) // 1 year
+    payload.addEntries(cardEntry)
+    payload.addEntries(imgEntry)
 
     let serializedPayload = payload.serializeBinary()
-    let hashbuf = cashlib.Hash.sha256(serializedPayload)
-    let ecdsa = cashlib.ECDSA({ privKey, hashbuf })
-    let sig = ecdsa.sign()
+    let hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
+    let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
+    ecdsa.sign()
 
-    let metadata = cashlib.AddressMetadata({
-      pub_key: privKey.toPublicKey().toBuffer(),
-      signature: sig.toBuffer(),
-      scheme: 'ECDSA',
-      serializedPayload
-    })
+    let metadata = new addressmetadata.AddressMetadata()
+    let sig = ecdsa.sig.toCompact(1).slice(1)
+    metadata.setPubKey(privKey.toPublicKey().toBuffer())
+    metadata.setSignature(sig)
+    metadata.setScheme(1)
+    metadata.setSerializedPayload(serializedPayload)
+
     return metadata
   }
 
@@ -120,8 +116,7 @@ class KeyserverHandler {
       console.log(err.response)
     }
 
-    console.log(response)
-    let token = response.headers['Authorization']
+    let token = response.headers['authorization']
     let paymentReceipt = response.data
     return { paymentReceipt, token }
   }
@@ -129,16 +124,18 @@ class KeyserverHandler {
   static async putMetadata (addr, server, metadata, token) {
     let rawMetadata = metadata.serializeBinary()
     let url = `${server}/keys/${addr.toLegacyAddress()}`
-    let response = await axios({
-      method: 'post',
-      url: url,
-      headers: {
-        'Authorization': token
-      },
-      responseType: 'arrayBuffer',
-      data: rawMetadata
-    })
-    console.log(response)
+    try {
+      await axios({
+        method: 'put',
+        url: url,
+        headers: {
+          'Authorization': token
+        },
+        data: rawMetadata
+      })
+    } catch (err) {
+      console.log(err.response)
+    }
   }
 }
 

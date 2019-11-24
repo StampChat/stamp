@@ -16,13 +16,16 @@ export default {
       startProfileUpdater: 'contacts/startProfileUpdater',
       setProfile: 'myProfile/setMyProfile',
       setClient: 'electrumHandler/setClient',
-      walletReinitialize: 'wallet/reinitialize'
+      walletReinitialize: 'wallet/reinitialize',
+      walletReset: 'wallet/reset'
     })
   },
   mounted () {
     this.setProfile({ 'name': null, 'address': null })
   },
   created () {
+    this.walletReset()
+
     // Reinitialize wallet classes
     this.walletReinitialize()
 

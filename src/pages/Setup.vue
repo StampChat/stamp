@@ -397,7 +397,7 @@ export default {
   },
   methods: {
     ...mapActions({ setProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
-    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler', getMyAddress: 'wallet/getMyAddress', getClient: 'electrumHandler/getClient', getAddresses: 'wallet/getAddresses' }),
+    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler', getMyAddress: 'wallet/getMyAddress', getClient: 'electrumHandler/getClient', getAddresses: 'wallet/getAddresses', getIdentityPrivKey: 'wallet/getIdentityPrivKey' }),
     parseImage () {
       if (this.avatar == null) {
         return
@@ -528,20 +528,20 @@ export default {
             transaction = transaction.sign(signingKeys[i])
           }
           let rawTransaction = transaction.toBuffer()
-          console.log(rawTransaction)
 
           // Send payment and receive token
           let payment = new paymentrequest.Payment()
           payment.addTransactions(rawTransaction)
           payment.setMerchantData(paymentDetails.getMerchantData())
-          console.log(payment)
           let paymentUrl = paymentDetails.getPaymentUrl()
           let { paymentReceipt, token } = await KeyserverHandler.sendPayment(paymentUrl, payment)
+          console.log('paymentReceipt')
           console.log(paymentReceipt)
 
           // Construct metadata
-          let metadata = KeyserverHandler.constructProfileMetadata(profile)
-          await ksHandler.putMetadata(idAddress, server, metadata, token)
+          let idPrivKey = this.getIdentityPrivKey()
+          let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
+          await KeyserverHandler.putMetadata(idAddress, server, metadata, token)
 
           this.setProfile(profile)
 
