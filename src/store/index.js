@@ -142,6 +142,15 @@ export default new Vuex.Store({
         },
         clearChat (state, addr) {
           state.data[addr].messages = []
+        },
+        addChatPre (state, addr) {
+          state.data[addr] = {
+            messages: []
+          }
+        },
+        addChatPost (state, addr) {
+          state.order.unshift(addr)
+          state.activeChatAddr = addr
         }
       },
       actions: {
@@ -247,7 +256,7 @@ export default new Vuex.Store({
         },
         async updateAddresses ({ commit }) {
           let client = this.state.electrumHandler.client
-          for (var i = 0; i < 16; i++) {
+          for (var i = 0; i < 2; i++) {
             let privKey = this.state.wallet.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(i, true).privateKey
             let address = privKey.toAddress('testnet').toLegacyAddress()
             let balanceJson = await client.blockchainAddress_getBalance(address)
@@ -352,42 +361,64 @@ export default new Vuex.Store({
         }
       },
       actions: {
-        startProfileUpdater ({ commit }) {
+        async addNewContact ({ commit, dispatch }, addr) {
+          let res = addr.split(':')
+          let addrTrimmed
+          if (res.length === 2) {
+            addrTrimmed = res[1]
+          } else {
+            addrTrimmed = res[0]
+          }
+
+          let profile = { 'name': 'Loading...' }
+
+          commit('updateProfile', { addr, profile })
+
+          commit('chats/addChatPre', addrTrimmed, { root: true })
+
+          dispatch('refresh', addrTrimmed)
+
+          commit('chats/addChatPre', addrTrimmed, { root: true })
+        },
+        refresh ({ commit }, addr) {
+          // Make this generic over networks
+          // Batch this
+          this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`).then(function (metadata) {
+            let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
+
+            function isVCard (entry) {
+              return entry.getKind() === 'vcard'
+            }
+
+            let entryList = payload.getEntriesList()
+
+            // Get vCard
+            let rawCard = entryList.find(isVCard).getEntryData()
+            let strCard = new TextDecoder().decode(rawCard)
+
+            let vCard = new VCard().parse(strCard)
+
+            let name = vCard.data.fn._data
+            let bio = vCard.data.bio._data
+
+            // Get avatar
+            function isAvatar (entry) {
+              return entry.getKind() === 'avatar'
+            }
+            let rawAvatar = entryList.find(isAvatar).getEntryData()
+
+            let profile = {
+              'name': name,
+              'bio': bio,
+              'avatar': rawAvatar
+            }
+            commit('updateProfile', { addr, profile })
+          })
+        },
+        startProfileUpdater ({ commit, dispatch }) {
           setInterval(() => {
             for (let addr in this.state.contacts.profiles) {
-              // Make this generic over networks
-              // Batch this
-              this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`).then(function (metadata) {
-                let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
-
-                function isVCard (entry) {
-                  return entry.getKind() === 'vcard'
-                }
-
-                let entryList = payload.getEntriesList()
-
-                // Get vCard
-                let rawCard = entryList.find(isVCard).getEntryData()
-                let strCard = new TextDecoder().decode(rawCard)
-
-                let vCard = new VCard().parse(strCard)
-
-                let name = vCard.data.fn._data
-                let bio = vCard.data.bio._data
-
-                // Get avatar
-                function isAvatar (entry) {
-                  return entry.getKind() === 'avatar'
-                }
-                let rawAvatar = entryList.find(isAvatar).getEntryData()
-
-                let profile = {
-                  'name': name,
-                  'bio': bio,
-                  'avatar': rawAvatar
-                }
-                commit('updateProfile', { addr, profile })
-              })
+              dispatch('refresh', addr)
             }
           }, 1000)
         }

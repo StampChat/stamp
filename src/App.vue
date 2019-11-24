@@ -30,7 +30,7 @@ export default {
     this.walletReinitialize()
 
     // Start internal timer
-    this.startClock()
+    // this.startClock()
 
     // Start profile watcher
     // this.startProfileUpdater()

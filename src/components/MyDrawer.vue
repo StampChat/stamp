@@ -13,13 +13,14 @@
         <q-item
           clickable
           v-ripple
+          @click="newContactPrompt"
         >
           <q-item-section avatar>
             <q-icon name="add_comment" />
           </q-item-section>
 
           <q-item-section>
-            New Thread
+            Add Contact
           </q-item-section>
         </q-item>
         <q-item
@@ -67,7 +68,21 @@ export default {
     ProfileCard
   },
   methods: {
-    ...mapActions({ setDrawerOpen: 'myDrawer/setDrawerOpen' })
+    ...mapActions({ setDrawerOpen: 'myDrawer/setDrawerOpen', addNewContact: 'contacts/addNewContact' }),
+    newContactPrompt () {
+      this.$q.dialog({
+        title: 'Add New Contact',
+        message: 'Contact address',
+        prompt: {
+          model: '',
+          type: 'text' // optional
+        },
+        cancel: true,
+        persistent: true
+      }).onOk(async data => {
+        await this.addNewContact(data)
+      })
+    }
   },
   computed: {
     ...mapGetters({
