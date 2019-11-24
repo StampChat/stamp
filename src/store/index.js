@@ -117,7 +117,12 @@ export default new Vuex.Store({
           return state.activeChatAddr
         },
         getLatestMessageBody: (state) => (addr) => {
-          return state.data[addr].messages[state.data[addr].messages.length - 1].body
+          let nMessages = Object.keys(state.data[addr].messages).length
+          if (nMessages !== 0) {
+            return state.data[addr].messages[nMessages - 1].body
+          } else {
+            return ''
+          }
         },
         getAllMessages: (state) => (addr) => {
           return state.data[addr].messages
