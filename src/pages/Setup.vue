@@ -490,12 +490,13 @@ export default {
             if (amount !== 0) {
               let outputs = await client.blockchainAddress_listunspent(addr)
               for (let index in outputs) {
-                console.log(outputs[index])
                 let value = outputs[index].value
                 utxos.push({
                   'txId': outputs[index].tx_hash,
                   'outputIndex': outputs[index].tx_pos,
-                  'satoshis': value
+                  'satoshis': value,
+                  'address': addr,
+                  'script': cashlib.Script.buildPublicKeyHashOut(addr).toHex()
                 })
                 totalOutput -= value
                 if (totalOutput <= -fee) {
@@ -507,14 +508,22 @@ export default {
               break
             }
           }
-          console.log(utxos)
-
           // Construct Transaction
           let transaction = new cashlib.Transaction()
 
-          for (var utxo in utxos) {
-            console.log(utxo)
-            transaction = transaction.from(utxo)
+          for (let i in utxos) {
+            transaction = transaction.from(utxos[i])
+          }
+          for (let i in requestOutputs) {
+            let script = requestOutputs[i].getScript()
+            let satoshis = requestOutputs[i].getAmount()
+            console.log('script')
+            console.log(script)
+            let output = new cashlib.Transaction.Output({
+              script,
+              satoshis
+            })
+            transaction = transaction.addOutput(output)
           }
           console.log(transaction)
 
