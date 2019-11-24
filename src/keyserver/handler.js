@@ -26,7 +26,8 @@ class KeyserverHandler {
     // Construct avatar
     let imgEntry = new addressmetadata.Entry()
     imgEntry.setKind('avatar')
-    imgEntry.setEntryData(profile.avatar)
+    let rawAvatar = new Uint8Array(profile.avatar)
+    imgEntry.setEntryData(rawAvatar)
 
     // Construct payload
     let payload = new addressmetadata.Payload()
