@@ -96,12 +96,14 @@ class Handler {
       let response = err.response
       if (response.status === 402) {
         let paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
-        return { paymentRequest, server }
+        let serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
+        let paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
+        return { paymentRequest, paymentDetails, server }
       }
     }
   }
 
-  async sendPayment (addr, server, payment) {
+  static async sendPayment (addr, server, payment) {
     let rawPayment = payment.serializeBinary()
     let url = `${server}/keys/${addr.toLegacyAddress()}`
     let response = await axios({
@@ -116,7 +118,7 @@ class Handler {
     return { paymentReceipt, token }
   }
 
-  async putMetadata (addr, server, metadata, token) {
+  static async putMetadata (addr, server, metadata, token) {
     let rawMetadata = metadata.serializeBinary()
     let url = `${server}/keys/${addr.toLegacyAddress()}`
     let response = await axios({

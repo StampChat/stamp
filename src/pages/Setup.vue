@@ -377,7 +377,7 @@ Vue.use(VueRouter)
 export default {
   data () {
     return {
-      step: 4,
+      step: 1,
       name: '',
       bio: '',
       avatar: null,
@@ -396,7 +396,7 @@ export default {
   },
   methods: {
     ...mapActions({ setProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
-    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler', getMyAddress: 'wallet/getMyAddress' }),
+    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler', getMyAddress: 'wallet/getMyAddress', getClient: 'electrumHandler/getClient', getAddresses: 'wallet/getAddresses' }),
     parseImage () {
       if (this.avatar == null) {
         return
@@ -460,17 +460,69 @@ export default {
           })
 
           let idAddress = this.getMyAddress()
-          let { paymentRequest, server } = await ksHandler.getPaymentRequest(idAddress)
-
+          let { paymentRequest, paymentDetails, server } = await ksHandler.getPaymentRequest(idAddress)
+          console.log(paymentRequest) // TODO: Validation and logging
           this.$q.loading.show({
             delay: 100,
             message: 'Sending Payment...'
           })
+          let merchantData = paymentDetails.getMerchantData()
+          console.log(merchantData)
 
-          // Construct payment
+          // Get Outputs
+          var totalOutput = 0
+          let requestOutputs = paymentDetails.getOutputsList()
+          for (let i in requestOutputs) {
+            let output = requestOutputs[i]
+            totalOutput += output.getAmount()
+          }
+
+          let addresses = this.getAddresses()
+
+          // Collect inputs
+          let client = this.getClient()
+          var utxos = []
+          let fee = 30
+          let complete = false
+          for (let addr in addresses) {
+            let vals = addresses[addr]
+            let amount = Math.min(vals.balance, totalOutput)
+            if (amount !== 0) {
+              let outputs = await client.blockchainAddress_listunspent(addr)
+              for (let index in outputs) {
+                console.log(outputs[index])
+                let value = outputs[index].value
+                utxos.push({
+                  'txId': outputs[index].tx_hash,
+                  'outputIndex': outputs[index].tx_pos,
+                  'satoshis': value
+                })
+                totalOutput -= value
+                if (totalOutput <= -fee) {
+                  complete = true
+                }
+              }
+            }
+            if (complete) {
+              break
+            }
+          }
+          console.log(utxos)
+
+          // Construct Transaction
+          let transaction = new cashlib.Transaction()
+
+          for (var utxo in utxos) {
+            console.log(utxo)
+            transaction = transaction.from(utxo)
+          }
+          console.log(transaction)
 
           // Send payment and receive token
+          let payment = 'hello'
+          console.log('got here')
           let { paymentReceipt, token } = await ksHandler.sendPayment(idAddress, server, payment)
+          console.log(paymentReceipt)
 
           // Construct metadata
           let metadata = keyserverClient.Handler.constructProfileMetadata(profile)

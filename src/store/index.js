@@ -189,18 +189,20 @@ export default new Vuex.Store({
         totalBalance: 0
       },
       mutations: {
-        setAddresses (state, addresses) {
-          // TODO: Recalc balance
-          state.addresses = addresses
-        },
-        setAddress (state, pair) {
-          let oldBalance = state.addresses[pair.address]
-          let newBalance = pair.balance
-          state.addresses[pair.address] = newBalance
-          if (oldBalance == null) {
-            state.totalBalance = newBalance
+        setAddress (state, { address, balance, privKey }) {
+          if (state.addresses[address] == null) {
+            state.totalBalance = balance
           } else {
-            state.totalBalance += newBalance - oldBalance
+            let oldBalance = state.addresses[address].balance
+            state.totalBalance += balance - oldBalance
+          }
+          state.addresses[address] = { balance, privKey }
+        },
+        updateBalance (state, { address, balance }) {
+          if (state.addresses[address] != null) {
+            let oldBalance = state.addresses[address].balance
+            state.addresses[address].balance = balance
+            state.totalBalance += balance - oldBalance
           }
         },
         setXPrivKey (state, xPrivKey) {
@@ -225,26 +227,23 @@ export default new Vuex.Store({
         async updateBalance ({ commit }, address) {
           let balanceJson = await this.state.electrumHandler.client.blockchainAddress_getBalance(address)
           let balance = balanceJson.confirmed + balanceJson.unconfirmed
-          let pair = { 'address': address, 'balance': balance }
-          commit('setAddress', pair)
+          commit('updateBalance', { address, balance })
         },
         async updateBalances ({ commit }) {
           for (var addr in this.addresses) {
             let balanceJson = await this.state.electrumHandler.client.blockchainAddress_getBalance(addr)
             let balance = balanceJson.confirmed + balanceJson.unconfirmed
-            let pair = { 'address': addr, 'balance': balance }
-            commit('setAddress', pair)
+            commit('updateBalance', { addr, balance })
           }
         },
         async updateAddresses ({ commit }) {
           let client = this.state.electrumHandler.client
-          var i
-          for (i = 0; i < 16; i++) {
-            let addr = this.state.wallet.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(i, true).privateKey.toAddress('testnet').toLegacyAddress()
-            let balanceJson = await client.blockchainAddress_getBalance(addr)
+          for (var i = 0; i < 16; i++) {
+            let privKey = this.state.wallet.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(i, true).privateKey
+            let address = privKey.toAddress('testnet').toLegacyAddress()
+            let balanceJson = await client.blockchainAddress_getBalance(address)
             let balance = balanceJson.confirmed + balanceJson.unconfirmed
-            let pair = { 'address': addr, 'balance': balance }
-            commit('setAddress', pair)
+            commit('setAddress', { address, balance, privKey })
           }
         },
         async startListeners ({ commit, dispatch }) {
@@ -278,6 +277,9 @@ export default new Vuex.Store({
         },
         getMyAddress (state) {
           return state.identityPrivKey.toAddress('testnet')
+        },
+        getAddresses (state) {
+          return state.addresses
         }
       }
     },
