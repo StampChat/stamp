@@ -5,7 +5,7 @@ import VCard from 'vcf'
 
 const cashlib = require('bitcore-lib-cash')
 
-class Handler {
+class KeyserverHandler {
   trustedServers = ['http://34.67.137.105']
   constructor (defaultSampleSize, keyservers) {
     this.keyservers = keyservers || this.trustedServers
@@ -77,7 +77,7 @@ class Handler {
   async uniformSample (addr) {
     // TODO: Sample correctly
     let server = this.chooseServer()
-    return Handler.fetchMetadata(server, addr)
+    return KeyserverHandler.fetchMetadata(server, addr)
   }
 
   async getPaymentRequest (addr) {
@@ -103,15 +103,23 @@ class Handler {
     }
   }
 
-  static async sendPayment (addr, server, payment) {
-    let rawPayment = payment.serializeBinary()
-    let url = `${server}/keys/${addr.toLegacyAddress()}`
-    let response = await axios({
-      method: 'post',
-      url: url,
-      responseType: 'arrayBuffer',
-      data: rawPayment
-    })
+  static async sendPayment (paymentUrl, payment) {
+    var rawPayment = payment.serializeBinary()
+    let response
+    try {
+      response = await axios({
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/bitcoincash-payment',
+          'Accept': 'application/bitcoincash-paymentack'
+        },
+        url: paymentUrl,
+        data: rawPayment
+      })
+    } catch (err) {
+      console.log(err.response)
+    }
+
     console.log(response)
     let token = response.headers['Authorization']
     let paymentReceipt = response.data
@@ -134,6 +142,4 @@ class Handler {
   }
 }
 
-export default {
-  Handler
-}
+export default KeyserverHandler

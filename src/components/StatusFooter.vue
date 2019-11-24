@@ -3,10 +3,9 @@
     <q-bar>
       <q-space />
       <q-btn
-        text-color="white"
         dense
         flat
-        :color="connected?'white':'red'"
+        :color="connected?'white':'negative'"
         :icon="connected?'account_balance_wallet':'error'"
         label="Wallet"
       />

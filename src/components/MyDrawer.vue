@@ -27,6 +27,7 @@
           v-ripple
         >
           <q-item-section avatar>
+            <q-img :src="getMyProfile.avatar" />
             <q-icon name="contacts" />
           </q-item-section>
 
@@ -52,6 +53,7 @@
     <profile-card
       :address="getMyProfile.address"
       :name="getMyProfile.name"
+      :bio="getMyProfile.bio"
     />
   </q-drawer>
 </template>

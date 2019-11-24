@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import client from '../keyserver/client'
+import KeyserverHandler from '../keyserver/handler'
 import addressmetadata from '../keyserver/addressmetadata_pb'
 import VCard from 'vcf'
 import VuexPersistence from 'vuex-persist'
@@ -162,7 +162,7 @@ export default new Vuex.Store({
     keyserverHandler: {
       namespaced: true,
       state: {
-        handler: new client.Handler()
+        handler: new KeyserverHandler()
       },
       mutations: {
         setHandler (state, handler) {
@@ -191,7 +191,7 @@ export default new Vuex.Store({
       mutations: {
         setAddress (state, { address, balance, privKey }) {
           if (state.addresses[address] == null) {
-            state.totalBalance = balance
+            state.totalBalance += balance
           } else {
             let oldBalance = state.addresses[address].balance
             state.totalBalance += balance - oldBalance

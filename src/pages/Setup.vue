@@ -364,12 +364,13 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { mapActions, mapGetters } from 'vuex'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
+import KeyserverHandler from '../keyserver/handler'
+import paymentrequest from '../keyserver/paymentrequest_pb'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
 const cashlib = require('bitcore-lib-cash')
 const bip39 = require('bip39')
-var keyserverClient = require('../keyserver/client')
 
 Vue.component(VueQrcode.name, VueQrcode)
 Vue.use(VueRouter)
@@ -466,8 +467,6 @@ export default {
             delay: 100,
             message: 'Sending Payment...'
           })
-          let merchantData = paymentDetails.getMerchantData()
-          console.log(merchantData)
 
           // Get Outputs
           var totalOutput = 0
@@ -481,7 +480,8 @@ export default {
 
           // Collect inputs
           let client = this.getClient()
-          var utxos = []
+          let utxos = []
+          let signingKeys = []
           let fee = 30
           let complete = false
           for (let addr in addresses) {
@@ -498,6 +498,7 @@ export default {
                   'address': addr,
                   'script': cashlib.Script.buildPublicKeyHashOut(addr).toHex()
                 })
+                signingKeys.push(vals.privKey)
                 totalOutput -= value
                 if (totalOutput <= -fee) {
                   complete = true
@@ -517,24 +518,29 @@ export default {
           for (let i in requestOutputs) {
             let script = requestOutputs[i].getScript()
             let satoshis = requestOutputs[i].getAmount()
-            console.log('script')
-            console.log(script)
             let output = new cashlib.Transaction.Output({
               script,
               satoshis
             })
             transaction = transaction.addOutput(output)
           }
-          console.log(transaction)
+          for (let i in signingKeys) {
+            transaction = transaction.sign(signingKeys[i])
+          }
+          let rawTransaction = transaction.toBuffer()
+          console.log(rawTransaction)
 
           // Send payment and receive token
-          let payment = 'hello'
-          console.log('got here')
-          let { paymentReceipt, token } = await ksHandler.sendPayment(idAddress, server, payment)
+          let payment = new paymentrequest.Payment()
+          payment.addTransactions(rawTransaction)
+          payment.setMerchantData(paymentDetails.getMerchantData())
+          console.log(payment)
+          let paymentUrl = paymentDetails.getPaymentUrl()
+          let { paymentReceipt, token } = await KeyserverHandler.sendPayment(paymentUrl, payment)
           console.log(paymentReceipt)
 
           // Construct metadata
-          let metadata = keyserverClient.Handler.constructProfileMetadata(profile)
+          let metadata = KeyserverHandler.constructProfileMetadata(profile)
           await ksHandler.putMetadata(idAddress, server, metadata, token)
 
           this.setProfile(profile)
