@@ -286,7 +286,7 @@
                 <q-toolbar-title>Upload Avatar</q-toolbar-title>
 
                 <q-input
-                  @input="val => { avatar = val[0] }"
+                  @input="val => { avatarPath = val[0] }"
                   ref="displayPicker"
                   style="display:none"
                   type="file"
@@ -304,7 +304,7 @@
               </q-toolbar>
               <div>
                 <q-img
-                  :src="avatarRaw"
+                  :src="avatarDataURL"
                   spinner-color="white"
                 />
               </div>
@@ -382,8 +382,8 @@ export default {
       step: 1,
       name: '',
       bio: '',
-      avatar: null,
-      avatarRaw: null,
+      avatarPath: null,
+      avatarDataURL: null,
       generatedWarning: true,
       generatedSeed: '',
       generateExpanded: false,
@@ -400,13 +400,13 @@ export default {
     ...mapActions({ setMyProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
     ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler', getMyAddress: 'wallet/getMyAddress', getClient: 'electrumHandler/getClient', getAddresses: 'wallet/getAddresses', getIdentityPrivKey: 'wallet/getIdentityPrivKey' }),
     parseImage () {
-      if (this.avatar == null) {
+      if (this.avatarPath == null) {
         return
       }
       var reader = new FileReader()
-      reader.readAsDataURL(this.avatar)
+      reader.readAsDataURL(this.avatarPath)
       reader.onload = () => {
-        this.avatarRaw = reader.result
+        this.avatarDataURL = reader.result
       }
     },
     async next () {
@@ -450,7 +450,7 @@ export default {
           let profile = {
             'name': this.name,
             'bio': this.bio,
-            'avatar': this.avatarRaw
+            'avatar': this.avatarDataURL
           }
 
           let ksHandler = this.getKsHandler()
