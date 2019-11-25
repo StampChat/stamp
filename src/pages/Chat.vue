@@ -13,6 +13,7 @@
             v-for="(message, index) in messages"
             v-bind:key="index"
             :message="message"
+            :targetAddr="getActiveChat"
           />
         </q-scroll-area>
       </div>
@@ -53,27 +54,23 @@ export default {
     ChatMessage
   },
   methods: {
-    ...mapGetters({ getProfile: 'contacts/getProfile', getAllMessages: 'chats/getAllMessages', getActiveChat: 'chats/getActiveChat' }),
     ...mapActions({ sendMessageVuex: 'chats/sendMessage', switchOrder: 'chats/switchOrder' }),
     sendMessage () {
-      this.sendMessageVuex({ addr: this.getActiveChat(), text: this.message })
-      this.switchOrder(this.getActiveChat())
+      this.sendMessageVuex({ addr: this.getActiveChat, text: this.message })
+      this.switchOrder(this.getActiveChat)
       this.message = ''
       this.$nextTick(() => this.$refs.inputBox.focus())
     }
   },
   computed: {
+    ...mapGetters({ getProfile: 'contacts/getProfile', getAllMessages: 'chats/getAllMessages', getActiveChat: 'chats/getActiveChat' }),
     messages () {
-      console.log(this.getActiveChat())
-      if (this.getActiveChat() !== null) {
-        return this.getAllMessages()(this.getActiveChat())
+      if (this.getActiveChat !== null) {
+        return this.getAllMessages(this.getActiveChat)
       } else {
         return []
       }
     }
-    // profile () {
-    //   return this.getProfile()(this.getActiveChat())
-    // }
   },
   data: function () {
     return {

@@ -5,7 +5,7 @@
       v-bind:key="index"
       v-bind:chatAddr="addr"
     />
-    <q-item v-if="chatAddr === null">
+    <q-item v-if="getChatOrder.length === 0">
       <q-item-section>
         <q-item-label>Add contacts from the drawer above...</q-item-label>
       </q-item-section>

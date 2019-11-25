@@ -1,7 +1,7 @@
 <template>
   <q-chat-message
     class="q-py-sm"
-    avatar="https://cdn.quasar.dev/img/avatar4.jpg"
+    :avatar="message.sent?this.getMyProfile.avatar:this.getProfile(targetAddr).avatar"
     :text="[message.body]"
     :sent="message.outbound"
     :stamp="timeStamp"
@@ -41,6 +41,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({ getProfile: 'contacts/getProfile', getMyProfile: 'myProfile/getMyProfile' }),
     timeStamp () {
       let unixTime = this.getUnixTime()
       let stamp = this.unixToStamp(this.message.timestamp, unixTime)
@@ -50,6 +51,6 @@ export default {
   created () {
     this.updateClock()
   },
-  props: ['message']
+  props: ['message', 'targetAddr']
 }
 </script>

@@ -79,6 +79,8 @@ export default new Vuex.Store({
       },
       getters: {
         getChatOrder (state) {
+          console.log('order')
+          console.log(state.order)
           return state.order
         },
         getActiveChat (state) {
