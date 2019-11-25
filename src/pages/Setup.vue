@@ -14,7 +14,8 @@
           icon="settings"
           :done="step > 1"
         >
-          <p>It seems you don't have any accounts setup right now. We'll guide you through the account creation process.</p>
+          <p>It seems you don't have any accounts setup right now.</p>
+          <p>We'll guide you through the account creation process...</p>
         </q-step>
 
         <q-step
