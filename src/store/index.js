@@ -413,13 +413,25 @@ export default new Vuex.Store({
           function isAvatar (entry) {
             return entry.getKind() === 'avatar'
           }
-          let rawAvatar = entryList.find(isAvatar).getEntryData()
+          let avatarEntry = entryList.find(isAvatar)
           console.log(rawAvatar)
+          let rawAvatar = avatarEntry.getEntryData()
+          function _arrayBufferToBase64 (buffer) {
+            var binary = ''
+            var bytes = new Uint8Array(buffer)
+            var len = bytes.byteLength
+            for (var i = 0; i < len; i++) {
+              binary += String.fromCharCode(bytes[i])
+            }
+            return window.btoa(binary)
+          }
+          let value = avatarEntry.getHeadersList()[0].getValue()
+          let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
 
           let profile = {
             'name': name,
             'bio': bio,
-            'avatar': rawAvatar
+            'avatar': avatarDataURL
           }
           commit('updateProfile', { addr, profile })
         },

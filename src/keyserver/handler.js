@@ -29,19 +29,18 @@ class KeyserverHandler {
 
     let arr = profile.avatar.split(',')
     let avatarType = arr[0].match(/:(.*?);/)[1]
-    console.log(avatarType)
     let bstr = atob(arr[1])
     let n = bstr.length
     let rawAvatar = new Uint8Array(n)
 
     while (n--) {
-      avatarType[n] = bstr.charCodeAt(n)
+      rawAvatar[n] = bstr.charCodeAt(n)
     }
-    console.log(rawAvatar)
     let imgHeader = new addressmetadata.Header()
     imgHeader.setName('data')
     imgHeader.setValue(avatarType)
     imgEntry.setEntryData(rawAvatar)
+    imgEntry.addHeaders(imgHeader)
 
     // Construct payload
     let payload = new addressmetadata.Payload()
