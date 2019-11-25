@@ -366,62 +366,62 @@ export default new Vuex.Store({
         }
       },
       actions: {
-        async addNewContact ({ commit, dispatch }, addr) {
-          let res = addr.split(':')
-          let addrTrimmed
+        async addNewContact ({ commit, dispatch }, addrLong) {
+          let res = addrLong.split(':')
+          let addr
           if (res.length === 2) {
-            addrTrimmed = res[1]
+            addr = res[1]
           } else {
-            addrTrimmed = res[0]
+            addr = res[0]
           }
 
-          let profile = { 'name': 'Loading...' }
+          let profile = { 'name': 'Retreiving...' }
 
-          commit('updateProfile', { addr: addrTrimmed, profile })
+          commit('updateProfile', { addr, profile })
 
-          commit('chats/addChatPre', addrTrimmed, { root: true })
+          commit('chats/addChatPre', addr, { root: true })
 
-          await dispatch('refresh', addrTrimmed)
+          await dispatch('refresh', addr)
 
-          commit('chats/addChatPost', addrTrimmed, { root: true })
+          commit('chats/addChatPost', addr, { root: true })
         },
-        refresh ({ commit }, addr) {
+        async refresh ({ commit }, addr) {
           // Make this generic over networks
           // Batch this
-          this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`).then(function (metadata) {
-            let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
+          let metadata = await this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`)
 
-            function isVCard (entry) {
-              return entry.getKind() === 'vcard'
-            }
+          let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
 
-            let entryList = payload.getEntriesList()
+          function isVCard (entry) {
+            return entry.getKind() === 'vcard'
+          }
 
-            // Get vCard
-            let rawCard = entryList.find(isVCard).getEntryData()
-            let strCard = new TextDecoder().decode(rawCard)
+          let entryList = payload.getEntriesList()
 
-            let vCard = new VCard().parse(strCard)
+          // Get vCard
+          let rawCard = entryList.find(isVCard).getEntryData()
+          let strCard = new TextDecoder().decode(rawCard)
 
-            let name = vCard.data.fn._data
+          let vCard = new VCard().parse(strCard)
 
-            // let bio = vCard.data.note._data
-            let bio = ''
+          let name = vCard.data.fn._data
 
-            // Get avatar
-            function isAvatar (entry) {
-              return entry.getKind() === 'avatar'
-            }
-            let rawAvatar = entryList.find(isAvatar).getEntryData()
-            console.log(rawAvatar)
+          // let bio = vCard.data.note._data
+          let bio = ''
 
-            let profile = {
-              'name': name,
-              'bio': bio,
-              'avatar': rawAvatar
-            }
-            commit('updateProfile', { addr, profile })
-          })
+          // Get avatar
+          function isAvatar (entry) {
+            return entry.getKind() === 'avatar'
+          }
+          let rawAvatar = entryList.find(isAvatar).getEntryData()
+          console.log(rawAvatar)
+
+          let profile = {
+            'name': name,
+            'bio': bio,
+            'avatar': rawAvatar
+          }
+          commit('updateProfile', { addr, profile })
         },
         startProfileUpdater ({ commit, dispatch }) {
           setInterval(() => {
