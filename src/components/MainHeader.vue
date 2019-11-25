@@ -43,7 +43,7 @@
       <template v-slot:after>
         <q-toolbar>
           <q-toolbar-title class="h6">
-            {{activeProfile.name}}
+            {{activeProfileName}}
           </q-toolbar-title>
 
           <q-space />
@@ -93,8 +93,12 @@ export default {
   },
   computed: {
     ...mapGetters(['getSplitterRatio']),
-    activeProfile () {
-      return this.getProfile()(this.getActiveChat())
+    activeProfileName () {
+      if (this.getActiveChat() !== null) {
+        return this.getProfile()(this.getActiveChat()).name
+      } else {
+        return ''
+      }
     },
     splitterRatio: {
       get () {

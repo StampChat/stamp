@@ -64,11 +64,16 @@ export default {
   },
   computed: {
     messages () {
-      return this.getAllMessages()(this.getActiveChat())
-    },
-    profile () {
-      return this.getProfile()(this.getActiveChat())
+      console.log(this.getActiveChat())
+      if (this.getActiveChat() !== null) {
+        return this.getAllMessages()(this.getActiveChat())
+      } else {
+        return []
+      }
     }
+    // profile () {
+    //   return this.getProfile()(this.getActiveChat())
+    // }
   },
   data: function () {
     return {

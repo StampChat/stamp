@@ -72,41 +72,9 @@ export default new Vuex.Store({
     chats: {
       namespaced: true,
       state: {
-        order: ['qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g', 'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs'],
-        activeChatAddr: 'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g',
+        order: [],
+        activeChatAddr: null,
         data: {
-          'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g': {
-            messages: [
-              {
-                'outbound': false,
-                'sent': true,
-                'body': 'hello there',
-                'timestamp': 1570890706
-              },
-              {
-                'outbound': true,
-                'sent': true,
-                'body': 'howdy',
-                'timestamp': 1570890736
-              }
-            ]
-          },
-          'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
-            messages: [
-              {
-                'outbound': true,
-                'sent': true,
-                'body': 'Calin yooo',
-                'timestamp': 1570890006
-              },
-              {
-                'outbound': false,
-                'sent': true,
-                'body': 'whats up bro',
-                'timestamp': 1570890736
-              }
-            ]
-          }
         }
       },
       getters: {
@@ -414,7 +382,6 @@ export default new Vuex.Store({
             return entry.getKind() === 'avatar'
           }
           let avatarEntry = entryList.find(isAvatar)
-          console.log(rawAvatar)
           let rawAvatar = avatarEntry.getEntryData()
           function _arrayBufferToBase64 (buffer) {
             var binary = ''

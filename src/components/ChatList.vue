@@ -5,6 +5,11 @@
       v-bind:key="index"
       v-bind:chatAddr="addr"
     />
+    <q-item v-if="chatAddr === null">
+      <q-item-section>
+        <q-item-label>Add contacts from the drawer above...</q-item-label>
+      </q-item-section>
+    </q-item>
   </q-list>
 </template>
 

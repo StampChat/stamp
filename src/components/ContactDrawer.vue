@@ -103,8 +103,9 @@
 
     <!-- Contact card -->
     <profile-card
-      :address="getActiveProfile.address"
+      :address="getActiveChat"
       :name="getActiveProfile.name"
+      :avatar="getActiveProfile.avatar"
     />
   </q-drawer>
 </template>
@@ -127,12 +128,13 @@ export default {
     ProfileCard
   },
   methods: {
-    ...mapGetters({ getProfile: 'contacts/getProfile', getActiveChat: 'chats/getActiveChat' }),
+    ...mapGetters({ getProfile: 'contacts/getProfile' }),
     ...mapActions({ setDrawerOpen: 'contactDrawer/setDrawerOpen', clearChat: 'chats/clearChat' })
   },
   computed: {
     ...mapGetters({
-      getDrawerOpen: 'contactDrawer/getDrawerOpen'
+      getDrawerOpen: 'contactDrawer/getDrawerOpen',
+      getActiveChat: 'chats/getActiveChat'
     }),
     drawerOpen: {
       get () {
@@ -143,9 +145,8 @@ export default {
       }
     },
     getActiveProfile () {
-      let addr = this.getActiveChat()
+      let addr = this.getActiveChat
       let profile = this.getProfile()(addr)
-      profile['address'] = addr
       return profile
     }
   },

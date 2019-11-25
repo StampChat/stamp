@@ -20,9 +20,6 @@ export default {
       walletReset: 'wallet/reset'
     })
   },
-  mounted () {
-    this.setProfile({ 'name': null, 'address': null })
-  },
   created () {
     // this.walletReset()
 
