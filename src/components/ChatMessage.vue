@@ -1,7 +1,7 @@
 <template>
   <q-chat-message
     class="q-py-sm"
-    :avatar="message.sent?this.getMyProfile.avatar:this.getProfile(targetAddr).avatar"
+    :avatar="message.sent?this.getProfile(targetAddr).avatar:this.getMyProfile.avatar"
     :text="[message.body]"
     :sent="message.outbound"
     :stamp="timeStamp"

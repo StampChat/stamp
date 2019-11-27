@@ -462,8 +462,7 @@ export default {
           })
 
           let idAddress = this.getMyAddress()
-          let { paymentRequest, paymentDetails, server } = await ksHandler.getPaymentRequest(idAddress)
-          console.log(paymentRequest) // TODO: Validation and logging
+          let { paymentDetails, server } = await ksHandler.getPaymentRequest(idAddress)
           this.$q.loading.show({
             delay: 100,
             message: 'Sending Payment...'
@@ -535,8 +534,7 @@ export default {
           payment.addTransactions(rawTransaction)
           payment.setMerchantData(paymentDetails.getMerchantData())
           let paymentUrl = paymentDetails.getPaymentUrl()
-          let { paymentReceipt, token } = await KeyserverHandler.sendPayment(paymentUrl, payment)
-          console.log(paymentReceipt) // TODO: Logging
+          let { token } = await KeyserverHandler.sendPayment(paymentUrl, payment)
 
           // Construct metadata
           let idPrivKey = this.getIdentityPrivKey()

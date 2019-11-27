@@ -127,7 +127,7 @@ class KeyserverHandler {
         data: rawPayment
       })
     } catch (err) {
-      console.log(err.response)
+      // TODO: Do something with err
     }
 
     let token = response.headers['authorization']
@@ -148,7 +148,7 @@ class KeyserverHandler {
         data: rawMetadata
       })
     } catch (err) {
-      console.log(err.response)
+      // TODO: Do something with err
     }
   }
 }
