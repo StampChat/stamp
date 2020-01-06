@@ -20,3 +20,4 @@ yarn-error.log*
 *.sln
 
 src/keyserver/*_pb.js
+src/relay/*_pb.js
