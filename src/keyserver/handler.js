@@ -1,6 +1,5 @@
 import axios from 'axios'
 import addressmetadata from './addressmetadata_pb'
-import paymentrequest from './paymentrequest_pb'
 import VCard from 'vcf'
 
 const cashlib = require('bitcore-lib-cash')
@@ -88,51 +87,6 @@ class KeyserverHandler {
     // TODO: Sample correctly
     let server = this.chooseServer()
     return KeyserverHandler.fetchMetadata(server, addr)
-  }
-
-  async getPaymentRequest (addr) {
-    // TODO: Sample correctly
-    let server = this.chooseServer()
-
-    let url = `${server}/keys/${addr.toLegacyAddress()}`
-
-    try {
-      await axios({
-        method: 'put',
-        url: url,
-        responseType: 'arraybuffer'
-      })
-    } catch (err) {
-      let response = err.response
-      if (response.status === 402) {
-        let paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
-        let serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
-        let paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
-        return { paymentRequest, paymentDetails, server }
-      }
-    }
-  }
-
-  static async sendPayment (paymentUrl, payment) {
-    var rawPayment = payment.serializeBinary()
-    let response
-    try {
-      response = await axios({
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/bitcoincash-payment',
-          'Accept': 'application/bitcoincash-paymentack'
-        },
-        url: paymentUrl,
-        data: rawPayment
-      })
-    } catch (err) {
-      // TODO: Do something with err
-    }
-
-    let token = response.headers['authorization']
-    let paymentReceipt = response.data
-    return { paymentReceipt, token }
   }
 
   static async putMetadata (addr, server, metadata, token) {

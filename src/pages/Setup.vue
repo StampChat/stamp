@@ -367,6 +367,8 @@ import { mapActions, mapGetters } from 'vuex'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
 import KeyserverHandler from '../keyserver/handler'
 import paymentrequest from '../keyserver/paymentrequest_pb'
+import { getPaymentRequest, sendPayment } from './pop'
+
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
@@ -454,6 +456,7 @@ export default {
           }
 
           let ksHandler = this.getKsHandler()
+          let serverUrl = ksHandler.chooseServer()
 
           // Request Payment
           this.$q.loading.show({
@@ -462,7 +465,8 @@ export default {
           })
 
           let idAddress = this.getMyAddress()
-          let { paymentDetails, server } = await ksHandler.getPaymentRequest(idAddress)
+          let url = `${serverUrl}/keys/${idAddress.toLegacyAddress()}`
+          let { paymentDetails } = await getPaymentRequest(url, 'keys', 'put')
           this.$q.loading.show({
             delay: 100,
             message: 'Sending Payment...'
@@ -534,12 +538,12 @@ export default {
           payment.addTransactions(rawTransaction)
           payment.setMerchantData(paymentDetails.getMerchantData())
           let paymentUrl = paymentDetails.getPaymentUrl()
-          let { token } = await KeyserverHandler.sendPayment(paymentUrl, payment)
+          let { token } = await sendPayment(paymentUrl, payment)
 
           // Construct metadata
           let idPrivKey = this.getIdentityPrivKey()
           let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
-          await KeyserverHandler.putMetadata(idAddress, server, metadata, token)
+          await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
 
           this.setMyProfile(profile)
 
