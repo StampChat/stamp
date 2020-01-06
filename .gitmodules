@@ -1,0 +1,3 @@
+[submodule "src/keyserver"]
+	path = src/keyserver/proto
+	url = https://github.com/cashweb/pop-proto.git
