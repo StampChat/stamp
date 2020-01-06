@@ -9,13 +9,13 @@ class RelayClient {
 
   static constructTextMessage (text, privKey) {
     // Construct vCard
-    let textEntry = new addressmetadata.Entry()
+    let textEntry = new messages.Entry()
     textEntry.setKind('text-utf8')
     let rawText = new TextEncoder("utf-8").encode(text)
     textEntry.setEntryData(rawText)
 
     // Construct payload
-    let payload = new addressmetadata.Payload()
+    let payload = new messages.Payload()
     payload.setTimestamp(Math.floor(Date.now() / 1000))
     payload.addEntries(textEntry)
 
@@ -24,14 +24,14 @@ class RelayClient {
     let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
     ecdsa.sign()
 
-    let metadata = new addressmetadata.AddressMetadata()
+    let message = new messages.Message()
     let sig = ecdsa.sig.toCompact(1).slice(1)
-    metadata.setPubKey(privKey.toPublicKey().toBuffer())
-    metadata.setSignature(sig)
-    metadata.setScheme(1)
-    metadata.setSerializedPayload(serializedPayload)
+    message.setPubKey(privKey.toPublicKey().toBuffer())
+    message.setSignature(sig)
+    message.setScheme(1)
+    message.setSerializedPayload(serializedPayload)
 
-    return metadata
+    return message
   }
 
   async getPaymentRequest (addr, path, method) {
@@ -49,7 +49,7 @@ class RelayClient {
         let paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
         let serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
         let paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
-        return { paymentRequest, paymentDetails, server }
+        return { paymentRequest, paymentDetails }
       }
     }
   }
@@ -76,7 +76,33 @@ class RelayClient {
     return { paymentReceipt, token }
   }
 
-  static async putMessages (addr, server, messageSet, token) {
+  static async getMessages(addr, server, token, startTime, endTime) {
+    let url = `${server}/message/${addr.toLegacyAddress()}`
+
+    let response
+    try {
+      response = await axios({
+        method: 'get',
+        url: url,
+        headers: {
+          'Authorization': token
+        },
+        params: {
+          start: startTime,
+          end: endTime
+        },
+        data: rawMetadata
+      })
+    } catch (err) {
+      // TODO: Do something with err
+    }
+    if (response.status === 200) {
+      let messageSet = messages.Message.deserializeBinary(response.data)
+      return messageSet
+    }
+  }
+
+  static async putMessages (addr, server, messageSet) {
     let rawMetadata = messageSet.serializeBinary()
     let url = `${server}/message/${addr.toLegacyAddress()}`
     try {
