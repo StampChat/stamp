@@ -1,3 +1,6 @@
-[submodule "src/keyserver"]
+[submodule "keyserver-protobufs"]
 	path = src/keyserver/proto
 	url = https://github.com/cashweb/pop-proto.git
+[submodule "relay-protobufs"]
+	path = src/relay/proto
+	url = https://github.com/cashweb/relay-proto.git
