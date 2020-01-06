@@ -367,7 +367,7 @@ import { mapActions, mapGetters } from 'vuex'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
 import KeyserverHandler from '../keyserver/handler'
 import paymentrequest from '../keyserver/paymentrequest_pb'
-import { getPaymentRequest, sendPayment } from './pop'
+import pop from '../pop'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -466,7 +466,7 @@ export default {
 
           let idAddress = this.getMyAddress()
           let url = `${serverUrl}/keys/${idAddress.toLegacyAddress()}`
-          let { paymentDetails } = await getPaymentRequest(url, 'keys', 'put')
+          let { paymentDetails } = await pop.getPaymentRequest(url, 'keys', 'put')
           this.$q.loading.show({
             delay: 100,
             message: 'Sending Payment...'
@@ -538,7 +538,7 @@ export default {
           payment.addTransactions(rawTransaction)
           payment.setMerchantData(paymentDetails.getMerchantData())
           let paymentUrl = paymentDetails.getPaymentUrl()
-          let { token } = await sendPayment(paymentUrl, payment)
+          let { token } = await pop.sendPayment(paymentUrl, payment)
 
           // Construct metadata
           let idPrivKey = this.getIdentityPrivKey()
