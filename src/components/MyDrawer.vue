@@ -76,7 +76,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import ProfileCard from './ProfileCard.vue'
 import RelayClient from '../relay/client.js'
-import pop from '../pop'
+import pop from '../pop/index'
 
 export default {
   components: {
@@ -110,16 +110,16 @@ export default {
           delay: 100,
           message: 'Requesting Payment...'
         })
-        let client = new RelayClient('34.67.137.105')
+        let client = new RelayClient('http://34.67.137.105:8080') // TODO: Make this a variable
+        // let client = new RelayClient('http://localhost:8083') // TODO: Make this a variable
         let { paymentDetails } = await client.filterPaymentRequest(idAddress)
-
         // Send payment
         this.$q.loading.show({
           delay: 100,
           message: 'Sending Payment...'
         })
 
-        let { payment, paymentUrl } = pop.constructPaymentTransaction(paymentDetails)
+        let { payment, paymentUrl } = await pop.constructPaymentTransaction(paymentDetails)
         let { token } = await pop.sendPayment(paymentUrl, payment)
 
         // Upload filter

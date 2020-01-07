@@ -1,7 +1,7 @@
 import axios from 'axios'
 import addressmetadata from './addressmetadata_pb'
 import VCard from 'vcf'
-import pop from '../pop'
+import pop from '../pop/index'
 
 const cashlib = require('bitcore-lib-cash')
 

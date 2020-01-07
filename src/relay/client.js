@@ -1,7 +1,7 @@
 import axios from 'axios'
 import messages from './messages_pb'
 import filters from './filters_pb'
-import pop from '../pop'
+import pop from '../pop/index'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -45,11 +45,11 @@ class RelayClient {
     priceFilter.setNotificationPrice(notificationPrice)
 
     // Construct Filter
-    let filter = new filters.Filter()
-    filter.setPriceFilter(priceFilter)
+    let filtersMsg = new filters.Filters()
+    filtersMsg.setPriceFilter(priceFilter)
 
     // Construct FilterApplication
-    let serializedFilter = filter.serializeBinary()
+    let serializedFilter = filtersMsg.serializeBinary()
     let hashbuf = cashlib.crypto.Hash.sha256(serializedFilter)
     let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
     ecdsa.sign()
@@ -65,12 +65,46 @@ class RelayClient {
   }
 
   async filterPaymentRequest (addr) {
-    let url = `${this.url}/filters/${addr.toLegacyAddress()}`
+    let url = `${this.url}/${addr.toLegacyAddress()}/filters`
     return pop.getPaymentRequest(url, 'put')
   }
 
+  async getFilter (addr) {
+    let url = `${this.url}/${addr.toLegacyAddress()}/filters`
+    let response
+    try {
+      response = await axios({
+        method: 'get',
+        url
+      })
+    } catch (err) {
+      // TODO: Do something with err
+    }
+    if (response.status === 200) {
+      let filtersMsg = filters.Filters.deserializeBinary(response.data)
+      return filtersMsg
+    }
+  }
+
+  async applyFilter (addr, filterApplication, token) {
+    let rawApplication = filterApplication.serializeBinary()
+    let url = `${this.url}/${addr.toLegacyAddress()}/filters`
+    try {
+      await axios({
+        method: 'put',
+        url: url,
+        headers: {
+          'Authorization': token
+        },
+        data: rawApplication
+      })
+    } catch (err) {
+      // TODO: Do something with err
+    }
+  }
+
   async getMessages (addr, token, startTime, endTime) {
-    let url = `${this.url}/message/${addr.toLegacyAddress()}`
+    let url = `${this.url}/${addr.toLegacyAddress()}/messages`
 
     let response
     try {
@@ -96,46 +130,12 @@ class RelayClient {
 
   async putMessages (addr, messageSet) {
     let rawMetadata = messageSet.serializeBinary()
-    let url = `${this.url}/message/${addr.toLegacyAddress()}`
+    let url = `${this.url}/${addr.toLegacyAddress()}/messages`
     try {
       await axios({
         method: 'put',
         url: url,
         data: rawMetadata
-      })
-    } catch (err) {
-      // TODO: Do something with err
-    }
-  }
-
-  async getFilter (addr) {
-    let url = `${this.url}/message/${addr.toLegacyAddress()}`
-    let response
-    try {
-      response = await axios({
-        method: 'get',
-        url
-      })
-    } catch (err) {
-      // TODO: Do something with err
-    }
-    if (response.status === 200) {
-      let filtersMsg = filters.Filters.deserializeBinary(response.data)
-      return filtersMsg
-    }
-  }
-
-  async applyFilter (addr, filterApplication, token) {
-    let rawApplication = filterApplication.serializeBinary()
-    let url = `${this.url}/message/${addr.toLegacyAddress()}`
-    try {
-      await axios({
-        method: 'put',
-        url: url,
-        headers: {
-          'Authorization': token
-        },
-        data: rawApplication
       })
     } catch (err) {
       // TODO: Do something with err

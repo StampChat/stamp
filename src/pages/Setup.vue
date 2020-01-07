@@ -366,7 +366,7 @@ import VueRouter from 'vue-router'
 import { mapActions, mapGetters } from 'vuex'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
 import KeyserverHandler from '../keyserver/handler'
-import pop from '../pop'
+import pop from '../pop/index'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -470,9 +470,7 @@ export default {
             message: 'Sending Payment...'
           })
 
-          let { payment, paymentUrl } = await pop.constructPaymentTransaction(this, paymentDetails)
-          console.log(payment)
-          console.log(paymentUrl)
+          let { payment, paymentUrl } = await pop.constructPaymentTransaction(paymentDetails)
 
           let { token } = await pop.sendPayment(paymentUrl, payment)
 
