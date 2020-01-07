@@ -465,8 +465,7 @@ export default {
           })
 
           let idAddress = this.getMyAddress()
-          let url = `${serverUrl}/keys/${idAddress.toLegacyAddress()}`
-          let { paymentDetails } = await pop.getPaymentRequest(url, 'put')
+          let { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
           this.$q.loading.show({
             delay: 100,
             message: 'Sending Payment...'

@@ -267,10 +267,10 @@ export default new Vuex.Store({
           }
         },
         getMyAddress (state) {
-          return state.identityPrivKey.toAddress('testnet')
+          return state.identityPrivKey.toAddress('testnet') // TODO: Not just testnet
         },
         getMyAddressStr (state) {
-          return state.identityPrivKey.toAddress('testnet')
+          return state.identityPrivKey.toAddress('testnet') // TODO: Not just testnet
         },
         getAddresses (state) {
           return state.addresses

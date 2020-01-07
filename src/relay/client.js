@@ -1,6 +1,7 @@
 import axios from 'axios'
-import messages from './messages'
-import filters from './filters'
+import messages from './messages_pb'
+import filters from './filters_pb'
+import getPaymentRequest from '../pop'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -61,6 +62,11 @@ class RelayClient {
     filterApplication.setSerializedPayload(serializedFilter)
 
     return filterApplication
+  }
+
+  async filterPaymentRequest (addr) {
+    let url = `${this.url}/filters/${addr.toLegacyAddress()}`
+    return getPaymentRequest(url, 'put')
   }
 
   async getMessages (addr, token, startTime, endTime) {
