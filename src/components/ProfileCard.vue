@@ -13,11 +13,12 @@
         </q-item-section>
         <q-item-section>
           <q-item-label
-            style=""
-            class="text-weight-bold text-white absolute-right"
+            style="text-align: right;"
+            class="text-weight-bold text-white"
             lines="1"
           >Inbox Fee</q-item-label>
           <q-item-label
+            style="text-align: right;"
             class="text-white"
             caption
             lines="1"

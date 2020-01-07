@@ -353,7 +353,10 @@ export default new Vuex.Store({
         profiles: {
           // Example:
           // 'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
-          //   'name': 'Anon'
+          //   name: 'Anon',
+          //   bio: '',
+          //   avatar: ...,
+          //   acceptancePrice: ...
           // },
         }
       },

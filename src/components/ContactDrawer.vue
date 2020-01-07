@@ -11,7 +11,6 @@
     <q-dialog
       v-model="confirm"
       persistent
-      @click="clearChat(getActiveChat)"
     >
       <q-card>
         <q-card-section class="row items-center">
@@ -35,6 +34,7 @@
             label="Delete"
             color="primary"
             v-close-popup
+            @click="clearChat(getActiveChat)"
           />
         </q-card-actions>
       </q-card>
@@ -123,6 +123,7 @@
       :address="getActiveChat"
       :name="getActiveProfile.name"
       :avatar="getActiveProfile.avatar"
+      :acceptancePrice="getActiveProfile.acceptancePrice"
     />
   </q-drawer>
 </template>

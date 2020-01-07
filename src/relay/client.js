@@ -82,7 +82,6 @@ class RelayClient {
       // TODO: Do something with err
     }
     if (response.status === 200) {
-      console.log(response.data)
       let filtersMsg = filters.Filters.deserializeBinary(response.data)
       return filtersMsg
     }
