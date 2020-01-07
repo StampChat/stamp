@@ -1,7 +1,7 @@
 import axios from 'axios'
 import addressmetadata from './addressmetadata_pb'
 import VCard from 'vcf'
-import getPaymentRequest from '../pop'
+import pop from '../pop'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -84,9 +84,9 @@ class KeyserverHandler {
     return this.keyservers[0]
   }
 
-  async paymentRequest (serverUrl, addr) {
+  static async paymentRequest (serverUrl, addr) {
     let url = `${serverUrl}/keys/${addr.toLegacyAddress()}`
-    return getPaymentRequest(url, 'put')
+    return pop.getPaymentRequest(url, 'put')
   }
 
   async uniformSample (addr) {

@@ -8,7 +8,6 @@
     :width="200"
     :breakpoint="400"
   >
-    <set-filter :active="setFilterDialog"/>
     <q-scroll-area style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd">
       <q-list padding>
         <q-item
@@ -77,13 +76,21 @@
 import { mapGetters, mapActions } from 'vuex'
 import ProfileCard from './ProfileCard.vue'
 import RelayClient from '../relay/client.js'
+import pop from '../pop'
 
 export default {
   components: {
     ProfileCard
   },
   methods: {
-    ...mapActions({ setDrawerOpen: 'myDrawer/setDrawerOpen', addNewContact: 'contacts/addNewContact', getIdentityPrivKey: 'wallet/getIdentityPrivKey', getMyAddress: 'wallet/getMyAddress' }),
+    ...mapActions({
+      setDrawerOpen: 'myDrawer/setDrawerOpen',
+      addNewContact: 'contacts/addNewContact'
+    }),
+    ...mapGetters({
+      getIdentityPrivKey: 'wallet/getIdentityPrivKey',
+      getMyAddress: 'wallet/getMyAddress'
+    }),
     setFilter () {
       this.$q.dialog({
         title: 'Set Price Filter',
@@ -95,12 +102,6 @@ export default {
         cancel: true,
         persistent: true
       }).onOk(async data => {
-        // Get identity privKey
-        let privKey = this.getIdentityPrivKey()
-
-        // Create filter application
-        let filterApplication = RelayClient.constructPriceFilterApplication(true, data, data, privKey)
-
         // Get identity address
         let idAddress = this.getMyAddress()
 
@@ -109,15 +110,31 @@ export default {
           delay: 100,
           message: 'Requesting Payment...'
         })
-        let client = RelayClient('34.67.137.105')
-        let { paymentRequest } = client.filterPaymentRequest(idAddress)
+        let client = new RelayClient('34.67.137.105')
+        let { paymentDetails } = await client.filterPaymentRequest(idAddress)
 
+        // Send payment
         this.$q.loading.show({
           delay: 100,
           message: 'Sending Payment...'
         })
 
-        await this.addNewContact(data)
+        let { payment, paymentUrl } = pop.constructPaymentTransaction(paymentDetails)
+        let { token } = await pop.sendPayment(paymentUrl, payment)
+
+        // Upload filter
+        this.$q.loading.show({
+          delay: 100,
+          message: 'Uploading Filter...'
+        })
+
+        // Get identity privKey
+        let privKey = this.getIdentityPrivKey()
+
+        // Create filter application
+        let filterApplication = RelayClient.constructPriceFilterApplication(true, data, data, privKey)
+
+        await client.applyFilter(idAddress, filterApplication, token)
       })
     },
     newContactPrompt () {

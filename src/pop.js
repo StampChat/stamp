@@ -1,6 +1,8 @@
 import axios from 'axios'
 import paymentrequest from './keyserver/paymentrequest_pb'
 
+const cashlib = require('bitcore-lib-cash')
+
 export default {
   async getPaymentRequest (url, method) {
     try {
@@ -19,6 +21,7 @@ export default {
       }
     }
   },
+
   async sendPayment (paymentUrl, payment) {
     var rawPayment = payment.serializeBinary()
     let response
@@ -39,5 +42,77 @@ export default {
     let token = response.headers['authorization']
     let paymentReceipt = response.data
     return { paymentReceipt, token }
+  },
+
+  async constructPaymentTransaction (self, paymentDetails) {
+    // Get Outputs
+    var totalOutput = 0
+    let requestOutputs = paymentDetails.getOutputsList()
+    for (let i in requestOutputs) {
+      let output = requestOutputs[i]
+      totalOutput += output.getAmount()
+    }
+
+    let addresses = self.getAddresses()
+
+    // Collect inputs
+    let client = self.getClient()
+    let utxos = []
+    let signingKeys = []
+    let fee = 30
+    let complete = false
+    for (let addr in addresses) {
+      let vals = addresses[addr]
+      let amount = Math.min(vals.balance, totalOutput)
+      if (amount !== 0) {
+        let outputs = await client.blockchainAddress_listunspent(addr)
+        for (let index in outputs) {
+          let value = outputs[index].value
+          utxos.push({
+            'txId': outputs[index].tx_hash,
+            'outputIndex': outputs[index].tx_pos,
+            'satoshis': value,
+            'address': addr,
+            'script': cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+          })
+          signingKeys.push(vals.privKey)
+          totalOutput -= value
+          if (totalOutput <= -fee) {
+            complete = true
+          }
+        }
+      }
+      if (complete) {
+        break
+      }
+    }
+
+    // Construct Transaction
+    let transaction = new cashlib.Transaction()
+
+    for (let i in utxos) {
+      transaction = transaction.from(utxos[i])
+    }
+    for (let i in requestOutputs) {
+      let script = requestOutputs[i].getScript()
+      let satoshis = requestOutputs[i].getAmount()
+      let output = new cashlib.Transaction.Output({
+        script,
+        satoshis
+      })
+      transaction = transaction.addOutput(output)
+    }
+    for (let i in signingKeys) {
+      transaction = transaction.sign(signingKeys[i])
+    }
+    let rawTransaction = transaction.toBuffer()
+
+    // Send payment and receive token
+    let payment = new paymentrequest.Payment()
+    payment.addTransactions(rawTransaction)
+    payment.setMerchantData(paymentDetails.getMerchantData())
+    let paymentUrl = paymentDetails.getPaymentUrl()
+
+    return { payment, paymentUrl }
   }
 }

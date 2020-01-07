@@ -366,7 +366,6 @@ import VueRouter from 'vue-router'
 import { mapActions, mapGetters } from 'vuex'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
 import KeyserverHandler from '../keyserver/handler'
-import paymentrequest from '../keyserver/paymentrequest_pb'
 import pop from '../pop'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -471,73 +470,16 @@ export default {
             message: 'Sending Payment...'
           })
 
-          // Get Outputs
-          var totalOutput = 0
-          let requestOutputs = paymentDetails.getOutputsList()
-          for (let i in requestOutputs) {
-            let output = requestOutputs[i]
-            totalOutput += output.getAmount()
-          }
+          let { payment, paymentUrl } = await pop.constructPaymentTransaction(this, paymentDetails)
+          console.log(payment)
+          console.log(paymentUrl)
 
-          let addresses = this.getAddresses()
-
-          // Collect inputs
-          let client = this.getClient()
-          let utxos = []
-          let signingKeys = []
-          let fee = 30
-          let complete = false
-          for (let addr in addresses) {
-            let vals = addresses[addr]
-            let amount = Math.min(vals.balance, totalOutput)
-            if (amount !== 0) {
-              let outputs = await client.blockchainAddress_listunspent(addr)
-              for (let index in outputs) {
-                let value = outputs[index].value
-                utxos.push({
-                  'txId': outputs[index].tx_hash,
-                  'outputIndex': outputs[index].tx_pos,
-                  'satoshis': value,
-                  'address': addr,
-                  'script': cashlib.Script.buildPublicKeyHashOut(addr).toHex()
-                })
-                signingKeys.push(vals.privKey)
-                totalOutput -= value
-                if (totalOutput <= -fee) {
-                  complete = true
-                }
-              }
-            }
-            if (complete) {
-              break
-            }
-          }
-          // Construct Transaction
-          let transaction = new cashlib.Transaction()
-
-          for (let i in utxos) {
-            transaction = transaction.from(utxos[i])
-          }
-          for (let i in requestOutputs) {
-            let script = requestOutputs[i].getScript()
-            let satoshis = requestOutputs[i].getAmount()
-            let output = new cashlib.Transaction.Output({
-              script,
-              satoshis
-            })
-            transaction = transaction.addOutput(output)
-          }
-          for (let i in signingKeys) {
-            transaction = transaction.sign(signingKeys[i])
-          }
-          let rawTransaction = transaction.toBuffer()
-
-          // Send payment and receive token
-          let payment = new paymentrequest.Payment()
-          payment.addTransactions(rawTransaction)
-          payment.setMerchantData(paymentDetails.getMerchantData())
-          let paymentUrl = paymentDetails.getPaymentUrl()
           let { token } = await pop.sendPayment(paymentUrl, payment)
+
+          this.$q.loading.show({
+            delay: 100,
+            message: 'Uploading Metadata...'
+          })
 
           // Construct metadata
           let idPrivKey = this.getIdentityPrivKey()
