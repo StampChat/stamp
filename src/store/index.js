@@ -124,6 +124,9 @@ export default new Vuex.Store({
           state.order = state.order.filter(function (value, index, arr) {
             return value !== addr
           })
+          if (state.activeChatAddr === addr) {
+            state.activeChatAddr = null
+          }
         },
         addChatPre (state, addr) {
           state.data[addr] = {

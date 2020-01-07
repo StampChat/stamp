@@ -24,9 +24,7 @@ export default {
   },
 
   async sendPayment (paymentUrl, payment) {
-    console.log(payment)
     var rawPayment = payment.serializeBinary()
-    console.log(rawPayment)
     let response
     try {
       response = await axios({
