@@ -68,6 +68,7 @@
       :name="getMyProfile.name"
       :bio="getMyProfile.bio"
       :avatar="getMyProfile.avatar"
+      :acceptancePrice="getMyProfile.acceptancePrice"
     />
   </q-drawer>
 </template>
@@ -85,7 +86,8 @@ export default {
   methods: {
     ...mapActions({
       setDrawerOpen: 'myDrawer/setDrawerOpen',
-      addNewContact: 'contacts/addNewContact'
+      addNewContact: 'contacts/addNewContact',
+      setAcceptancePrice: 'myProfile/setAcceptancePrice'
     }),
     ...mapGetters({
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',
@@ -101,7 +103,7 @@ export default {
         },
         cancel: true,
         persistent: true
-      }).onOk(async data => {
+      }).onOk(async acceptancePrice => {
         // Get identity address
         let idAddress = this.getMyAddress()
 
@@ -110,9 +112,9 @@ export default {
           delay: 100,
           message: 'Requesting Payment...'
         })
-        let client = new RelayClient('http://34.67.137.105:8080') // TODO: Make this a variable
-        // let client = new RelayClient('http://localhost:8083') // TODO: Make this a variable
-        let { paymentDetails } = await client.filterPaymentRequest(idAddress)
+        let client = new RelayClient('http://34.67.137.105:8080')
+        let { paymentDetails } = await client.filterPaymentRequest(idAddress.toLegacyAddress())
+
         // Send payment
         this.$q.loading.show({
           delay: 100,
@@ -132,9 +134,13 @@ export default {
         let privKey = this.getIdentityPrivKey()
 
         // Create filter application
-        let filterApplication = RelayClient.constructPriceFilterApplication(true, data, data, privKey)
+        let filterApplication = RelayClient.constructPriceFilterApplication(true, acceptancePrice, acceptancePrice, privKey)
+
+        // Set locally
+        this.setAcceptancePrice(acceptancePrice)
 
         await client.applyFilter(idAddress, filterApplication, token)
+        this.$q.loading.hide()
       })
     },
     newContactPrompt () {

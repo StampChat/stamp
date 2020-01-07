@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import KeyserverHandler from '../keyserver/handler'
+import RelayClient from '../relay/client'
 import addressmetadata from '../keyserver/addressmetadata_pb'
 import VCard from 'vcf'
 import VuexPersistence from 'vuex-persist'
@@ -116,6 +117,14 @@ export default new Vuex.Store({
         clearChat (state, addr) {
           state.data[addr].messages = []
         },
+        clearCurrent (state) {
+          state.activeChatAddr = null
+        },
+        deleteChat (state, addr) {
+          state.order = state.order.filter(function (value, index, arr) {
+            return value !== addr
+          })
+        },
         addChatPre (state, addr) {
           state.data[addr] = {
             messages: []
@@ -138,6 +147,12 @@ export default new Vuex.Store({
         },
         clearChat ({ commit }, addr) {
           commit('clearChat', addr)
+        },
+        clearCurrent ({ commit }) {
+          commit('clearCurrent')
+        },
+        deleteChat ({ commit }, addr) {
+          commit('deleteChat', addr)
         }
       }
     },
@@ -154,6 +169,27 @@ export default new Vuex.Store({
       actions: {
         setHandler ({ commit }, handler) {
           commit('setHandler', handler)
+        }
+      },
+      getters: {
+        getHandler (state) {
+          return state.handler
+        }
+      }
+    },
+    relayClient: {
+      namespaced: true,
+      state: {
+        client: new RelayClient('http://34.67.137.105:8080') // TODO: Make this a variable
+      },
+      mutations: {
+        setClient (state, client) {
+          state.client = client
+        }
+      },
+      actions: {
+        setClient ({ commit }, client) {
+          commit('setClient', client)
         }
       },
       getters: {
@@ -315,12 +351,10 @@ export default new Vuex.Store({
       namespaced: true,
       state: {
         profiles: {
-          'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
-            'name': 'Shammah'
-          },
-          'qrtwst5ggcw59g8yk0x3qj4g5qdt28frts0g526x6g': {
-            'name': 'Calin'
-          }
+          // Example:
+          // 'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
+          //   'name': 'Anon'
+          // },
         }
       },
       getters: {
@@ -331,6 +365,9 @@ export default new Vuex.Store({
       mutations: {
         updateProfile (state, { addr, profile }) {
           state.profiles[addr] = profile
+        },
+        deleteContact (state, addr) {
+          delete state.profiles[addr]
         }
       },
       actions: {
@@ -353,8 +390,15 @@ export default new Vuex.Store({
 
           commit('chats/addChatPost', addr, { root: true })
         },
+        deleteContact ({ commit }, addr) {
+          commit('chats/clearChat', addr, { root: true })
+          commit('chats/deleteChat', addr, { root: true })
+          commit('deleteContact', addr)
+        },
         async refresh ({ commit }, addr) {
           // Make this generic over networks
+
+          // Get metadata
           // Batch this
           let metadata = await this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`)
 
@@ -395,10 +439,22 @@ export default new Vuex.Store({
           let value = avatarEntry.getHeadersList()[0].getValue()
           let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
 
+          // Get fee
+          let acceptancePrice
+          try {
+            let client = this.state.relayClient.client
+            let filters = await client.getFilter(`bchtest:${addr}`)
+            let priceFilter = filters.getPriceFilter()
+            acceptancePrice = priceFilter.getAcceptancePrice()
+          } catch (err) {
+            acceptancePrice = 'Unknown'
+          }
+
           let profile = {
-            'name': name,
-            'bio': bio,
-            'avatar': avatarDataURL
+            name,
+            bio,
+            avatar: avatarDataURL,
+            acceptancePrice
           }
           commit('updateProfile', { addr, profile })
         },
@@ -416,11 +472,15 @@ export default new Vuex.Store({
       state: {
         name: null,
         bio: null,
-        avatar: null
+        avatar: null,
+        acceptancePrice: null
       },
       getters: {
         getMyProfile (state) {
           return state
+        },
+        getAcceptancePrice (state) {
+          return state.acceptancePrice
         }
       },
       mutations: {
@@ -428,11 +488,17 @@ export default new Vuex.Store({
           state.name = name
           state.avatar = avatar
           state.bio = bio
+        },
+        setAcceptancePrice (state, fee) {
+          state.acceptancePrice = fee
         }
       },
       actions: {
         setMyProfile ({ commit }, profile) {
           commit('setMyProfile', profile)
+        },
+        setAcceptancePrice ({ commit }, fee) {
+          commit('setAcceptancePrice', fee)
         }
       }
     },

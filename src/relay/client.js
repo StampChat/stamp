@@ -49,8 +49,8 @@ class RelayClient {
     filtersMsg.setPriceFilter(priceFilter)
 
     // Construct FilterApplication
-    let serializedFilter = filtersMsg.serializeBinary()
-    let hashbuf = cashlib.crypto.Hash.sha256(serializedFilter)
+    let serializedFilters = filtersMsg.serializeBinary()
+    let hashbuf = cashlib.crypto.Hash.sha256(serializedFilters)
     let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
     ecdsa.sign()
 
@@ -59,28 +59,30 @@ class RelayClient {
     filterApplication.setPubKey(privKey.toPublicKey().toBuffer())
     filterApplication.setSignature(sig)
     filterApplication.setScheme(1)
-    filterApplication.setSerializedPayload(serializedFilter)
+    filterApplication.setSerializedFilters(serializedFilters)
 
     return filterApplication
   }
 
   async filterPaymentRequest (addr) {
-    let url = `${this.url}/${addr.toLegacyAddress()}/filters`
+    let url = `${this.url}/${addr}/filters`
     return pop.getPaymentRequest(url, 'put')
   }
 
   async getFilter (addr) {
-    let url = `${this.url}/${addr.toLegacyAddress()}/filters`
+    let url = `${this.url}/${addr}/filters`
     let response
     try {
       response = await axios({
         method: 'get',
-        url
+        url,
+        responseType: 'arraybuffer'
       })
     } catch (err) {
       // TODO: Do something with err
     }
     if (response.status === 200) {
+      console.log(response.data)
       let filtersMsg = filters.Filters.deserializeBinary(response.data)
       return filtersMsg
     }
@@ -100,6 +102,8 @@ class RelayClient {
       })
     } catch (err) {
       // TODO: Do something with err
+      console.log(err)
+      console.log(err.response)
     }
   }
 
@@ -138,6 +142,8 @@ class RelayClient {
         data: rawMetadata
       })
     } catch (err) {
+      console.log(err)
+      console.log(err.response)
       // TODO: Do something with err
     }
   }

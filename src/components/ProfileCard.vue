@@ -2,16 +2,28 @@
   <q-img
     class="absolute-top"
     src="https://cdn.quasar.dev/img/material.png"
-    style="height: 150px"
+    style="height: 130px"
   >
     <q-list class="absolute-bottom bg-transparent q-pa-none">
       <q-item class="bg-transparent q-pa-none">
-        <q-avatar
-          avatar
-          size="56px"
-        >
-          <q-img :src="avatar" />
-        </q-avatar>
+        <q-item-section>
+          <q-avatar rounded>
+            <img :src="avatar">
+          </q-avatar>
+        </q-item-section>
+        <q-item-section>
+          <q-item-label
+            style=""
+            class="text-weight-bold text-white absolute-right"
+            lines="1"
+          >Inbox Fee</q-item-label>
+          <q-item-label
+            class="text-white"
+            caption
+            lines="1"
+          >{{ acceptancePrice }}
+          </q-item-label>
+        </q-item-section>
       </q-item>
 
       <q-item class="bg-transparent q-pa-none">
@@ -24,7 +36,8 @@
             class="text-white"
             caption
             lines="1"
-          >{{ address }} </q-item-label>
+          >{{ address }}</q-item-label>
+
         </q-item-section>
         <q-item-section side>
           <q-btn
@@ -32,6 +45,7 @@
             dense
             color="white"
             icon="file_copy"
+            size="sm"
           />
         </q-item-section>
       </q-item>
@@ -42,6 +56,6 @@
 
 <script>
 export default {
-  props: ['avatar', 'name', 'bio', 'address']
+  props: ['avatar', 'name', 'bio', 'address', 'acceptancePrice']
 }
 </script>

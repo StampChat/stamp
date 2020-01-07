@@ -11,7 +11,7 @@
     <q-dialog
       v-model="confirm"
       persistent
-      @click="clearChat(getActiveProfile.address)"
+      @click="clearChat(getActiveChat)"
     >
       <q-card>
         <q-card-section class="row items-center">
@@ -98,6 +98,23 @@
             Block
           </q-item-section>
         </q-item>
+        <q-item
+          clickable
+          v-ripple
+          @click="deleteContact(getActiveChat)"
+        >
+          <q-item-section avatar>
+            <q-icon
+              name="delete"
+              color="red"
+              @click="deleteContact(getActiveChat)"
+            />
+          </q-item-section>
+
+          <q-item-section>
+            Delete
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-scroll-area>
 
@@ -129,7 +146,11 @@ export default {
   },
   methods: {
     ...mapGetters({ getProfile: 'contacts/getProfile' }),
-    ...mapActions({ setDrawerOpen: 'contactDrawer/setDrawerOpen', clearChat: 'chats/clearChat' })
+    ...mapActions({
+      setDrawerOpen: 'contactDrawer/setDrawerOpen',
+      clearChat: 'chats/clearChat',
+      deleteContact: 'contacts/deleteContact'
+    })
   },
   computed: {
     ...mapGetters({
