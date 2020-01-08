@@ -14,6 +14,7 @@ export default {
     ...mapActions(['startClock']),
     ...mapActions({
       startProfileUpdater: 'contacts/startProfileUpdater',
+      startChatUpdater: 'chats/startChatUpdater',
       setProfile: 'myProfile/setMyProfile',
       setClient: 'electrumHandler/setClient',
       walletReinitialize: 'wallet/reinitialize',
@@ -31,6 +32,9 @@ export default {
 
     // Start profile watcher
     // this.startProfileUpdater()
+
+    // Start chat watcher
+    this.startChatUpdater()
 
     let ecl = new ElectrumClient(60002, 'blackie.c3-soft.com', 'tls')
     this.setClient(ecl)

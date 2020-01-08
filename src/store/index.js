@@ -6,6 +6,7 @@ import addressmetadata from '../keyserver/addressmetadata_pb'
 import VCard from 'vcf'
 import VuexPersistence from 'vuex-persist'
 import messages from '../relay/messages_pb'
+import pop from '../pop/index'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -155,6 +156,11 @@ export default new Vuex.Store({
         switchChatActive ({ commit }, addr) {
           commit('switchChatActive', addr)
         },
+        startChatUpdater ({ commit, dispatch }) {
+          setInterval(() => {
+            dispatch('refresh')
+          }, 10_000)
+        },
         async sendMessage ({ commit, rootGetters }, { addr, text }) {
           // Send locally
           commit('sendMessage', { addr, text })
@@ -182,22 +188,36 @@ export default new Vuex.Store({
         },
         deleteChat ({ commit }, addr) {
           commit('deleteChat', addr)
+        },
+        async refresh ({ commit, rootGetters, dispatch, getters }) {
+          let myAddressStr = rootGetters['wallet/getMyAddressStr']
+          let client = rootGetters['relayClient/getClient']
+          let lastReceived = getters['getLastReceived'] || 0
+
+          // If token is null then purchase one
+          let token = rootGetters['relayClient/getToken']
+          if (token === null) {
+            let client = new RelayClient('http://34.67.137.105:8080')
+            let { paymentDetails } = await client.messagePaymentRequest(myAddressStr)
+
+            let { payment, paymentUrl } = await pop.constructPaymentTransaction(paymentDetails)
+            let { token } = await pop.sendPayment(paymentUrl, payment)
+
+            dispatch('relayClient/setToken', token, { root: true })
+          }
+
+          let messagePage = await client.getMessages(myAddressStr, token, lastReceived, null)
+          console.log(messagePage)
+          let messages = messagePage.getMessagesList()
+          for (let timedMessage in messages) {
+            let timestamp = timedMessage.getTimestamp()
+            let message = timedMessage.getMessage()
+            let rawSenderPubKey = message.getSenderPubKey()
+            let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
+            let addr = senderPubKey.toAddress('testnet').toCashAddress(true)
+            commit('receiveMessage', { addr, senderPubKey, timestamp })
+          }
         }
-      },
-      async refresh ({ commit, rootGetters }) {
-        let myAddressStr = rootGetters['wallet/getMyAddressStr']
-        let client = rootGetters['relayClient/getClient']
-        let lastReceived = this.getLastReceived() || 0
-
-        let token = rootGetters['relayClient/getToken']
-        if (token === null) {
-
-        }
-
-        let messagePage = client.getMessages(myAddressStr, token, lastReceived, null)
-        let messages = messagePage.getMessages()
-        console.log(messages)
-        // commit('receiveMessage', { addr })
       }
     },
     keyserverHandler: {
@@ -360,7 +380,7 @@ export default new Vuex.Store({
           return state.identityPrivKey.toAddress('testnet') // TODO: Not just testnet
         },
         getMyAddressStr (state) {
-          return state.identityPrivKey.toAddress('testnet').toLegacyAddress() // TODO: Not just testnet
+          return state.identityPrivKey.toAddress('testnet').toCashAddress() // TODO: Not just testnet
         },
         getAddresses (state) {
           return state.addresses

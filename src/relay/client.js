@@ -127,15 +127,22 @@ class RelayClient {
         params: {
           start: startTime,
           end: endTime
-        }
+        },
+        responseType: 'arraybuffer'
       })
     } catch (err) {
       // TODO: Do something with err
+      console.log(err)
     }
     if (response.status === 200) {
-      let messagePage = messages.messagePage.deserializeBinary(response.data)
+      let messagePage = messages.MessagePage.deserializeBinary(response.data)
       return messagePage
     }
+  }
+
+  async messagePaymentRequest (addr) {
+    let url = `${this.url}/${addr}/messages`
+    return pop.getPaymentRequest(url, 'get')
   }
 
   async pushMessages (addr, messageSet) {

@@ -136,10 +136,12 @@ export default {
         // Create filter application
         let filterApplication = RelayClient.constructPriceFilterApplication(true, acceptancePrice, acceptancePrice, privKey)
 
-        // Set locally
+        // Apply remotely
+        await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
+
+        // Apply locally
         this.setAcceptancePrice(acceptancePrice)
 
-        await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
         this.$q.loading.hide()
       })
     },
