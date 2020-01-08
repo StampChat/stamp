@@ -76,8 +76,8 @@ export default new Vuex.Store({
       state: {
         order: [],
         activeChatAddr: null,
-        data: {
-        }
+        data: {},
+        lastReceived: null
       },
       getters: {
         getChatOrder (state) {
@@ -96,6 +96,9 @@ export default new Vuex.Store({
         },
         getAllMessages: (state) => (addr) => {
           return state.data[addr].messages
+        },
+        getLastReceived (state) {
+          return state.lastReceived
         }
       },
       mutations: {
@@ -137,6 +140,15 @@ export default new Vuex.Store({
         addChatPost (state, addr) {
           state.order.unshift(addr)
           state.activeChatAddr = addr
+        },
+        receiveMessage (state, { addr, text, timestamp }) {
+          let newMsg = {
+            outbound: false,
+            sent: true,
+            body: text,
+            timestamp
+          }
+          state.data[addr].message.push(newMsg)
         }
       },
       actions: {
@@ -149,7 +161,6 @@ export default new Vuex.Store({
 
           // Peer's relay server
           let privKey = rootGetters['wallet/getIdentityPrivKey']
-          console.log(privKey)
 
           let client = new RelayClient('http://34.67.137.105:8080')
           let message = RelayClient.constructTextMessage(text, privKey)
@@ -157,7 +168,6 @@ export default new Vuex.Store({
           messageSet.addMessages(message)
 
           let senderAddr = privKey.toAddress('testnet').toLegacyAddress()
-          console.log(senderAddr)
 
           client.pushMessages(senderAddr, messageSet)
         },
@@ -173,6 +183,21 @@ export default new Vuex.Store({
         deleteChat ({ commit }, addr) {
           commit('deleteChat', addr)
         }
+      },
+      async refresh ({ commit, rootGetters }) {
+        let myAddressStr = rootGetters['wallet/getMyAddressStr']
+        let client = rootGetters['relayClient/getClient']
+        let lastReceived = this.getLastReceived() || 0
+
+        let token = rootGetters['relayClient/getToken']
+        if (token === null) {
+
+        }
+
+        let messagePage = client.getMessages(myAddressStr, token, lastReceived, null)
+        let messages = messagePage.getMessages()
+        console.log(messages)
+        // commit('receiveMessage', { addr })
       }
     },
     keyserverHandler: {
@@ -199,21 +224,31 @@ export default new Vuex.Store({
     relayClient: {
       namespaced: true,
       state: {
-        client: new RelayClient('http://34.67.137.105:8080') // TODO: Make this a variable
+        client: new RelayClient('http://34.67.137.105:8080'), // TODO: Make this a variable
+        token: null
       },
       mutations: {
         setClient (state, client) {
           state.client = client
+        },
+        setToken (state, token) {
+          state.token = token
         }
       },
       actions: {
         setClient ({ commit }, client) {
           commit('setClient', client)
+        },
+        setToken ({ commit }, token) {
+          commit('setToken', token)
         }
       },
       getters: {
         getClient (state) {
           return state.client
+        },
+        getToken (state) {
+          return state.token
         }
       }
     },
@@ -325,7 +360,7 @@ export default new Vuex.Store({
           return state.identityPrivKey.toAddress('testnet') // TODO: Not just testnet
         },
         getMyAddressStr (state) {
-          return state.identityPrivKey.toAddress('testnet') // TODO: Not just testnet
+          return state.identityPrivKey.toAddress('testnet').toLegacyAddress() // TODO: Not just testnet
         },
         getAddresses (state) {
           return state.addresses
