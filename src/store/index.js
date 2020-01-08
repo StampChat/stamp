@@ -5,6 +5,7 @@ import RelayClient from '../relay/client'
 import addressmetadata from '../keyserver/addressmetadata_pb'
 import VCard from 'vcf'
 import VuexPersistence from 'vuex-persist'
+import messages from '../relay/messages_pb'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -103,10 +104,10 @@ export default new Vuex.Store({
         },
         sendMessage (state, { addr, text }) {
           let newMsg = {
-            'outbound': true,
-            'sent': false,
-            'body': text,
-            'timestamp': Math.floor(Date.now() / 1000)
+            outbound: true,
+            sent: false,
+            body: text,
+            timestamp: Math.floor(Date.now() / 1000)
           }
           state.data[addr].messages.push(newMsg)
         },
@@ -142,8 +143,23 @@ export default new Vuex.Store({
         switchChatActive ({ commit }, addr) {
           commit('switchChatActive', addr)
         },
-        sendMessage ({ commit }, { addr, text }) {
+        async sendMessage ({ commit, rootGetters }, { addr, text }) {
+          // Send locally
           commit('sendMessage', { addr, text })
+
+          // Peer's relay server
+          let privKey = rootGetters['wallet/getIdentityPrivKey']
+          console.log(privKey)
+
+          let client = new RelayClient('http://34.67.137.105:8080')
+          let message = RelayClient.constructTextMessage(text, privKey)
+          let messageSet = new messages.MessageSet()
+          messageSet.addMessages(message)
+
+          let senderAddr = privKey.toAddress('testnet').toLegacyAddress()
+          console.log(senderAddr)
+
+          client.pushMessages(senderAddr, messageSet)
         },
         switchOrder ({ commit }, addr) {
           commit('switchOrder', addr)
@@ -196,8 +212,8 @@ export default new Vuex.Store({
         }
       },
       getters: {
-        getHandler (state) {
-          return state.handler
+        getClient (state) {
+          return state.client
         }
       }
     },

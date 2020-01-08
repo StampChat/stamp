@@ -139,7 +139,7 @@ export default {
         // Set locally
         this.setAcceptancePrice(acceptancePrice)
 
-        await client.applyFilter(idAddress, filterApplication, token)
+        await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
         this.$q.loading.hide()
       })
     },

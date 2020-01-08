@@ -17,10 +17,17 @@ class RelayClient {
     let rawText = new TextEncoder('utf-8').encode(text)
     textEntry.setEntryData(rawText)
 
-    // Construct payload
+    // Aggregate entries
+    let entries = new messages.Entries()
+    entries.addEntries(textEntry)
+
+    let rawEntries = entries.serializeBinary()
+
+    // TODO: Encryption and set other fields
+
     let payload = new messages.Payload()
     payload.setTimestamp(Math.floor(Date.now() / 1000))
-    payload.addEntries(textEntry)
+    payload.setEntries(rawEntries)
 
     let serializedPayload = payload.serializeBinary()
     let hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
@@ -29,7 +36,7 @@ class RelayClient {
 
     let message = new messages.Message()
     let sig = ecdsa.sig.toCompact(1).slice(1)
-    message.setPubKey(privKey.toPublicKey().toBuffer())
+    message.setSenderPubKey(privKey.toPublicKey().toBuffer())
     message.setSignature(sig)
     message.setScheme(1)
     message.setSerializedPayload(serializedPayload)
@@ -89,7 +96,7 @@ class RelayClient {
 
   async applyFilter (addr, filterApplication, token) {
     let rawApplication = filterApplication.serializeBinary()
-    let url = `${this.url}/${addr.toLegacyAddress()}/filters`
+    let url = `${this.url}/${addr}/filters`
     try {
       await axios({
         method: 'put',
@@ -107,7 +114,7 @@ class RelayClient {
   }
 
   async getMessages (addr, token, startTime, endTime) {
-    let url = `${this.url}/${addr.toLegacyAddress()}/messages`
+    let url = `${this.url}/${addr}/messages`
 
     let response
     try {
@@ -126,14 +133,14 @@ class RelayClient {
       // TODO: Do something with err
     }
     if (response.status === 200) {
-      let messageSet = messages.Message.deserializeBinary(response.data)
-      return messageSet
+      let messagePage = messages.messagePage.deserializeBinary(response.data)
+      return messagePage
     }
   }
 
-  async putMessages (addr, messageSet) {
+  async pushMessages (addr, messageSet) {
     let rawMetadata = messageSet.serializeBinary()
-    let url = `${this.url}/${addr.toLegacyAddress()}/messages`
+    let url = `${this.url}/${addr}/messages`
     try {
       await axios({
         method: 'put',
