@@ -162,7 +162,7 @@ export default new Vuex.Store({
         startChatUpdater ({ commit, dispatch }) {
           setInterval(() => {
             dispatch('refresh')
-          }, 10_000)
+          }, 1_000)
         },
         async sendMessage ({ commit, rootGetters }, { addr, text }) {
           // Send locally
@@ -193,6 +193,9 @@ export default new Vuex.Store({
           commit('deleteChat', addr)
         },
         async refresh ({ commit, rootGetters, dispatch, getters }) {
+          if (rootGetters['wallet/isSetupComplete'] === false) {
+            return
+          }
           let myAddressStr = rootGetters['wallet/getMyAddressStr']
           let client = rootGetters['relayClient/getClient']
           let lastReceived = getters['getLastReceived'] || 0
@@ -296,12 +299,16 @@ export default new Vuex.Store({
     wallet: {
       namespaced: true,
       state: {
+        complete: false,
         xPrivKey: null,
         identityPrivKey: null,
         addresses: {},
         totalBalance: 0
       },
       mutations: {
+        completeSetup (state) {
+          state.complete = true
+        },
         reset (state) {
           state.xPrivKey = null
           state.identityPrivKey = null
@@ -336,6 +343,9 @@ export default new Vuex.Store({
         }
       },
       actions: {
+        completeSetup ({ commit }) {
+          commit('completeSetup')
+        },
         reset ({ commit }) {
           commit('reset')
         },
@@ -383,6 +393,9 @@ export default new Vuex.Store({
         }
       },
       getters: {
+        isSetupComplete (state) {
+          return state.complete
+        },
         getBalance (state) {
           return state.totalBalance
         },

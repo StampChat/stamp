@@ -133,6 +133,7 @@ class RelayClient {
     } catch (err) {
       // TODO: Do something with err
       console.log(err)
+      return
     }
     if (response.status === 200) {
       let messagePage = messages.MessagePage.deserializeBinary(response.data)

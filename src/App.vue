@@ -31,7 +31,7 @@ export default {
     // this.startClock()
 
     // Start profile watcher
-    // this.startProfileUpdater()
+    this.startProfileUpdater()
 
     // Start chat watcher
     this.startChatUpdater()

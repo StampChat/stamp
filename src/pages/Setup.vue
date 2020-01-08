@@ -398,7 +398,13 @@ export default {
     }
   },
   methods: {
-    ...mapActions({ setMyProfile: 'myProfile/setMyProfile', setXPrivKey: 'wallet/setXPrivKey', updateAddresses: 'wallet/updateAddresses', startListeners: 'wallet/startListeners' }),
+    ...mapActions({
+      setMyProfile: 'myProfile/setMyProfile',
+      setXPrivKey: 'wallet/setXPrivKey',
+      updateAddresses: 'wallet/updateAddresses',
+      startListeners: 'wallet/startListeners',
+      completeSetup: 'wallet/completeSetup'
+    }),
     ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler', getMyAddress: 'wallet/getMyAddress', getClient: 'electrumHandler/getClient', getAddresses: 'wallet/getAddresses', getIdentityPrivKey: 'wallet/getIdentityPrivKey' }),
     parseImage () {
       if (this.avatarPath == null) {
@@ -487,7 +493,7 @@ export default {
           this.setMyProfile(profile)
 
           this.$q.loading.hide()
-
+          this.completeSetup()
           this.$router.push('/')
           break
         default:
