@@ -149,7 +149,10 @@ export default new Vuex.Store({
             body: text,
             timestamp
           }
-          state.data[addr].message.push(newMsg)
+          state.data[addr].messages.push(newMsg)
+        },
+        setLastReceived (state, lastReceived) {
+          state.lastReceived = lastReceived
         }
       },
       actions: {
@@ -207,15 +210,33 @@ export default new Vuex.Store({
           }
 
           let messagePage = await client.getMessages(myAddressStr, token, lastReceived, null)
-          console.log(messagePage)
-          let messages = messagePage.getMessagesList()
-          for (let timedMessage in messages) {
+          let messageList = messagePage.getMessagesList()
+          for (let index in messageList) {
+            let timedMessage = messageList[index]
             let timestamp = timedMessage.getTimestamp()
             let message = timedMessage.getMessage()
             let rawSenderPubKey = message.getSenderPubKey()
             let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
             let addr = senderPubKey.toAddress('testnet').toCashAddress(true)
-            commit('receiveMessage', { addr, senderPubKey, timestamp })
+            let rawPayload = message.getSerializedPayload()
+
+            let payload = messages.Payload.deserializeBinary(rawPayload)
+
+            // TODO: Decrypt
+            let encryptedEntries = payload.getEntries()
+            let entries = messages.Entries.deserializeBinary(encryptedEntries)
+            let entriesList = entries.getEntriesList()
+            let lastReceived = null
+            for (let index in entriesList) {
+              let entry = entriesList[index]
+              // TODO: Don't assume it's a text msg
+              let text = new TextDecoder().decode(entry.getEntryData())
+              commit('receiveMessage', { addr, text, timestamp })
+              lastReceived = Math.max(lastReceived, timestamp)
+            }
+            if (lastReceived) {
+              commit('setLastReceived', lastReceived + 1)
+            }
           }
         }
       }
