@@ -5,14 +5,14 @@ function getRandomInt (max) {
   return Math.floor(Math.random() * Math.floor(max))
 }
 
-test('Encrypt entries', () => {
+test('Encrypt', () => {
   let raw = new ArrayBuffer(8)
   let privKey = PrivateKey()
   let destPubKey = PrivateKey().toPublicKey()
   crypto.encrypt(raw, privKey, destPubKey)
 })
 
-test('Decrypt entries', () => {
+test('Decrypt', () => {
   let length = 8
   let raw = new Uint8Array(new ArrayBuffer(length))
   for (let i = 0; i < length; i++) {
@@ -24,7 +24,5 @@ test('Decrypt entries', () => {
   let destPubKey = destPrivKey.toPublicKey()
   let { cipherText, ephemeralPubKey } = crypto.encrypt(raw, sourcePrivKey, destPubKey)
   let plainText = crypto.decrypt(cipherText, destPrivKey, sourcePubKey, ephemeralPubKey)
-  console.log(raw)
-  console.log(plainText)
-  // expect(plainText).toBe(raw)
+  expect(plainText).toStrictEqual(raw)
 })

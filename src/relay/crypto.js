@@ -48,7 +48,7 @@ export default {
     let rawBuffer = new forge.util.ByteBuffer(cipherText)
     cipher.update(rawBuffer)
     cipher.finish()
-    let plainText = cipher.output.bytes()
+    let plainText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
     return plainText
   }
 }
