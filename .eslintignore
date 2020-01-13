@@ -1,5 +1,5 @@
 /dist
 /src/keyserver/addressmetadata_pb.js
-/src/keyserver/paymentrequest_pb.js
 /src/relay/messages_pb.js
 /src/relay/filters_pb.js
+/src/pop/paymentrequest_pb.js
