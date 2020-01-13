@@ -1,8 +1,7 @@
 import messages from './messages_pb'
 import filters from './filters_pb'
-import { PrivateKey } from 'bitcore-lib-cash'
+import crypto from './crypto'
 
-const forge = require('node-forge')
 const cashlib = require('bitcore-lib-cash')
 
 export default {
@@ -26,25 +25,7 @@ export default {
     if (scheme === 0) {
       payload.setEntries(rawEntries)
     } else if (scheme === 1) {
-      // Generate new (random) emphemeral key
-      let ephemeralPrivKey = PrivateKey()
-
-      // Construct DH key
-      let diffieKeyPoint = destPubKey.point.mul(ephemeralPrivKey.point) + privKey.point
-      let diffieKeyPointRaw = cashlib.crypto.Point.pointToCompressed(diffieKeyPoint)
-
-      // Extract encryption params from digest
-      let digest = cashlib.sha256(diffieKeyPointRaw)
-      let iv = digest.slice(0, 16)
-      let key = digest.slice(16)
-
-      // Encrypt entries
-      let cipher = forge.cipher.createCipher('AES-CBC', key)
-      cipher.start({ iv })
-      cipher.update(rawEntries)
-      cipher.finish()
-      let encryptedEntries = cipher.output
-
+      let encryptedEntries = crypto.encrypt(rawEntries, privKey, destPubKey)
       payload.setEntries(encryptedEntries)
     } else {
       // TODO: Raise error
