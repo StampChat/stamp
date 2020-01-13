@@ -25,8 +25,9 @@ export default {
     if (scheme === 0) {
       payload.setEntries(rawEntries)
     } else if (scheme === 1) {
-      let encryptedEntries = crypto.encrypt(rawEntries, privKey, destPubKey)
+      let { encryptedEntries, ephemeralPubPointRaw } = crypto.encrypt(rawEntries, privKey, destPubKey)
       payload.setEntries(encryptedEntries)
+      payload.setSecretSeed(ephemeralPubPointRaw)
     } else {
       // TODO: Raise error
       return
