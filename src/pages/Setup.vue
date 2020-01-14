@@ -20,146 +20,126 @@
 
         <q-step
           :name="2"
-          title="Create/Import a Key"
+          title="Setup Wallet"
           icon="vpn_key"
           :done="step > 2"
         >
-          <q-list>
-            <div class="q-pb-sm">
-              <q-expansion-item
-                class="shadow-1 overflow-hidden"
-                style="border-radius: 30px"
-                icon="new_releases"
-                label="New Seed"
-                header-class="bg-primary text-white"
-                expand-icon-class="text-white"
-                v-model="generateExpanded"
-                @show="importExpanded=false"
+          <q-splitter
+            :value=7.5
+            disable
+          >
+            <template v-slot:before>
+              <q-tabs
+                v-model="seedTabs"
+                vertical
+                class="text-primary"
               >
-                <q-card>
-                  <q-slide-transition>
-                    <q-banner
-                      class="bg-primary text-white"
-                      v-show="generatedWarning"
-                    >
-                      <span class="text-bold">Warning:</span> Forgetting this seed phrase will result in the bitcoin wallet and any contained money being lost.
-                      Do not overestimate your ability to remember passphrases especially when you may not use it very often.
-                      <template v-slot:action>
-                        <q-btn
-                          flat
-                          color="white"
-                          label="Dismiss"
-                          @click="generatedWarning = false"
-                        />
-                      </template>
-                    </q-banner>
-                  </q-slide-transition>
-
-                  <q-card-section>
-                    <q-input
-                      class="text-bold text-h6"
-                      v-model="generatedSeed"
-                      filled
-                      type="textarea"
-                      readonly
-                      rows="1"
-                    >
-                      <q-menu
-                        touch-position
-                        context-menu
-                      >
-                        <q-list
-                          dense
-                          style="min-width: 100px"
-                        >
-                          <q-item
-                            clickable
-                            v-close-popup
-                            @click="copyGenerated"
-                          >
-                            <q-item-section>Copy</q-item-section>
-                          </q-item>
-                        </q-list>
-                      </q-menu>
-                    </q-input>
-                    <div class="q-pa-md float-right">
-                      <q-btn
-                        color="primary"
-                        flat
-                        icon="content_copy"
-                        @click="copyGenerated"
-                      />
-                      <q-btn
-                        color="primary"
-                        label="Generate"
-                        @click="nextMnemonic"
-                      />
-                    </div>
-                  </q-card-section>
-                </q-card>
-              </q-expansion-item>
-            </div>
-            <div class="q-py-sm">
-
-              <q-expansion-item
-                class="shadow-1 overflow-hidden"
-                style="border-radius: 30px"
-                icon="import_export"
-                label="Import Seed"
-                header-class="bg-primary text-white"
-                expand-icon-class="text-white"
-                v-model="importExpanded"
-                @show="generateExpanded=false"
+                <q-tab
+                  name="new"
+                  icon="new_releases"
+                  label="New Seed"
+                />
+                <q-tab
+                  name="import"
+                  icon="import_export"
+                  label="Import Seed"
+                />
+              </q-tabs>
+            </template>
+            <template v-slot:after>
+              <q-tab-panels
+                v-model="seedTabs"
+                animated
+                transition-prev="jump-up"
+                transition-next="jump-up"
               >
-                <q-card>
-                  <q-card-section>
-                    <q-input
-                      class="text-bold text-h6"
-                      v-model="importedSeed"
-                      filled
-                      type="textarea"
-                      rows="1"
-                      placeholder="Enter a seed phrase..."
+                <q-tab-panel name="new">
+                  <q-input
+                    class="text-bold text-h6"
+                    v-model="generatedSeed"
+                    filled
+                    type="textarea"
+                    readonly
+                    rows="1"
+                  >
+                    <q-menu
+                      touch-position
+                      context-menu
                     >
-                      <q-menu
-                        touch-position
-                        context-menu
+                      <q-list
+                        dense
+                        style="min-width: 100px"
                       >
-                        <q-list
-                          dense
-                          style="min-width: 100px"
+                        <q-item
+                          clickable
+                          v-close-popup
+                          @click="copyGenerated"
                         >
-                          <q-item
-                            clickable
-                            v-close-popup
-                            @click="pasteImported"
-                          >
-                            <q-item-section>Paste</q-item-section>
-                          </q-item>
-                        </q-list>
-                      </q-menu>
-                      <template v-slot:after>
-                        <q-icon
-                          v-show="!isImportedValid"
-                          name="warning"
-                          class="text-red"
-                          size="lg"
-                        />
-                        <q-icon
-                          v-show="isImportedValid"
-                          name="check"
-                          class="text-green"
-                          size="lg"
-                        />
-                      </template>
-                    </q-input>
+                          <q-item-section>Copy</q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                  </q-input>
+                  <div class="q-pa-md float-right">
+                    <q-btn
+                      color="primary"
+                      flat
+                      icon="content_copy"
+                      @click="copyGenerated"
+                    />
+                    <q-btn
+                      color="primary"
+                      label="Generate"
+                      @click="nextMnemonic"
+                    />
+                  </div>
+                </q-tab-panel>
 
-                  </q-card-section>
-                </q-card>
-              </q-expansion-item>
-            </div>
-
-          </q-list>
+                <q-tab-panel name="import">
+                  <q-input
+                    class="text-bold text-h6"
+                    v-model="importedSeed"
+                    filled
+                    type="textarea"
+                    rows="1"
+                    placeholder="Enter a seed phrase..."
+                  >
+                    <q-menu
+                      touch-position
+                      context-menu
+                    >
+                      <q-list
+                        dense
+                        style="min-width: 100px"
+                      >
+                        <q-item
+                          clickable
+                          v-close-popup
+                          @click="pasteImported"
+                        >
+                          <q-item-section>Paste</q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-menu>
+                    <template v-slot:after>
+                      <q-icon
+                        v-show="!isImportedValid"
+                        name="warning"
+                        class="text-red"
+                        size="lg"
+                      />
+                      <q-icon
+                        v-show="isImportedValid"
+                        name="check"
+                        class="text-green"
+                        size="lg"
+                      />
+                    </template>
+                  </q-input>
+                </q-tab-panel>
+              </q-tab-panels>
+            </template>
+          </q-splitter>
         </q-step>
 
         <q-step
@@ -318,7 +298,10 @@
           icon="build"
           style="min-height: 300px;"
         >
-          <q-splitter :v-model="20.0">
+          <q-splitter
+            :value=7.5
+            disable
+          >
             <template v-slot:before>
               <q-tabs
                 v-model="settingsTab"
@@ -355,7 +338,7 @@
                       <div class="row q-pa-md">
                         <q-input
                           outlined
-                          v-model="filterPrice"
+                          v-model="acceptancePrice"
                           label="Inbox Fee *"
                           hint="The minimum fee required for strangers to message you"
                           style="width:100%"
@@ -410,7 +393,7 @@
               v-else-if="step === 2"
               @click="next()"
               color="primary"
-              label="Continue"
+              :label="seedTabs==='new'?'New Wallet':'Import Wallet'"
               :disable="!isConnected"
             />
             <q-btn
@@ -440,32 +423,48 @@
         <template v-slot:message>
           <q-banner
             v-if="step === 1"
-            class="bg-blue-8 text-white q-px-lg"
+            class="bg-primary text-white q-px-lg"
           >
             Welcome to IRCash!
           </q-banner>
           <q-banner
             v-else-if="step === 2"
-            class="bg-blue-8 text-white q-px-lg"
+            class="bg-primary text-white q-px-lg"
           >
             How would you like to add a key to IRCash? </q-banner>
           <q-banner
             v-else-if="step === 3"
-            class="bg-blue-8 text-white q-px-lg"
+            class="bg-primary text-white q-px-lg"
           >
             Deposit Bitcoin Cash to your messaging wallet...
           </q-banner>
           <q-banner
             v-else-if="step === 4"
-            class="bg-blue-8 text-white q-px-lg"
+            class="bg-primary text-white q-px-lg"
           >
             Create your profile...
           </q-banner>
           <q-banner
             v-else
-            class="bg-blue-8 text-white q-px-lg"
+            class="bg-primary text-white q-px-lg"
           >
             Tweak your settings...
+          </q-banner>
+          <q-banner
+            v-if="step === 2"
+            class="bg-primary text-white"
+            v-show="generatedWarning"
+          >
+            <span class="text-bold">Warning:</span> Forgetting this seed phrase will result in the bitcoin wallet and any contained money being lost.
+            Do not overestimate your ability to remember passphrases especially when you may not use it very often.
+            <template v-slot:action>
+              <q-btn
+                flat
+                color="white"
+                label="Dismiss"
+                @click="generatedWarning = false"
+              />
+            </template>
           </q-banner>
         </template>
       </q-stepper>
@@ -480,6 +479,8 @@ import { mapActions, mapGetters } from 'vuex'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
 import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop/index'
+import RelayClient from '../relay/client'
+import relayConstructors from '../relay/constructors'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -495,9 +496,10 @@ const relayUrlOptions = ['http://34.67.137.105:8080', 'bitcoin.com', 'cashweb.io
 export default {
   data () {
     return {
-      step: 1,
+      step: 2,
       name: '',
       bio: '',
+      seedTabs: 'new',
       avatarPath: null,
       avatarDataURL: null,
       generatedWarning: true,
@@ -510,7 +512,7 @@ export default {
       paymentAddrCounter: 0,
       xPrivKey: null,
       currentAddress: null,
-      filterPrice: 500,
+      acceptancePrice: 500,
       settingsTab: 'inbox',
       relayUrl: 'http://34.67.137.105:8080',
       options: []
@@ -522,9 +524,16 @@ export default {
       setXPrivKey: 'wallet/setXPrivKey',
       updateAddresses: 'wallet/updateAddresses',
       startListeners: 'wallet/startListeners',
-      completeSetup: 'wallet/completeSetup'
+      completeSetup: 'wallet/completeSetup',
+      setRelayToken: 'relayClient/setToken'
     }),
-    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler', getMyAddress: 'wallet/getMyAddress', getClient: 'electrumHandler/getClient', getAddresses: 'wallet/getAddresses', getIdentityPrivKey: 'wallet/getIdentityPrivKey' }),
+    ...mapGetters({
+      getKsHandler: 'keyserverHandler/getHandler',
+      getMyAddress: 'wallet/getMyAddress',
+      getClient: 'electrumHandler/getClient',
+      getAddresses: 'wallet/getAddresses',
+      getIdentityPrivKey: 'wallet/getIdentityPrivKey'
+    }),
     parseImage () {
       if (this.avatarPath == null) {
         return
@@ -584,43 +593,20 @@ export default {
           // Send seed
           worker.postMessage(this.seed)
           break
+        case 4:
+          await this.setUpProfile()
+          this.$refs.stepper.next()
+
+          break
         case 5:
-          // Set profile
+          await this.setUpFilter()
+
           let profile = {
-            'name': this.name,
-            'bio': this.bio,
-            'avatar': this.avatarDataURL
+            name: this.name,
+            bio: this.bio,
+            avatar: this.avatarDataURL,
+            acceptancePrice: this.acceptancePrice
           }
-
-          let ksHandler = this.getKsHandler()
-          let serverUrl = ksHandler.chooseServer()
-
-          // Request Payment
-          this.$q.loading.show({
-            delay: 100,
-            message: 'Requesting Payment...'
-          })
-
-          let idAddress = this.getMyAddress()
-          let { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
-          this.$q.loading.show({
-            delay: 100,
-            message: 'Sending Payment...'
-          })
-
-          let { payment, paymentUrl } = await pop.constructPaymentTransaction(paymentDetails)
-
-          let { token } = await pop.sendPayment(paymentUrl, payment)
-
-          this.$q.loading.show({
-            delay: 100,
-            message: 'Uploading Metadata...'
-          })
-
-          // Construct metadata
-          let idPrivKey = this.getIdentityPrivKey()
-          let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
-          await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
 
           this.setMyProfile(profile)
 
@@ -631,6 +617,83 @@ export default {
         default:
           this.$refs.stepper.next()
       }
+    },
+    async setUpProfile () {
+      // Set profile
+      let profile = {
+        'name': this.name,
+        'bio': this.bio,
+        'avatar': this.avatarDataURL
+      }
+
+      let ksHandler = this.getKsHandler()
+      let serverUrl = ksHandler.chooseServer()
+
+      // Request Payment
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Requesting Payment...'
+      })
+
+      let idAddress = this.getMyAddress()
+      let { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Sending Payment...'
+      })
+
+      let { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
+      let { token } = await pop.sendPayment(paymentUrl, payment)
+
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Uploading Metadata...'
+      })
+
+      // Construct metadata
+      let idPrivKey = this.getIdentityPrivKey()
+      let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
+
+      // Put to keyserver
+      await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
+
+      this.$q.loading.hide()
+    },
+    async setUpFilter () {
+      // Set filter
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Requesting Payment...'
+      })
+
+      // TODO: Make variable
+      let client = new RelayClient('http://34.67.137.105:8080')
+
+      let idAddress = this.getMyAddress()
+      let filterPaymentRequest = await client.filterPaymentRequest(idAddress.toLegacyAddress())
+
+      // Send payment
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Sending Payment...'
+      })
+
+      // Get token from relay server
+      let { paymentUrl, payment } = await pop.constructPaymentTransaction(filterPaymentRequest.paymentDetails)
+      let { token } = await pop.sendPayment(paymentUrl, payment)
+      this.setRelayToken(token)
+
+      // Create filter application
+      let idPrivKey = this.getIdentityPrivKey()
+      let filterApplication = relayConstructors.constructPriceFilterApplication(true, this.acceptancePrice, this.acceptancePrice, idPrivKey)
+
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Opening Inbox...'
+      })
+
+      // Apply remotely
+      await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
     },
     nextMnemonic () {
       this.generatedSeed = bip39.generateMnemonic()

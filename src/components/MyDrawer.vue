@@ -77,7 +77,6 @@
 import { mapGetters, mapActions } from 'vuex'
 import ProfileCard from './ProfileCard.vue'
 import RelayClient from '../relay/client.js'
-import pop from '../pop/index'
 import relayConstructors from '../relay/constructors'
 
 export default {
@@ -92,7 +91,8 @@ export default {
     }),
     ...mapGetters({
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',
-      getMyAddress: 'wallet/getMyAddress'
+      getMyAddress: 'wallet/getMyAddress',
+      getRelayToken: 'relayClient/getToken'
     }),
     setFilter () {
       this.$q.dialog({
@@ -108,28 +108,11 @@ export default {
         // Get identity address
         let idAddress = this.getMyAddress()
 
-        // Get payment request
-        this.$q.loading.show({
-          delay: 100,
-          message: 'Requesting Payment...'
-        })
+        // TODO: Make variable
         let client = new RelayClient('http://34.67.137.105:8080')
-        let { paymentDetails } = await client.filterPaymentRequest(idAddress.toLegacyAddress())
 
-        // Send payment
-        this.$q.loading.show({
-          delay: 100,
-          message: 'Sending Payment...'
-        })
-
-        let { payment, paymentUrl } = await pop.constructPaymentTransaction(paymentDetails)
-        let { token } = await pop.sendPayment(paymentUrl, payment)
-
-        // Upload filter
-        this.$q.loading.show({
-          delay: 100,
-          message: 'Uploading Filter...'
-        })
+        // Get relay token
+        let token = this.getRelayToken()
 
         // Get identity privKey
         let privKey = this.getIdentityPrivKey()

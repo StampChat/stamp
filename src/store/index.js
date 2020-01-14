@@ -6,7 +6,6 @@ import addressmetadata from '../keyserver/addressmetadata_pb'
 import VCard from 'vcf'
 import VuexPersistence from 'vuex-persist'
 import messages from '../relay/messages_pb'
-import pop from '../pop/index'
 import relayConstructors from '../relay/constructors'
 import { PublicKey } from 'bitcore-lib-cash'
 import crypto from '../relay/crypto'
@@ -196,7 +195,7 @@ export default new Vuex.Store({
         deleteChat ({ commit }, addr) {
           commit('deleteChat', addr)
         },
-        async refresh ({ commit, rootGetters, dispatch, getters }) {
+        async refresh ({ commit, rootGetters, getters }) {
           if (rootGetters['wallet/isSetupComplete'] === false) {
             return
           }
@@ -206,15 +205,6 @@ export default new Vuex.Store({
 
           // If token is null then purchase one
           let token = rootGetters['relayClient/getToken']
-          if (token === null) {
-            let client = new RelayClient('http://34.67.137.105:8080') // TODO: Not hard coded
-            let { paymentDetails } = await client.messagePaymentRequest(myAddressStr)
-
-            let { payment, paymentUrl } = await pop.constructPaymentTransaction(paymentDetails)
-            let { token } = await pop.sendPayment(paymentUrl, payment)
-
-            dispatch('relayClient/setToken', token, { root: true })
-          }
 
           let messagePage = await client.getMessages(myAddressStr, token, lastReceived, null)
           let messageList = messagePage.getMessagesList()
