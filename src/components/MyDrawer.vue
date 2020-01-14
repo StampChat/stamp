@@ -78,6 +78,7 @@ import { mapGetters, mapActions } from 'vuex'
 import ProfileCard from './ProfileCard.vue'
 import RelayClient from '../relay/client.js'
 import pop from '../pop/index'
+import relayConstructors from '../relay/constructors'
 
 export default {
   components: {
@@ -134,7 +135,7 @@ export default {
         let privKey = this.getIdentityPrivKey()
 
         // Create filter application
-        let filterApplication = RelayClient.constructPriceFilterApplication(true, acceptancePrice, acceptancePrice, privKey)
+        let filterApplication = relayConstructors.constructPriceFilterApplication(true, acceptancePrice, acceptancePrice, privKey)
 
         // Apply remotely
         await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)

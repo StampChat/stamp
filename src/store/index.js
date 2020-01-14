@@ -7,6 +7,9 @@ import VCard from 'vcf'
 import VuexPersistence from 'vuex-persist'
 import messages from '../relay/messages_pb'
 import pop from '../pop/index'
+import relayConstructors from '../relay/constructors'
+import { PublicKey } from 'bitcore-lib-cash'
+import crypto from '../relay/crypto'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -172,7 +175,8 @@ export default new Vuex.Store({
           let privKey = rootGetters['wallet/getIdentityPrivKey']
 
           let client = new RelayClient('http://34.67.137.105:8080')
-          let message = RelayClient.constructTextMessage(text, privKey)
+          let destPubKey = rootGetters['contacts/getPubKey'](addr)
+          let message = relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
           let messageSet = new messages.MessageSet()
           messageSet.addMessages(message)
 
@@ -203,7 +207,7 @@ export default new Vuex.Store({
           // If token is null then purchase one
           let token = rootGetters['relayClient/getToken']
           if (token === null) {
-            let client = new RelayClient('http://34.67.137.105:8080')
+            let client = new RelayClient('http://34.67.137.105:8080') // TODO: Not hard coded
             let { paymentDetails } = await client.messagePaymentRequest(myAddressStr)
 
             let { payment, paymentUrl } = await pop.constructPaymentTransaction(paymentDetails)
@@ -216,6 +220,10 @@ export default new Vuex.Store({
           let messageList = messagePage.getMessagesList()
           for (let index in messageList) {
             let timedMessage = messageList[index]
+
+            // TODO: Check correct destination
+            // let destPubKey = timedMessage.getDestination()
+
             let timestamp = timedMessage.getTimestamp()
             let message = timedMessage.getMessage()
             let rawSenderPubKey = message.getSenderPubKey()
@@ -225,9 +233,22 @@ export default new Vuex.Store({
 
             let payload = messages.Payload.deserializeBinary(rawPayload)
 
-            // TODO: Decrypt
-            let encryptedEntries = payload.getEntries()
-            let entries = messages.Entries.deserializeBinary(encryptedEntries)
+            let scheme = payload.getEncryptionScheme()
+            let entriesRaw
+            if (scheme === 0) {
+              entriesRaw = payload.getEntries()
+            } else if (scheme === 1) {
+              let entriesCipherText = payload.getEntries()
+
+              let secretSeed = payload.getSecretSeed()
+              let ephemeralPubKey = PublicKey.fromBuffer(secretSeed)
+              let privKey = rootGetters['wallet/getIdentityPrivKey']
+              entriesRaw = crypto.decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
+            } else {
+              // TODO: Raise error
+            }
+
+            let entries = messages.Entries.deserializeBinary(entriesRaw)
             let entriesList = entries.getEntriesList()
             let lastReceived = null
             for (let index in entriesList) {
@@ -464,13 +485,18 @@ export default new Vuex.Store({
           //   name: 'Anon',
           //   bio: '',
           //   avatar: ...,
-          //   acceptancePrice: ...
+          //   acceptancePrice: ...,
+          //   pubKey: ...
           // },
         }
       },
       getters: {
         getProfile: (state) => (addr) => {
           return state.profiles[addr]
+        },
+        getPubKey: (state) => (addr) => {
+          let arr = Uint8Array.from(Object.values(state.profiles[addr].pubKey))
+          return PublicKey.fromBuffer(arr)
         }
       },
       mutations: {
@@ -491,7 +517,7 @@ export default new Vuex.Store({
             addr = res[0]
           }
 
-          let profile = { 'name': 'Retreiving...' }
+          let profile = { name: 'Retreiving...', acceptancePrice: 'Unknown', bio: '', avatar: null, pubKey: null }
 
           commit('updateProfile', { addr, profile })
 
@@ -510,21 +536,20 @@ export default new Vuex.Store({
           // Make this generic over networks
 
           // Get metadata
-          // Batch this
           let metadata = await this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`)
+
+          // Get PubKey
+          let pubKey = metadata.getPubKey()
 
           let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
 
+          // Find vCard
           function isVCard (entry) {
             return entry.getKind() === 'vcard'
           }
-
           let entryList = payload.getEntriesList()
-
-          // Get vCard
-          let rawCard = entryList.find(isVCard).getEntryData()
+          let rawCard = entryList.find(isVCard).getEntryData() // TODO: Cancel if not found
           let strCard = new TextDecoder().decode(rawCard)
-
           let vCard = new VCard().parse(strCard)
 
           let name = vCard.data.fn._data
@@ -565,7 +590,8 @@ export default new Vuex.Store({
             name,
             bio,
             avatar: avatarDataURL,
-            acceptancePrice
+            acceptancePrice,
+            pubKey
           }
           commit('updateProfile', { addr, profile })
         },

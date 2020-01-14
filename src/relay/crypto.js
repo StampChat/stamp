@@ -24,7 +24,7 @@ export default {
     let rawBuffer = new forge.util.ByteBuffer(plainText)
     cipher.update(rawBuffer)
     cipher.finish()
-    let cipherText = cipher.output
+    let cipherText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
 
     // Get empheral public key point
     let ephemeralPubKey = ephemeralPrivKey.toPublicKey()
