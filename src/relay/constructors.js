@@ -31,6 +31,7 @@ export default {
 
       payload.setEntries(cipherText)
       payload.setSecretSeed(ephemeralPubKeyRaw)
+      payload.setScheme(messages.Payload.EncryptionScheme.EPHEMERALDH)
     } else {
       // TODO: Raise error
       return
@@ -45,7 +46,6 @@ export default {
     let rawPubkey = privKey.toPublicKey().toBuffer()
     message.setSenderPubKey(rawPubkey)
     message.setSignature(sig)
-    message.setScheme(1)
     message.setSerializedPayload(serializedPayload)
 
     return message
