@@ -36,7 +36,7 @@ export default {
     // Start chat watcher
     this.startChatUpdater()
 
-    let ecl = new ElectrumClient(60002, 'blackie.c3-soft.com', 'tls')
+    let ecl = new ElectrumClient(51002, 'bch0.kister.net', 'tls')
     this.setClient(ecl)
   }
 }
