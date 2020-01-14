@@ -8,32 +8,25 @@
     :width="200"
     :breakpoint="400"
   >
+    <!-- Dialogs -->
+    <q-dialog v-model="newContactOpen">
+      <new-contact-dialog :active="newContactOpen" />
+    </q-dialog>
+
+    <!-- Drawer -->
     <q-scroll-area style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd">
       <q-list padding>
         <q-item
           clickable
           v-ripple
-          @click="setFilter"
-        >
-          <q-item-section avatar>
-            <q-icon name="filter_list" />
-          </q-item-section>
-
-          <q-item-section>
-            Set Filter
-          </q-item-section>
-        </q-item>
-        <q-item
-          clickable
-          v-ripple
-          @click="newContactPrompt"
+          @click="newContactOpen = true"
         >
           <q-item-section avatar>
             <q-icon name="add_comment" />
           </q-item-section>
 
           <q-item-section>
-            Add Contact
+            New Contact
           </q-item-section>
         </q-item>
         <q-item
@@ -48,7 +41,19 @@
             Contacts
           </q-item-section>
         </q-item>
+        <q-item
+          clickable
+          v-ripple
+          @click="setFilter"
+        >
+          <q-item-section avatar>
+            <q-icon name="filter_list" />
+          </q-item-section>
 
+          <q-item-section>
+            Set Filter
+          </q-item-section>
+        </q-item>
         <q-item
           clickable
           v-ripple
@@ -77,11 +82,18 @@
 import { mapGetters, mapActions } from 'vuex'
 import ProfileCard from './ProfileCard.vue'
 import RelayClient from '../relay/client.js'
+import NewContactDialog from './dialogs/NewContactDialog.vue'
 import relayConstructors from '../relay/constructors'
 
 export default {
   components: {
-    ProfileCard
+    ProfileCard,
+    NewContactDialog
+  },
+  data () {
+    return {
+      newContactOpen: false
+    }
   },
   methods: {
     ...mapActions({
@@ -127,20 +139,6 @@ export default {
         this.setAcceptancePrice(acceptancePrice)
 
         this.$q.loading.hide()
-      })
-    },
-    newContactPrompt () {
-      this.$q.dialog({
-        title: 'Add New Contact',
-        message: 'Contact address',
-        prompt: {
-          model: '',
-          type: 'text'
-        },
-        cancel: true,
-        persistent: true
-      }).onOk(async data => {
-        await this.addNewContact(data)
       })
     }
   },

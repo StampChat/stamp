@@ -349,7 +349,6 @@
                     </div>
                     <div class="col">
                       <div class="row q-pa-md">
-
                         <q-select
                           outlined
                           v-model="relayUrl"
@@ -499,14 +498,13 @@ export default {
       step: 1,
       name: '',
       bio: '',
-      seedTabs: 'new',
       avatarPath: null,
       avatarDataURL: null,
       generatedWarning: true,
       generatedSeed: '',
-      generateExpanded: false,
-      importExpanded: false,
       importedSeed: '',
+      seedTabs: 'new',
+      seed: null,
       walletBalance: 0,
       recomendedBalance: 2000,
       paymentAddrCounter: 0,
@@ -525,7 +523,8 @@ export default {
       updateAddresses: 'wallet/updateAddresses',
       startListeners: 'wallet/startListeners',
       completeSetup: 'wallet/completeSetup',
-      setRelayToken: 'relayClient/setToken'
+      setRelayToken: 'relayClient/setToken',
+      setAcceptancePrice: 'myProfile/setAcceptancePrice'
     }),
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
@@ -591,6 +590,11 @@ export default {
           }
 
           // Send seed
+          if (this.seedTabs === 'new') {
+            this.seed = this.generatedSeed
+          } else {
+            this.seed = this.importedSeed
+          }
           worker.postMessage(this.seed)
           break
         case 4:
@@ -694,6 +698,9 @@ export default {
 
       // Apply remotely
       await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
+
+      // Apply locally
+      this.setAcceptancePrice(this.acceptancePrice)
     },
     nextMnemonic () {
       this.generatedSeed = bip39.generateMnemonic()
@@ -756,15 +763,6 @@ export default {
         return String(this.getBalance / 1_000_000) + ' cBCH'
       } else {
         return String(this.getBalance / 1_00_000_000) + ' BCH'
-      }
-    },
-    seed () {
-      if (this.generateExpanded) {
-        return this.generatedSeed
-      } else if (this.importExpanded & this.isImportedValid) {
-        return this.importedSeed
-      } else {
-        return null
       }
     },
     isImportedValid () {

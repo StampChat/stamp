@@ -13,6 +13,19 @@ class RelayClient {
     return pop.getPaymentRequest(url, 'put')
   }
 
+  async getAcceptancePrice (addr) {
+    // Get fee
+    let acceptancePrice
+    try {
+      let filters = await this.getFilter(addr)
+      let priceFilter = filters.getPriceFilter()
+      acceptancePrice = priceFilter.getAcceptancePrice()
+    } catch (err) {
+      acceptancePrice = 'Unknown'
+    }
+    return acceptancePrice
+  }
+
   async getFilter (addr) {
     let url = `${this.url}/${addr}/filters`
     let response

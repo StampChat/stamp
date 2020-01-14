@@ -95,6 +95,57 @@ class KeyserverHandler {
     return KeyserverHandler.fetchMetadata(server, addr)
   }
 
+  async getProfile (addr) {
+    // Get metadata
+    let metadata = await this.uniformSample(addr)
+
+    // Get PubKey
+    let pubKey = metadata.getPubKey()
+
+    let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
+
+    // Find vCard
+    function isVCard (entry) {
+      return entry.getKind() === 'vcard'
+    }
+    let entryList = payload.getEntriesList()
+    let rawCard = entryList.find(isVCard).getEntryData() // TODO: Cancel if not found
+    let strCard = new TextDecoder().decode(rawCard)
+    let vCard = new VCard().parse(strCard)
+
+    let name = vCard.data.fn._data
+
+    // let bio = vCard.data.note._data
+    let bio = ''
+
+    // Get avatar
+    function isAvatar (entry) {
+      return entry.getKind() === 'avatar'
+    }
+    let avatarEntry = entryList.find(isAvatar)
+    let rawAvatar = avatarEntry.getEntryData()
+    function _arrayBufferToBase64 (buffer) {
+      var binary = ''
+      var bytes = new Uint8Array(buffer)
+      var len = bytes.byteLength
+      for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i])
+      }
+      return window.btoa(binary)
+    }
+    let value = avatarEntry.getHeadersList()[0].getValue()
+    let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
+
+    let profile = {
+      name,
+      bio,
+      avatar: avatarDataURL,
+      acceptancePrice: 'Unknown',
+      pubKey
+    }
+    return profile
+  }
+
   static async putMetadata (addr, server, metadata, token) {
     let rawMetadata = metadata.serializeBinary()
     let url = `${server}/keys/${addr.toLegacyAddress()}`
