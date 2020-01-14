@@ -3,3 +3,4 @@
 /src/relay/messages_pb.js
 /src/relay/filters_pb.js
 /src/pop/paymentrequest_pb.js
+/src/pop/wrapper_pb.js

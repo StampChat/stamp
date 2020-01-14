@@ -232,8 +232,7 @@ export default new Vuex.Store({
             let rawPayload = message.getSerializedPayload()
 
             let payload = messages.Payload.deserializeBinary(rawPayload)
-
-            let scheme = payload.getEncryptionScheme()
+            let scheme = payload.getScheme()
             let entriesRaw
             if (scheme === 0) {
               entriesRaw = payload.getEntries()
