@@ -496,7 +496,7 @@ const relayUrlOptions = ['http://34.67.137.105:8080', 'bitcoin.com', 'cashweb.io
 export default {
   data () {
     return {
-      step: 2,
+      step: 1,
       name: '',
       bio: '',
       seedTabs: 'new',
