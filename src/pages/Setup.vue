@@ -253,6 +253,7 @@
           title="Create a Profile"
           icon="person"
           style="min-height: 300px;"
+          :done="step > 4"
         >
           <div class="row">
             <div class="col">
@@ -311,14 +312,120 @@
             </div>
           </div>
         </q-step>
+        <q-step
+          :name="5"
+          title="Settings"
+          icon="build"
+          style="min-height: 300px;"
+        >
+          <q-splitter :v-model="20.0">
+            <template v-slot:before>
+              <q-tabs
+                v-model="settingsTab"
+                vertical
+                class="text-primary"
+              >
+                <q-tab
+                  name="inbox"
+                  icon="mail"
+                  label="Inbox"
+                />
+                <q-tab
+                  name="appearance"
+                  icon="wallpaper"
+                  label="Appearance"
+                />
+                <q-tab
+                  name="security"
+                  icon="fingerprint"
+                  label="Security"
+                />
+              </q-tabs>
+            </template>
+            <template v-slot:after>
+              <q-tab-panels
+                v-model="settingsTab"
+                animated
+                transition-prev="jump-up"
+                transition-next="jump-up"
+              >
+                <q-tab-panel name="inbox">
+                  <div class="row">
+                    <div class="col">
+                      <div class="row q-pa-md">
+                        <q-input
+                          outlined
+                          v-model="filterPrice"
+                          label="Inbox Fee *"
+                          hint="The minimum fee required for strangers to message you"
+                          style="width:100%"
+                          type="number"
+                          :rules="[ val => val && val.length > 0 || 'Please input an inbox fee']"
+                        />
+                      </div>
+                    </div>
+                    <div class="col">
+                      <div class="row q-pa-md">
+
+                        <q-select
+                          outlined
+                          v-model="relayUrl"
+                          use-input
+                          hide-selected
+                          fill-input
+                          new-value-mode="add"
+                          input-debounce="0"
+                          label="Relay URL *"
+                          :options="options"
+                          @filter="filterRelayFn"
+                          style="width:100%"
+                        >
+                          <template v-slot:no-option>
+                            <q-item>
+                              <q-item-section class="text-grey">
+                                No results
+                              </q-item-section>
+                            </q-item>
+                          </template>
+                        </q-select>
+                      </div>
+                    </div>
+                  </div>
+                </q-tab-panel>
+              </q-tab-panels>
+            </template>
+          </q-splitter>
+        </q-step>
 
         <template v-slot:navigation>
           <q-stepper-navigation>
             <q-btn
+              v-if="step === 1"
               @click="next()"
               color="primary"
-              :disable="!canProceedSeed"
-              :label="step === 4 ? 'Finish' : 'Continue'"
+              label="Continue"
+            />
+            <!-- TODO: Switch between labels -->
+            <q-btn
+              v-else-if="step === 2"
+              @click="next()"
+              color="primary"
+              label="Continue"
+              :disable="!isConnected"
+            />
+            <q-btn
+              v-else-if="step === 3"
+              @click="next()"
+              color="primary"
+              :disable="!(canProceedSeed && isConnected)"
+              label="Continue"
+            />
+            <q-btn
+              v-else
+              @click="next()"
+              color="primary"
+              :disable="!isConnected"
+              :label="step === 5 ? 'Finish' : 'Continue'"
             />
             <q-btn
               v-if="step > 1"
@@ -349,10 +456,16 @@
             Deposit Bitcoin Cash to your messaging wallet...
           </q-banner>
           <q-banner
-            v-else
+            v-else-if="step === 4"
             class="bg-blue-8 text-white q-px-lg"
           >
             Create your profile...
+          </q-banner>
+          <q-banner
+            v-else
+            class="bg-blue-8 text-white q-px-lg"
+          >
+            Tweak your settings...
           </q-banner>
         </template>
       </q-stepper>
@@ -377,6 +490,8 @@ const bip39 = require('bip39')
 Vue.component(VueQrcode.name, VueQrcode)
 Vue.use(VueRouter)
 
+const relayUrlOptions = ['http://34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']
+
 export default {
   data () {
     return {
@@ -394,7 +509,11 @@ export default {
       recomendedBalance: 2000,
       paymentAddrCounter: 0,
       xPrivKey: null,
-      currentAddress: null
+      currentAddress: null,
+      filterPrice: 500,
+      settingsTab: 'inbox',
+      relayUrl: 'http://34.67.137.105:8080',
+      options: []
     }
   },
   methods: {
@@ -415,6 +534,19 @@ export default {
       reader.onload = () => {
         this.avatarDataURL = reader.result
       }
+    },
+    filterRelayFn (val, update) {
+      if (val === '') {
+        update(() => {
+          this.options = relayUrlOptions
+        })
+        return
+      }
+
+      update(() => {
+        const needle = val.toLowerCase()
+        this.options = relayUrlOptions.filter(v => v.toLowerCase().indexOf(needle) > -1)
+      })
     },
     async next () {
       switch (this.step) {
@@ -452,7 +584,7 @@ export default {
           // Send seed
           worker.postMessage(this.seed)
           break
-        case 4:
+        case 5:
           // Set profile
           let profile = {
             'name': this.name,
@@ -576,11 +708,10 @@ export default {
       return bip39.validateMnemonic(this.importedSeed)
     },
     canProceedSeed () {
-      if (this.step === 2) {
-        return (this.seed !== null) && this.connected
-      } else {
-        return true
-      }
+      return (this.seed !== null)
+    },
+    isConnected () {
+      return this.connected
     }
   },
   created () {
