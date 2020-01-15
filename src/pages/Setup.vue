@@ -482,6 +482,7 @@ import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop/index'
 import RelayClient from '../relay/client'
 import relayConstructors from '../relay/constructors'
+import { copyToClipboard } from 'quasar'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -714,30 +715,28 @@ export default {
       this.currentAddress = privKey.privateKey.toAddress('testnet')
     },
     copyGenerated () {
-      var dummy = document.createElement('textarea')
-      document.body.appendChild(dummy)
-      dummy.value = this.generatedSeed
-      dummy.select()
-      document.execCommand('copy')
-      document.body.removeChild(dummy)
-      this.$q.notify({
-        message: '<div class="text-center"> Seed copied to clipboard </div>',
-        html: true,
-        color: 'purple'
+      copyToClipboard(this.generatedSeed).then(() => {
+        this.$q.notify({
+          message: '<div class="text-center"> Seed copied to clipboard </div>',
+          html: true,
+          color: 'purple'
+        })
       })
+        .catch(() => {
+          // fail
+        })
     },
     copyAddress () {
-      var dummy = document.createElement('textarea')
-      document.body.appendChild(dummy)
-      dummy.value = this.currentAddress
-      dummy.select()
-      document.execCommand('copy')
-      document.body.removeChild(dummy)
-      this.$q.notify({
-        message: '<div class="text-center"> Address copied to clipboard </div>',
-        html: true,
-        color: 'purple'
+      copyToClipboard(this.currentAddress).then(() => {
+        this.$q.notify({
+          message: '<div class="text-center"> Address copied to clipboard </div>',
+          html: true,
+          color: 'purple'
+        })
       })
+        .catch(() => {
+          // fail
+        })
     },
     pasteImported () {
       var el = document.createElement('textarea')
