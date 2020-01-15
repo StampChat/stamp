@@ -624,7 +624,7 @@ export default new Vuex.Store({
     },
     splitter: {
       state: {
-        splitterRatio: 40
+        splitterRatio: 20
       },
       mutations: {
         setSplitterRatio (state, ratio) {

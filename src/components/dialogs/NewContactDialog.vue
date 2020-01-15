@@ -16,7 +16,10 @@
       />
     </q-card-section>
     <q-slide-transition>
-      <q-card-section v-if="(profile === null) && address !== ''">
+      <q-card-section
+        class="q-py-none"
+        v-if="(profile === null) && address !== ''"
+      >
         <q-item>
           <q-item-section avatar>
             <q-icon
@@ -26,17 +29,28 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>Not found</q-item-label>
+            <!-- TODO: Error information here -->
           </q-item-section>
         </q-item>
       </q-card-section>
       <q-card-section
-        class="text-center"
+        class="q-py-none"
         v-else-if="profile === 'loading'"
       >
-        <q-spinner
-          color="primary"
-          size="3em"
-        />
+        <q-item>
+          <q-item-section avatar>
+            <q-skeleton type="QAvatar" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>
+              <q-skeleton type="text" />
+            </q-item-label>
+            <q-item-label caption>
+              <q-skeleton type="text" />
+            </q-item-label>
+          </q-item-section>
+        </q-item>
+
       </q-card-section>
       <q-card-section
         v-else-if="profile !== null"
@@ -103,7 +117,6 @@ export default {
         profile.acceptancePrice = await relayClient.getAcceptancePrice(newAddress)
         this.profile = profile
       } catch {
-        this.address = null
         this.profile = null
       }
     }
@@ -118,8 +131,6 @@ export default {
     }),
     addContact () {
       let cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
-      console.log(cashAddress)
-      console.log(this.profile)
       this.addContactVuex({ addr: cashAddress, profile: this.profile })
     }
   }
