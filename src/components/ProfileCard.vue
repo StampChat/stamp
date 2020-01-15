@@ -47,6 +47,7 @@
             color="white"
             icon="file_copy"
             size="sm"
+            @click="copyAddress()"
           />
         </q-item-section>
       </q-item>
@@ -56,7 +57,23 @@
 </template>
 
 <script>
+import { copyToClipboard } from 'quasar'
+
 export default {
-  props: ['avatar', 'name', 'bio', 'address', 'acceptancePrice']
+  props: ['avatar', 'name', 'bio', 'address', 'acceptancePrice'],
+  methods: {
+    copyAddress () {
+      copyToClipboard(this.address).then(() => {
+        this.$q.notify({
+          message: '<div class="text-center"> Address copied to clipboard </div>',
+          html: true,
+          color: 'purple'
+        })
+      })
+        .catch(() => {
+          // fail
+        })
+    }
+  }
 }
 </script>
