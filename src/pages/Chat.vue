@@ -53,13 +53,12 @@ export default {
   components: {
     ChatMessage
   },
-  created () {
-    // Start websocket listener
-    let client = this.getRelayClient()
-    client.setUpWebsocket(this.getAddressStr(), this.getToken())
-  },
   methods: {
-    ...mapActions({ sendMessageVuex: 'chats/sendMessage', switchOrder: 'chats/switchOrder' }),
+    ...mapActions({
+      sendMessageVuex: 'chats/sendMessage',
+      switchOrder: 'chats/switchOrder',
+      refreshChat: 'chats/refresh'
+    }),
     ...mapGetters({
       getRelayClient: 'relayClient/getClient',
       getAddressStr: 'wallet/getMyAddressStr',
@@ -71,6 +70,14 @@ export default {
       this.message = ''
       this.$nextTick(() => this.$refs.inputBox.focus())
     }
+  },
+  created () {
+    // Start websocket listener
+    let client = this.getRelayClient()
+    client.setUpWebsocket(this.getAddressStr(), this.getToken())
+
+    // Get historic messages
+    this.refreshChat()
   },
   computed: {
     ...mapGetters({ getProfile: 'contacts/getProfile', getAllMessages: 'chats/getAllMessages', getActiveChat: 'chats/getActiveChat' }),

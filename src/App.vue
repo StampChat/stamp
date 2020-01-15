@@ -37,9 +37,6 @@ export default {
     // Start profile watcher
     this.startProfileUpdater()
 
-    // Start chat watcher
-    this.startChatUpdater()
-
     let ecl = new ElectrumClient(51002, 'bch0.kister.net', 'tls')
     this.setClient(ecl)
   }

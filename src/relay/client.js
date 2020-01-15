@@ -2,6 +2,7 @@ import axios from 'axios'
 import messages from './messages_pb'
 import filters from './filters_pb'
 import pop from '../pop/index'
+import store from '../store/index'
 
 const WebSocket = window.require('ws')
 
@@ -23,7 +24,19 @@ class RelayClient {
     let socket = new WebSocket(url, opts)
 
     socket.onmessage = function (event) {
-      console.log(event)
+      let buffer = event.data
+      let timedMessageSet = messages.TimedMessageSet.deserializeBinary(buffer)
+      let timestamp = timedMessageSet.getTimestamp()
+      let messageList = timedMessageSet.getMessagesList()
+      for (let index in messageList) {
+        let message = messageList[index]
+        store.dispatch('chats/addMessage', { timestamp, message })
+      }
+      let lastReceived = store.getters['chats/getLastReceived'] || 0
+      lastReceived = Math.max(lastReceived, timestamp)
+      if (lastReceived) {
+        store.commit('chats/setLastReceived', lastReceived + 1)
+      }
     }
   }
 
