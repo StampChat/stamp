@@ -195,7 +195,38 @@ export default new Vuex.Store({
         deleteChat ({ commit }, addr) {
           commit('deleteChat', addr)
         },
-        async refresh ({ commit, rootGetters, getters }) {
+        addMessage ({ commit, rootGetters }, { message, timestamp }) {
+          let rawSenderPubKey = message.getSenderPubKey()
+          let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
+          let addr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
+          let rawPayload = message.getSerializedPayload()
+
+          let payload = messages.Payload.deserializeBinary(rawPayload)
+          let scheme = payload.getScheme()
+          let entriesRaw
+          if (scheme === 0) {
+            entriesRaw = payload.getEntries()
+          } else if (scheme === 1) {
+            let entriesCipherText = payload.getEntries()
+
+            let secretSeed = payload.getSecretSeed()
+            let ephemeralPubKey = PublicKey.fromBuffer(secretSeed)
+            let privKey = rootGetters['wallet/getIdentityPrivKey']
+            entriesRaw = crypto.decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
+          } else {
+            // TODO: Raise error
+          }
+
+          let entries = messages.Entries.deserializeBinary(entriesRaw)
+          let entriesList = entries.getEntriesList()
+          for (let index in entriesList) {
+            let entry = entriesList[index]
+            // TODO: Don't assume it's a text msg
+            let text = new TextDecoder().decode(entry.getEntryData())
+            commit('receiveMessage', { addr, text, timestamp })
+          }
+        },
+        async refresh ({ commit, rootGetters, getters, dispatch }) {
           if (rootGetters['wallet/isSetupComplete'] === false) {
             return
           }
@@ -208,6 +239,7 @@ export default new Vuex.Store({
 
           let messagePage = await client.getMessages(myAddressStr, token, lastReceived, null)
           let messageList = messagePage.getMessagesList()
+
           for (let index in messageList) {
             let timedMessage = messageList[index]
 
@@ -216,40 +248,11 @@ export default new Vuex.Store({
 
             let timestamp = timedMessage.getTimestamp()
             let message = timedMessage.getMessage()
-            let rawSenderPubKey = message.getSenderPubKey()
-            let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
-            let addr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
-            let rawPayload = message.getSerializedPayload()
-
-            let payload = messages.Payload.deserializeBinary(rawPayload)
-            let scheme = payload.getScheme()
-            let entriesRaw
-            if (scheme === 0) {
-              entriesRaw = payload.getEntries()
-            } else if (scheme === 1) {
-              let entriesCipherText = payload.getEntries()
-
-              let secretSeed = payload.getSecretSeed()
-              let ephemeralPubKey = PublicKey.fromBuffer(secretSeed)
-              let privKey = rootGetters['wallet/getIdentityPrivKey']
-              entriesRaw = crypto.decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
-            } else {
-              // TODO: Raise error
-            }
-
-            let entries = messages.Entries.deserializeBinary(entriesRaw)
-            let entriesList = entries.getEntriesList()
-            let lastReceived = null
-            for (let index in entriesList) {
-              let entry = entriesList[index]
-              // TODO: Don't assume it's a text msg
-              let text = new TextDecoder().decode(entry.getEntryData())
-              commit('receiveMessage', { addr, text, timestamp })
-              lastReceived = Math.max(lastReceived, timestamp)
-            }
-            if (lastReceived) {
-              commit('setLastReceived', lastReceived + 1)
-            }
+            dispatch('addMessage', { timestamp, message })
+            lastReceived = Math.max(lastReceived, timestamp)
+          }
+          if (lastReceived) {
+            commit('setLastReceived', lastReceived + 1)
           }
         }
       }
