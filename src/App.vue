@@ -18,6 +18,7 @@ export default {
       setProfile: 'myProfile/setMyProfile',
       setClient: 'electrumHandler/setClient',
       walletReinitialize: 'wallet/reinitialize',
+      relayClientReinitialize: 'relayClient/reinitialize',
       walletReset: 'wallet/reset'
     })
   },
@@ -27,8 +28,11 @@ export default {
     // Reinitialize wallet classes
     this.walletReinitialize()
 
+    // Reinitialize relay client
+    this.relayClientReinitialize()
+
     // Start internal timer
-    // this.startClock()
+    this.startClock()
 
     // Start profile watcher
     this.startProfileUpdater()

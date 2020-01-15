@@ -218,7 +218,7 @@ export default new Vuex.Store({
             let message = timedMessage.getMessage()
             let rawSenderPubKey = message.getSenderPubKey()
             let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
-            let addr = senderPubKey.toAddress('testnet').toCashAddress(true)
+            let addr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
             let rawPayload = message.getSerializedPayload()
 
             let payload = messages.Payload.deserializeBinary(rawPayload)
@@ -278,7 +278,7 @@ export default new Vuex.Store({
     relayClient: {
       namespaced: true,
       state: {
-        client: new RelayClient('http://34.67.137.105:8080'), // TODO: Make this a variable
+        client: null, // TODO: Make this a variable
         token: null
       },
       mutations: {
@@ -287,6 +287,11 @@ export default new Vuex.Store({
         },
         setToken (state, token) {
           state.token = token
+        },
+        reinitialize (state) {
+          if (state.client !== null) {
+            state.client = new RelayClient(state.client.url)
+          }
         }
       },
       actions: {
@@ -295,6 +300,9 @@ export default new Vuex.Store({
         },
         setToken ({ commit }, token) {
           commit('setToken', token)
+        },
+        reinitialize ({ commit }) {
+          commit('reinitialize')
         }
       },
       getters: {
@@ -489,7 +497,7 @@ export default new Vuex.Store({
         }
       },
       mutations: {
-        updateProfile (state, { addr, profile }) {
+        updateContact (state, { addr, profile }) {
           state.profiles[addr] = profile
         },
         deleteContact (state, addr) {
@@ -497,23 +505,9 @@ export default new Vuex.Store({
         }
       },
       actions: {
-        async addNewContact ({ commit, dispatch }, addrLong) {
-          let res = addrLong.split(':')
-          let addr
-          if (res.length === 2) {
-            addr = res[1]
-          } else {
-            addr = res[0]
-          }
-
-          let profile = { name: 'Retreiving...', acceptancePrice: 'Unknown', bio: '', avatar: null, pubKey: null }
-
-          commit('updateProfile', { addr, profile })
-
+        addContact ({ commit }, { addr, profile }) {
           commit('chats/addChatPre', addr, { root: true })
-
-          await dispatch('refresh', addr)
-
+          commit('updateContact', { addr, profile })
           commit('chats/addChatPost', addr, { root: true })
         },
         deleteContact ({ commit }, addr) {
@@ -525,7 +519,7 @@ export default new Vuex.Store({
           // Make this generic over networks
 
           // Get metadata
-          let metadata = await this.state.keyserverHandler.handler.uniformSample(`bchtest:${addr}`)
+          let metadata = await this.state.keyserverHandler.handler.uniformSample(addr)
 
           // Get PubKey
           let pubKey = metadata.getPubKey()
@@ -568,7 +562,7 @@ export default new Vuex.Store({
           let acceptancePrice
           try {
             let client = this.state.relayClient.client
-            let filters = await client.getFilter(`bchtest:${addr}`)
+            let filters = await client.getFilter(addr)
             let priceFilter = filters.getPriceFilter()
             acceptancePrice = priceFilter.getAcceptancePrice()
           } catch (err) {
@@ -582,9 +576,9 @@ export default new Vuex.Store({
             acceptancePrice,
             pubKey
           }
-          commit('updateProfile', { addr, profile })
+          commit('updateContact', { addr, profile })
         },
-        startProfileUpdater ({ commit, dispatch }) {
+        startProfileUpdater ({ dispatch }) {
           setInterval(() => {
             for (let addr in this.state.contacts.profiles) {
               dispatch('refresh', addr)

@@ -25,7 +25,8 @@
           :done="step > 2"
         >
           <q-splitter
-            :value=7.5
+            :value=110
+            unit="px"
             disable
           >
             <template v-slot:before>
@@ -299,7 +300,8 @@
           style="min-height: 300px;"
         >
           <q-splitter
-            :value=7.5
+            :value=110
+            unit="px"
             disable
           >
             <template v-slot:before>
@@ -524,7 +526,8 @@ export default {
       startListeners: 'wallet/startListeners',
       completeSetup: 'wallet/completeSetup',
       setRelayToken: 'relayClient/setToken',
-      setAcceptancePrice: 'myProfile/setAcceptancePrice'
+      setAcceptancePrice: 'myProfile/setAcceptancePrice',
+      setRelayClient: 'relayClient/setClient'
     }),
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
@@ -603,7 +606,8 @@ export default {
 
           break
         case 5:
-          await this.setUpFilter()
+          let client = new RelayClient(this.relayUrl)
+          await this.setUpFilter(client)
 
           let profile = {
             name: this.name,
@@ -612,6 +616,7 @@ export default {
             acceptancePrice: this.acceptancePrice
           }
 
+          this.setRelayClient(client)
           this.setMyProfile(profile)
 
           this.$q.loading.hide()
@@ -663,15 +668,12 @@ export default {
 
       this.$q.loading.hide()
     },
-    async setUpFilter () {
+    async setUpFilter (client) {
       // Set filter
       this.$q.loading.show({
         delay: 100,
         message: 'Requesting Payment...'
       })
-
-      // TODO: Make variable
-      let client = new RelayClient('http://34.67.137.105:8080')
 
       let idAddress = this.getMyAddress()
       let filterPaymentRequest = await client.filterPaymentRequest(idAddress.toLegacyAddress())

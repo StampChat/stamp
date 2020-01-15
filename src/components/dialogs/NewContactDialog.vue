@@ -13,11 +13,10 @@
         filled
         dense
         placeholder="Enter address..."
-        debounce="250"
       />
     </q-card-section>
     <q-slide-transition>
-      <q-card-section v-show="(profile === null) && address !== ''">
+      <q-card-section v-if="(profile === null) && address !== ''">
         <q-item>
           <q-item-section avatar>
             <q-icon
@@ -27,6 +26,34 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>Not found</q-item-label>
+          </q-item-section>
+        </q-item>
+      </q-card-section>
+      <q-card-section
+        class="text-center"
+        v-else-if="profile === 'loading'"
+      >
+        <q-spinner
+          color="primary"
+          size="3em"
+        />
+      </q-card-section>
+      <q-card-section
+        v-else-if="profile !== null"
+        class="q-py-none"
+      >
+        <q-item>
+          <q-item-section avatar>
+            <q-avatar rounded>
+              <img
+                :src="profile.avatar"
+                size="xl"
+              >
+            </q-avatar>
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>{{profile.name}}</q-item-label>
+            <q-item-label caption>Inbox Fee: {{profile.acceptancePrice}}</q-item-label>
           </q-item-section>
         </q-item>
       </q-card-section>
@@ -43,6 +70,7 @@
         :disable="profile === null"
         label="Add"
         color="primary"
+        @click="addContact()"
         v-close-popup
       />
     </q-card-actions>
@@ -51,6 +79,8 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+
+const cashlib = require('bitcore-lib-cash')
 
 export default {
   data () {
@@ -65,17 +95,33 @@ export default {
         this.profile = null
         return
       }
-      let ksHandler = this.getKsHandler()
-      this.profile = await ksHandler.getProfile(newAddress)
+      this.profile = 'loading'
+      try {
+        let ksHandler = this.getKsHandler()
+        let relayClient = this.getRelayClient()
+        let profile = await ksHandler.getProfile(newAddress)
+        profile.acceptancePrice = await relayClient.getAcceptancePrice(newAddress)
+        this.profile = profile
+      } catch {
+        this.address = null
+        this.profile = null
+      }
     }
   },
   methods: {
     ...mapActions({
-      addNewContact: 'contacts/addNewContact'
+      addContactVuex: 'contacts/addContact'
     }),
     ...mapGetters({
-      getKsHandler: 'keyserverHandler/getHandler'
-    })
+      getKsHandler: 'keyserverHandler/getHandler',
+      getRelayClient: 'relayClient/getClient'
+    }),
+    addContact () {
+      let cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
+      console.log(cashAddress)
+      console.log(this.profile)
+      this.addContactVuex({ addr: cashAddress, profile: this.profile })
+    }
   }
 }
 </script>

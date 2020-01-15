@@ -81,7 +81,6 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import ProfileCard from './ProfileCard.vue'
-import RelayClient from '../relay/client.js'
 import NewContactDialog from './dialogs/NewContactDialog.vue'
 import relayConstructors from '../relay/constructors'
 
@@ -104,7 +103,8 @@ export default {
     ...mapGetters({
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',
       getMyAddress: 'wallet/getMyAddress',
-      getRelayToken: 'relayClient/getToken'
+      getRelayToken: 'relayClient/getToken',
+      getRelayClient: 'relayClient/getClient'
     }),
     setFilter () {
       this.$q.dialog({
@@ -120,9 +120,6 @@ export default {
         // Get identity address
         let idAddress = this.getMyAddress()
 
-        // TODO: Make variable
-        let client = new RelayClient('http://34.67.137.105:8080')
-
         // Get relay token
         let token = this.getRelayToken()
 
@@ -133,6 +130,7 @@ export default {
         let filterApplication = relayConstructors.constructPriceFilterApplication(true, acceptancePrice, acceptancePrice, privKey)
 
         // Apply remotely
+        let client = this.getRelayClient()
         await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
 
         // Apply locally
