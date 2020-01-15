@@ -3,14 +3,28 @@ import messages from './messages_pb'
 import filters from './filters_pb'
 import pop from '../pop/index'
 
+const WebSocket = window.require('ws')
+
 class RelayClient {
   constructor (url) {
     this.url = url
+    this.httpScheme = 'http'
+    this.wsScheme = 'ws'
   }
 
   async filterPaymentRequest (addr) {
-    let url = `${this.url}/${addr}/filters`
+    let url = `${this.httpScheme}://${this.url}/${addr}/filters`
     return pop.getPaymentRequest(url, 'put')
+  }
+
+  setUpWebsocket (addr, token) {
+    let url = `${this.wsScheme}://${this.url}/${addr}/ws`
+    let opts = { headers: { Authorization: token } }
+    let socket = new WebSocket(url, opts)
+
+    socket.onmessage = function (event) {
+      console.log(event)
+    }
   }
 
   async getAcceptancePrice (addr) {
@@ -27,7 +41,7 @@ class RelayClient {
   }
 
   async getFilter (addr) {
-    let url = `${this.url}/${addr}/filters`
+    let url = `${this.httpScheme}://${this.url}/${addr}/filters`
     let response
     try {
       response = await axios({
@@ -46,7 +60,7 @@ class RelayClient {
 
   async applyFilter (addr, filterApplication, token) {
     let rawApplication = filterApplication.serializeBinary()
-    let url = `${this.url}/${addr}/filters`
+    let url = `${this.httpScheme}://${this.url}/${addr}/filters`
     try {
       await axios({
         method: 'put',
@@ -64,7 +78,7 @@ class RelayClient {
   }
 
   async getMessages (addr, token, startTime, endTime) {
-    let url = `${this.url}/${addr}/messages`
+    let url = `${this.httpScheme}://${this.url}/${addr}/messages`
 
     let response
     try {
@@ -92,13 +106,13 @@ class RelayClient {
   }
 
   async messagePaymentRequest (addr) {
-    let url = `${this.url}/${addr}/messages`
+    let url = `${this.httpScheme}://${this.url}/${addr}/messages`
     return pop.getPaymentRequest(url, 'get')
   }
 
   async pushMessages (addr, messageSet) {
     let rawMetadata = messageSet.serializeBinary()
-    let url = `${this.url}/${addr}/messages`
+    let url = `${this.httpScheme}://${this.url}/${addr}/messages`
     try {
       await axios({
         method: 'put',

@@ -173,7 +173,7 @@ export default new Vuex.Store({
           // Peer's relay server
           let privKey = rootGetters['wallet/getIdentityPrivKey']
 
-          let client = new RelayClient('http://34.67.137.105:8080')
+          let client = new RelayClient('34.67.137.105:8080')
           let destPubKey = rootGetters['contacts/getPubKey'](addr)
           let message = relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
           let messageSet = new messages.MessageSet()

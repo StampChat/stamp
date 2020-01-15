@@ -53,8 +53,18 @@ export default {
   components: {
     ChatMessage
   },
+  created () {
+    // Start websocket listener
+    let client = this.getRelayClient()
+    client.setUpWebsocket(this.getAddressStr(), this.getToken())
+  },
   methods: {
     ...mapActions({ sendMessageVuex: 'chats/sendMessage', switchOrder: 'chats/switchOrder' }),
+    ...mapGetters({
+      getRelayClient: 'relayClient/getClient',
+      getAddressStr: 'wallet/getMyAddressStr',
+      getToken: 'relayClient/getToken'
+    }),
     sendMessage () {
       this.sendMessageVuex({ addr: this.getActiveChat, text: this.message })
       this.switchOrder(this.getActiveChat)

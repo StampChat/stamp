@@ -493,7 +493,7 @@ const bip39 = require('bip39')
 Vue.component(VueQrcode.name, VueQrcode)
 Vue.use(VueRouter)
 
-const relayUrlOptions = ['http://34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']
+const relayUrlOptions = ['34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']
 
 export default {
   data () {
@@ -515,7 +515,7 @@ export default {
       currentAddress: null,
       acceptancePrice: 500,
       settingsTab: 'inbox',
-      relayUrl: 'http://34.67.137.105:8080',
+      relayUrl: '34.67.137.105:8080',
       options: []
     }
   },
