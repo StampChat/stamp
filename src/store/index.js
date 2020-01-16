@@ -191,9 +191,9 @@ export default new Vuex.Store({
           let messageSet = new messages.MessageSet()
           messageSet.addMessages(message)
 
-          let senderAddr = privKey.toAddress('testnet').toLegacyAddress()
+          let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
 
-          client.pushMessages(senderAddr, messageSet)
+          client.pushMessages(destAddr, messageSet)
         },
         switchOrder ({ commit }, addr) {
           commit('switchOrder', addr)
