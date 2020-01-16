@@ -26,7 +26,7 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
   methods: {
-    ...mapGetters({ getActiveChat: 'chats/getActiveChat', getProfile: 'contacts/getProfile', getLatestMessageBody: 'chats/getLatestMessageBody' }),
+    ...mapGetters({ getActiveChat: 'chats/getActiveChat', getContact: 'contacts/getContact', getLatestMessageBody: 'chats/getLatestMessageBody' }),
     ...mapActions({ switchChatActive: 'chats/switchChatActive' })
   },
   computed: {
@@ -34,7 +34,7 @@ export default {
       return this.getLatestMessageBody()(this.chatAddr)
     },
     profile () {
-      return this.getProfile()(this.chatAddr)
+      return this.getContact()(this.chatAddr)
     },
     isActive () {
       return this.getActiveChat() === this.chatAddr

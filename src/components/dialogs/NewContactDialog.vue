@@ -113,7 +113,7 @@ export default {
       try {
         let ksHandler = this.getKsHandler()
         let relayClient = this.getRelayClient()
-        let profile = await ksHandler.getProfile(newAddress)
+        let profile = await ksHandler.getContact(newAddress)
         profile.acceptancePrice = await relayClient.getAcceptancePrice(newAddress)
         this.profile = profile
       } catch {

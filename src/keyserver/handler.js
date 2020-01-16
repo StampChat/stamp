@@ -95,7 +95,7 @@ class KeyserverHandler {
     return KeyserverHandler.fetchMetadata(server, addr)
   }
 
-  async getProfile (addr) {
+  async getContact (addr) {
     // Get metadata
     let metadata = await this.uniformSample(addr)
 

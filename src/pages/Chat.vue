@@ -80,7 +80,7 @@ export default {
     this.refreshChat()
   },
   computed: {
-    ...mapGetters({ getProfile: 'contacts/getProfile', getAllMessages: 'chats/getAllMessages', getActiveChat: 'chats/getActiveChat' }),
+    ...mapGetters({ getContact: 'contacts/getContact', getAllMessages: 'chats/getAllMessages', getActiveChat: 'chats/getActiveChat' }),
     messages () {
       if (this.getActiveChat !== null) {
         return this.getAllMessages(this.getActiveChat)

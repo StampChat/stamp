@@ -146,7 +146,7 @@ export default {
     ProfileCard
   },
   methods: {
-    ...mapGetters({ getProfile: 'contacts/getProfile' }),
+    ...mapGetters({ getContact: 'contacts/getContact' }),
     ...mapActions({
       setDrawerOpen: 'contactDrawer/setDrawerOpen',
       clearChat: 'chats/clearChat',
@@ -168,7 +168,7 @@ export default {
     },
     getActiveProfile () {
       let addr = this.getActiveChat
-      let profile = this.getProfile()(addr)
+      let profile = this.getContact()(addr)
       return profile
     }
   },

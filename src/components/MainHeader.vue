@@ -83,7 +83,7 @@ export default {
   methods: {
     ...mapActions(['setSplitterRatio']),
     ...mapGetters({
-      getProfile: 'contacts/getProfile',
+      getContact: 'contacts/getContact',
       getActiveChat: 'chats/getActiveChat'
     }),
     ...mapActions({
@@ -95,7 +95,7 @@ export default {
     ...mapGetters(['getSplitterRatio']),
     activeProfileName () {
       if (this.getActiveChat() !== null) {
-        return this.getProfile()(this.getActiveChat()).name
+        return this.getContact()(this.getActiveChat()).name
       } else {
         return ''
       }

@@ -102,6 +102,9 @@ export default new Vuex.Store({
         },
         getLastReceived (state) {
           return state.lastReceived
+        },
+        isChat: (state) => (addr) => {
+          return (addr in state.data)
         }
       },
       mutations: {
@@ -145,6 +148,15 @@ export default new Vuex.Store({
           state.activeChatAddr = addr
         },
         receiveMessage (state, { addr, text, timestamp }) {
+          // If addr data doesn't exist then add it
+          if (!(addr in state.data)) {
+            state.data[addr] = {
+              messages: []
+            }
+            state.order.unshift(addr)
+          }
+
+          // Add new message
           let newMsg = {
             outbound: false,
             sent: true,
@@ -195,10 +207,20 @@ export default new Vuex.Store({
         deleteChat ({ commit }, addr) {
           commit('deleteChat', addr)
         },
-        addMessage ({ commit, rootGetters }, { message, timestamp }) {
+        addMessage ({ commit, rootGetters, dispatch }, { message, timestamp }) {
           let rawSenderPubKey = message.getSenderPubKey()
           let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
           let addr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
+
+          // Check whether contact exists
+          if (!rootGetters['contacts/isContact']) {
+            // Add dummy contact
+            dispatch('contacts/addLoadingContact', addr, { root: true })
+
+            // Load contact
+            dispatch('contacts/refresh', addr, { root: true })
+          }
+
           let rawPayload = message.getSerializedPayload()
 
           let payload = messages.Payload.deserializeBinary(rawPayload)
@@ -399,7 +421,7 @@ export default new Vuex.Store({
             commit('setAddress', { address, balance, privKey })
           }
         },
-        async startListeners ({ commit, dispatch }) {
+        async startListeners ({ dispatch }) {
           let client = this.state.electrumHandler.client
           await client.subscribe.on('blockchain.address.subscribe', async (result) => {
             let address = result[0]
@@ -491,7 +513,10 @@ export default new Vuex.Store({
         }
       },
       getters: {
-        getProfile: (state) => (addr) => {
+        isContact: (state) => (addr) => {
+          return (addr in state.profiles)
+        },
+        getContact: (state) => (addr) => {
           return state.profiles[addr]
         },
         getPubKey: (state) => (addr) => {
@@ -508,6 +533,16 @@ export default new Vuex.Store({
         }
       },
       actions: {
+        addLoadingContact ({ commit }, addr) {
+          let profile = {
+            name: 'Loading...',
+            bio: null,
+            avatar: null,
+            acceptancePrice: 'Unknown',
+            pubKey: null
+          }
+          commit('updateContact', { addr, profile })
+        },
         addContact ({ commit }, { addr, profile }) {
           commit('chats/addChatPre', addr, { root: true })
           commit('updateContact', { addr, profile })

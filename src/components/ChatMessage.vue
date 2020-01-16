@@ -1,7 +1,7 @@
 <template>
   <q-chat-message
     class="q-py-sm"
-    :avatar="message.sent?this.getProfile(targetAddr).avatar:this.getMyProfile.avatar"
+    :avatar="message.sent?this.getContact(targetAddr).avatar:this.getMyProfile.avatar"
     :text="[message.body]"
     :sent="message.outbound"
     :stamp="timeStamp"
@@ -41,7 +41,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters({ getProfile: 'contacts/getProfile', getMyProfile: 'myProfile/getMyProfile' }),
+    ...mapGetters({ getContact: 'contacts/getContact', getMyProfile: 'myProfile/getMyProfile' }),
     timeStamp () {
       let unixTime = this.getUnixTime()
       let stamp = this.unixToStamp(this.message.timestamp, unixTime)
