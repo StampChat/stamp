@@ -47,7 +47,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import ChatMessage from '../components/ChatMessage.vue'
+import ChatMessage from '../components/chat/ChatMessage.vue'
 
 export default {
   components: {

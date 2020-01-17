@@ -7,17 +7,13 @@
       <div class="text-h6">Set Filter</div>
     </q-card-section>
     <q-card-section>
-      <q-item-label>
-        Set the minimal price for inbox acceptance (satoshis).
-      </q-item-label>
-    </q-card-section>
-    <q-card-section>
       <q-input
         class="text-bold text-h6"
         v-model="price"
         type="number"
         filled
         dense
+        hint="Set the minimal price for inbox acceptance (satoshis)."
         placeholder="Enter acceptance price..."
       />
     </q-card-section>

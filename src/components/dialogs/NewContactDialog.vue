@@ -25,6 +25,7 @@
             <q-icon
               color="negative"
               name="error"
+              size="xl"
             />
           </q-item-section>
           <q-item-section>
