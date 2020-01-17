@@ -29,8 +29,8 @@
 <script>
 import Chat from '../pages/Chat.vue'
 import ChatList from '../components/ChatList.vue'
-import MyDrawer from '../components/MyDrawer.vue'
-import ContactDrawer from '../components/ContactDrawer.vue'
+import MyDrawer from '../components/drawers/MyDrawer.vue'
+import ContactDrawer from '../components/drawers/ContactDrawer.vue'
 import MainHeader from '../components/MainHeader.vue'
 import { mapActions, mapGetters } from 'vuex'
 

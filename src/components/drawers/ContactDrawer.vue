@@ -107,7 +107,7 @@
     </q-scroll-area>
 
     <!-- Contact card -->
-    <profile-card
+    <drawer-contact-card
       :address="address"
       :name="contact.name"
       :avatar="contact.avatar"
@@ -119,9 +119,9 @@
 <script>
 import Vue from 'vue'
 import { mapGetters, mapActions } from 'vuex'
-import ProfileCard from './ProfileCard.vue'
-import ClearHistoryDialog from './dialogs/ClearHistoryDialog.vue'
-import DeleteChatDialog from './dialogs/DeleteChatDialog.vue'
+import DrawerContactCard from './DrawerContactCard.vue'
+import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
+import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
 
 Vue.filter('truncate', function (text, length, clamp) {
   clamp = clamp || '...'
@@ -133,7 +133,7 @@ Vue.filter('truncate', function (text, length, clamp) {
 
 export default {
   components: {
-    ProfileCard,
+    DrawerContactCard,
     ClearHistoryDialog,
     DeleteChatDialog
   },

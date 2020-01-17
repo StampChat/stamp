@@ -73,7 +73,7 @@
         </q-item>
       </q-list>
     </q-scroll-area>
-    <profile-card
+    <drawer-contact-card
       :address="getMyAddressStr"
       :name="getMyProfile.name"
       :bio="getMyProfile.bio"
@@ -85,13 +85,13 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import ProfileCard from './ProfileCard.vue'
-import NewContactDialog from './dialogs/NewContactDialog.vue'
-import SetFilterDialog from './dialogs/SetFilterDialog.vue'
+import DrawerContactCard from './DrawerContactCard.vue'
+import NewContactDialog from '../dialogs/NewContactDialog.vue'
+import SetFilterDialog from '../dialogs/SetFilterDialog.vue'
 
 export default {
   components: {
-    ProfileCard,
+    DrawerContactCard,
     NewContactDialog,
     SetFilterDialog
   },
