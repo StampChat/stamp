@@ -1,7 +1,12 @@
 <template>
   <q-layout view="hHr LpR lff">
     <my-drawer />
-    <contact-drawer v-if="getActiveChat !== null" />
+    <contact-drawer
+      v-if="getActiveChat !== null"
+      :address="getActiveChat"
+      :open="getDrawerOpen"
+      :contact="getContact(getActiveChat)"
+    />
     <main-header />
     <q-page-container>
       <q-splitter
@@ -42,7 +47,11 @@ export default {
     ...mapActions(['setSplitterRatio'])
   },
   computed: {
-    ...mapGetters({ getActiveChat: 'chats/getActiveChat' }),
+    ...mapGetters({
+      getActiveChat: 'chats/getActiveChat',
+      getContact: 'contacts/getContact',
+      getDrawerOpen: 'contactDrawer/getDrawerOpen'
+    }),
     ...mapGetters([
       'getSplitterRatio'
     ]),

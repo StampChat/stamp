@@ -8,9 +8,14 @@
     :width="200"
     :breakpoint="400"
   >
-    <!-- Dialogs -->
+    <!-- New contact dialog -->
     <q-dialog v-model="newContactOpen">
-      <new-contact-dialog :active="newContactOpen" />
+      <new-contact-dialog />
+    </q-dialog>
+
+    <!-- Set filter dialog -->
+    <q-dialog v-model="setFilterOpen">
+      <set-filter-dialog :oldPrice="getMyProfile.acceptancePrice" />
     </q-dialog>
 
     <!-- Drawer -->
@@ -44,7 +49,7 @@
         <q-item
           clickable
           v-ripple
-          @click="setFilter"
+          @click="setFilterOpen = true"
         >
           <q-item-section avatar>
             <q-icon name="filter_list" />
@@ -82,63 +87,31 @@
 import { mapGetters, mapActions } from 'vuex'
 import ProfileCard from './ProfileCard.vue'
 import NewContactDialog from './dialogs/NewContactDialog.vue'
-import relayConstructors from '../relay/constructors'
+import SetFilterDialog from './dialogs/SetFilterDialog.vue'
 
 export default {
   components: {
     ProfileCard,
-    NewContactDialog
+    NewContactDialog,
+    SetFilterDialog
   },
   data () {
     return {
-      newContactOpen: false
+      newContactOpen: false,
+      setFilterOpen: false
     }
   },
   methods: {
     ...mapActions({
       setDrawerOpen: 'myDrawer/setDrawerOpen',
-      addNewContact: 'contacts/addNewContact',
-      setAcceptancePrice: 'myProfile/setAcceptancePrice'
+      addNewContact: 'contacts/addNewContact'
     }),
     ...mapGetters({
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',
       getMyAddress: 'wallet/getMyAddress',
       getRelayToken: 'relayClient/getToken',
       getRelayClient: 'relayClient/getClient'
-    }),
-    setFilter () {
-      this.$q.dialog({
-        title: 'Set Price Filter',
-        message: 'Set the required price for inbox admission (satoshis)',
-        prompt: {
-          model: '',
-          type: 'number'
-        },
-        cancel: true,
-        persistent: true
-      }).onOk(async acceptancePrice => {
-        // Get identity address
-        let idAddress = this.getMyAddress()
-
-        // Get relay token
-        let token = this.getRelayToken()
-
-        // Get identity privKey
-        let privKey = this.getIdentityPrivKey()
-
-        // Create filter application
-        let filterApplication = relayConstructors.constructPriceFilterApplication(true, acceptancePrice, acceptancePrice, privKey)
-
-        // Apply remotely
-        let client = this.getRelayClient()
-        await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
-
-        // Apply locally
-        this.setAcceptancePrice(acceptancePrice)
-
-        this.$q.loading.hide()
-      })
-    }
+    })
   },
   computed: {
     ...mapGetters({

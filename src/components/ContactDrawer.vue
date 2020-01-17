@@ -1,43 +1,32 @@
 <template>
   <q-drawer
-    v-model="drawerOpen"
+    v-model="open"
     show-if-above
     side="right"
     elevated
     :width="300"
     :breakpoint="400"
   >
-    <!-- Delete dialog -->
+    <!-- Clear history dialog -->
     <q-dialog
-      v-model="confirm"
+      v-model="confirmClearOpen"
       persistent
     >
-      <q-card>
-        <q-card-section class="row items-center">
-          <q-avatar
-            icon="delete"
-            color="red"
-            text-color="white"
-          />
-          <span class="q-ml-sm">Are you sure you want to clear this conversation?</span>
-        </q-card-section>
+      <clear-history-dialog
+        :address="address"
+        :name="contact.name"
+      />
+    </q-dialog>
 
-        <q-card-actions align="right">
-          <q-btn
-            flat
-            label="Cancel"
-            color="primary"
-            v-close-popup
-          />
-          <q-btn
-            flat
-            label="Delete"
-            color="primary"
-            v-close-popup
-            @click="clearChat(getActiveChat)"
-          />
-        </q-card-actions>
-      </q-card>
+    <!-- Delete chat dialog -->
+    <q-dialog
+      v-model="confirmDeleteOpen"
+      persistent
+    >
+      <delete-chat-dialog
+        :address="address"
+        :name="contact.name"
+      />
     </q-dialog>
 
     <!-- Scroll area -->
@@ -73,7 +62,7 @@
         <q-item
           clickable
           v-ripple
-          @click="confirm = true"
+          @click="confirmClearOpen = true"
         >
           <q-item-section avatar>
             <q-icon name="clear_all" />
@@ -101,13 +90,12 @@
         <q-item
           clickable
           v-ripple
-          @click="deleteContact(getActiveChat)"
+          @click="confirmDeleteOpen = true"
         >
           <q-item-section avatar>
             <q-icon
               name="delete"
               color="red"
-              @click="deleteContact(getActiveChat)"
             />
           </q-item-section>
 
@@ -120,10 +108,10 @@
 
     <!-- Contact card -->
     <profile-card
-      :address="getActiveChat"
-      :name="getActiveProfile.name"
-      :avatar="getActiveProfile.avatar"
-      :acceptancePrice="getActiveProfile.acceptancePrice"
+      :address="address"
+      :name="contact.name"
+      :avatar="contact.avatar"
+      :acceptancePrice="contact.acceptancePrice"
     />
   </q-drawer>
 </template>
@@ -132,6 +120,8 @@
 import Vue from 'vue'
 import { mapGetters, mapActions } from 'vuex'
 import ProfileCard from './ProfileCard.vue'
+import ClearHistoryDialog from './dialogs/ClearHistoryDialog.vue'
+import DeleteChatDialog from './dialogs/DeleteChatDialog.vue'
 
 Vue.filter('truncate', function (text, length, clamp) {
   clamp = clamp || '...'
@@ -143,20 +133,18 @@ Vue.filter('truncate', function (text, length, clamp) {
 
 export default {
   components: {
-    ProfileCard
+    ProfileCard,
+    ClearHistoryDialog,
+    DeleteChatDialog
   },
+  props: ['address', 'open', 'contact'],
   methods: {
-    ...mapGetters({ getContact: 'contacts/getContact' }),
     ...mapActions({
-      setDrawerOpen: 'contactDrawer/setDrawerOpen',
-      clearChat: 'chats/clearChat',
-      deleteContact: 'contacts/deleteContact'
+      setDrawerOpen: 'contactDrawer/setDrawerOpen'
     })
   },
   computed: {
     ...mapGetters({
-      getDrawerOpen: 'contactDrawer/getDrawerOpen',
-      getActiveChat: 'chats/getActiveChat'
     }),
     drawerOpen: {
       get () {
@@ -165,17 +153,13 @@ export default {
       set (value) {
         this.setDrawerOpen(value)
       }
-    },
-    getActiveProfile () {
-      let addr = this.getActiveChat
-      let profile = this.getContact()(addr)
-      return profile
     }
   },
   data: function () {
     return {
       notifications: false,
-      confirm: false
+      confirmClearOpen: false,
+      confirmDeleteOpen: false
     }
   }
 }
