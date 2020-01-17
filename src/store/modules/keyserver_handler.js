@@ -1,4 +1,4 @@
-import KeyserverHandler from '../keyserver/handler'
+import KeyserverHandler from '../../keyserver/handler'
 
 export default {
   namespaced: true,

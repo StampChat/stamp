@@ -1,9 +1,9 @@
-import RelayClient from '../relay/client'
+import RelayClient from '../../relay/client'
 
 export default {
   namespaced: true,
   state: {
-    client: null, // TODO: Make this a variable
+    client: null,
     token: null
   },
   mutations: {

@@ -4,11 +4,11 @@ const requireModule = require.context('.', false, /\.js$/) // extract js files i
 const modules = {}
 
 requireModule.keys().forEach(fileName => {
-    if (fileName === './index.js') return // reject the index.js file
+  if (fileName === './index.js') return // reject the index.js file
 
-    const moduleName = camelCase(fileName.replace(/(\.\/|\.js)/g, '')) //
+  const moduleName = camelCase(fileName.replace(/(\.\/|\.js)/g, '')) //
 
-    modules[moduleName] = requireModule(fileName).default
+  modules[moduleName] = requireModule(fileName).default
 })
 
 export default modules
