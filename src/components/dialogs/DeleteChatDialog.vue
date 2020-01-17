@@ -21,7 +21,7 @@
         label="Delete"
         color="primary"
         v-close-popup
-        @click="deleteContact(address)"
+        @click="deleteChat(address)"
       />
     </q-card-actions>
   </q-card>
@@ -34,7 +34,7 @@ export default {
   props: ['address', 'name'],
   methods: {
     ...mapActions({
-      deleteContact: 'contacts/deleteContact'
+      deleteChat: 'contacts/deleteChat'
     })
   }
 }

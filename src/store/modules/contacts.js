@@ -52,10 +52,9 @@ export default {
       commit('updateContact', { addr, profile })
       commit('chats/addChatPost', addr, { root: true })
     },
-    deleteContact ({ commit }, addr) {
+    deleteChat ({ commit }, addr) {
       commit('chats/clearChat', addr, { root: true })
       commit('chats/deleteChat', addr, { root: true })
-      commit('deleteContact', addr)
     },
     async refresh ({ commit }, addr) {
       // Make this generic over networks
