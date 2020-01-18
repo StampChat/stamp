@@ -36,20 +36,23 @@
       clickable
       v-ripple
       v-else-if="contact !== null"
-      class="q-py-none"
       v-close-popup
     >
       <q-item-section avatar>
-        <q-avatar rounded>
-          <img
-            :src="contact.avatar"
-            size="xl"
-          >
+        <q-avatar
+          rounded
+          size="55px"
+        >
+          <img :src="contact.avatar">
         </q-avatar>
       </q-item-section>
       <q-item-section>
         <q-item-label>{{contact.name}}</q-item-label>
-        <q-item-label caption>Inbox Fee: {{contact.acceptancePrice}}</q-item-label>
+        <q-item-label
+          lines="1"
+          caption
+        ><span class="text-weight-bold">Address: </span>{{address}}</q-item-label>
+        <q-item-label caption><span class="text-weight-bold">Inbox Price: </span> {{contact.acceptancePrice}}</q-item-label>
       </q-item-section>
       <q-item-section
         side
