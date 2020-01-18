@@ -7,23 +7,30 @@ const cashlib = require('bitcore-lib-cash')
 
 export default {
   namespaced: true,
-  state: { order: [], activeChatAddr: null, data: {}, lastReceived: null },
+  state: {
+    order: [],
+    activeChatAddr: null,
+    data: {},
+    lastReceived: null
+  },
   getters: {
     getChatOrder (state) {
       return state.order
     },
+    getInputMessage: (state) => (addr) => {
+      return state.data[addr].inputMessage
+    },
     getActiveChat (state) {
       return state.activeChatAddr
     },
-    getLatestMessageBody:
-            (state) => (addr) => {
-              let nMessages = Object.keys(state.data[addr].messages).length
-              if (nMessages !== 0) {
-                return state.data[addr].messages[nMessages - 1].body
-              } else {
-                return ''
-              }
-            },
+    getLatestMessageBody: (state) => (addr) => {
+      let nMessages = Object.keys(state.data[addr].messages).length
+      if (nMessages !== 0) {
+        return state.data[addr].messages[nMessages - 1].body
+      } else {
+        return ''
+      }
+    },
     getAllMessages: (state) => (addr) => {
       return state.data[addr].messages
     },
@@ -35,6 +42,9 @@ export default {
     }
   },
   mutations: {
+    setInputMessage (state, { addr, text }) {
+      state.data[addr].inputMessage = text
+    },
     switchChatActive (state, addr) {
       state.activeChatAddr = addr
     },
@@ -63,13 +73,6 @@ export default {
       }
       delete state.data[addr]
     },
-    addChatPre (state, addr) {
-      state.data[addr] = { messages: [] }
-    },
-    addChatPost (state, addr) {
-      state.order.unshift(addr)
-      state.activeChatAddr = addr
-    },
     receiveMessage (state, { addr, text, timestamp }) {
       // If addr data doesn't exist then add it
       if (!(addr in state.data)) {
@@ -85,17 +88,17 @@ export default {
       state.lastReceived = lastReceived
     },
     openChat (state, addr) {
-      console.log(addr)
-      console.log(state.data)
       if (!(addr in state.data)) {
-        console.log('got here')
-        state.data[addr] = { messages: [] }
+        state.data[addr] = { messages: [], inputMessage: '' }
         state.order.unshift(addr)
       }
       state.activeChatAddr = addr
     }
   },
   actions: {
+    setInputMessage ({ commit }, { addr, text }) {
+      commit('setInputMessage', { addr, text })
+    },
     switchChatActive ({ commit }, addr) {
       commit('switchChatActive', addr)
     },

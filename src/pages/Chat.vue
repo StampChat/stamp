@@ -58,12 +58,9 @@ export default {
     ...mapActions({
       sendMessageVuex: 'chats/sendMessage',
       switchOrder: 'chats/switchOrder',
-      refreshChat: 'chats/refresh'
+      setInputMessage: 'chats/setInputMessage'
     }),
     ...mapGetters({
-      getRelayClient: 'relayClient/getClient',
-      getAddressStr: 'wallet/getMyAddressStr',
-      getToken: 'relayClient/getToken'
     }),
     sendMessage () {
       this.sendMessageVuex({ addr: this.getActiveChat, text: this.message })
@@ -72,27 +69,31 @@ export default {
       this.$nextTick(() => this.$refs.inputBox.focus())
     }
   },
-  created () {
-    // Start websocket listener
-    let client = this.getRelayClient()
-    client.setUpWebsocket(this.getAddressStr(), this.getToken())
-
-    // Get historic messages
-    this.refreshChat()
-  },
   computed: {
-    ...mapGetters({ getContact: 'contacts/getContact', getAllMessages: 'chats/getAllMessages', getActiveChat: 'chats/getActiveChat' }),
+    ...mapGetters({
+      getContact: 'contacts/getContact',
+      getAllMessages: 'chats/getAllMessages',
+      getActiveChat: 'chats/getActiveChat',
+      getInputMessage: 'chats/getInputMessage'
+    }),
     messages () {
       if (this.getActiveChat !== null) {
         return this.getAllMessages(this.getActiveChat)
       } else {
         return []
       }
-    }
-  },
-  data: function () {
-    return {
-      message: ''
+    },
+    message: {
+      get () {
+        if (this.getActiveChat) {
+          return this.getInputMessage(this.getActiveChat)
+        } else {
+          return ''
+        }
+      },
+      set (text) {
+        this.setInputMessage({ addr: this.getActiveChat, text })
+      }
     }
   }
 }

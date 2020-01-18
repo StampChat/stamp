@@ -44,10 +44,19 @@ export default {
     MainHeader
   },
   methods: {
-    ...mapActions(['setSplitterRatio'])
+    ...mapActions(['setSplitterRatio', 'startClock']),
+    ...mapActions({
+      walletReinitialize: 'wallet/reinitialize',
+      relayClientReinitialize: 'relayClient/reinitialize',
+      startContactUpdater: 'contacts/startContactUpdater',
+      refreshChat: 'chats/refresh'
+    })
   },
   computed: {
     ...mapGetters({
+      getToken: 'relayClient/getToken',
+      getRelayClient: 'relayClient/getClient',
+      getAddressStr: 'wallet/getMyAddressStr',
       getActiveChat: 'chats/getActiveChat',
       getContact: 'contacts/getContact',
       getDrawerOpen: 'contactDrawer/getDrawerOpen'
@@ -63,6 +72,26 @@ export default {
         this.setSplitterRatio(value)
       }
     }
+  },
+  created () {
+    // Start internal timer
+    this.startClock()
+
+    // Reinitialize wallet classes
+    this.walletReinitialize()
+
+    // Reinitialize relay client
+    this.relayClientReinitialize()
+
+    // Start profile watcher
+    this.startContactUpdater()
+
+    // Start websocket listener
+    let client = this.getRelayClient
+    client.setUpWebsocket(this.getAddressStr, this.getToken)
+
+    // Get historic messages
+    this.refreshChat()
   }
 }
 </script>

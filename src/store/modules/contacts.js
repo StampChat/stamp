@@ -68,18 +68,18 @@ export default {
       commit('deleteContact', addr)
     },
     addContact ({ commit }, { addr, profile }) {
-      commit('chats/addChatPre', addr, { root: true })
+      commit('chats/openChat', addr, { root: true })
       commit('updateContact', { addr, profile })
-      commit('chats/addChatPost', addr, { root: true })
     },
     deleteChat ({ commit }, addr) {
       commit('chats/deleteChat', addr, { root: true })
     },
-    async refresh ({ commit }, addr) {
+    async refresh ({ commit, rootGetters }, addr) {
       // Make this generic over networks
 
       // Get metadata
-      let metadata = await this.state.keyserverHandler.handler.uniformSample(addr)
+      let handler = rootGetters['keyserverHandler/getHandler']
+      let metadata = await handler.uniformSample(addr)
 
       // Get PubKey
       let pubKey = metadata.getPubKey()
@@ -123,7 +123,7 @@ export default {
       // Get fee
       let acceptancePrice
       try {
-        let client = this.state.relayClient.client
+        let client = rootGetters['relayClient/getClient']
         let filters = await client.getFilter(addr)
         let priceFilter = filters.getPriceFilter()
         acceptancePrice = priceFilter.getAcceptancePrice()
@@ -140,9 +140,10 @@ export default {
       }
       commit('updateContact', { addr, profile })
     },
-    startProfileUpdater ({ dispatch }) {
+    startContactUpdater ({ dispatch, getters }) {
       setInterval(() => {
-        for (let addr in this.state.contacts.profiles) {
+        let contacts = getters['getAll']
+        for (let addr in contacts) {
           dispatch('refresh', addr)
         }
       }, 1000)

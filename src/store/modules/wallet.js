@@ -62,25 +62,26 @@ export default {
     setXPrivKey ({ commit }, xPrivKey) {
       commit('setXPrivKey', xPrivKey)
     },
-    async updateBalance ({ commit }, address) {
-      let balanceJson =
-          await this.state.electrumHandler.client.blockchainAddress_getBalance(
-            address)
+    async updateBalance ({ commit, rootGetters }, address) {
+      let handler = rootGetters['electrumHandler/getClient']
+      let balanceJson = await handler.blockchainAddress_getBalance(address)
       let balance = balanceJson.confirmed + balanceJson.unconfirmed
       commit('updateBalance', { address, balance })
     },
-    async updateBalances ({ commit }) {
-      for (var addr in this.addresses) {
-        let balanceJson = await this.state.electrumHandler.client
-          .blockchainAddress_getBalance(addr)
+    async updateBalances ({ commit, rootGetters, getters }) {
+      let addresses = getters['getAddresses']
+      for (var addr in addresses) {
+        let handler = rootGetters['electrumHandler/getClient']
+        let balanceJson = await handler.blockchainAddress_getBalance(addr)
         let balance = balanceJson.confirmed + balanceJson.unconfirmed
         commit('updateBalance', { addr, balance })
       }
     },
-    async updateAddresses ({ commit }) {
-      let client = this.state.electrumHandler.client
+    async updateAddresses ({ commit, rootGetters, getters }) {
+      let client = rootGetters['electrumHandler/getClient']
+      let xPrivKey = getters['getXPrivKey']
       for (var i = 0; i < 2; i++) {
-        let privKey = this.state.wallet.xPrivKey.deriveChild(44)
+        let privKey = xPrivKey.deriveChild(44)
           .deriveChild(0)
           .deriveChild(0)
           .deriveChild(i, true)
@@ -91,15 +92,16 @@ export default {
         commit('setAddress', { address, balance, privKey })
       }
     },
-    async startListeners ({ dispatch }) {
-      let client = this.state.electrumHandler.client
+    async startListeners ({ dispatch, getters, rootGetters }) {
+      let client = rootGetters['electrumHandler/getClient']
       await client.subscribe.on(
         'blockchain.address.subscribe',
         async (result) => {
           let address = result[0]
           await dispatch('updateBalance', address)
         })
-      for (var addr in this.state.wallet.addresses) {
+      let addresses = getters['getAddresses']
+      for (var addr in addresses) {
         await client.blockchainAddress_subscribe(addr)
       }
     },
@@ -117,28 +119,31 @@ export default {
     getIdentityPrivKey (state) {
       return state.identityPrivKey
     },
-    getPaymentAddress:
-        (state) => (seqNum) => {
-          if (state.xPrivKey !== null) {
-            let privkey = state.xPrivKey.deriveChild(44)
-              .deriveChild(0)
-              .deriveChild(0)
-              .deriveChild(seqNum, true)
-            return privkey.toAddress('testnet')
-          } else {
-            return null
-          }
-        },
+    getPaymentAddress: (state) => (seqNum) => {
+      if (state.xPrivKey !== null) {
+        let privkey = state.xPrivKey.deriveChild(44)
+          .deriveChild(0)
+          .deriveChild(0)
+          .deriveChild(seqNum, true)
+        return privkey.toAddress('testnet')
+      } else {
+        return null
+      }
+    },
     getMyAddress (state) {
       return state.identityPrivKey.toAddress(
         'testnet') // TODO: Not just testnet
     },
     getMyAddressStr (state) {
+      console.log(state)
       return state.identityPrivKey.toAddress('testnet')
         .toCashAddress() // TODO: Not just testnet
     },
     getAddresses (state) {
       return state.addresses
+    },
+    getXPrivKey (state) {
+      return state.xPrivKey
     }
   }
 }
