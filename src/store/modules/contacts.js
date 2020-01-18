@@ -26,6 +26,9 @@ export default {
     getPubKey: (state) => (addr) => {
       let arr = Uint8Array.from(Object.values(state.profiles[addr].pubKey))
       return PublicKey.fromBuffer(arr)
+    },
+    getAll (state) {
+      return state.profiles
     }
   },
   mutations: {
@@ -47,21 +50,23 @@ export default {
       }
       commit('updateContact', { addr, profile })
     },
+    deleteContact ({ commit }, addr) {
+      commit('chats/deleteChat', addr, { root: true })
+      commit('deleteContact', addr)
+    },
     addContact ({ commit }, { addr, profile }) {
       commit('chats/addChatPre', addr, { root: true })
       commit('updateContact', { addr, profile })
       commit('chats/addChatPost', addr, { root: true })
     },
     deleteChat ({ commit }, addr) {
-      commit('chats/clearChat', addr, { root: true })
       commit('chats/deleteChat', addr, { root: true })
     },
     async refresh ({ commit }, addr) {
       // Make this generic over networks
 
       // Get metadata
-      let metadata =
-                await this.state.keyserverHandler.handler.uniformSample(addr)
+      let metadata = await this.state.keyserverHandler.handler.uniformSample(addr)
 
       // Get PubKey
       let pubKey = metadata.getPubKey()
@@ -100,8 +105,7 @@ export default {
         return window.btoa(binary)
       }
       let value = avatarEntry.getHeadersList()[0].getValue()
-      let avatarDataURL =
-                'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
+      let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
 
       // Get fee
       let acceptancePrice

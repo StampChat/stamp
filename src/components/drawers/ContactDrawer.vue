@@ -1,6 +1,6 @@
 <template>
   <q-drawer
-    v-model="open"
+    :value="open"
     show-if-above
     side="right"
     elevated

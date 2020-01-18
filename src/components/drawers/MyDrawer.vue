@@ -18,6 +18,11 @@
       <set-filter-dialog :oldPrice="getMyProfile.acceptancePrice" />
     </q-dialog>
 
+    <!-- Contact book dialog -->
+    <q-dialog v-model="contactBookOpen">
+      <contact-book-dialog />
+    </q-dialog>
+
     <!-- Drawer -->
     <q-scroll-area style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd">
       <q-list padding>
@@ -37,6 +42,7 @@
         <q-item
           clickable
           v-ripple
+          @click="contactBookOpen = true"
         >
           <q-item-section avatar>
             <q-icon name="contacts" />
@@ -88,17 +94,20 @@ import { mapGetters, mapActions } from 'vuex'
 import DrawerContactCard from './DrawerContactCard.vue'
 import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import SetFilterDialog from '../dialogs/SetFilterDialog.vue'
+import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 
 export default {
   components: {
     DrawerContactCard,
     NewContactDialog,
-    SetFilterDialog
+    SetFilterDialog,
+    ContactBookDialog
   },
   data () {
     return {
       newContactOpen: false,
-      setFilterOpen: false
+      setFilterOpen: false,
+      contactBookOpen: false
     }
   },
   methods: {
