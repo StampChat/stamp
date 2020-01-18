@@ -8,6 +8,14 @@
     :width="200"
     :breakpoint="400"
   >
+    <drawer-contact-card
+      :address="getMyAddressStr"
+      :name="getMyProfile.name"
+      :bio="getMyProfile.bio"
+      :avatar="getMyProfile.avatar"
+      :acceptancePrice="getMyProfile.acceptancePrice"
+    />
+
     <!-- New contact dialog -->
     <q-dialog v-model="newContactOpen">
       <new-contact-dialog />
@@ -24,7 +32,7 @@
     </q-dialog>
 
     <!-- Drawer -->
-    <q-scroll-area style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd">
+    <q-scroll-area style="height: calc(100% - 125px); margin-top: 125px; border-right: 1px solid #ddd">
       <q-list padding>
         <q-item
           clickable
@@ -52,6 +60,9 @@
             Contacts
           </q-item-section>
         </q-item>
+
+        <q-separator />
+
         <q-item
           clickable
           v-ripple
@@ -79,13 +90,7 @@
         </q-item>
       </q-list>
     </q-scroll-area>
-    <drawer-contact-card
-      :address="getMyAddressStr"
-      :name="getMyProfile.name"
-      :bio="getMyProfile.bio"
-      :avatar="getMyProfile.avatar"
-      :acceptancePrice="getMyProfile.acceptancePrice"
-    />
+
   </q-drawer>
 </template>
 
