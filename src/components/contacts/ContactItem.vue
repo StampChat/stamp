@@ -1,7 +1,7 @@
 <template>
-  <span>
+  <div>
     <q-item
-      class="q-py-none"
+      class='q-pa-none'
       v-if="(contact === null)"
     >
       <q-item-section avatar>
@@ -17,7 +17,7 @@
       </q-item-section>
     </q-item>
     <q-item
-      class="q-py-none"
+      class='q-pa-none'
       v-else-if="contact === 'loading'"
     >
       <q-item-section avatar>
@@ -33,6 +33,7 @@
       </q-item-section>
     </q-item>
     <q-item
+      class='q-pa-none'
       clickable
       v-ripple
       v-else-if="contact !== null"
@@ -67,7 +68,7 @@
         />
       </q-item-section>
     </q-item>
-  </span>
+  </div>
 </template>
 
 <script>

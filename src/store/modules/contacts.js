@@ -29,6 +29,18 @@ export default {
     },
     getAll (state) {
       return state.profiles
+    },
+    searchContacts: (state) => (search) => {
+      let result = {}
+      let contacts = state.profiles
+      for (let key in contacts) {
+        let lowerSearch = search.toLowerCase()
+        if (contacts[key].name.toLowerCase().includes(lowerSearch) || key.toLowerCase().includes(lowerSearch)) {
+          result[key] = contacts[key]
+        }
+      }
+
+      return result
     }
   },
   mutations: {
@@ -51,6 +63,7 @@ export default {
       commit('updateContact', { addr, profile })
     },
     deleteContact ({ commit }, addr) {
+      commit('chats/clearChat', addr, { root: true })
       commit('chats/deleteChat', addr, { root: true })
       commit('deleteContact', addr)
     },
