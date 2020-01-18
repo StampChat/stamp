@@ -25,6 +25,7 @@
             style="width: 100%;"
             dense
             borderless
+            @keydown.enter.prevent="sendMessage"
             v-model="message"
             placeholder="Write a message..."
           />
