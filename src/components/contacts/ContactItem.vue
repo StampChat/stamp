@@ -37,6 +37,7 @@
       clickable
       v-ripple
       v-else-if="contact !== null"
+      @click="openChat(address)"
       v-close-popup
     >
       <q-item-section avatar>
@@ -78,6 +79,7 @@ export default {
   props: ['address', 'contact', 'method'],
   methods: {
     ...mapActions({
+      openChat: 'chats/openChat',
       deleteContact: 'contacts/deleteContact'
     })
   }

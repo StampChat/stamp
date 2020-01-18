@@ -1,7 +1,6 @@
 import messages from '../../relay/messages_pb'
 import relayConstructors from '../../relay/constructors'
 import crypto from '../../relay/crypto'
-import RelayClient from '../../relay/client'
 import { PublicKey } from 'bitcore-lib-cash'
 
 const cashlib = require('bitcore-lib-cash')
@@ -55,9 +54,6 @@ export default {
     clearChat (state, addr) {
       state.data[addr].messages = []
     },
-    clearCurrent (state) {
-      state.activeChatAddr = null
-    },
     deleteChat (state, addr) {
       state.order = state.order.filter(function (value, index, arr) {
         return value !== addr
@@ -65,6 +61,7 @@ export default {
       if (state.activeChatAddr === addr) {
         state.activeChatAddr = null
       }
+      delete state.data[addr]
     },
     addChatPre (state, addr) {
       state.data[addr] = { messages: [] }
@@ -86,6 +83,16 @@ export default {
     },
     setLastReceived (state, lastReceived) {
       state.lastReceived = lastReceived
+    },
+    openChat (state, addr) {
+      console.log(addr)
+      console.log(state.data)
+      if (!(addr in state.data)) {
+        console.log('got here')
+        state.data[addr] = { messages: [] }
+        state.order.unshift(addr)
+      }
+      state.activeChatAddr = addr
     }
   },
   actions: {
@@ -102,7 +109,7 @@ export default {
       // Peer's relay server
       let privKey = rootGetters['wallet/getIdentityPrivKey']
 
-      let client = new RelayClient('34.67.137.105:8080')
+      let client = rootGetters['relayClient/getClient']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let message =
             relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
@@ -111,16 +118,15 @@ export default {
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
 
-      client.pushMessages(destAddr, messageSet)
+      await client.pushMessages(destAddr, messageSet)
+
+      // TODO: Confirmation
     },
     switchOrder ({ commit }, addr) {
       commit('switchOrder', addr)
     },
     clearChat ({ commit }, addr) {
       commit('clearChat', addr)
-    },
-    clearCurrent ({ commit }) {
-      commit('clearCurrent')
     },
     deleteChat ({ commit }, addr) {
       commit('deleteChat', addr)
@@ -197,6 +203,9 @@ export default {
       if (lastReceived) {
         commit('setLastReceived', lastReceived + 1)
       }
+    },
+    openChat ({ commit }, addr) {
+      commit('openChat', addr)
     }
   }
 }
