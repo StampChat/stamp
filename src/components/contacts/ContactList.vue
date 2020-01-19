@@ -9,6 +9,7 @@
       v-bind:key="address"
       :address="address"
       :contact="contact"
+      :contactClick="contactClick"
     />
   </q-list>
 </template>
@@ -20,7 +21,7 @@ export default {
   components: {
     ContactItem
   },
-  props: ['contacts'],
+  props: ['contacts', 'contactClick'],
   data () {
     return {}
   }

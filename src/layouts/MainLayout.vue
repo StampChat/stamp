@@ -6,7 +6,9 @@
       :address="getActiveChat"
       :contact="getContact(getActiveChat)"
     />
-    <main-header />
+    <main-header>
+      <q-resize-observer @resize="onResize" />
+    </main-header>
     <q-page-container>
       <q-splitter
         emit-immediately
@@ -19,6 +21,7 @@
 
         <template v-slot:after>
           <chat
+            :tabHeight="tabHeight"
             :activeChat="getActiveChat"
             :messages="getAllMessages(getActiveChat)"
           />
@@ -36,6 +39,8 @@ import MyDrawer from '../components/drawers/MyDrawer.vue'
 import ContactDrawer from '../components/drawers/ContactDrawer.vue'
 import MainHeader from '../components/MainHeader.vue'
 import { mapActions, mapGetters } from 'vuex'
+import { dom } from 'quasar'
+const { height } = dom
 
 export default {
   name: 'MainLayout',
@@ -46,6 +51,11 @@ export default {
     MyDrawer,
     MainHeader
   },
+  data () {
+    return {
+      tabHeight: 50
+    }
+  },
   methods: {
     ...mapActions(['setSplitterRatio', 'startClock']),
     ...mapActions({
@@ -53,7 +63,10 @@ export default {
       relayClientReinitialize: 'relayClient/reinitialize',
       startContactUpdater: 'contacts/startContactUpdater',
       refreshChat: 'chats/refresh'
-    })
+    }),
+    onResize (size) {
+      this.tabHeight = height(this.$refs.tabs.$el)
+    }
   },
   computed: {
     ...mapGetters({

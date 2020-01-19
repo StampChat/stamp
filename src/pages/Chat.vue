@@ -1,31 +1,28 @@
 <template>
   <q-page>
-    <div class="column">
-      <div
-        class="row justify-center"
-        style="background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - 100px);"
+    <div class="col">
+      <q-scroll-area
+        ref="chatScroll"
+        class="q-px-md row"
+        :style="`background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - ${height}px - ${tabHeight}px); width: 100%;`"
       >
-        <q-scroll-area
-          ref="chatScroll"
-          class="q-px-md"
-          style="width: 100%; max-width: 100%"
-        >
-          <chat-message
-            v-for="(chatMessage, index) in messages"
-            v-bind:key="index"
-            :message="chatMessage"
-            :targetAddr="activeChat"
-          />
-        </q-scroll-area>
-      </div>
+        <chat-message
+          v-for="(chatMessage, index) in messages"
+          v-bind:key="index"
+          :message="chatMessage"
+          :targetAddr="activeChat"
+        />
+      </q-scroll-area>
 
       <div class="row">
+        <q-resize-observer @resize="onResize" />
         <q-toolbar class="bg-white">
           <q-input
             ref="inputBox"
             style="width: 100%;"
             dense
             borderless
+            autogrow
             @keydown.enter.prevent="sendMessage"
             v-model="message"
             placeholder="Write a message..."
@@ -52,9 +49,14 @@ import { mapGetters, mapActions } from 'vuex'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 
 export default {
-  props: ['activeChat', 'messages'],
+  props: ['activeChat', 'messages', 'tabHeight'],
   components: {
     ChatMessage
+  },
+  data () {
+    return {
+      height: 100
+    }
   },
   methods: {
     ...mapActions({
@@ -68,6 +70,9 @@ export default {
     },
     scrollBottom () {
       this.$refs.chatScroll.setScrollPosition(this.$refs.chatScroll.$el.scrollHeight, 1)
+    },
+    onResize (size) {
+      this.height = size.height
     }
   },
   computed: {

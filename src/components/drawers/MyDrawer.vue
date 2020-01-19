@@ -28,7 +28,7 @@
 
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
-      <contact-book-dialog />
+      <contact-book-dialog :contactClick="function (addr, contact) { return openChat(addr) }" />
     </q-dialog>
 
     <!-- Drawer -->
@@ -118,7 +118,8 @@ export default {
   methods: {
     ...mapActions({
       setDrawerOpen: 'myDrawer/setDrawerOpen',
-      addNewContact: 'contacts/addNewContact'
+      addNewContact: 'contacts/addNewContact',
+      openChat: 'chats/openChat'
     }),
     ...mapGetters({
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',

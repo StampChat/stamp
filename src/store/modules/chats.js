@@ -122,6 +122,11 @@ export default {
     }
   },
   actions: {
+    shareContact ({ commit }, { targetAddr, contact, shareAddr }) {
+      let text = 'Name: ' + contact.name + '\n' + 'Address: ' + shareAddr
+      commit('setInputMessage', { addr: targetAddr, text })
+      commit('switchChatActive', targetAddr)
+    },
     setInputMessage ({ commit }, { addr, text }) {
       commit('setInputMessage', { addr, text })
     },

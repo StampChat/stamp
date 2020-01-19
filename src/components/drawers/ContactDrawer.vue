@@ -29,6 +29,11 @@
       />
     </q-dialog>
 
+    <!-- Contact book dialog -->
+    <q-dialog v-model="contactBookOpen">
+      <contact-book-dialog :contactClick="function (targetAddr, contact) { return shareContact({targetAddr, contact, shareAddr: address }) }" />
+    </q-dialog>
+
     <!-- Scroll area -->
     <q-scroll-area style="height: calc(100% - 125px); margin-top: 125px; border-right: 1px solid #ddd">
       <q-list padding>
@@ -49,6 +54,7 @@
         <q-item
           clickable
           v-ripple
+          @click="contactBookOpen = true"
         >
           <q-item-section avatar>
             <q-icon name="share" />
@@ -122,6 +128,7 @@ import { mapGetters, mapActions } from 'vuex'
 import DrawerContactCard from './DrawerContactCard.vue'
 import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
 import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
+import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 
 Vue.filter('truncate', function (text, length, clamp) {
   clamp = clamp || '...'
@@ -135,12 +142,14 @@ export default {
   components: {
     DrawerContactCard,
     ClearHistoryDialog,
-    DeleteChatDialog
+    DeleteChatDialog,
+    ContactBookDialog
   },
   props: ['address', 'contact'],
   methods: {
     ...mapActions({
-      setDrawerOpen: 'contactDrawer/setDrawerOpen'
+      setDrawerOpen: 'contactDrawer/setDrawerOpen',
+      shareContact: 'chats/shareContact'
     })
   },
   computed: {
@@ -160,7 +169,8 @@ export default {
     return {
       notifications: false,
       confirmClearOpen: false,
-      confirmDeleteOpen: false
+      confirmDeleteOpen: false,
+      contactBookOpen: false
     }
   }
 }

@@ -27,7 +27,10 @@
       />
     </q-card-section>
     <q-card-section class="q-pb-none">
-      <contact-list :contacts="searchContacts(search)" />
+      <contact-list
+        :contacts="searchContacts(search)"
+        :contactClick="contactClick"
+      />
     </q-card-section>
     <q-card-actions align="right">
       <q-btn
@@ -46,6 +49,7 @@ import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import { mapGetters } from 'vuex'
 
 export default {
+  props: ['contactClick'],
   components: {
     ContactList,
     NewContactDialog

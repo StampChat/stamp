@@ -34,7 +34,7 @@
     >
       <q-item-section
         avatar
-        @click="openChat(address)"
+        @click="contactClick(address, contact)"
       >
         <q-avatar
           rounded
@@ -43,13 +43,13 @@
           <img :src="contact.avatar">
         </q-avatar>
       </q-item-section>
-      <q-item-section @click="openChat(address)">
+      <q-item-section @click="contactClick(address, contact)">
         <q-item-label>{{contact.name}}</q-item-label>
         <q-item-label
           lines="1"
           caption
         ><span class="text-weight-bold">Address: </span>{{address}}</q-item-label>
-        <q-item-label caption><span class="text-weight-bold">Inbox Price: </span> {{contact.acceptancePrice}}</q-item-label>
+        <q-item-label caption><span class="text-weight-bold">Inbox Price: </span>{{contact.acceptancePrice}}</q-item-label>
       </q-item-section>
       <q-item-section
         side
@@ -71,10 +71,9 @@
 import { mapActions } from 'vuex'
 
 export default {
-  props: ['address', 'contact', 'method'],
+  props: ['address', 'contact', 'method', 'contactClick'],
   methods: {
     ...mapActions({
-      openChat: 'chats/openChat',
       deleteContact: 'contacts/deleteContact'
     })
   }
