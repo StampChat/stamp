@@ -1,9 +1,6 @@
 <template>
   <div>
-    <q-item
-      class='q-pa-none'
-      v-if="(contact === null)"
-    >
+    <q-item v-if="(contact === null)">
       <q-item-section avatar>
         <q-icon
           color="negative"
@@ -16,10 +13,7 @@
         <!-- TODO: Error information here -->
       </q-item-section>
     </q-item>
-    <q-item
-      class='q-pa-none'
-      v-else-if="contact === 'loading'"
-    >
+    <q-item v-else-if="contact === 'loading'">
       <q-item-section avatar>
         <q-skeleton type="QAvatar" />
       </q-item-section>
@@ -33,7 +27,6 @@
       </q-item-section>
     </q-item>
     <q-item
-      class='q-pa-none'
       clickable
       v-ripple
       v-else-if="contact !== null"
