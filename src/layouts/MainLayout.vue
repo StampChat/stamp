@@ -9,6 +9,7 @@
     <main-header />
     <q-page-container>
       <q-splitter
+        emit-immediately
         v-model="splitterRatio"
         separator-style="width: 0px"
       >
