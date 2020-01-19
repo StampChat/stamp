@@ -6,8 +6,6 @@ import Vue from 'vue'
 
 const cashlib = require('bitcore-lib-cash')
 
-const emptyChatData = { messages: [], inputMessage: '' }
-
 export default {
   namespaced: true,
   state: {
@@ -102,21 +100,22 @@ export default {
     },
     receiveMessage (state, { addr, text, timestamp }) {
       // If addr data doesn't exist then add it
-      if (!(addr in state.data)) {
-        Vue.set(state.data, addr, emptyChatData)
-        state.order.unshift(addr)
-      }
+      let newMsg = { outbound: false, sent: true, body: text, timestamp }
 
       // Add new message
-      let newMsg = { outbound: false, sent: true, body: text, timestamp }
-      state.data[addr].messages.push(newMsg)
+      if (!(addr in state.data)) {
+        Vue.set(state.data, addr, { messages: [newMsg], inputMessage: '' })
+        state.order.unshift(addr)
+      } else {
+        state.data[addr].messages.push(newMsg)
+      }
     },
     setLastReceived (state, lastReceived) {
       state.lastReceived = lastReceived
     },
     openChat (state, addr) {
       if (!(addr in state.data)) {
-        Vue.set(state.data, addr, emptyChatData)
+        Vue.set(state.data, addr, { messages: [], inputMessage: '' })
         state.order.unshift(addr)
       }
       state.activeChatAddr = addr
