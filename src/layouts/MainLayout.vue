@@ -18,7 +18,10 @@
         </template>
 
         <template v-slot:after>
-          <chat />
+          <chat
+            :activeChat="getActiveChat"
+            :messages="getAllMessages(getActiveChat)"
+          />
         </template>
 
       </q-splitter>
@@ -59,7 +62,9 @@ export default {
       getAddressStr: 'wallet/getMyAddressStr',
       getActiveChat: 'chats/getActiveChat',
       getContact: 'contacts/getContact',
-      getDrawerOpen: 'contactDrawer/getDrawerOpen'
+      getDrawerOpen: 'contactDrawer/getDrawerOpen',
+      getAllMessages: 'chats/getAllMessages'
+
     }),
     ...mapGetters([
       'getSplitterRatio'

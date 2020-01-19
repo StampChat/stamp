@@ -2,8 +2,11 @@ import messages from '../../relay/messages_pb'
 import relayConstructors from '../../relay/constructors'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
+import Vue from 'vue'
 
 const cashlib = require('bitcore-lib-cash')
+
+const emptyChatData = { messages: [], inputMessage: '' }
 
 export default {
   namespaced: true,
@@ -18,7 +21,18 @@ export default {
       return state.order
     },
     getInputMessage: (state) => (addr) => {
-      return state.data[addr].inputMessage
+      if (addr in state.data) {
+        return state.data[addr].inputMessage
+      } else {
+        return ''
+      }
+    },
+    getInputMessageActive (state) {
+      if (state.activeChatAddr == null) {
+        return ''
+      } else {
+        return state.data[state.activeChatAddr].inputMessage
+      }
     },
     getActiveChat (state) {
       return state.activeChatAddr
@@ -32,7 +46,11 @@ export default {
       }
     },
     getAllMessages: (state) => (addr) => {
-      return state.data[addr].messages
+      if (addr in state.data) {
+        return state.data[addr].messages
+      } else {
+        return []
+      }
     },
     getLastReceived (state) {
       return state.lastReceived
@@ -43,7 +61,14 @@ export default {
   },
   mutations: {
     setInputMessage (state, { addr, text }) {
-      state.data[addr].inputMessage = text
+      if (addr in state.data) {
+        state.data[addr].inputMessage = text
+      }
+    },
+    setInputMessageActive (state, text) {
+      if (state.activeChatAddr != null) {
+        state.data[state.activeChatAddr].inputMessage = text
+      }
     },
     switchChatActive (state, addr) {
       state.activeChatAddr = addr
@@ -62,7 +87,9 @@ export default {
       state.order.unshift(addr)
     },
     clearChat (state, addr) {
-      state.data[addr].messages = []
+      if (addr in state.data) {
+        state.data[addr].messages = []
+      }
     },
     deleteChat (state, addr) {
       state.order = state.order.filter(function (value, index, arr) {
@@ -71,12 +98,12 @@ export default {
       if (state.activeChatAddr === addr) {
         state.activeChatAddr = null
       }
-      delete state.data[addr]
+      Vue.delete(state.data, addr)
     },
     receiveMessage (state, { addr, text, timestamp }) {
       // If addr data doesn't exist then add it
       if (!(addr in state.data)) {
-        state.data[addr] = { messages: [] }
+        Vue.set(state.data, addr, emptyChatData)
         state.order.unshift(addr)
       }
 
@@ -89,7 +116,7 @@ export default {
     },
     openChat (state, addr) {
       if (!(addr in state.data)) {
-        state.data[addr] = { messages: [], inputMessage: '' }
+        Vue.set(state.data, addr, emptyChatData)
         state.order.unshift(addr)
       }
       state.activeChatAddr = addr
@@ -98,6 +125,9 @@ export default {
   actions: {
     setInputMessage ({ commit }, { addr, text }) {
       commit('setInputMessage', { addr, text })
+    },
+    setInputMessageActive ({ commit }, text) {
+      commit('setInputMessageActive', text)
     },
     switchChatActive ({ commit }, addr) {
       commit('switchChatActive', addr)

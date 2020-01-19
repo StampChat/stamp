@@ -1,3 +1,4 @@
+import Vue from 'vue'
 const cashlib = require('bitcore-lib-cash')
 
 export default {
@@ -26,7 +27,7 @@ export default {
         let oldBalance = state.addresses[address].balance
         state.totalBalance += balance - oldBalance
       }
-      state.addresses[address] = { balance, privKey }
+      Vue.set(state.addresses, address, { balance, privKey })
     },
     updateBalance (state, { address, balance }) {
       if (state.addresses[address] != null) {

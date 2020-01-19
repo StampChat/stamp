@@ -62,13 +62,6 @@
             @click="toggleContactDrawerOpen"
             icon="face"
           />
-          <q-btn
-            class="q-px-sm"
-            flat
-            dense
-            color="white"
-            icon="arrow_drop_down"
-          />
         </q-toolbar>
       </template>
     </q-splitter>

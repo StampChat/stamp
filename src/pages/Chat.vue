@@ -10,10 +10,10 @@
           style="width: 100%; max-width: 100%"
         >
           <chat-message
-            v-for="(message, index) in messages"
+            v-for="(chatMessage, index) in messages"
             v-bind:key="index"
-            :message="message"
-            :targetAddr="getActiveChat"
+            :message="chatMessage"
+            :targetAddr="activeChat"
           />
         </q-scroll-area>
       </div>
@@ -51,20 +51,17 @@ import { mapGetters, mapActions } from 'vuex'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 
 export default {
+  props: ['activeChat', 'messages'],
   components: {
     ChatMessage
   },
   methods: {
     ...mapActions({
       sendMessageVuex: 'chats/sendMessage',
-      switchOrder: 'chats/switchOrder',
       setInputMessage: 'chats/setInputMessage'
     }),
-    ...mapGetters({
-    }),
     sendMessage () {
-      this.sendMessageVuex({ addr: this.getActiveChat, text: this.message })
-      this.switchOrder(this.getActiveChat)
+      this.sendMessageVuex({ addr: this.activeChat, text: this.message })
       this.message = ''
       this.$nextTick(() => this.$refs.inputBox.focus())
     }
@@ -72,27 +69,14 @@ export default {
   computed: {
     ...mapGetters({
       getContact: 'contacts/getContact',
-      getAllMessages: 'chats/getAllMessages',
-      getActiveChat: 'chats/getActiveChat',
       getInputMessage: 'chats/getInputMessage'
     }),
-    messages () {
-      if (this.getActiveChat !== null) {
-        return this.getAllMessages(this.getActiveChat)
-      } else {
-        return []
-      }
-    },
     message: {
-      get () {
-        if (this.getActiveChat) {
-          return this.getInputMessage(this.getActiveChat)
-        } else {
-          return ''
-        }
-      },
       set (text) {
-        this.setInputMessage({ addr: this.getActiveChat, text })
+        this.setInputMessage({ addr: this.activeChat, text })
+      },
+      get () {
+        return this.getInputMessage(this.activeChat)
       }
     }
   }

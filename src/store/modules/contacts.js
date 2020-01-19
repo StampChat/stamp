@@ -1,6 +1,7 @@
 import { PublicKey } from 'bitcore-lib-cash'
 import addressmetadata from '../../keyserver/addressmetadata_pb'
 import VCard from 'vcf'
+import Vue from 'vue'
 
 export default {
   namespaced: true,
@@ -45,10 +46,10 @@ export default {
   },
   mutations: {
     updateContact (state, { addr, profile }) {
-      state.profiles[addr] = profile
+      Vue.set(state.profiles, addr, profile)
     },
     deleteContact (state, addr) {
-      delete state.profiles[addr]
+      Vue.delete(state.profiles, addr)
     }
   },
   actions: {

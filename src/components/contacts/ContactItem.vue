@@ -37,10 +37,12 @@
       clickable
       v-ripple
       v-else-if="contact !== null"
-      @click="openChat(address)"
       v-close-popup
     >
-      <q-item-section avatar>
+      <q-item-section
+        avatar
+        @click="openChat(address)"
+      >
         <q-avatar
           rounded
           size="55px"
@@ -48,7 +50,7 @@
           <img :src="contact.avatar">
         </q-avatar>
       </q-item-section>
-      <q-item-section>
+      <q-item-section @click="openChat(address)">
         <q-item-label>{{contact.name}}</q-item-label>
         <q-item-label
           lines="1"
@@ -59,13 +61,13 @@
       <q-item-section
         side
         clickable
+        @click="deleteContact(address)"
       >
         <q-btn
           flat
           round
           icon="delete"
           color="red"
-          @click="deleteContact(address)"
         />
       </q-item-section>
     </q-item>
