@@ -1,6 +1,6 @@
 <template>
   <q-drawer
-    :value="open"
+    v-model="drawerOpen"
     show-if-above
     side="right"
     elevated
@@ -137,7 +137,7 @@ export default {
     ClearHistoryDialog,
     DeleteChatDialog
   },
-  props: ['address', 'open', 'contact'],
+  props: ['address', 'contact'],
   methods: {
     ...mapActions({
       setDrawerOpen: 'contactDrawer/setDrawerOpen'
@@ -145,6 +145,7 @@ export default {
   },
   computed: {
     ...mapGetters({
+      getDrawerOpen: 'contactDrawer/getDrawerOpen'
     }),
     drawerOpen: {
       get () {

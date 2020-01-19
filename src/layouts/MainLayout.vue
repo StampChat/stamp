@@ -4,7 +4,6 @@
     <contact-drawer
       v-if="getActiveChat !== null"
       :address="getActiveChat"
-      :open="getDrawerOpen"
       :contact="getContact(getActiveChat)"
     />
     <main-header />
@@ -62,7 +61,6 @@ export default {
       getAddressStr: 'wallet/getMyAddressStr',
       getActiveChat: 'chats/getActiveChat',
       getContact: 'contacts/getContact',
-      getDrawerOpen: 'contactDrawer/getDrawerOpen',
       getAllMessages: 'chats/getAllMessages'
 
     }),
@@ -80,7 +78,7 @@ export default {
   },
   created () {
     // Start internal timer
-    // this.startClock()
+    this.startClock()
 
     // Reinitialize wallet classes
     this.walletReinitialize()
@@ -89,7 +87,7 @@ export default {
     this.relayClientReinitialize()
 
     // Start profile watcher
-    // this.startContactUpdater()
+    this.startContactUpdater()
 
     // Start websocket listener
     let client = this.getRelayClient

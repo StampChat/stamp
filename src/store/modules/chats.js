@@ -173,11 +173,9 @@ export default {
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](senderAddr)) {
         // Add dummy contact
-        dispatch('contacts/addLoadingContact', { senderAddr, senderPubKey }, { root: true })
+        dispatch('contacts/addLoadingContact', { addr: senderAddr, pubKey: senderPubKey }, { root: true })
 
         // Load contact
-        console.log('loading...')
-        console.log(senderAddr)
         dispatch('contacts/refresh', senderAddr, { root: true })
       }
 
