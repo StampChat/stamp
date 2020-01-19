@@ -7,7 +7,7 @@ export default {
   },
   actions: {
     startClock ({ commit }) {
-      setInterval(() => { commit('updateClock') }, 1000)
+      setInterval(() => { commit('updateClock') }, 5000)
     },
     updateClock ({ commit }) {
       commit('updateClock')

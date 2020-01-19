@@ -45,8 +45,13 @@ export default {
     }
   },
   mutations: {
-    updateContact (state, { addr, profile }) {
+    addContact (state, { addr, profile }) {
       Vue.set(state.profiles, addr, profile)
+    },
+    updateContact (state, { addr, profile }) {
+      if (addr in state.profiles) {
+        Vue.set(state.profiles, addr, profile)
+      }
     },
     deleteContact (state, addr) {
       Vue.delete(state.profiles, addr)
@@ -61,7 +66,7 @@ export default {
         acceptancePrice: 'Unknown',
         pubKey
       }
-      commit('updateContact', { addr, profile })
+      commit('addContact', { addr, profile })
     },
     deleteContact ({ commit }, addr) {
       commit('chats/clearChat', addr, { root: true })
@@ -70,15 +75,13 @@ export default {
     },
     addContact ({ commit }, { addr, profile }) {
       commit('chats/openChat', addr, { root: true })
-      commit('updateContact', { addr, profile })
+      commit('addContact', { addr, profile })
     },
     deleteChat ({ commit }, addr) {
       commit('chats/deleteChat', addr, { root: true })
     },
     async refresh ({ commit, rootGetters }, addr) {
       // Make this generic over networks
-      console.log('refreshing...')
-      console.log(addr)
 
       // Get metadata
       let handler = rootGetters['keyserverHandler/getHandler']
@@ -149,7 +152,7 @@ export default {
         for (let addr in contacts) {
           dispatch('refresh', addr)
         }
-      }, 1000)
+      }, 10000)
     }
   }
 }
