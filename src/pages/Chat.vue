@@ -6,6 +6,7 @@
         style="background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - 100px);"
       >
         <q-scroll-area
+          ref="chatScroll"
           class="q-px-md"
           style="width: 100%; max-width: 100%"
         >
@@ -64,6 +65,9 @@ export default {
       this.sendMessageVuex({ addr: this.activeChat, text: this.message })
       this.message = ''
       this.$nextTick(() => this.$refs.inputBox.focus())
+    },
+    scrollBottom () {
+      this.$refs.chatScroll.setScrollPosition(this.$refs.chatScroll.$el.scrollHeight, 1)
     }
   },
   computed: {
@@ -78,6 +82,11 @@ export default {
       get () {
         return this.getInputMessage(this.activeChat)
       }
+    }
+  },
+  watch: {
+    messages: function (newMsgs, oldMsgs) {
+      this.scrollBottom()
     }
   }
 }
