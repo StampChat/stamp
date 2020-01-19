@@ -132,7 +132,7 @@ export default {
     switchChatActive ({ commit }, addr) {
       commit('switchChatActive', addr)
     },
-    startChatUpdater ({ commit, dispatch }) {
+    startChatUpdater ({ dispatch }) {
       setInterval(() => { dispatch('refresh') }, 1_000)
     },
     async sendMessage ({ commit, rootGetters }, { addr, text }) {
@@ -167,16 +167,18 @@ export default {
     addMessage ({ commit, rootGetters, dispatch }, { message, timestamp }) {
       let rawSenderPubKey = message.getSenderPubKey()
       let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
-      let addr = senderPubKey.toAddress('testnet')
+      let senderAddr = senderPubKey.toAddress('testnet')
         .toCashAddress() // TODO: Make generic
 
       // Check whether contact exists
-      if (!rootGetters['contacts/isContact']) {
+      if (!rootGetters['contacts/isContact'](senderAddr)) {
         // Add dummy contact
-        dispatch('contacts/addLoadingContact', addr, { root: true })
+        dispatch('contacts/addLoadingContact', { senderAddr, senderPubKey }, { root: true })
 
         // Load contact
-        dispatch('contacts/refresh', addr, { root: true })
+        console.log('loading...')
+        console.log(senderAddr)
+        dispatch('contacts/refresh', senderAddr, { root: true })
       }
 
       let rawPayload = message.getSerializedPayload()
@@ -204,7 +206,7 @@ export default {
         let entry = entriesList[index]
         // TODO: Don't assume it's a text msg
         let text = new TextDecoder().decode(entry.getEntryData())
-        commit('receiveMessage', { addr, text, timestamp })
+        commit('receiveMessage', { addr: senderAddr, text, timestamp })
       }
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {

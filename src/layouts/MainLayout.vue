@@ -80,7 +80,7 @@ export default {
   },
   created () {
     // Start internal timer
-    this.startClock()
+    // this.startClock()
 
     // Reinitialize wallet classes
     this.walletReinitialize()
@@ -89,7 +89,7 @@ export default {
     this.relayClientReinitialize()
 
     // Start profile watcher
-    this.startContactUpdater()
+    // this.startContactUpdater()
 
     // Start websocket listener
     let client = this.getRelayClient

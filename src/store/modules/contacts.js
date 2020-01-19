@@ -53,13 +53,13 @@ export default {
     }
   },
   actions: {
-    addLoadingContact ({ commit }, addr) {
+    addLoadingContact ({ commit }, { addr, pubKey }) {
       let profile = {
         name: 'Loading...',
         bio: null,
         avatar: null,
         acceptancePrice: 'Unknown',
-        pubKey: null
+        pubKey
       }
       commit('updateContact', { addr, profile })
     },
@@ -77,6 +77,8 @@ export default {
     },
     async refresh ({ commit, rootGetters }, addr) {
       // Make this generic over networks
+      console.log('refreshing...')
+      console.log(addr)
 
       // Get metadata
       let handler = rootGetters['keyserverHandler/getHandler']
