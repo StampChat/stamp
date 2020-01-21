@@ -56,39 +56,28 @@ export default {
       totalOutput += output.getAmount()
     }
 
-    // Update balances
-    await store.dispatch['wallet/updateBalances']
+    // Update UTXOs
+    await store.dispatch['wallet/updateUTXOs']
 
     let addresses = store.getters['wallet/getAddresses']
 
     // Collect inputs
-    let client = store.getters['electrumHandler/getClient']
-    let utxos = []
+    let inputUTXOs = []
     let signingKeys = []
     let fee = 500
-    let complete = false
     let inputValue = 0
-    for (let addr in addresses) {
-      let vals = addresses[addr]
-      if (vals.balance !== 0) {
-        let outputs = await client.blockchainAddress_listunspent(addr)
-        for (let index in outputs) {
-          let value = outputs[index].value
-          inputValue += value
-          utxos.push({
-            'txId': outputs[index].tx_hash,
-            'outputIndex': outputs[index].tx_pos,
-            'satoshis': value,
-            'address': addr,
-            'script': cashlib.Script.buildPublicKeyHashOut(addr).toHex()
-          })
-          signingKeys.push(vals.privKey)
-          if (totalOutput + fee < inputValue) {
-            complete = true
-          }
-        }
-      }
-      if (complete) {
+    let outputs = await store.getters['wallet/getUTXOs']
+
+    for (let i in outputs) {
+      let output = outputs[i]
+      inputValue += output.satoshis
+      let addr = output.address
+      output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+      inputUTXOs.push(output)
+
+      let signingKey = addresses[addr].privKey
+      signingKeys.push(signingKey)
+      if (totalOutput + fee < inputValue) {
         break
       }
     }
@@ -99,8 +88,8 @@ export default {
     let transaction = new cashlib.Transaction()
 
     // Add inputs
-    for (let i in utxos) {
-      transaction = transaction.from(utxos[i])
+    for (let i in inputUTXOs) {
+      transaction = transaction.from(inputUTXOs[i])
     }
 
     // Add Outputs from PaymentRequest

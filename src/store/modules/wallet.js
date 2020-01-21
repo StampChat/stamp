@@ -8,7 +8,7 @@ export default {
     xPrivKey: null,
     identityPrivKey: null,
     addresses: {},
-    totalBalance: 0
+    outputs: []
   },
   mutations: {
     completeSetup (state) {
@@ -29,13 +29,6 @@ export default {
       }
       Vue.set(state.addresses, address, { balance, privKey })
     },
-    updateBalance (state, { address, balance }) {
-      if (state.addresses[address] != null) {
-        let oldBalance = state.addresses[address].balance
-        state.addresses[address].balance = balance
-        state.totalBalance += balance - oldBalance
-      }
-    },
     setXPrivKey (state, xPrivKey) {
       state.xPrivKey = xPrivKey
       state.identityPrivKey = xPrivKey.deriveChild(20102019)
@@ -47,6 +40,12 @@ export default {
         state.xPrivKey = cashlib.HDPrivateKey.fromObject(state.xPrivKey)
         state.identityPrivKey = cashlib.PrivateKey.fromObject(state.identityPrivKey)
       }
+    },
+    setUTXOs (state, outputs) {
+      state.outputs = outputs
+    },
+    setUTXOsByAddr (state, outputs) {
+      state.outputs = outputs
     }
   },
   actions: {
@@ -63,21 +62,6 @@ export default {
     setXPrivKey ({ commit }, xPrivKey) {
       commit('setXPrivKey', xPrivKey)
     },
-    async updateBalance ({ commit, rootGetters }, address) {
-      let handler = rootGetters['electrumHandler/getClient']
-      let balanceJson = await handler.blockchainAddress_getBalance(address)
-      let balance = balanceJson.confirmed + balanceJson.unconfirmed
-      commit('updateBalance', { address, balance })
-    },
-    async updateBalances ({ commit, rootGetters, getters }) {
-      let addresses = getters['getAddresses']
-      for (var addr in addresses) {
-        let handler = rootGetters['electrumHandler/getClient']
-        let balanceJson = await handler.blockchainAddress_getBalance(addr)
-        let balance = balanceJson.confirmed + balanceJson.unconfirmed
-        commit('updateBalance', { addr, balance })
-      }
-    },
     async updateAddresses ({ commit, rootGetters, getters }) {
       let client = rootGetters['electrumHandler/getClient']
       let xPrivKey = getters['getXPrivKey']
@@ -93,21 +77,42 @@ export default {
         commit('setAddress', { address, balance, privKey })
       }
     },
+    async updateUTXOFromAddr ({ commit, rootGetters }, addr) {
+      let client = rootGetters['electrumHandler/getClient']
+      let elOutputs = await client.blockchainAddress_listunspent(addr)
+      let outputs = elOutputs.map(elOutput => {
+        let output = {
+          txId: elOutput.tx_hash,
+          outputIndex: elOutput.tx_pos,
+          satoshis: elOutput.value,
+          type: 'p2pkh',
+          address: addr
+        }
+        return output
+      })
+      commit('setUTXOsByAddr', outputs)
+    },
+    async updateUTXOs ({ commit, getters, dispatch }) {
+      let addresses = Object.keys(getters['getAddresses'])
+
+      let outputsWindowed = await Promise
+        .all(addresses.map(addr => dispatch('updateUTXOFromAddr', addr)))
+      let outputs = outputsWindowed.flat()
+
+      commit('setUTXOs', outputs)
+    },
     async startListeners ({ dispatch, getters, rootGetters }) {
       let client = rootGetters['electrumHandler/getClient']
       await client.subscribe.on(
         'blockchain.address.subscribe',
         async (result) => {
           let address = result[0]
-          await dispatch('updateBalance', address)
+          await dispatch('updateUTXOFromAddr', address)
         })
       let addresses = getters['getAddresses']
       for (var addr in addresses) {
         await client.blockchainAddress_subscribe(addr)
       }
-    },
-    clearWallet ({ commit }) {
-      commit('setAddresses', {})
     }
   },
   getters: {
@@ -115,7 +120,11 @@ export default {
       return state.complete
     },
     getBalance (state) {
-      return state.totalBalance
+      if (state.outputs.length) {
+        return state.outputs.reduce((acc, output) => acc + output.satoshis, 0)
+      } else {
+        return 0
+      }
     },
     getIdentityPrivKey (state) {
       return state.identityPrivKey
@@ -136,7 +145,6 @@ export default {
         'testnet') // TODO: Not just testnet
     },
     getMyAddressStr (state) {
-      console.log(state)
       return state.identityPrivKey.toAddress('testnet')
         .toCashAddress() // TODO: Not just testnet
     },
@@ -145,6 +153,9 @@ export default {
     },
     getXPrivKey (state) {
       return state.xPrivKey
+    },
+    getUTXOs (state) {
+      return state.outputs
     }
   }
 }
