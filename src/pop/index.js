@@ -57,19 +57,18 @@ export default {
     }
 
     // Update UTXOs
-    await store.dispatch['wallet/updateUTXOs']
-
-    let addresses = store.getters['wallet/getAddresses']
+    await store.dispatch('wallet/updateUTXOs')
 
     // Collect inputs
+    let addresses = store.getters['wallet/getAddresses']
     let inputUTXOs = []
     let signingKeys = []
-    let fee = 500
+    let fee = 500 // TODO: Not const
     let inputValue = 0
-    let outputs = await store.getters['wallet/getUTXOs']
+    let utxos = await store.getters['wallet/getUTXOs']
 
-    for (let i in outputs) {
-      let output = outputs[i]
+    for (let i in utxos) {
+      let output = utxos[i]
       inputValue += output.satoshis
       let addr = output.address
       output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
@@ -104,7 +103,7 @@ export default {
     }
 
     // Add change Output
-    transaction = transaction.fee(fee).change(Object.keys(addresses)[0])
+    transaction = transaction.fee(fee).change(Object.keys(addresses)[0]) // TODO: Properly handle change
 
     for (let i in signingKeys) {
       transaction = transaction.sign(signingKeys[i])

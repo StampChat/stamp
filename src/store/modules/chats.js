@@ -148,8 +148,7 @@ export default {
 
       let client = rootGetters['relayClient/getClient']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
-      let message =
-            relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
+      let message = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
       let messageSet = new messages.MessageSet()
       messageSet.addMessages(message)
 

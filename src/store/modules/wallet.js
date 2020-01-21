@@ -18,16 +18,9 @@ export default {
       state.xPrivKey = null
       state.identityPrivKey = null
       state.addresses = {}
-      state.totalBalance = 0
     },
-    setAddress (state, { address, balance, privKey }) {
-      if (state.addresses[address] == null) {
-        state.totalBalance += balance
-      } else {
-        let oldBalance = state.addresses[address].balance
-        state.totalBalance += balance - oldBalance
-      }
-      Vue.set(state.addresses, address, { balance, privKey })
+    setAddress (state, { address, privKey }) {
+      Vue.set(state.addresses, address, { privKey })
     },
     setXPrivKey (state, xPrivKey) {
       state.xPrivKey = xPrivKey
@@ -44,8 +37,12 @@ export default {
     setUTXOs (state, outputs) {
       state.outputs = outputs
     },
-    setUTXOsByAddr (state, outputs) {
-      state.outputs = outputs
+    setUTXOsByAddr (state, { addr, outputs }) {
+      state.outputs = state.outputs.filter(output => output.address !== addr)
+      state.outputs = state.outputs.concat(outputs)
+    },
+    removeUTXO (state, output) {
+      state.outputs = state.outputs.filter(utxo => utxo !== output)
     }
   },
   actions: {
@@ -62,8 +59,7 @@ export default {
     setXPrivKey ({ commit }, xPrivKey) {
       commit('setXPrivKey', xPrivKey)
     },
-    async updateAddresses ({ commit, rootGetters, getters }) {
-      let client = rootGetters['electrumHandler/getClient']
+    initAddresses ({ commit, rootGetters, getters }) {
       let xPrivKey = getters['getXPrivKey']
       for (var i = 0; i < 2; i++) {
         let privKey = xPrivKey.deriveChild(44)
@@ -72,9 +68,7 @@ export default {
           .deriveChild(i, true)
           .privateKey
         let address = privKey.toAddress('testnet').toLegacyAddress()
-        let balanceJson = await client.blockchainAddress_getBalance(address)
-        let balance = balanceJson.confirmed + balanceJson.unconfirmed
-        commit('setAddress', { address, balance, privKey })
+        commit('setAddress', { address, privKey })
       }
     },
     async updateUTXOFromAddr ({ commit, rootGetters }, addr) {
@@ -90,16 +84,13 @@ export default {
         }
         return output
       })
-      commit('setUTXOsByAddr', outputs)
+      commit('setUTXOsByAddr', { addr, outputs })
     },
-    async updateUTXOs ({ commit, getters, dispatch }) {
+    async updateUTXOs ({ getters, dispatch }) {
       let addresses = Object.keys(getters['getAddresses'])
 
-      let outputsWindowed = await Promise
+      await Promise
         .all(addresses.map(addr => dispatch('updateUTXOFromAddr', addr)))
-      let outputs = outputsWindowed.flat()
-
-      commit('setUTXOs', outputs)
     },
     async startListeners ({ dispatch, getters, rootGetters }) {
       let client = rootGetters['electrumHandler/getClient']

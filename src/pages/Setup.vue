@@ -523,7 +523,7 @@ export default {
     ...mapActions({
       setMyProfile: 'myProfile/setMyProfile',
       setXPrivKey: 'wallet/setXPrivKey',
-      updateAddresses: 'wallet/updateAddresses',
+      initAddresses: 'wallet/initAddresses',
       startListeners: 'wallet/startListeners',
       completeSetup: 'wallet/completeSetup',
       setRelayToken: 'relayClient/setToken',
@@ -580,8 +580,8 @@ export default {
             this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
             let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(0, true)
             this.currentAddress = privKey.privateKey.toAddress('testnet')
-            await this.setXPrivKey(this.xPrivKey)
-            await this.updateAddresses()
+            this.setXPrivKey(this.xPrivKey)
+            this.initAddresses()
 
             this.$q.loading.show({
               delay: 100,

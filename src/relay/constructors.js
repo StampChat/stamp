@@ -1,11 +1,79 @@
 import messages from './messages_pb'
 import filters from './filters_pb'
 import crypto from './crypto'
+import store from '../store/index'
 
 const cashlib = require('bitcore-lib-cash')
 
 export default {
-  constructTextMessage (text, privKey, destPubKey, scheme) {
+  async constructStampTransaction (payloadDigest, destPubKey, satoshis) {
+    // Update UTXOs
+    await store.dispatch('wallet/updateUTXOs')
+
+    // Collect inputs
+    let addresses = store.getters['wallet/getAddresses']
+    let inputUTXOs = []
+    let signingKeys = []
+    let fee = 500 // TODO: Not const
+    let inputValue = 0
+    let utxos = await store.getters['wallet/getUTXOs']
+
+    for (let i in utxos) {
+      let output = utxos[i]
+      inputValue += output.satoshis
+      let addr = output.address
+      output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+      inputUTXOs.push(output)
+
+      let signingKey = addresses[addr].privKey
+      signingKeys.push(signingKey)
+      if (satoshis + fee < inputValue) {
+        break
+      }
+    }
+
+    // Construct Transaction
+    let transaction = new cashlib.Transaction()
+
+    // Add inputs
+    for (let i in inputUTXOs) {
+      transaction = transaction.from(inputUTXOs[i])
+    }
+
+    // Add stamp output
+    let stampAddress = crypto.constructStampAddress(payloadDigest, destPubKey)
+    let script = cashlib.Script.buildPublicKeyHashOut(stampAddress).toHex()
+    let output = new cashlib.Transaction.Output({
+      script,
+      satoshis
+    })
+    transaction = transaction.addOutput(output)
+
+    // Add change Output
+    transaction = transaction.fee(fee).change(Object.keys(addresses)[0])
+
+    return transaction
+  },
+  async constructMessage (serializedPayload, privKey, destPubKey) {
+    let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
+    let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
+    ecdsa.sign()
+
+    let message = new messages.Message()
+    let sig = ecdsa.sig.toCompact(1).slice(1)
+    let rawPubkey = privKey.toPublicKey().toBuffer()
+    message.setSenderPubKey(rawPubkey)
+    message.setSignature(sig)
+    message.setSerializedPayload(serializedPayload)
+
+    let amount = 300
+    let stampTx = await this.constructStampTransaction(payloadDigest, destPubKey, amount)
+    let rawStampTx = stampTx.toBuffer()
+    message.setStampTx(rawStampTx)
+
+    return message
+  },
+  async constructTextMessage (text, privKey, destPubKey, scheme) {
     // Construct text entry
     let textEntry = new messages.Entry()
     textEntry.setKind('text-utf8')
@@ -37,17 +105,8 @@ export default {
       return
     }
     let serializedPayload = payload.serializeBinary()
-    let hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
-    let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
-    ecdsa.sign()
 
-    let message = new messages.Message()
-    let sig = ecdsa.sig.toCompact(1).slice(1)
-    let rawPubkey = privKey.toPublicKey().toBuffer()
-    message.setSenderPubKey(rawPubkey)
-    message.setSignature(sig)
-    message.setSerializedPayload(serializedPayload)
-
+    let message = await this.constructMessage(serializedPayload, privKey, destPubKey)
     return message
   },
   constructPriceFilterApplication (isPublic, acceptancePrice, notificationPrice, privKey) {
