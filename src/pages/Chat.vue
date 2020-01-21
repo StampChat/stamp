@@ -69,7 +69,10 @@ export default {
       this.$nextTick(() => this.$refs.inputBox.focus())
     },
     scrollBottom () {
-      this.$refs.chatScroll.setScrollPosition(this.$refs.chatScroll.$el.scrollHeight, 1)
+      const scrollArea = this.$refs.chatScroll
+      const scrollTarget = scrollArea.getScrollTarget()
+      const duration = 300
+      scrollArea.setScrollPosition(scrollTarget.scrollHeight, duration)
     },
     onResize (size) {
       this.height = size.height
