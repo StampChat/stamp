@@ -1,6 +1,8 @@
 import crypto from '../../../src/relay/crypto'
 import { PrivateKey } from 'bitcore-lib-cash'
 
+const cashlib = require('bitcore-lib-cash')
+
 function getRandomInt (max) {
   return Math.floor(Math.random() * Math.floor(max))
 }
@@ -25,4 +27,15 @@ test('Decrypt', () => {
   let { cipherText, ephemeralPubKey } = crypto.encrypt(raw, sourcePrivKey, destPubKey)
   let plainText = crypto.decrypt(cipherText, destPrivKey, sourcePubKey, ephemeralPubKey)
   expect(plainText).toStrictEqual(raw)
+})
+
+test('Stamp Signatures', () => {
+  let preimage = Buffer.from('hello')
+  let digest = cashlib.crypto.Hash.sha256(preimage)
+  let privKey = PrivateKey()
+  let publicKey = privKey.toPublicKey()
+  let stampPublicKey = crypto.constructStampPubKey(digest, publicKey)
+  let stampPrivKey = crypto.constructStampPrivKey(digest, privKey)
+  let stampPublicKeyDerived = stampPrivKey.toPublicKey()
+  expect(stampPublicKey.toBuffer()).toStrictEqual(stampPublicKeyDerived.toBuffer())
 })

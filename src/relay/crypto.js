@@ -4,14 +4,20 @@ const forge = require('node-forge')
 const cashlib = require('bitcore-lib-cash')
 
 export default {
-  constructStampAddress (payloadDigest, destPubKey) {
+  constructStampPubKey (payloadDigest, destPubKey) {
     let digestPrivateKey = PrivateKey.fromBuffer(payloadDigest)
     let digestPublicKey = digestPrivateKey.toPublicKey()
 
     let stampPoint = digestPublicKey.point.add(destPubKey.point)
     let stampPublicKey = PublicKey.fromPoint(stampPoint)
 
-    return stampPublicKey.toAddress('testnet')
+    return stampPublicKey
+  },
+  constructStampPrivKey (payloadDigest, privKey) {
+    let digestBn = cashlib.crypto.BN.fromBuffer(payloadDigest)
+    let stampPrivBn = privKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN()) // TODO: Check this
+    let stampPrivKey = PrivateKey(stampPrivBn)
+    return stampPrivKey
   },
   encrypt (plainText, privKey, destPubKey) {
     // Generate new (random) emphemeral key

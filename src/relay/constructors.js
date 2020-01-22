@@ -41,9 +41,9 @@ export default {
     }
 
     // Add stamp output
-    let stampAddress = crypto.constructStampAddress(payloadDigest, destPubKey)
+    let stampPubKey = crypto.constructStampPubKey(payloadDigest, destPubKey)
     transaction = transaction.addOutput(new cashlib.Transaction.Output({
-      script: cashlib.Script(new cashlib.Address(stampAddress)),
+      script: cashlib.Script(new cashlib.Address(stampPubKey.toAddress('testnet'))),
       satoshis: amount
     }))
 
