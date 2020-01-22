@@ -125,7 +125,7 @@ export default {
       let fee = 500 // TODO: Not const
       let inputValue = 0
       let utxos = getters['getUTXOs']
-      let totalAmount = outputs.reduce((acc, output) => acc + output.satoshis)
+      let totalAmount = outputs.reduce((acc, output) => acc + output.satoshis, 0)
 
       // TODO: Coin selection
       for (let i in utxos) {
