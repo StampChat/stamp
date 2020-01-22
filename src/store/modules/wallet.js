@@ -43,6 +43,9 @@ export default {
     },
     removeUTXO (state, output) {
       state.outputs = state.outputs.filter(utxo => utxo !== output)
+    },
+    addUTXO (state, output) {
+      state.outputs.push(output)
     }
   },
   actions: {
@@ -91,6 +94,12 @@ export default {
 
       await Promise
         .all(addresses.map(addr => dispatch('updateUTXOFromAddr', addr)))
+    },
+    addUTXO ({ commit }, output) {
+      commit('addUTXO', output)
+    },
+    removeUTXO ({ commit }, output) {
+      commit('removeUTXO', output)
     },
     async startListeners ({ dispatch, getters, rootGetters }) {
       let client = rootGetters['electrumHandler/getClient']

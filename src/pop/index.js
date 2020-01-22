@@ -69,6 +69,8 @@ export default {
 
     for (let i in utxos) {
       let output = utxos[i]
+      store.dispatch('wallet/removeUTXO', output)
+
       inputValue += output.satoshis
       let addr = output.address
       output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
@@ -103,12 +105,24 @@ export default {
     }
 
     // Add change Output
+    let changeAddr = Object.keys(addresses)[0]
     transaction = transaction.fee(fee).change(Object.keys(addresses)[0]) // TODO: Properly handle change
 
+    // Sign
     for (let i in signingKeys) {
       transaction = transaction.sign(signingKeys[i])
     }
     let rawTransaction = transaction.toBuffer()
+
+    // Add change output
+    let changeOutput = {
+      address: changeAddr,
+      outputIndex: 1, // This is because we have only 1 stamp output
+      satoshis: inputValue - fee - totalOutput,
+      txId: transaction.hash,
+      type: 'p2pkh'
+    }
+    store.dispatch('wallet/addUTXO', changeOutput)
 
     // Send payment and receive token
     let payment = new paymentrequest.Payment()

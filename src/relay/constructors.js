@@ -7,9 +7,6 @@ const cashlib = require('bitcore-lib-cash')
 
 export default {
   async constructStampTransaction (payloadDigest, destPubKey, amount) {
-    // Update UTXOs
-    await store.dispatch('wallet/updateUTXOs')
-
     // Collect inputs
     let addresses = store.getters['wallet/getAddresses']
     let inputUTXOs = []
@@ -20,6 +17,8 @@ export default {
 
     for (let i in utxos) {
       let output = utxos[i]
+      store.dispatch('wallet/removeUTXO', output)
+
       inputValue += output.satoshis
       let addr = output.address
       output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
@@ -27,6 +26,7 @@ export default {
 
       let signingKey = addresses[addr].privKey
       signingKeys.push(signingKey)
+
       if (amount + fee < inputValue) {
         break
       }
@@ -48,12 +48,23 @@ export default {
     }))
 
     // Add change Output
-    transaction = transaction.fee(fee).change(Object.keys(addresses)[0])
+    let changeAddr = Object.keys(addresses)[0]
+    transaction = transaction.fee(fee).change(changeAddr)
 
     // Sign
     for (let i in signingKeys) {
       transaction = transaction.sign(signingKeys[i])
     }
+
+    // Add change output
+    let changeOutput = {
+      address: changeAddr,
+      outputIndex: 1, // This is because we have only 1 stamp output
+      satoshis: inputValue - fee - amount,
+      txId: transaction.hash,
+      type: 'p2pkh'
+    }
+    store.dispatch('wallet/addUTXO', changeOutput)
 
     return transaction
   },
