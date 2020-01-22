@@ -1,4 +1,6 @@
 import Vue from 'vue'
+import crypto from '../../relay/crypto'
+
 const cashlib = require('bitcore-lib-cash')
 
 export default {
@@ -125,6 +127,7 @@ export default {
       let utxos = getters['getUTXOs']
       let totalAmount = outputs.reduce((acc, output) => acc + output.satoshis)
 
+      // TODO: Coin selection
       for (let i in utxos) {
         let output = utxos[i]
 
@@ -136,8 +139,17 @@ export default {
         output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
         inputUTXOs.push(output)
 
-        let signingKey = addresses[addr].privKey
-        signingKeys.push(signingKey)
+        // Grab private key
+        if (output.type === 'p2pkh') {
+          let signingKey = addresses[addr].privKey
+          signingKeys.push(signingKey)
+        } else if (output.type === 'stamp') {
+          let privKey = getters['getIdentityPrivKey']
+          let signingKey = crypto.constructStampPrivKey(output.payloadDigest, privKey)
+          signingKeys.push(signingKey)
+        } else {
+          // TODO: Handle
+        }
 
         if (totalAmount + fee < inputValue) {
           break
