@@ -49,80 +49,20 @@ export default {
 
   async constructPaymentTransaction (paymentDetails) {
     // Get Outputs
-    var totalOutput = 0
     let requestOutputs = paymentDetails.getOutputsList()
-    for (let i in requestOutputs) {
-      let output = requestOutputs[i]
-      totalOutput += output.getAmount()
-    }
-
-    // Update UTXOs
-    await store.dispatch('wallet/updateUTXOs')
-
-    // Collect inputs
-    let addresses = store.getters['wallet/getAddresses']
-    let inputUTXOs = []
-    let signingKeys = []
-    let fee = 500 // TODO: Not const
-    let inputValue = 0
-    let utxos = await store.getters['wallet/getUTXOs']
-
-    for (let i in utxos) {
-      let output = utxos[i]
-      store.dispatch('wallet/removeUTXO', output)
-
-      inputValue += output.satoshis
-      let addr = output.address
-      output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
-      inputUTXOs.push(output)
-
-      let signingKey = addresses[addr].privKey
-      signingKeys.push(signingKey)
-      if (totalOutput + fee < inputValue) {
-        break
-      }
-    }
-
-    // TODO: Check for insufficient funds
-
-    // Construct Transaction
-    let transaction = new cashlib.Transaction()
-
-    // Add inputs
-    for (let i in inputUTXOs) {
-      transaction = transaction.from(inputUTXOs[i])
-    }
-
-    // Add Outputs from PaymentRequest
-    for (let i in requestOutputs) {
-      let script = requestOutputs[i].getScript()
-      let satoshis = requestOutputs[i].getAmount()
+    let outputs = requestOutputs.map(reqOutput => {
+      let script = reqOutput.getScript()
+      let satoshis = reqOutput.getAmount()
       let output = new cashlib.Transaction.Output({
         script,
         satoshis
       })
-      transaction = transaction.addOutput(output)
-    }
+      return output
+    })
 
-    // Add change Output
-    let changeAddr = Object.keys(addresses)[0]
-    transaction = transaction.fee(fee).change(Object.keys(addresses)[0]) // TODO: Properly handle change
-
-    // Sign
-    for (let i in signingKeys) {
-      transaction = transaction.sign(signingKeys[i])
-    }
-    let rawTransaction = transaction.toBuffer()
-
-    // Add change output
-    let changeOutput = {
-      address: changeAddr,
-      outputIndex: 1, // This is because we have only 1 stamp output
-      satoshis: inputValue - fee - totalOutput,
-      txId: transaction.hash,
-      type: 'p2pkh'
-    }
-    store.dispatch('wallet/addUTXO', changeOutput)
+    // Construct tx
+    let popTx = await store.dispatch('wallet/constructTransaction', outputs)
+    let rawTransaction = popTx.toBuffer()
 
     // Send payment and receive token
     let payment = new paymentrequest.Payment()

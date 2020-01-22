@@ -7,66 +7,14 @@ const cashlib = require('bitcore-lib-cash')
 
 export default {
   async constructStampTransaction (payloadDigest, destPubKey, amount) {
-    // Collect inputs
-    let addresses = store.getters['wallet/getAddresses']
-    let inputUTXOs = []
-    let signingKeys = []
-    let fee = 500 // TODO: Not const
-    let inputValue = 0
-    let utxos = await store.getters['wallet/getUTXOs']
-
-    for (let i in utxos) {
-      let output = utxos[i]
-      store.dispatch('wallet/removeUTXO', output)
-
-      inputValue += output.satoshis
-      let addr = output.address
-      output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
-      inputUTXOs.push(output)
-
-      let signingKey = addresses[addr].privKey
-      signingKeys.push(signingKey)
-
-      if (amount + fee < inputValue) {
-        break
-      }
-    }
-
-    // Construct Transaction
-    let transaction = new cashlib.Transaction()
-
-    // Add inputs
-    for (let i in inputUTXOs) {
-      transaction = transaction.from(inputUTXOs[i])
-    }
-
     // Add stamp output
-    let stampPubKey = crypto.constructStampPubKey(payloadDigest, destPubKey)
-    transaction = transaction.addOutput(new cashlib.Transaction.Output({
-      script: cashlib.Script(new cashlib.Address(stampPubKey.toAddress('testnet'))),
+    let stampAddress = crypto.constructStampPubKey(payloadDigest, destPubKey).toAddress('testnet')
+    let stampOutput = new cashlib.Transaction.Output({
+      script: cashlib.Script(new cashlib.Address(stampAddress)),
       satoshis: amount
-    }))
-
-    // Add change Output
-    let changeAddr = Object.keys(addresses)[0]
-    transaction = transaction.fee(fee).change(changeAddr)
-
-    // Sign
-    for (let i in signingKeys) {
-      transaction = transaction.sign(signingKeys[i])
-    }
-
-    // Add change output
-    let changeOutput = {
-      address: changeAddr,
-      outputIndex: 1, // This is because we have only 1 stamp output
-      satoshis: inputValue - fee - amount,
-      txId: transaction.hash,
-      type: 'p2pkh'
-    }
-    store.dispatch('wallet/addUTXO', changeOutput)
-
-    return transaction
+    })
+    let stampTx = await store.dispatch('wallet/constructTransaction', [stampOutput])
+    return stampTx
   },
   async constructMessage (serializedPayload, privKey, destPubKey) {
     let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)

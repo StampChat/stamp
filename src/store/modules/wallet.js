@@ -62,8 +62,9 @@ export default {
     setXPrivKey ({ commit }, xPrivKey) {
       commit('setXPrivKey', xPrivKey)
     },
-    initAddresses ({ commit, rootGetters, getters }) {
+    initAddresses ({ commit, getters }) {
       let xPrivKey = getters['getXPrivKey']
+      // TODO: More here
       for (var i = 0; i < 2; i++) {
         let privKey = xPrivKey.deriveChild(44)
           .deriveChild(0)
@@ -113,6 +114,70 @@ export default {
       for (var addr in addresses) {
         await client.blockchainAddress_subscribe(addr)
       }
+    },
+    constructTransaction ({ commit, getters }, outputs) {
+      // Collect inputs
+      let addresses = getters['getAddresses']
+      let inputUTXOs = []
+      let signingKeys = []
+      let fee = 500 // TODO: Not const
+      let inputValue = 0
+      let utxos = getters['getUTXOs']
+      let totalAmount = outputs.reduce((acc, output) => acc + output.satoshis)
+
+      for (let i in utxos) {
+        let output = utxos[i]
+
+        // Remove UTXO
+        commit('removeUTXO', output)
+
+        inputValue += output.satoshis
+        let addr = output.address
+        output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+        inputUTXOs.push(output)
+
+        let signingKey = addresses[addr].privKey
+        signingKeys.push(signingKey)
+
+        if (totalAmount + fee < inputValue) {
+          break
+        }
+      }
+
+      // Construct Transaction
+      let transaction = new cashlib.Transaction()
+
+      // Add inputs
+      for (let i in inputUTXOs) {
+        transaction = transaction.from(inputUTXOs[i])
+      }
+
+      // Add stamp output
+      for (let i in outputs) {
+        let output = outputs[i]
+        transaction = transaction.addOutput(output)
+      }
+
+      // Add change Output
+      let changeAddr = Object.keys(addresses)[0] // TODO: Better change selection
+      transaction = transaction.fee(fee).change(changeAddr)
+
+      // Sign
+      for (let i in signingKeys) {
+        transaction = transaction.sign(signingKeys[i])
+      }
+
+      // Add change output
+      let changeOutput = {
+        address: changeAddr,
+        outputIndex: 1, // This is because we have only 1 stamp output
+        satoshis: inputValue - fee - totalAmount,
+        txId: transaction.hash,
+        type: 'p2pkh'
+      }
+      commit('addUTXO', changeOutput)
+
+      return transaction
     }
   },
   getters: {
