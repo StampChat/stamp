@@ -62,7 +62,8 @@ export default {
       walletReinitialize: 'wallet/reinitialize',
       relayClientReinitialize: 'relayClient/reinitialize',
       startContactUpdater: 'contacts/startContactUpdater',
-      refreshChat: 'chats/refresh'
+      refreshChat: 'chats/refresh',
+      updateUTXOs: 'wallet/updateUTXOs'
     }),
     onResize (size) {
       this.tabHeight = height(this.$refs.tabs.$el)
@@ -93,6 +94,9 @@ export default {
   created () {
     // Start internal timer
     this.startClock()
+
+    // TODO: Remove?
+    this.updateUTXOs()
 
     // Reinitialize wallet classes
     this.walletReinitialize()

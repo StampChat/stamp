@@ -1,11 +1,41 @@
 import messages from './messages_pb'
 import filters from './filters_pb'
 import crypto from './crypto'
+import store from '../store/index'
 
 const cashlib = require('bitcore-lib-cash')
 
 export default {
-  constructTextMessage (text, privKey, destPubKey, scheme) {
+  async constructStampTransaction (payloadDigest, destPubKey, amount) {
+    // Add stamp output
+    let stampAddress = crypto.constructStampPubKey(payloadDigest, destPubKey).toAddress('testnet')
+    let stampOutput = new cashlib.Transaction.Output({
+      script: cashlib.Script(new cashlib.Address(stampAddress)),
+      satoshis: amount
+    })
+    let stampTx = await store.dispatch('wallet/constructTransaction', [stampOutput])
+    return stampTx
+  },
+  async constructMessage (serializedPayload, privKey, destPubKey) {
+    let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
+    let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
+    ecdsa.sign()
+
+    let message = new messages.Message()
+    let sig = ecdsa.sig.toCompact(1).slice(1)
+    let rawPubkey = privKey.toPublicKey().toBuffer()
+    message.setSenderPubKey(rawPubkey)
+    message.setSignature(sig)
+    message.setSerializedPayload(serializedPayload)
+
+    let amount = 300
+    let stampTx = await this.constructStampTransaction(payloadDigest, destPubKey, amount)
+    let rawStampTx = stampTx.toBuffer()
+    message.setStampTx(rawStampTx)
+
+    return message
+  },
+  async constructTextMessage (text, privKey, destPubKey, scheme) {
     // Construct text entry
     let textEntry = new messages.Entry()
     textEntry.setKind('text-utf8')
@@ -37,17 +67,8 @@ export default {
       return
     }
     let serializedPayload = payload.serializeBinary()
-    let hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
-    let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
-    ecdsa.sign()
 
-    let message = new messages.Message()
-    let sig = ecdsa.sig.toCompact(1).slice(1)
-    let rawPubkey = privKey.toPublicKey().toBuffer()
-    message.setSenderPubKey(rawPubkey)
-    message.setSignature(sig)
-    message.setSerializedPayload(serializedPayload)
-
+    let message = await this.constructMessage(serializedPayload, privKey, destPubKey)
     return message
   },
   constructPriceFilterApplication (isPublic, acceptancePrice, notificationPrice, privKey) {

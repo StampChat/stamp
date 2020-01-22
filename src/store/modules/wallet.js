@@ -1,4 +1,6 @@
 import Vue from 'vue'
+import crypto from '../../relay/crypto'
+
 const cashlib = require('bitcore-lib-cash')
 
 export default {
@@ -8,7 +10,7 @@ export default {
     xPrivKey: null,
     identityPrivKey: null,
     addresses: {},
-    totalBalance: 0
+    outputs: []
   },
   mutations: {
     completeSetup (state) {
@@ -18,23 +20,9 @@ export default {
       state.xPrivKey = null
       state.identityPrivKey = null
       state.addresses = {}
-      state.totalBalance = 0
     },
-    setAddress (state, { address, balance, privKey }) {
-      if (state.addresses[address] == null) {
-        state.totalBalance += balance
-      } else {
-        let oldBalance = state.addresses[address].balance
-        state.totalBalance += balance - oldBalance
-      }
-      Vue.set(state.addresses, address, { balance, privKey })
-    },
-    updateBalance (state, { address, balance }) {
-      if (state.addresses[address] != null) {
-        let oldBalance = state.addresses[address].balance
-        state.addresses[address].balance = balance
-        state.totalBalance += balance - oldBalance
-      }
+    setAddress (state, { address, privKey }) {
+      Vue.set(state.addresses, address, { privKey })
     },
     setXPrivKey (state, xPrivKey) {
       state.xPrivKey = xPrivKey
@@ -47,6 +35,19 @@ export default {
         state.xPrivKey = cashlib.HDPrivateKey.fromObject(state.xPrivKey)
         state.identityPrivKey = cashlib.PrivateKey.fromObject(state.identityPrivKey)
       }
+    },
+    setUTXOs (state, outputs) {
+      state.outputs = outputs
+    },
+    setUTXOsByAddr (state, { addr, outputs }) {
+      state.outputs = state.outputs.filter(output => output.address !== addr)
+      state.outputs = state.outputs.concat(outputs)
+    },
+    removeUTXO (state, output) {
+      state.outputs = state.outputs.filter(utxo => utxo !== output)
+    },
+    addUTXO (state, output) {
+      state.outputs.push(output)
     }
   },
   actions: {
@@ -63,24 +64,9 @@ export default {
     setXPrivKey ({ commit }, xPrivKey) {
       commit('setXPrivKey', xPrivKey)
     },
-    async updateBalance ({ commit, rootGetters }, address) {
-      let handler = rootGetters['electrumHandler/getClient']
-      let balanceJson = await handler.blockchainAddress_getBalance(address)
-      let balance = balanceJson.confirmed + balanceJson.unconfirmed
-      commit('updateBalance', { address, balance })
-    },
-    async updateBalances ({ commit, rootGetters, getters }) {
-      let addresses = getters['getAddresses']
-      for (var addr in addresses) {
-        let handler = rootGetters['electrumHandler/getClient']
-        let balanceJson = await handler.blockchainAddress_getBalance(addr)
-        let balance = balanceJson.confirmed + balanceJson.unconfirmed
-        commit('updateBalance', { addr, balance })
-      }
-    },
-    async updateAddresses ({ commit, rootGetters, getters }) {
-      let client = rootGetters['electrumHandler/getClient']
+    initAddresses ({ commit, getters }) {
       let xPrivKey = getters['getXPrivKey']
+      // TODO: More here
       for (var i = 0; i < 2; i++) {
         let privKey = xPrivKey.deriveChild(44)
           .deriveChild(0)
@@ -88,10 +74,35 @@ export default {
           .deriveChild(i, true)
           .privateKey
         let address = privKey.toAddress('testnet').toLegacyAddress()
-        let balanceJson = await client.blockchainAddress_getBalance(address)
-        let balance = balanceJson.confirmed + balanceJson.unconfirmed
-        commit('setAddress', { address, balance, privKey })
+        commit('setAddress', { address, privKey })
       }
+    },
+    async updateUTXOFromAddr ({ commit, rootGetters }, addr) {
+      let client = rootGetters['electrumHandler/getClient']
+      let elOutputs = await client.blockchainAddress_listunspent(addr)
+      let outputs = elOutputs.map(elOutput => {
+        let output = {
+          txId: elOutput.tx_hash,
+          outputIndex: elOutput.tx_pos,
+          satoshis: elOutput.value,
+          type: 'p2pkh',
+          address: addr
+        }
+        return output
+      })
+      commit('setUTXOsByAddr', { addr, outputs })
+    },
+    async updateUTXOs ({ getters, dispatch }) {
+      let addresses = Object.keys(getters['getAddresses'])
+
+      await Promise
+        .all(addresses.map(addr => dispatch('updateUTXOFromAddr', addr)))
+    },
+    addUTXO ({ commit }, output) {
+      commit('addUTXO', output)
+    },
+    removeUTXO ({ commit }, output) {
+      commit('removeUTXO', output)
     },
     async startListeners ({ dispatch, getters, rootGetters }) {
       let client = rootGetters['electrumHandler/getClient']
@@ -99,15 +110,86 @@ export default {
         'blockchain.address.subscribe',
         async (result) => {
           let address = result[0]
-          await dispatch('updateBalance', address)
+          await dispatch('updateUTXOFromAddr', address)
         })
       let addresses = getters['getAddresses']
       for (var addr in addresses) {
         await client.blockchainAddress_subscribe(addr)
       }
     },
-    clearWallet ({ commit }) {
-      commit('setAddresses', {})
+    constructTransaction ({ commit, getters }, outputs) {
+      // Collect inputs
+      let addresses = getters['getAddresses']
+      let inputUTXOs = []
+      let signingKeys = []
+      let fee = 500 // TODO: Not const
+      let inputValue = 0
+      let utxos = getters['getUTXOs']
+      let totalAmount = outputs.reduce((acc, output) => acc + output.satoshis)
+
+      // TODO: Coin selection
+      for (let i in utxos) {
+        let output = utxos[i]
+
+        // Remove UTXO
+        commit('removeUTXO', output)
+
+        inputValue += output.satoshis
+        let addr = output.address
+        output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+        inputUTXOs.push(output)
+
+        // Grab private key
+        if (output.type === 'p2pkh') {
+          let signingKey = addresses[addr].privKey
+          signingKeys.push(signingKey)
+        } else if (output.type === 'stamp') {
+          let privKey = getters['getIdentityPrivKey']
+          let signingKey = crypto.constructStampPrivKey(output.payloadDigest, privKey)
+          signingKeys.push(signingKey)
+        } else {
+          // TODO: Handle
+        }
+
+        if (totalAmount + fee < inputValue) {
+          break
+        }
+      }
+
+      // Construct Transaction
+      let transaction = new cashlib.Transaction()
+
+      // Add inputs
+      for (let i in inputUTXOs) {
+        transaction = transaction.from(inputUTXOs[i])
+      }
+
+      // Add stamp output
+      for (let i in outputs) {
+        let output = outputs[i]
+        transaction = transaction.addOutput(output)
+      }
+
+      // Add change Output
+      let changeAddr = Object.keys(addresses)[0] // TODO: Better change selection
+      transaction = transaction.fee(fee).change(changeAddr)
+
+      // Sign
+      for (let i in signingKeys) {
+        transaction = transaction.sign(signingKeys[i])
+      }
+
+      // Add change output
+      let changeOutput = {
+        address: changeAddr,
+        outputIndex: 1, // This is because we have only 1 stamp output
+        satoshis: inputValue - fee - totalAmount,
+        txId: transaction.hash,
+        type: 'p2pkh'
+      }
+      commit('addUTXO', changeOutput)
+
+      return transaction
     }
   },
   getters: {
@@ -115,7 +197,11 @@ export default {
       return state.complete
     },
     getBalance (state) {
-      return state.totalBalance
+      if (state.outputs.length) {
+        return state.outputs.reduce((acc, output) => acc + output.satoshis, 0)
+      } else {
+        return 0
+      }
     },
     getIdentityPrivKey (state) {
       return state.identityPrivKey
@@ -136,7 +222,6 @@ export default {
         'testnet') // TODO: Not just testnet
     },
     getMyAddressStr (state) {
-      console.log(state)
       return state.identityPrivKey.toAddress('testnet')
         .toCashAddress() // TODO: Not just testnet
     },
@@ -145,6 +230,9 @@ export default {
     },
     getXPrivKey (state) {
       return state.xPrivKey
+    },
+    getUTXOs (state) {
+      return state.outputs
     }
   }
 }

@@ -148,8 +148,7 @@ export default {
 
       let client = rootGetters['relayClient/getClient']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
-      let message =
-            relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
+      let message = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
       let messageSet = new messages.MessageSet()
       messageSet.addMessages(message)
 
@@ -201,6 +200,24 @@ export default {
       } else {
         // TODO: Raise error
       }
+
+      // Add UTXO
+      let payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
+      let stampTxRaw = Buffer.from(message.getStampTx())
+      let stampTx = cashlib.Transaction(stampTxRaw)
+      let txId = stampTx.hash
+      let output = stampTx.outputs[0]
+      let satoshis = output.satoshis
+      let address = output.script.toAddress('testnet') // TODO: Make generic
+      let changeOutput = {
+        address,
+        outputIndex: 0, // 0 is always stamp output
+        satoshis,
+        txId,
+        type: 'stamp',
+        payloadDigest
+      }
+      dispatch('wallet/addUTXO', changeOutput, { root: true })
 
       let entries = messages.Entries.deserializeBinary(entriesRaw)
       let entriesList = entries.getEntriesList()
