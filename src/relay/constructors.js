@@ -16,7 +16,8 @@ export default {
     let stampTx = await store.dispatch('wallet/constructTransaction', [stampOutput])
     return stampTx
   },
-  async constructMessage (serializedPayload, privKey, destPubKey) {
+  async constructMessage (payload, privKey, destPubKey) {
+    let serializedPayload = payload.serializeBinary()
     let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
     let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
     ecdsa.sign()
@@ -35,17 +36,7 @@ export default {
 
     return message
   },
-  async constructTextMessage (text, privKey, destPubKey, scheme) {
-    // Construct text entry
-    let textEntry = new messages.Entry()
-    textEntry.setKind('text-utf8')
-    let rawText = new TextEncoder('utf-8').encode(text)
-    textEntry.setEntryData(rawText)
-
-    // Aggregate entries
-    let entries = new messages.Entries()
-    entries.addEntries(textEntry)
-
+  constructPayload (entries, privKey, destPubKey, scheme) {
     let payload = new messages.Payload()
     payload.setTimestamp(Math.floor(Date.now() / 1000))
     let rawDestPubKey = destPubKey.toBuffer()
@@ -66,9 +57,34 @@ export default {
       // TODO: Raise error
       return
     }
-    let serializedPayload = payload.serializeBinary()
+    return payload
+  },
+  async constructStealthPaymentMessage (amount, privKey, destPubKey, scheme) {
+    // Construct payment entry
+    let paymentEntry = new messages.Entry()
+    paymentEntry.setKind('stealth-payment')
 
-    let message = await this.constructMessage(serializedPayload, privKey, destPubKey)
+    // Aggregate entries
+    let entries = new messages.Entries()
+    entries.addEntries(paymentEntry)
+
+    let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
+    let message = await this.constructMessage(payload, privKey, destPubKey)
+    return message
+  },
+  async constructTextMessage (text, privKey, destPubKey, scheme) {
+    // Construct text entry
+    let textEntry = new messages.Entry()
+    textEntry.setKind('text-utf8')
+    let rawText = new TextEncoder('utf-8').encode(text)
+    textEntry.setEntryData(rawText)
+
+    // Aggregate entries
+    let entries = new messages.Entries()
+    entries.addEntries(textEntry)
+
+    let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
+    let message = await this.constructMessage(payload, privKey, destPubKey)
     return message
   },
   constructPriceFilterApplication (isPublic, acceptancePrice, notificationPrice, privKey) {
