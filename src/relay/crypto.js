@@ -10,8 +10,8 @@ export default {
     let stealthPublicKey = PublicKey.fromPoint(stampPoint)
     return stealthPublicKey
   },
-  constructStealthPrivKey (emphemeralPrivKey, destPrivKey) {
-    let stealthPrivBn = emphemeralPrivKey.bn.add(destPrivKey.bn).mod(cashlib.crypto.Point.getN())
+  constructStealthPrivKey (emphemeralPrivKey, privKey) {
+    let stealthPrivBn = emphemeralPrivKey.bn.add(privKey.bn).mod(cashlib.crypto.Point.getN())
     let stealthPrivKey = PrivateKey(stealthPrivBn)
     return stealthPrivKey
   },

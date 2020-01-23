@@ -276,7 +276,7 @@ export default {
 
           // Add stealth output
           let output = tx.outputs[0]
-          let ephemeralPrivKey = entryData.getEphemeralPrivKey()
+          let ephemeralPrivKey = stealthMessage.getEphemeralPrivKey()
           let stealthOutput = {
             address,
             outputIndex: 0, // 0 is always stamp output

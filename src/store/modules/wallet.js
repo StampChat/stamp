@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import crypto from '../../relay/crypto'
+import { PrivateKey } from 'bitcore-lib-cash'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -149,7 +150,8 @@ export default {
           signingKeys.push(signingKey)
         } else if (output.type === 'stealth') {
           let privKey = getters['getIdentityPrivKey']
-          let signingKey = crypto.constructStealthPrivKey(output.ephemeralPrivKey, privKey)
+          let ephemeralPrivKey = PrivateKey(Buffer.from(output.ephemeralPrivKey))
+          let signingKey = crypto.constructStealthPrivKey(ephemeralPrivKey, privKey)
           signingKeys.push(signingKey)
         } else {
           // TODO: Handle
