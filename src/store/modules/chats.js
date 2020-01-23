@@ -208,7 +208,7 @@ export default {
       let txId = stampTx.hash
       let output = stampTx.outputs[0]
       let satoshis = output.satoshis
-      let address = output.script.toAddress('testnet') // TODO: Make generic
+      let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
       let changeOutput = {
         address,
         outputIndex: 0, // 0 is always stamp output
