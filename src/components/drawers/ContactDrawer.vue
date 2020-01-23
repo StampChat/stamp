@@ -7,6 +7,17 @@
     :width="300"
     :breakpoint="400"
   >
+    <!-- Send Bitcoin dialog -->
+    <q-dialog
+      v-model="sendBitcoinOpen"
+      persistent
+    >
+      <send-bitcoin-dialog
+        :address="address"
+        :contact="contact"
+      />
+    </q-dialog>
+
     <!-- Clear history dialog -->
     <q-dialog
       v-model="confirmClearOpen"
@@ -37,6 +48,21 @@
     <!-- Scroll area -->
     <q-scroll-area style="height: calc(100% - 125px); margin-top: 125px; border-right: 1px solid #ddd">
       <q-list padding>
+        <q-item
+          clickable
+          v-ripple
+          @click="sendBitcoinOpen = true"
+        >
+          <q-item-section avatar>
+            <q-icon name="attach_money" />
+          </q-item-section>
+          <q-item-section>
+            Send Bitcoin
+          </q-item-section>
+        </q-item>
+
+        <q-separator spaced />
+
         <q-item
           clickable
           v-ripple
@@ -129,6 +155,7 @@ import DrawerContactCard from './DrawerContactCard.vue'
 import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
 import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
+import SendBitcoinDialog from '../dialogs/SendBitcoinDialog.vue'
 
 Vue.filter('truncate', function (text, length, clamp) {
   clamp = clamp || '...'
@@ -143,7 +170,8 @@ export default {
     DrawerContactCard,
     ClearHistoryDialog,
     DeleteChatDialog,
-    ContactBookDialog
+    ContactBookDialog,
+    SendBitcoinDialog
   },
   props: ['address', 'contact'],
   methods: {
@@ -170,7 +198,8 @@ export default {
       notifications: false,
       confirmClearOpen: false,
       confirmDeleteOpen: false,
-      contactBookOpen: false
+      contactBookOpen: false,
+      sendBitcoinOpen: false
     }
   }
 }
