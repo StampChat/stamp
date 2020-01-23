@@ -1,4 +1,5 @@
 import messages from '../../relay/messages_pb'
+import stealth from '../../relay/stealth_pb'
 import relayConstructors from '../../relay/constructors'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
@@ -38,7 +39,14 @@ export default {
     getLatestMessageBody: (state) => (addr) => {
       let nMessages = Object.keys(state.data[addr].messages).length
       if (nMessages !== 0) {
-        return state.data[addr].messages[nMessages - 1].body
+        let latestMessage = state.data[addr].messages[nMessages - 1]
+        if (latestMessage.type === 'text') {
+          return latestMessage.body
+        } else if (latestMessage.type === 'stealth-payment') {
+          return latestMessage.body.memo
+        } else {
+          return ''
+        }
       } else {
         return ''
       }
@@ -73,9 +81,23 @@ export default {
     },
     sendMessage (state, { addr, text }) {
       let newMsg = {
+        type: 'text',
         outbound: true,
         sent: false,
         body: text,
+        timestamp: Math.floor(Date.now() / 1000)
+      }
+      state.data[addr].messages.push(newMsg)
+    },
+    sendStealthPayment (state, { addr, amount, memo }) {
+      let newMsg = {
+        type: 'stealth-payment',
+        outbound: true,
+        sent: false,
+        body: {
+          amount,
+          memo
+        },
         timestamp: Math.floor(Date.now() / 1000)
       }
       state.data[addr].messages.push(newMsg)
@@ -98,10 +120,7 @@ export default {
       }
       Vue.delete(state.data, addr)
     },
-    receiveMessage (state, { addr, text, timestamp }) {
-      // If addr data doesn't exist then add it
-      let newMsg = { outbound: false, sent: true, body: text, timestamp }
-
+    receiveMessage (state, { addr, newMsg }) {
       // Add new message
       if (!(addr in state.data)) {
         Vue.set(state.data, addr, { messages: [newMsg], inputMessage: '' })
@@ -143,20 +162,32 @@ export default {
       // Send locally
       commit('sendMessage', { addr, text })
 
-      // Peer's relay server
       let privKey = rootGetters['wallet/getIdentityPrivKey']
-
-      let client = rootGetters['relayClient/getClient']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let message = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
       let messageSet = new messages.MessageSet()
       messageSet.addMessages(message)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
-
+      let client = rootGetters['relayClient/getClient']
       await client.pushMessages(destAddr, messageSet)
 
       // TODO: Confirmation
+    },
+    async sendStealthPayment ({ commit, rootGetters }, { addr, amount, memo }) {
+      // Send locally
+      commit('sendStealthPayment', { addr, amount, memo })
+
+      // Construct message
+      let privKey = rootGetters['wallet/getIdentityPrivKey']
+      let destPubKey = rootGetters['contacts/getPubKey'](addr)
+      let message = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1)
+      let messageSet = new messages.MessageSet()
+      messageSet.addMessages(message)
+
+      let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+      let client = rootGetters['relayClient/getClient']
+      await client.pushMessages(destAddr, messageSet)
     },
     switchOrder ({ commit }, addr) {
       commit('switchOrder', addr)
@@ -167,7 +198,7 @@ export default {
     deleteChat ({ commit }, addr) {
       commit('deleteChat', addr)
     },
-    addMessage ({ commit, rootGetters, dispatch }, { message, timestamp }) {
+    async addMessage ({ commit, rootGetters, dispatch }, { message, timestamp }) {
       let rawSenderPubKey = message.getSenderPubKey()
       let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
       let senderAddr = senderPubKey.toAddress('testnet')
@@ -182,8 +213,8 @@ export default {
         dispatch('contacts/refresh', senderAddr, { root: true })
       }
 
+      // Decode message
       let rawPayload = message.getSerializedPayload()
-
       let payload = messages.Payload.deserializeBinary(rawPayload)
       let scheme = payload.getScheme()
       let entriesRaw
@@ -195,8 +226,7 @@ export default {
         let secretSeed = payload.getSecretSeed()
         let ephemeralPubKey = PublicKey.fromBuffer(secretSeed)
         let privKey = rootGetters['wallet/getIdentityPrivKey']
-        entriesRaw = crypto.decrypt(
-          entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
+        entriesRaw = crypto.decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
       } else {
         // TODO: Raise error
       }
@@ -219,13 +249,56 @@ export default {
       }
       dispatch('wallet/addUTXO', changeOutput, { root: true })
 
+      // Decode entries
       let entries = messages.Entries.deserializeBinary(entriesRaw)
       let entriesList = entries.getEntriesList()
       for (let index in entriesList) {
         let entry = entriesList[index]
-        // TODO: Don't assume it's a text msg
-        let text = new TextDecoder().decode(entry.getEntryData())
-        commit('receiveMessage', { addr: senderAddr, text, timestamp })
+        // If addr data doesn't exist then add it
+        let newMsg
+        let kind = entry.getKind()
+        if (kind === 'text-utf8') {
+          let entryData = entry.getEntryData()
+          let text = new TextDecoder().decode(entryData)
+          newMsg = { type: 'text', outbound: false, sent: true, body: text, timestamp }
+        } else if (kind === 'stealth-payment') {
+          let entryData = entry.getEntryData()
+          let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
+
+          let memo = stealthMessage.getMemo()
+          let txId = Buffer.from(stealthMessage.getTxId()).toString('hex')
+
+          let electrumHandler = rootGetters['electrumHandler/getClient']
+          await new Promise(resolve => setTimeout(resolve, 5000)) // TODO: This is hacky as fuck
+
+          let txRaw = await electrumHandler.blockchainTransaction_get(txId)
+          let tx = cashlib.Transaction(txRaw)
+
+          // Add stealth output
+          let output = tx.outputs[0]
+          let ephemeralPrivKey = entryData.getEphemeralPrivKey()
+          let stealthOutput = {
+            address,
+            outputIndex: 0, // 0 is always stamp output
+            satoshis,
+            txId,
+            type: 'stealth',
+            ephemeralPrivKey
+          }
+          dispatch('wallet/addUTXO', stealthOutput, { root: true })
+
+          newMsg = {
+            type: 'stealth-payment',
+            outbound: false,
+            sent: true,
+            body: {
+              amount: output.satoshis,
+              memo
+            },
+            timestamp
+          }
+        }
+        commit('receiveMessage', { addr: senderAddr, newMsg })
       }
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
@@ -251,7 +324,7 @@ export default {
 
         let timestamp = timedMessage.getTimestamp()
         let message = timedMessage.getMessage()
-        dispatch('addMessage', { timestamp, message })
+        await dispatch('addMessage', { timestamp, message })
         lastReceived = Math.max(lastReceived, timestamp)
       }
       if (lastReceived) {

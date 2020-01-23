@@ -1,4 +1,5 @@
 import messages from './messages_pb'
+import stealth from './stealth_pb'
 import filters from './filters_pb'
 import crypto from './crypto'
 import store from '../store/index'
@@ -7,12 +8,24 @@ const cashlib = require('bitcore-lib-cash')
 
 export default {
   async constructStampTransaction (payloadDigest, destPubKey, amount) {
-    // Add stamp output
+    // Stamp output
     let stampAddress = crypto.constructStampPubKey(payloadDigest, destPubKey).toAddress('testnet')
     let stampOutput = new cashlib.Transaction.Output({
       script: cashlib.Script(new cashlib.Address(stampAddress)),
       satoshis: amount
     })
+
+    let stampTx = await store.dispatch('wallet/constructTransaction', [stampOutput])
+    return stampTx
+  },
+  async constructStealthTransaction (ephemeralPrivKey, destPubKey, amount) {
+    // Add ephemeral output
+    let stealthAddress = crypto.constructStealthPubKey(ephemeralPrivKey, destPubKey).toAddress('testnet')
+    let stampOutput = new cashlib.Transaction.Output({
+      script: cashlib.Script(new cashlib.Address(stealthAddress)),
+      satoshis: amount
+    })
+
     let stampTx = await store.dispatch('wallet/constructTransaction', [stampOutput])
     return stampTx
   },
@@ -59,10 +72,30 @@ export default {
     }
     return payload
   },
-  async constructStealthPaymentMessage (amount, privKey, destPubKey, scheme) {
+  async constructStealthPaymentMessage (amount, memo, privKey, destPubKey, scheme) {
     // Construct payment entry
     let paymentEntry = new messages.Entry()
     paymentEntry.setKind('stealth-payment')
+
+    let stealthPaymentEntry = new stealth.StealthPaymentEntry()
+    let ephemeralPrivKey = cashlib.PrivateKey()
+
+    let stealthTx = await this.constructStealthTransaction(ephemeralPrivKey, destPubKey, amount)
+    let stealthTxId = Buffer.from(stealthTx.id, 'hex')
+    let electrumHandler = store.getters['electrumHandler/getClient']
+
+    // Broadcast transaction
+    let stealthTxHex = stealthTx.toString()
+    await electrumHandler.blockchainTransaction_broadcast(stealthTxHex)
+
+    await new Promise(resolve => setTimeout(resolve, 5000)) // TODO: This is hacky as fuck
+
+    stealthPaymentEntry.setEphemeralPrivKey(ephemeralPrivKey.toBuffer())
+    stealthPaymentEntry.setTxId(stealthTxId)
+    stealthPaymentEntry.setMemo(memo)
+
+    let paymentEntryRaw = stealthPaymentEntry.serializeBinary()
+    paymentEntry.setEntryData(paymentEntryRaw)
 
     // Aggregate entries
     let entries = new messages.Entries()

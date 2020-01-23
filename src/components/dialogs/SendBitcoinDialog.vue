@@ -17,6 +17,16 @@
         placeholder="Enter number of satoshis..."
       />
     </q-card-section>
+    <q-card-section>
+      <q-input
+        class="text-bold text-h6"
+        v-model="memo"
+        filled
+        dense
+        hint="Attach a memo to the payment."
+        placeholder="Enter the memo..."
+      />
+    </q-card-section>
     <q-card-actions align="right">
       <q-btn
         flat
@@ -30,21 +40,30 @@
         label="Send"
         color="primary"
         v-close-popup
+        @click="sendStealthPayment()"
       />
     </q-card-actions>
   </q-card>
 </template>
 
 <script>
+import { mapActions } from 'vuex'
+
 export default {
   data () {
     return {
-      amount: 0
+      amount: 0,
+      memo: ''
     }
   },
   props: ['address', 'contact'],
   methods: {
-
+    ...mapActions({
+      sendStealthPaymentVuex: 'chats/sendStealthPayment'
+    }),
+    async sendStealthPayment () {
+      await this.sendStealthPaymentVuex({ addr: this.address, amount: this.amount, memo: this.memo })
+    }
   }
 }
 </script>

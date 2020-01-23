@@ -26,7 +26,11 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
   methods: {
-    ...mapGetters({ getActiveChat: 'chats/getActiveChat', getContact: 'contacts/getContact', getLatestMessageBody: 'chats/getLatestMessageBody' }),
+    ...mapGetters({
+      getActiveChat: 'chats/getActiveChat',
+      getContact: 'contacts/getContact',
+      getLatestMessageBody: 'chats/getLatestMessageBody'
+    }),
     ...mapActions({ switchChatActive: 'chats/switchChatActive' })
   },
   computed: {

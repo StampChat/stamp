@@ -147,6 +147,10 @@ export default {
           let privKey = getters['getIdentityPrivKey']
           let signingKey = crypto.constructStampPrivKey(output.payloadDigest, privKey)
           signingKeys.push(signingKey)
+        } else if (output.type === 'stealth') {
+          let privKey = getters['getIdentityPrivKey']
+          let signingKey = crypto.constructStealthPrivKey(output.ephemeralPrivKey, privKey)
+          signingKeys.push(signingKey)
         } else {
           // TODO: Handle
         }
