@@ -14,8 +14,7 @@
           icon="settings"
           :done="step > 1"
         >
-          <p>It seems you don't have any accounts setup right now.</p>
-          <p>We'll guide you through the account creation process...</p>
+          <introduction-step />
         </q-step>
 
         <q-step
@@ -24,123 +23,10 @@
           icon="vpn_key"
           :done="step > 2"
         >
-          <q-splitter
-            :value=110
-            unit="px"
-            disable
-          >
-            <template v-slot:before>
-              <q-tabs
-                v-model="seedTabs"
-                vertical
-                class="text-primary"
-              >
-                <q-tab
-                  name="new"
-                  icon="new_releases"
-                  label="New Seed"
-                />
-                <q-tab
-                  name="import"
-                  icon="import_export"
-                  label="Import Seed"
-                />
-              </q-tabs>
-            </template>
-            <template v-slot:after>
-              <q-tab-panels
-                v-model="seedTabs"
-                animated
-                transition-prev="jump-up"
-                transition-next="jump-up"
-              >
-                <q-tab-panel name="new">
-                  <q-input
-                    class="text-bold text-h6"
-                    v-model="generatedSeed"
-                    filled
-                    type="textarea"
-                    readonly
-                    rows="1"
-                  >
-                    <q-menu
-                      touch-position
-                      context-menu
-                    >
-                      <q-list
-                        dense
-                        style="min-width: 100px"
-                      >
-                        <q-item
-                          clickable
-                          v-close-popup
-                          @click="copyGenerated"
-                        >
-                          <q-item-section>Copy</q-item-section>
-                        </q-item>
-                      </q-list>
-                    </q-menu>
-                  </q-input>
-                  <div class="q-pa-md float-right">
-                    <q-btn
-                      color="primary"
-                      flat
-                      icon="content_copy"
-                      @click="copyGenerated"
-                    />
-                    <q-btn
-                      color="primary"
-                      label="Generate"
-                      @click="nextMnemonic"
-                    />
-                  </div>
-                </q-tab-panel>
-
-                <q-tab-panel name="import">
-                  <q-input
-                    class="text-bold text-h6"
-                    v-model="importedSeed"
-                    filled
-                    type="textarea"
-                    rows="1"
-                    placeholder="Enter a seed phrase..."
-                  >
-                    <q-menu
-                      touch-position
-                      context-menu
-                    >
-                      <q-list
-                        dense
-                        style="min-width: 100px"
-                      >
-                        <q-item
-                          clickable
-                          v-close-popup
-                          @click="pasteImported"
-                        >
-                          <q-item-section>Paste</q-item-section>
-                        </q-item>
-                      </q-list>
-                    </q-menu>
-                    <template v-slot:after>
-                      <q-icon
-                        v-show="!isImportedValid"
-                        name="warning"
-                        class="text-red"
-                        size="lg"
-                      />
-                      <q-icon
-                        v-show="isImportedValid"
-                        name="check"
-                        class="text-green"
-                        size="lg"
-                      />
-                    </template>
-                  </q-input>
-                </q-tab-panel>
-              </q-tab-panels>
-            </template>
-          </q-splitter>
+          <seed-step
+            v-on:seed="seed = $event"
+            v-on:switch="seedType = $event"
+          />
         </q-step>
 
         <q-step
@@ -150,83 +36,7 @@
           style="min-height: 300px;"
           :done="step > 3"
         >
-          <div class="row">
-            <div class="col">
-              <div class="row">
-                <p
-                  class="text-h4"
-                  style="margin: auto; "
-                >Deposit Address</p>
-              </div>
-
-              <div class="row">
-                <qrcode
-                  style="margin-left: auto; margin-right: auto;"
-                  :value="currentAddress"
-                  :options="{width: 300}"
-                ></qrcode>
-              </div>
-              <div class="row">
-                <q-input
-                  style="margin-left: auto; margin-right: auto; min-width: 500px"
-                  filled
-                  auto-grow
-                  v-model="currentAddress"
-                  readonly
-                >
-                  <template v-slot:after>
-                    <q-btn
-                      dense
-                      color="primary"
-                      flat
-                      icon="content_copy"
-                      @click="copyAddress"
-                    />
-                    <q-btn
-                      dense
-                      color="primary"
-                      flat
-                      icon="refresh"
-                      @click="nextAddress"
-                    />
-                  </template>
-                </q-input>
-              </div>
-            </div>
-            <q-separator
-              vertical
-              inset
-            />
-            <div class="col">
-              <div class="row">
-                <p
-                  class="text-h4"
-                  style="margin: auto; "
-                >Current Balance </p>
-              </div>
-
-              <div class="row">
-                <q-circular-progress
-                  style="margin-left: auto; margin-right: auto; margin-top: 50px;"
-                  show-value
-                  :value="percentageBalance"
-                  size="225px"
-                  :thickness="0.25"
-                  color="green"
-                  track-color="grey"
-                >
-                  <span class="text-h4">{{ formatBalance }}</span>
-                </q-circular-progress>
-              </div>
-              <div class="row">
-                <p
-                  class="q-pt-lg text-subtitle1"
-                  style="margin: auto;"
-                >Recommended {{ recomendedBalance }} satoshi </p>
-              </div>
-            </div>
-          </div>
-
+          <deposit-step :xPrivKey="xPrivKey" />
         </q-step>
 
         <q-step
@@ -236,62 +46,7 @@
           style="min-height: 300px;"
           :done="step > 4"
         >
-          <div class="row">
-            <div class="col">
-              <div class="row q-pa-md">
-                <q-input
-                  outlined
-                  v-model="name"
-                  label="Name *"
-                  hint="Name displayed to others"
-                  lazy-rules
-                  style="width:100%"
-                  :rules="[ val => val && val.length > 0 || 'Please type something']"
-                />
-              </div>
-              <div class="row q-pa-md">
-                <q-input
-                  v-model="bio"
-                  label="Bio"
-                  hint="Short biolography displayed to others"
-                  outlined
-                  style="width:100%"
-                  autogrow
-                />
-              </div>
-            </div>
-            <div class="col-4 q-pa-md">
-              <q-toolbar
-                class="bg-primary text-white shadow-2"
-                style="border-radius: 10px 10px 0px 0px"
-              >
-                <q-toolbar-title>Upload Avatar</q-toolbar-title>
-
-                <q-input
-                  @input="val => { avatarPath = val[0] }"
-                  ref="displayPicker"
-                  style="display:none"
-                  type="file"
-                  label="Standard"
-                  @change="parseImage"
-                />
-                <q-btn
-                  type="file"
-                  flat
-                  round
-                  dense
-                  icon="add_a_photo"
-                  @click="$refs.displayPicker.$el.click()"
-                />
-              </q-toolbar>
-              <div>
-                <q-img
-                  :src="avatarDataURL"
-                  spinner-color="white"
-                />
-              </div>
-            </div>
-          </div>
+          <profile-step v-on:profile="profile = $event" />
         </q-step>
         <q-step
           :name="5"
@@ -299,86 +54,7 @@
           icon="build"
           style="min-height: 300px;"
         >
-          <q-splitter
-            :value=110
-            unit="px"
-            disable
-          >
-            <template v-slot:before>
-              <q-tabs
-                v-model="settingsTab"
-                vertical
-                class="text-primary"
-              >
-                <q-tab
-                  name="inbox"
-                  icon="mail"
-                  label="Inbox"
-                />
-                <q-tab
-                  name="appearance"
-                  icon="wallpaper"
-                  label="Appearance"
-                />
-                <q-tab
-                  name="security"
-                  icon="fingerprint"
-                  label="Security"
-                />
-              </q-tabs>
-            </template>
-            <template v-slot:after>
-              <q-tab-panels
-                v-model="settingsTab"
-                animated
-                transition-prev="jump-up"
-                transition-next="jump-up"
-              >
-                <q-tab-panel name="inbox">
-                  <div class="row">
-                    <div class="col">
-                      <div class="row q-pa-md">
-                        <q-input
-                          outlined
-                          v-model="acceptancePrice"
-                          label="Inbox Fee *"
-                          hint="The minimum fee required for strangers to message you"
-                          style="width:100%"
-                          type="number"
-                          :rules="[ val => val && val.length > 0 || 'Please input an inbox fee']"
-                        />
-                      </div>
-                    </div>
-                    <div class="col">
-                      <div class="row q-pa-md">
-                        <q-select
-                          outlined
-                          v-model="relayUrl"
-                          use-input
-                          hide-selected
-                          fill-input
-                          new-value-mode="add"
-                          input-debounce="0"
-                          label="Relay URL *"
-                          :options="options"
-                          @filter="filterRelayFn"
-                          style="width:100%"
-                        >
-                          <template v-slot:no-option>
-                            <q-item>
-                              <q-item-section class="text-grey">
-                                No results
-                              </q-item-section>
-                            </q-item>
-                          </template>
-                        </q-select>
-                      </div>
-                    </div>
-                  </div>
-                </q-tab-panel>
-              </q-tab-panels>
-            </template>
-          </q-splitter>
+          <settings-step v-on:settings="settings = $event" />
         </q-step>
 
         <template v-slot:navigation>
@@ -389,26 +65,32 @@
               color="primary"
               label="Continue"
             />
-            <!-- TODO: Switch between labels -->
             <q-btn
               v-else-if="step === 2"
               @click="next()"
               color="primary"
-              :label="seedTabs==='new'?'New Wallet':'Import Wallet'"
-              :disable="!isConnected"
+              :label="seedType==='new'?'New Wallet':'Import Wallet'"
+              :disable="!electrumConnected || seed === null"
             />
             <q-btn
               v-else-if="step === 3"
               @click="next()"
               color="primary"
-              :disable="!(canProceedSeed && isConnected)"
+              :disable="!electrumConnected"
+              label="Continue"
+            />
+            <q-btn
+              v-else-if="step === 4"
+              @click="next()"
+              color="primary"
+              :disable="!electrumConnected || profile === null"
               label="Continue"
             />
             <q-btn
               v-else
               @click="next()"
               color="primary"
-              :disable="!isConnected"
+              :disable="!electrumConnected || settings === null"
               :label="step === 5 ? 'Finish' : 'Continue'"
             />
             <q-btn
@@ -482,42 +164,43 @@ import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop/index'
 import RelayClient from '../relay/client'
 import relayConstructors from '../relay/constructors'
-import { copyToClipboard } from 'quasar'
-import formatting from '../utils/formatting'
+import IntroductionStep from '../components/setup/IntroductionStep.vue'
+import SeedStep from '../components/setup/SeedStep.vue'
+import DepositStep from '../components/setup/DepositStep.vue'
+import ProfileStep from '../components/setup/ProfileStep.vue'
+import SettingsStep from '../components/setup/SettingsStep.vue'
+import { defaultAcceptancePrice, defaultRelayUrl } from '../utils/constants'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
 const cashlib = require('bitcore-lib-cash')
-const bip39 = require('bip39')
 
 Vue.component(VueQrcode.name, VueQrcode)
 Vue.use(VueRouter)
 
-const relayUrlOptions = ['34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']
-
 export default {
+  components: {
+    IntroductionStep,
+    SeedStep,
+    DepositStep,
+    ProfileStep,
+    SettingsStep
+  },
   data () {
     return {
       step: 1,
       name: '',
       bio: '',
-      avatarPath: null,
-      avatarDataURL: null,
-      generatedWarning: true,
-      generatedSeed: '',
-      importedSeed: '',
-      seedTabs: 'new',
+      seedType: 'new',
       seed: null,
-      walletBalance: 0,
-      recomendedBalance: 2000,
-      paymentAddrCounter: 0,
+      generatedWarning: true,
       xPrivKey: null,
-      currentAddress: null,
-      acceptancePrice: 500,
-      settingsTab: 'inbox',
-      relayUrl: '34.67.137.105:8080',
-      options: []
+      profile: null,
+      settings: {
+        acceptancePrice: defaultAcceptancePrice,
+        relayUrl: defaultRelayUrl
+      }
     }
   },
   methods: {
@@ -538,29 +221,6 @@ export default {
       getAddresses: 'wallet/getAddresses',
       getIdentityPrivKey: 'wallet/getIdentityPrivKey'
     }),
-    parseImage () {
-      if (this.avatarPath == null) {
-        return
-      }
-      var reader = new FileReader()
-      reader.readAsDataURL(this.avatarPath)
-      reader.onload = () => {
-        this.avatarDataURL = reader.result
-      }
-    },
-    filterRelayFn (val, update) {
-      if (val === '') {
-        update(() => {
-          this.options = relayUrlOptions
-        })
-        return
-      }
-
-      update(() => {
-        const needle = val.toLowerCase()
-        this.options = relayUrlOptions.filter(v => v.toLowerCase().indexOf(needle) > -1)
-      })
-    },
     async next () {
       switch (this.step) {
         case 2:
@@ -579,8 +239,6 @@ export default {
 
             let xPrivKeyObj = event.data
             this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
-            let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(0, true)
-            this.currentAddress = privKey.privateKey.toAddress('testnet')
             this.setXPrivKey(this.xPrivKey)
             this.initAddresses()
 
@@ -595,11 +253,6 @@ export default {
           }
 
           // Send seed
-          if (this.seedTabs === 'new') {
-            this.seed = this.generatedSeed
-          } else {
-            this.seed = this.importedSeed
-          }
           worker.postMessage(this.seed)
           break
         case 4:
@@ -608,15 +261,11 @@ export default {
 
           break
         case 5:
-          let client = new RelayClient(this.relayUrl)
+          let client = new RelayClient(this.settings.relayUrl)
           await this.setUpFilter(client)
 
-          let profile = {
-            name: this.name,
-            bio: this.bio,
-            avatar: this.avatarDataURL,
-            acceptancePrice: this.acceptancePrice
-          }
+          let profile = this.profile
+          profile.acceptancePrice = this.settings.acceptancePrice
 
           this.setRelayClient(client)
           this.setMyProfile(profile)
@@ -631,12 +280,6 @@ export default {
     },
     async setUpProfile () {
       // Set profile
-      let profile = {
-        'name': this.name,
-        'bio': this.bio,
-        'avatar': this.avatarDataURL
-      }
-
       let ksHandler = this.getKsHandler()
       let serverUrl = ksHandler.chooseServer()
 
@@ -663,7 +306,7 @@ export default {
 
       // Construct metadata
       let idPrivKey = this.getIdentityPrivKey()
-      let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
+      let metadata = KeyserverHandler.constructProfileMetadata(this.profile, idPrivKey)
 
       // Put to keyserver
       await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
@@ -705,70 +348,10 @@ export default {
 
       // Apply locally
       this.setAcceptancePrice(this.acceptancePrice)
-    },
-    nextMnemonic () {
-      this.generatedSeed = bip39.generateMnemonic()
-    },
-    nextAddress () {
-      // Increment address
-      this.paymentAddrCounter += 1
-      let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(this.paymentAddrCounter, true)
-      this.currentAddress = privKey.privateKey.toAddress('testnet')
-    },
-    copyGenerated () {
-      copyToClipboard(this.generatedSeed).then(() => {
-        this.$q.notify({
-          message: '<div class="text-center"> Seed copied to clipboard </div>',
-          html: true,
-          color: 'purple'
-        })
-      })
-        .catch(() => {
-          // fail
-        })
-    },
-    copyAddress () {
-      copyToClipboard(this.currentAddress).then(() => {
-        this.$q.notify({
-          message: '<div class="text-center"> Address copied to clipboard </div>',
-          html: true,
-          color: 'purple'
-        })
-      })
-        .catch(() => {
-          // fail
-        })
-    },
-    pasteImported () {
-      var el = document.createElement('textarea')
-      document.body.appendChild(el)
-      el.focus()
-      document.execCommand('paste')
-      this.importedSeed = el.value
-      document.body.removeChild(el)
     }
   },
   computed: {
-    ...mapGetters({ getBalance: 'wallet/getBalance', connected: 'electrumHandler/connected' }),
-    percentageBalance () {
-      let percentage = 100 * Math.min(this.getBalance / this.recomendedBalance, 1)
-      return percentage
-    },
-    formatBalance () {
-      return formatting.formatBalance(this.balance)
-    },
-    isImportedValid () {
-      return bip39.validateMnemonic(this.importedSeed)
-    },
-    canProceedSeed () {
-      return (this.seed !== null)
-    },
-    isConnected () {
-      return this.connected
-    }
-  },
-  created () {
-    this.nextMnemonic()
+    ...mapGetters({ electrumConnected: 'electrumHandler/connected' })
   }
 }
 </script>
