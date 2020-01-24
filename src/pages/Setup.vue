@@ -23,123 +23,10 @@
           icon="vpn_key"
           :done="step > 2"
         >
-          <q-splitter
-            :value=110
-            unit="px"
-            disable
-          >
-            <template v-slot:before>
-              <q-tabs
-                v-model="seedTabs"
-                vertical
-                class="text-primary"
-              >
-                <q-tab
-                  name="new"
-                  icon="new_releases"
-                  label="New Seed"
-                />
-                <q-tab
-                  name="import"
-                  icon="import_export"
-                  label="Import Seed"
-                />
-              </q-tabs>
-            </template>
-            <template v-slot:after>
-              <q-tab-panels
-                v-model="seedTabs"
-                animated
-                transition-prev="jump-up"
-                transition-next="jump-up"
-              >
-                <q-tab-panel name="new">
-                  <q-input
-                    class="text-bold text-h6"
-                    v-model="generatedSeed"
-                    filled
-                    type="textarea"
-                    readonly
-                    rows="1"
-                  >
-                    <q-menu
-                      touch-position
-                      context-menu
-                    >
-                      <q-list
-                        dense
-                        style="min-width: 100px"
-                      >
-                        <q-item
-                          clickable
-                          v-close-popup
-                          @click="copyGenerated"
-                        >
-                          <q-item-section>Copy</q-item-section>
-                        </q-item>
-                      </q-list>
-                    </q-menu>
-                  </q-input>
-                  <div class="q-pa-md float-right">
-                    <q-btn
-                      color="primary"
-                      flat
-                      icon="content_copy"
-                      @click="copyGenerated"
-                    />
-                    <q-btn
-                      color="primary"
-                      label="Generate"
-                      @click="nextMnemonic"
-                    />
-                  </div>
-                </q-tab-panel>
-
-                <q-tab-panel name="import">
-                  <q-input
-                    class="text-bold text-h6"
-                    v-model="importedSeed"
-                    filled
-                    type="textarea"
-                    rows="1"
-                    placeholder="Enter a seed phrase..."
-                  >
-                    <q-menu
-                      touch-position
-                      context-menu
-                    >
-                      <q-list
-                        dense
-                        style="min-width: 100px"
-                      >
-                        <q-item
-                          clickable
-                          v-close-popup
-                          @click="pasteImported"
-                        >
-                          <q-item-section>Paste</q-item-section>
-                        </q-item>
-                      </q-list>
-                    </q-menu>
-                    <template v-slot:after>
-                      <q-icon
-                        v-show="!isImportedValid"
-                        name="warning"
-                        class="text-red"
-                        size="lg"
-                      />
-                      <q-icon
-                        v-show="isImportedValid"
-                        name="check"
-                        class="text-green"
-                        size="lg"
-                      />
-                    </template>
-                  </q-input>
-                </q-tab-panel>
-              </q-tab-panels>
-            </template>
-          </q-splitter>
+          <seed-step
+            v-on:seed="seed = $event"
+            v-on:switch="seedType = $event"
+          />
         </q-step>
 
         <q-step
@@ -393,8 +280,8 @@
               v-else-if="step === 2"
               @click="next()"
               color="primary"
-              :label="seedTabs==='new'?'New Wallet':'Import Wallet'"
-              :disable="!isConnected"
+              :label="seedType==='new'?'New Wallet':'Import Wallet'"
+              :disable="!isConnected || seed === null"
             />
             <q-btn
               v-else-if="step === 3"
@@ -484,12 +371,12 @@ import relayConstructors from '../relay/constructors'
 import { copyToClipboard } from 'quasar'
 import formatting from '../utils/formatting'
 import IntroductionStep from '../components/setup/IntroductionStep.vue'
+import SeedStep from '../components/setup/SeedStep.vue'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
 const cashlib = require('bitcore-lib-cash')
-const bip39 = require('bip39')
 
 Vue.component(VueQrcode.name, VueQrcode)
 Vue.use(VueRouter)
@@ -498,20 +385,19 @@ const relayUrlOptions = ['34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']
 
 export default {
   components: {
-    IntroductionStep
+    IntroductionStep,
+    SeedStep
   },
   data () {
     return {
       step: 1,
       name: '',
       bio: '',
+      seed: null,
+      seedType: 'new',
+      generatedWarning: true,
       avatarPath: null,
       avatarDataURL: null,
-      generatedWarning: true,
-      generatedSeed: '',
-      importedSeed: '',
-      seedTabs: 'new',
-      seed: null,
       walletBalance: 0,
       recomendedBalance: 2000,
       paymentAddrCounter: 0,
@@ -709,26 +595,11 @@ export default {
       // Apply locally
       this.setAcceptancePrice(this.acceptancePrice)
     },
-    nextMnemonic () {
-      this.generatedSeed = bip39.generateMnemonic()
-    },
     nextAddress () {
       // Increment address
       this.paymentAddrCounter += 1
       let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(this.paymentAddrCounter, true)
       this.currentAddress = privKey.privateKey.toAddress('testnet')
-    },
-    copyGenerated () {
-      copyToClipboard(this.generatedSeed).then(() => {
-        this.$q.notify({
-          message: '<div class="text-center"> Seed copied to clipboard </div>',
-          html: true,
-          color: 'purple'
-        })
-      })
-        .catch(() => {
-          // fail
-        })
     },
     copyAddress () {
       copyToClipboard(this.currentAddress).then(() => {
@@ -741,14 +612,6 @@ export default {
         .catch(() => {
           // fail
         })
-    },
-    pasteImported () {
-      var el = document.createElement('textarea')
-      document.body.appendChild(el)
-      el.focus()
-      document.execCommand('paste')
-      this.importedSeed = el.value
-      document.body.removeChild(el)
     }
   },
   computed: {
@@ -760,18 +623,12 @@ export default {
     formatBalance () {
       return formatting.formatBalance(this.balance)
     },
-    isImportedValid () {
-      return bip39.validateMnemonic(this.importedSeed)
-    },
     canProceedSeed () {
       return (this.seed !== null)
     },
     isConnected () {
       return this.connected
     }
-  },
-  created () {
-    this.nextMnemonic()
   }
 }
 </script>
