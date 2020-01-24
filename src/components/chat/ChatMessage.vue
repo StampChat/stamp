@@ -89,7 +89,7 @@ export default {
     text () {
       if (this.message.type === 'text') {
         return this.message.body
-      } else if (this.message.type === 'stealth-payment') {
+      } else if (this.message.type === 'stealth') {
         return this.message.body.memo
       } else {
         return 'unknown'

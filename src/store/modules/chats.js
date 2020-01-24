@@ -42,7 +42,7 @@ export default {
         let latestMessage = state.data[addr].messages[nMessages - 1]
         if (latestMessage.type === 'text') {
           return latestMessage.body
-        } else if (latestMessage.type === 'stealth-payment') {
+        } else if (latestMessage.type === 'stealth') {
           return latestMessage.body.memo
         } else {
           return ''
@@ -91,7 +91,7 @@ export default {
     },
     sendStealthPayment (state, { addr, amount, memo }) {
       let newMsg = {
-        type: 'stealth-payment',
+        type: 'stealth',
         outbound: true,
         sent: false,
         body: {
@@ -276,11 +276,12 @@ export default {
 
           // Add stealth output
           let output = tx.outputs[0]
-          let ephemeralPubKey = Buffer.from(stealthMessage.getEphemeralPubKey())
+          let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
+          let ephemeralPubKey = stealthMessage.getEphemeralPubKey()
           let stealthOutput = {
             address,
-            outputIndex: 0, // 0 is always stamp output
-            satoshis,
+            outputIndex: 0, // 0 is always stealth output
+            satoshis: output.satoshis,
             txId,
             type: 'stealth',
             ephemeralPubKey
@@ -288,7 +289,7 @@ export default {
           dispatch('wallet/addUTXO', stealthOutput, { root: true })
 
           newMsg = {
-            type: 'stealth-payment',
+            type: 'stealth',
             outbound: false,
             sent: true,
             body: {

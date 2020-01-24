@@ -123,7 +123,7 @@ export default {
       let addresses = getters['getAddresses']
       let inputUTXOs = []
       let signingKeys = []
-      let fee = 500 // TODO: Not const
+      let fee = 800 // TODO: Not const
       let inputValue = 0
       let utxos = getters['getUTXOs']
       let totalAmount = outputs.reduce((acc, output) => acc + output.satoshis, 0)
