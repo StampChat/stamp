@@ -36,83 +36,7 @@
           style="min-height: 300px;"
           :done="step > 3"
         >
-          <div class="row">
-            <div class="col">
-              <div class="row">
-                <p
-                  class="text-h4"
-                  style="margin: auto; "
-                >Deposit Address</p>
-              </div>
-
-              <div class="row">
-                <qrcode
-                  style="margin-left: auto; margin-right: auto;"
-                  :value="currentAddress"
-                  :options="{width: 300}"
-                ></qrcode>
-              </div>
-              <div class="row">
-                <q-input
-                  style="margin-left: auto; margin-right: auto; min-width: 500px"
-                  filled
-                  auto-grow
-                  v-model="currentAddress"
-                  readonly
-                >
-                  <template v-slot:after>
-                    <q-btn
-                      dense
-                      color="primary"
-                      flat
-                      icon="content_copy"
-                      @click="copyAddress"
-                    />
-                    <q-btn
-                      dense
-                      color="primary"
-                      flat
-                      icon="refresh"
-                      @click="nextAddress"
-                    />
-                  </template>
-                </q-input>
-              </div>
-            </div>
-            <q-separator
-              vertical
-              inset
-            />
-            <div class="col">
-              <div class="row">
-                <p
-                  class="text-h4"
-                  style="margin: auto; "
-                >Current Balance </p>
-              </div>
-
-              <div class="row">
-                <q-circular-progress
-                  style="margin-left: auto; margin-right: auto; margin-top: 50px;"
-                  show-value
-                  :value="percentageBalance"
-                  size="225px"
-                  :thickness="0.25"
-                  color="green"
-                  track-color="grey"
-                >
-                  <span class="text-h4">{{ formatBalance }}</span>
-                </q-circular-progress>
-              </div>
-              <div class="row">
-                <p
-                  class="q-pt-lg text-subtitle1"
-                  style="margin: auto;"
-                >Recommended {{ recomendedBalance }} satoshi </p>
-              </div>
-            </div>
-          </div>
-
+          <deposit-step :xPrivKey="xPrivKey" />
         </q-step>
 
         <q-step
@@ -368,10 +292,9 @@ import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop/index'
 import RelayClient from '../relay/client'
 import relayConstructors from '../relay/constructors'
-import { copyToClipboard } from 'quasar'
-import formatting from '../utils/formatting'
 import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
+import DepositStep from '../components/setup/DepositStep.vue'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -386,7 +309,8 @@ const relayUrlOptions = ['34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']
 export default {
   components: {
     IntroductionStep,
-    SeedStep
+    SeedStep,
+    DepositStep
   },
   data () {
     return {
@@ -398,11 +322,7 @@ export default {
       generatedWarning: true,
       avatarPath: null,
       avatarDataURL: null,
-      walletBalance: 0,
-      recomendedBalance: 2000,
-      paymentAddrCounter: 0,
       xPrivKey: null,
-      currentAddress: null,
       acceptancePrice: 500,
       settingsTab: 'inbox',
       relayUrl: '34.67.137.105:8080',
@@ -468,8 +388,6 @@ export default {
 
             let xPrivKeyObj = event.data
             this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
-            let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(0, true)
-            this.currentAddress = privKey.privateKey.toAddress('testnet')
             this.setXPrivKey(this.xPrivKey)
             this.initAddresses()
 
@@ -484,11 +402,6 @@ export default {
           }
 
           // Send seed
-          if (this.seedTabs === 'new') {
-            this.seed = this.generatedSeed
-          } else {
-            this.seed = this.importedSeed
-          }
           worker.postMessage(this.seed)
           break
         case 4:
@@ -594,35 +507,10 @@ export default {
 
       // Apply locally
       this.setAcceptancePrice(this.acceptancePrice)
-    },
-    nextAddress () {
-      // Increment address
-      this.paymentAddrCounter += 1
-      let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(this.paymentAddrCounter, true)
-      this.currentAddress = privKey.privateKey.toAddress('testnet')
-    },
-    copyAddress () {
-      copyToClipboard(this.currentAddress).then(() => {
-        this.$q.notify({
-          message: '<div class="text-center"> Address copied to clipboard </div>',
-          html: true,
-          color: 'purple'
-        })
-      })
-        .catch(() => {
-          // fail
-        })
     }
   },
   computed: {
-    ...mapGetters({ getBalance: 'wallet/getBalance', connected: 'electrumHandler/connected' }),
-    percentageBalance () {
-      let percentage = 100 * Math.min(this.getBalance / this.recomendedBalance, 1)
-      return percentage
-    },
-    formatBalance () {
-      return formatting.formatBalance(this.balance)
-    },
+    ...mapGetters({ connected: 'electrumHandler/connected' }),
     canProceedSeed () {
       return (this.seed !== null)
     },
