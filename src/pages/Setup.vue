@@ -14,8 +14,7 @@
           icon="settings"
           :done="step > 1"
         >
-          <p>It seems you don't have any accounts setup right now.</p>
-          <p>We'll guide you through the account creation process...</p>
+          <introduction-step />
         </q-step>
 
         <q-step
@@ -484,6 +483,7 @@ import RelayClient from '../relay/client'
 import relayConstructors from '../relay/constructors'
 import { copyToClipboard } from 'quasar'
 import formatting from '../utils/formatting'
+import IntroductionStep from '../components/setup/IntroductionStep.vue'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -497,6 +497,9 @@ Vue.use(VueRouter)
 const relayUrlOptions = ['34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']
 
 export default {
+  components: {
+    IntroductionStep
+  },
   data () {
     return {
       step: 1,
