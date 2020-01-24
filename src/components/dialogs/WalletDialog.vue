@@ -7,7 +7,7 @@
       <div class="text-h6">Wallet Status</div>
     </q-card-section>
     <q-card-section>
-      <span class='text-bold'> {{getBalance}} </span>
+      <span class='text-bold'> Balance: </span> {{getBalance}}
     </q-card-section>
     <q-card-actions align="right">
       <q-btn

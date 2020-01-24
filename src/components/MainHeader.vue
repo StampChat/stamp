@@ -1,6 +1,7 @@
 <template>
   <q-header elevated>
     <q-splitter
+      emit-immediately
       v-model="splitterRatio"
       separator-style="width: 0px"
     >
