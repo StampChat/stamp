@@ -5,15 +5,24 @@ const cashlib = require('bitcore-lib-cash')
 
 export default {
   constructStealthPubKey (emphemeralPrivKey, destPubKey) {
-    let emphemeralPublicKey = emphemeralPrivKey.toPublicKey()
-    let stampPoint = emphemeralPublicKey.point.add(destPubKey.point)
-    let stealthPublicKey = PublicKey.fromPoint(stampPoint)
+    let dhKeyPoint = destPubKey.point.mul(emphemeralPrivKey.bn) // ebG
+    let dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
+
+    let digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
+    let digestPublicKey = PrivateKey.fromBuffer(digest).toPublicKey() // H(ebG)G
+
+    let stealthPublicKey = PublicKey(digestPublicKey.point.add(destPubKey.point)) // H(ebG)G + bG
     return stealthPublicKey
   },
-  constructStealthPrivKey (emphemeralPrivKey, privKey) {
-    let stealthPrivBn = emphemeralPrivKey.bn.add(privKey.bn).mod(cashlib.crypto.Point.getN())
-    let stealthPrivKey = PrivateKey(stealthPrivBn)
-    return stealthPrivKey
+  constructStealthPrivKey (emphemeralPubKey, privKey) {
+    let dhKeyPoint = emphemeralPubKey.point.mul(privKey.bn) // ebG
+    let dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
+
+    let digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
+    let digestBn = cashlib.crypto.BN.fromBuffer(digest)
+
+    let stealthPrivBn = digestBn.add(privKey.bn).mod(cashlib.crypto.Point.getN()) // H(ebG) + b
+    return PrivateKey(stealthPrivBn)
   },
   constructStampPubKey (payloadDigest, destPubKey) {
     let digestPrivateKey = PrivateKey.fromBuffer(payloadDigest)

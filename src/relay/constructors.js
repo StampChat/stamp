@@ -90,7 +90,8 @@ export default {
 
     await new Promise(resolve => setTimeout(resolve, 5000)) // TODO: This is hacky as fuck
 
-    stealthPaymentEntry.setEphemeralPrivKey(ephemeralPrivKey.toBuffer())
+    let ephemeralPubKey = ephemeralPrivKey.toPublicKey()
+    stealthPaymentEntry.setEphemeralPubKey(ephemeralPubKey.toBuffer())
     stealthPaymentEntry.setTxId(stealthTxId)
     stealthPaymentEntry.setMemo(memo)
 

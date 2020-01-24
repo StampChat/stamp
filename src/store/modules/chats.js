@@ -276,14 +276,14 @@ export default {
 
           // Add stealth output
           let output = tx.outputs[0]
-          let ephemeralPrivKey = stealthMessage.getEphemeralPrivKey()
+          let ephemeralPubKey = Buffer.from(stealthMessage.getEphemeralPubKey())
           let stealthOutput = {
             address,
             outputIndex: 0, // 0 is always stamp output
             satoshis,
             txId,
             type: 'stealth',
-            ephemeralPrivKey
+            ephemeralPubKey
           }
           dispatch('wallet/addUTXO', stealthOutput, { root: true })
 
