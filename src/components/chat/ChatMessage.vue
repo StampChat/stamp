@@ -1,11 +1,41 @@
 <template>
-  <q-chat-message
-    class="q-py-sm"
-    :avatar="message.sent?this.getContact(targetAddr).avatar:this.getMyProfile.avatar"
-    :text="[message.body]"
-    :sent="message.outbound"
-    :stamp="timeStamp"
-  />
+  <div>
+    <q-chat-message
+      v-if="isText"
+      class="q-py-sm"
+      :avatar="contact.avatar"
+      :text="[text]"
+      :sent="message.outbound"
+      :stamp="timeStamp"
+    />
+    <q-chat-message
+      v-else
+      class="q-py-sm"
+      :avatar="contact.avatar"
+      :sent="message.outbound"
+      :stamp="timeStamp"
+    >
+      <div class='col'>
+        <div class='row q-pb-sm'>
+          <div class='col-auto'>
+            <q-icon
+              name='attach_money'
+              size='md'
+              dense
+              color='green'
+            />
+          </div>
+          <div class='col q-px-sm q-pt-sm'>
+            Sent {{ message.body.amount }} satoshis
+          </div>
+        </div>
+        <q-separator />
+        <div class='row q-pt-sm'>
+          {{text}}
+        </div>
+      </div>
+    </q-chat-message>
+  </div>
 </template>
 
 <script>
@@ -38,19 +68,37 @@ export default {
         return '1 minute ago'
       }
       return 'just now'
+    },
+    stealthPaymentCaption () {
+      if (this.message.outbound) {
+        return 'Sent ' + this.message.body.amount + ' satoshis'
+      } else {
+        return 'Received ' + this.message.body.amount + ' satoshis'
+      }
     }
   },
   computed: {
-    ...mapGetters({ getContact: 'contacts/getContact', getMyProfile: 'myProfile/getMyProfile' }),
     timeStamp () {
       let unixTime = this.getUnixTime()
       let stamp = this.unixToStamp(this.message.timestamp, unixTime)
       return stamp
+    },
+    isText () {
+      return this.message.type === 'text'
+    },
+    text () {
+      if (this.message.type === 'text') {
+        return this.message.body
+      } else if (this.message.type === 'stealth') {
+        return this.message.body.memo
+      } else {
+        return 'unknown'
+      }
     }
   },
   created () {
     this.updateClock()
   },
-  props: ['message', 'targetAddr']
+  props: ['message', 'contact']
 }
 </script>

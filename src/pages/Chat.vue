@@ -10,7 +10,7 @@
           v-for="(chatMessage, index) in messages"
           v-bind:key="index"
           :message="chatMessage"
-          :targetAddr="activeChat"
+          :contact="getContact(chatMessage.outbound)"
         />
       </q-scroll-area>
 
@@ -76,12 +76,20 @@ export default {
     },
     onResize (size) {
       this.height = size.height
+    },
+    getContact (outbound) {
+      if (outbound) {
+        return this.getMyProfile
+      } else {
+        return this.getContactVuex(this.activeChat)
+      }
     }
   },
   computed: {
     ...mapGetters({
-      getContact: 'contacts/getContact',
-      getInputMessage: 'chats/getInputMessage'
+      getContactVuex: 'contacts/getContact',
+      getInputMessage: 'chats/getInputMessage',
+      getMyProfile: 'myProfile/getMyProfile'
     }),
     message: {
       set (text) {

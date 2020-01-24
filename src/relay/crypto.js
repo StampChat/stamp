@@ -4,6 +4,26 @@ const forge = require('node-forge')
 const cashlib = require('bitcore-lib-cash')
 
 export default {
+  constructStealthPubKey (emphemeralPrivKey, destPubKey) {
+    let dhKeyPoint = destPubKey.point.mul(emphemeralPrivKey.bn) // ebG
+    let dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
+
+    let digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
+    let digestPublicKey = PrivateKey.fromBuffer(digest).toPublicKey() // H(ebG)G
+
+    let stealthPublicKey = PublicKey(digestPublicKey.point.add(destPubKey.point)) // H(ebG)G + bG
+    return stealthPublicKey
+  },
+  constructStealthPrivKey (emphemeralPubKey, privKey) {
+    let dhKeyPoint = emphemeralPubKey.point.mul(privKey.bn) // ebG
+    let dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
+
+    let digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
+    let digestBn = cashlib.crypto.BN.fromBuffer(digest)
+
+    let stealthPrivBn = digestBn.add(privKey.bn).mod(cashlib.crypto.Point.getN()) // H(ebG) + b
+    return PrivateKey(stealthPrivBn)
+  },
   constructStampPubKey (payloadDigest, destPubKey) {
     let digestPrivateKey = PrivateKey.fromBuffer(payloadDigest)
     let digestPublicKey = digestPrivateKey.toPublicKey()

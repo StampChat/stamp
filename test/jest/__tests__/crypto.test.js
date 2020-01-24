@@ -39,3 +39,18 @@ test('Stamp Signatures', () => {
   let stampPublicKeyDerived = stampPrivKey.toPublicKey()
   expect(stampPublicKey.toBuffer()).toStrictEqual(stampPublicKeyDerived.toBuffer())
 })
+
+test('StealthKey', () => {
+  let destPrivKey = PrivateKey()
+  let destPubKey = destPrivKey.toPublicKey()
+
+  let ephemeralPrivKey = PrivateKey()
+  let ephemeralPubKey = ephemeralPrivKey.toPublicKey()
+
+  let stealthPubKey = crypto.constructStealthPubKey(ephemeralPrivKey, destPubKey)
+
+  let stealthPrivKey = crypto.constructStealthPrivKey(ephemeralPubKey, destPrivKey)
+  let stealthPubKeyExpected = stealthPrivKey.toPublicKey()
+
+  expect(stealthPubKey.toBuffer()).toStrictEqual(stealthPubKeyExpected.toBuffer())
+})

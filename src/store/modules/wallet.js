@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import crypto from '../../relay/crypto'
+import { PublicKey } from 'bitcore-lib-cash'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -122,7 +123,7 @@ export default {
       let addresses = getters['getAddresses']
       let inputUTXOs = []
       let signingKeys = []
-      let fee = 500 // TODO: Not const
+      let fee = 800 // TODO: Not const
       let inputValue = 0
       let utxos = getters['getUTXOs']
       let totalAmount = outputs.reduce((acc, output) => acc + output.satoshis, 0)
@@ -146,6 +147,12 @@ export default {
         } else if (output.type === 'stamp') {
           let privKey = getters['getIdentityPrivKey']
           let signingKey = crypto.constructStampPrivKey(output.payloadDigest, privKey)
+          signingKeys.push(signingKey)
+        } else if (output.type === 'stealth') {
+          let privKey = getters['getIdentityPrivKey']
+          let ephemeralPubKey = PublicKey(output.ephemeralPubKey)
+          console.log(ephemeralPubKey)
+          let signingKey = crypto.constructStealthPrivKey(ephemeralPubKey, privKey)
           signingKeys.push(signingKey)
         } else {
           // TODO: Handle
