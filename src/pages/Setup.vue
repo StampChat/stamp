@@ -46,62 +46,7 @@
           style="min-height: 300px;"
           :done="step > 4"
         >
-          <div class="row">
-            <div class="col">
-              <div class="row q-pa-md">
-                <q-input
-                  outlined
-                  v-model="name"
-                  label="Name *"
-                  hint="Name displayed to others"
-                  lazy-rules
-                  style="width:100%"
-                  :rules="[ val => val && val.length > 0 || 'Please type something']"
-                />
-              </div>
-              <div class="row q-pa-md">
-                <q-input
-                  v-model="bio"
-                  label="Bio"
-                  hint="Short biolography displayed to others"
-                  outlined
-                  style="width:100%"
-                  autogrow
-                />
-              </div>
-            </div>
-            <div class="col-4 q-pa-md">
-              <q-toolbar
-                class="bg-primary text-white shadow-2"
-                style="border-radius: 10px 10px 0px 0px"
-              >
-                <q-toolbar-title>Upload Avatar</q-toolbar-title>
-
-                <q-input
-                  @input="val => { avatarPath = val[0] }"
-                  ref="displayPicker"
-                  style="display:none"
-                  type="file"
-                  label="Standard"
-                  @change="parseImage"
-                />
-                <q-btn
-                  type="file"
-                  flat
-                  round
-                  dense
-                  icon="add_a_photo"
-                  @click="$refs.displayPicker.$el.click()"
-                />
-              </q-toolbar>
-              <div>
-                <q-img
-                  :src="avatarDataURL"
-                  spinner-color="white"
-                />
-              </div>
-            </div>
-          </div>
+          <profile-step v-on:profile="profile = $event" />
         </q-step>
         <q-step
           :name="5"
@@ -199,26 +144,32 @@
               color="primary"
               label="Continue"
             />
-            <!-- TODO: Switch between labels -->
             <q-btn
               v-else-if="step === 2"
               @click="next()"
               color="primary"
               :label="seedType==='new'?'New Wallet':'Import Wallet'"
-              :disable="!isConnected || seed === null"
+              :disable="!electrumConnected || seed === null"
             />
             <q-btn
               v-else-if="step === 3"
               @click="next()"
               color="primary"
-              :disable="!(canProceedSeed && isConnected)"
+              :disable="!electrumConnected"
+              label="Continue"
+            />
+            <q-btn
+              v-else-if="step === 4"
+              @click="next()"
+              color="primary"
+              :disable="!electrumConnected || profile === null"
               label="Continue"
             />
             <q-btn
               v-else
               @click="next()"
               color="primary"
-              :disable="!isConnected"
+              :disable="!electrumConnected"
               :label="step === 5 ? 'Finish' : 'Continue'"
             />
             <q-btn
@@ -295,6 +246,7 @@ import relayConstructors from '../relay/constructors'
 import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
+import ProfileStep from '../components/setup/ProfileStep.vue'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -310,7 +262,8 @@ export default {
   components: {
     IntroductionStep,
     SeedStep,
-    DepositStep
+    DepositStep,
+    ProfileStep
   },
   data () {
     return {
@@ -320,9 +273,8 @@ export default {
       seed: null,
       seedType: 'new',
       generatedWarning: true,
-      avatarPath: null,
-      avatarDataURL: null,
       xPrivKey: null,
+      profile: null,
       acceptancePrice: 500,
       settingsTab: 'inbox',
       relayUrl: '34.67.137.105:8080',
@@ -347,16 +299,6 @@ export default {
       getAddresses: 'wallet/getAddresses',
       getIdentityPrivKey: 'wallet/getIdentityPrivKey'
     }),
-    parseImage () {
-      if (this.avatarPath == null) {
-        return
-      }
-      var reader = new FileReader()
-      reader.readAsDataURL(this.avatarPath)
-      reader.onload = () => {
-        this.avatarDataURL = reader.result
-      }
-    },
     filterRelayFn (val, update) {
       if (val === '') {
         update(() => {
@@ -433,12 +375,6 @@ export default {
     },
     async setUpProfile () {
       // Set profile
-      let profile = {
-        'name': this.name,
-        'bio': this.bio,
-        'avatar': this.avatarDataURL
-      }
-
       let ksHandler = this.getKsHandler()
       let serverUrl = ksHandler.chooseServer()
 
@@ -465,7 +401,7 @@ export default {
 
       // Construct metadata
       let idPrivKey = this.getIdentityPrivKey()
-      let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
+      let metadata = KeyserverHandler.constructProfileMetadata(this.profile, idPrivKey)
 
       // Put to keyserver
       await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
@@ -510,13 +446,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters({ connected: 'electrumHandler/connected' }),
-    canProceedSeed () {
-      return (this.seed !== null)
-    },
-    isConnected () {
-      return this.connected
-    }
+    ...mapGetters({ electrumConnected: 'electrumHandler/connected' })
   }
 }
 </script>
