@@ -95,10 +95,10 @@ export default {
   },
   watch: {
     name (newName, oldName) {
-      this.$emit('profile', this.constructProfile())
+      this.$emit('profile', this.constructProfile)
     },
     avatar (newAvatar, oldAvatar) {
-      this.$emit('profile', this.constructProfile())
+      this.$emit('profile', this.constructProfile)
     }
   }
 }

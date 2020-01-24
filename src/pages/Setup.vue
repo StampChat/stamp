@@ -54,86 +54,7 @@
           icon="build"
           style="min-height: 300px;"
         >
-          <q-splitter
-            :value=110
-            unit="px"
-            disable
-          >
-            <template v-slot:before>
-              <q-tabs
-                v-model="settingsTab"
-                vertical
-                class="text-primary"
-              >
-                <q-tab
-                  name="inbox"
-                  icon="mail"
-                  label="Inbox"
-                />
-                <q-tab
-                  name="appearance"
-                  icon="wallpaper"
-                  label="Appearance"
-                />
-                <q-tab
-                  name="security"
-                  icon="fingerprint"
-                  label="Security"
-                />
-              </q-tabs>
-            </template>
-            <template v-slot:after>
-              <q-tab-panels
-                v-model="settingsTab"
-                animated
-                transition-prev="jump-up"
-                transition-next="jump-up"
-              >
-                <q-tab-panel name="inbox">
-                  <div class="row">
-                    <div class="col">
-                      <div class="row q-pa-md">
-                        <q-input
-                          outlined
-                          v-model="acceptancePrice"
-                          label="Inbox Fee *"
-                          hint="The minimum fee required for strangers to message you"
-                          style="width:100%"
-                          type="number"
-                          :rules="[ val => val && val.length > 0 || 'Please input an inbox fee']"
-                        />
-                      </div>
-                    </div>
-                    <div class="col">
-                      <div class="row q-pa-md">
-                        <q-select
-                          outlined
-                          v-model="relayUrl"
-                          use-input
-                          hide-selected
-                          fill-input
-                          new-value-mode="add"
-                          input-debounce="0"
-                          label="Relay URL *"
-                          :options="options"
-                          @filter="filterRelayFn"
-                          style="width:100%"
-                        >
-                          <template v-slot:no-option>
-                            <q-item>
-                              <q-item-section class="text-grey">
-                                No results
-                              </q-item-section>
-                            </q-item>
-                          </template>
-                        </q-select>
-                      </div>
-                    </div>
-                  </div>
-                </q-tab-panel>
-              </q-tab-panels>
-            </template>
-          </q-splitter>
+          <settings-step v-on:settings="settings = $event" />
         </q-step>
 
         <template v-slot:navigation>
@@ -169,7 +90,7 @@
               v-else
               @click="next()"
               color="primary"
-              :disable="!electrumConnected"
+              :disable="!electrumConnected || settings === null"
               :label="step === 5 ? 'Finish' : 'Continue'"
             />
             <q-btn
@@ -247,6 +168,8 @@ import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
 import ProfileStep from '../components/setup/ProfileStep.vue'
+import SettingsStep from '../components/setup/SettingsStep.vue'
+import { defaultAcceptancePrice, defaultRelayUrl } from '../utils/constants'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -256,29 +179,28 @@ const cashlib = require('bitcore-lib-cash')
 Vue.component(VueQrcode.name, VueQrcode)
 Vue.use(VueRouter)
 
-const relayUrlOptions = ['34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']
-
 export default {
   components: {
     IntroductionStep,
     SeedStep,
     DepositStep,
-    ProfileStep
+    ProfileStep,
+    SettingsStep
   },
   data () {
     return {
       step: 1,
       name: '',
       bio: '',
-      seed: null,
       seedType: 'new',
+      seed: null,
       generatedWarning: true,
       xPrivKey: null,
       profile: null,
-      acceptancePrice: 500,
-      settingsTab: 'inbox',
-      relayUrl: '34.67.137.105:8080',
-      options: []
+      settings: {
+        acceptancePrice: defaultAcceptancePrice,
+        relayUrl: defaultRelayUrl
+      }
     }
   },
   methods: {
@@ -299,19 +221,6 @@ export default {
       getAddresses: 'wallet/getAddresses',
       getIdentityPrivKey: 'wallet/getIdentityPrivKey'
     }),
-    filterRelayFn (val, update) {
-      if (val === '') {
-        update(() => {
-          this.options = relayUrlOptions
-        })
-        return
-      }
-
-      update(() => {
-        const needle = val.toLowerCase()
-        this.options = relayUrlOptions.filter(v => v.toLowerCase().indexOf(needle) > -1)
-      })
-    },
     async next () {
       switch (this.step) {
         case 2:
@@ -352,15 +261,11 @@ export default {
 
           break
         case 5:
-          let client = new RelayClient(this.relayUrl)
+          let client = new RelayClient(this.settings.relayUrl)
           await this.setUpFilter(client)
 
-          let profile = {
-            name: this.name,
-            bio: this.bio,
-            avatar: this.avatarDataURL,
-            acceptancePrice: this.acceptancePrice
-          }
+          let profile = this.profile
+          profile.acceptancePrice = this.settings.acceptancePrice
 
           this.setRelayClient(client)
           this.setMyProfile(profile)
