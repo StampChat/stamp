@@ -14,6 +14,7 @@
         emit-immediately
         v-model="splitterRatio"
         separator-style="width: 0px"
+        :limits="[minSplitter, maxSplitter]"
       >
         <template v-slot:before>
           <chat-list />
@@ -41,6 +42,7 @@ import MainHeader from '../components/MainHeader.vue'
 import { mapActions, mapGetters } from 'vuex'
 import { dom } from 'quasar'
 const { height } = dom
+import { minSplitter, maxSplitter } from '../utils/constants'
 
 export default {
   name: 'MainLayout',
@@ -53,7 +55,9 @@ export default {
   },
   data () {
     return {
-      tabHeight: 50
+      tabHeight: 50,
+      minSplitter: minSplitter,
+      maxSplitter: maxSplitter
     }
   },
   methods: {

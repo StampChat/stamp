@@ -4,6 +4,7 @@
       emit-immediately
       v-model="splitterRatio"
       separator-style="width: 0px"
+      :limits="[minSplitter, maxSplitter]"
     >
       <template v-slot:before>
         <q-toolbar>
