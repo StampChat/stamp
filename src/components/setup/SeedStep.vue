@@ -177,10 +177,12 @@ export default {
       if (newTab === 'new') {
         this.$emit('seed', this.generatedSeed)
       } else {
-        console.log(this.validateImportedSeed)
         this.$emit('seed', this.validateImportedSeed)
       }
     }
+  },
+  created () {
+    this.$emit('seed', this.generatedSeed)
   }
 }
 </script>
