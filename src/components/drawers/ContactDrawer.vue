@@ -61,7 +61,7 @@
           </q-item-section>
         </q-item>
 
-        <q-separator spaced />
+        <q-separator />
 
         <q-item
           clickable
@@ -90,7 +90,9 @@
             Share Contact
           </q-item-section>
         </q-item>
-        <q-separator spaced />
+
+        <q-separator />
+
         <q-item
           clickable
           v-ripple
