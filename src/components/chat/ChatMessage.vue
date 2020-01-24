@@ -29,8 +29,11 @@
             Sent {{ message.body.amount }} satoshis
           </div>
         </div>
-        <q-separator />
-        <div class='row q-pt-sm'>
+        <q-separator v-if="text !== ''" />
+        <div
+          v-if="text !== ''"
+          class='row q-pt-sm'
+        >
           {{text}}
         </div>
       </div>
