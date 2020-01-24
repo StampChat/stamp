@@ -215,7 +215,7 @@
                   color="green"
                   track-color="grey"
                 >
-                  <span class="text-h4">{{ formatedBalance }}</span>
+                  <span class="text-h4">{{ formatBalance }}</span>
                 </q-circular-progress>
               </div>
               <div class="row">
@@ -483,6 +483,7 @@ import pop from '../pop/index'
 import RelayClient from '../relay/client'
 import relayConstructors from '../relay/constructors'
 import { copyToClipboard } from 'quasar'
+import formatting from '../utils/formatting'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -753,18 +754,8 @@ export default {
       let percentage = 100 * Math.min(this.getBalance / this.recomendedBalance, 1)
       return percentage
     },
-    formatedBalance () {
-      if (this.getBalance < 1_000) {
-        return String(this.getBalance) + ' sats'
-      } else if (this.getBalance < 100_000) {
-        return String(this.getBalance / 100) + ' uBCH'
-      } else if (this.getBalance < 10_000_000) {
-        return String(this.getBalance / 100_000) + ' mBCH'
-      } else if (this.getBalance < 100_000_000) {
-        return String(this.getBalance / 1_000_000) + ' cBCH'
-      } else {
-        return String(this.getBalance / 1_00_000_000) + ' BCH'
-      }
+    formatBalance () {
+      return formatting.formatBalance(this.balance)
     },
     isImportedValid () {
       return bip39.validateMnemonic(this.importedSeed)

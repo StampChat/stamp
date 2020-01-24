@@ -151,7 +151,6 @@ export default {
         } else if (output.type === 'stealth') {
           let privKey = getters['getIdentityPrivKey']
           let ephemeralPubKey = PublicKey(output.ephemeralPubKey)
-          console.log(ephemeralPubKey)
           let signingKey = crypto.constructStealthPrivKey(ephemeralPubKey, privKey)
           signingKeys.push(signingKey)
         } else {

@@ -31,6 +31,11 @@
       <contact-book-dialog :contactClick="function (addr, contact) { return openChat(addr) }" />
     </q-dialog>
 
+    <!-- Wallet dialog -->
+    <q-dialog v-model="walletOpen">
+      <wallet-dialog />
+    </q-dialog>
+
     <!-- Drawer -->
     <q-scroll-area style="height: calc(100% - 125px); margin-top: 125px; border-right: 1px solid #ddd">
       <q-list padding>
@@ -66,6 +71,22 @@
         <q-item
           clickable
           v-ripple
+          @click="walletOpen = true"
+        >
+          <q-item-section avatar>
+            <q-icon name="account_balance_wallet" />
+          </q-item-section>
+
+          <q-item-section>
+            Wallet
+          </q-item-section>
+        </q-item>
+
+        <q-separator />
+
+        <q-item
+          clickable
+          v-ripple
           @click="setFilterOpen = true"
         >
           <q-item-section avatar>
@@ -76,6 +97,7 @@
             Set Filter
           </q-item-section>
         </q-item>
+
         <q-item
           clickable
           v-ripple
@@ -100,19 +122,22 @@ import DrawerContactCard from './DrawerContactCard.vue'
 import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import SetFilterDialog from '../dialogs/SetFilterDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
+import WalletDialog from '../dialogs/WalletDialog.vue'
 
 export default {
   components: {
     DrawerContactCard,
     NewContactDialog,
     SetFilterDialog,
-    ContactBookDialog
+    ContactBookDialog,
+    WalletDialog
   },
   data () {
     return {
       newContactOpen: false,
       setFilterOpen: false,
-      contactBookOpen: false
+      contactBookOpen: false,
+      walletOpen: false
     }
   },
   methods: {
