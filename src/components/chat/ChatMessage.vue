@@ -1,70 +1,30 @@
 <template>
   <div>
     <q-chat-message
-      v-if="isText"
-      class="q-py-sm"
-      :avatar="contact.avatar"
-      :text="[text]"
-      :sent="message.outbound"
-      :stamp="timeStamp"
-    />
-    <q-chat-message
-      v-else-if="isImage"
-      class="q-py-sm"
       :avatar="contact.avatar"
       :sent="message.outbound"
       :stamp="timeStamp"
     >
-      <div class='col'>
-        <div class='row q-pb-sm'>
-          <q-img :src="message.body.image" />
-        </div>
-        <q-separator v-if="text !== ''" />
-        <div
-          v-if="text !== ''"
-          class='row q-pt-sm'
-        >
-          {{text}}
-        </div>
-      </div>
-    </q-chat-message>
-    <q-chat-message
-      v-else
-      class="q-py-sm"
-      :avatar="contact.avatar"
-      :sent="message.outbound"
-      :stamp="timeStamp"
-    >
-      <div class='col'>
-        <div class='row q-pb-sm'>
-          <div class='col-auto'>
-            <q-icon
-              name='attach_money'
-              size='md'
-              dense
-              color='green'
-            />
-          </div>
-          <div class='col q-px-sm q-pt-sm'>
-            Sent {{ message.body.amount }} satoshis
-          </div>
-        </div>
-        <q-separator v-if="text !== ''" />
-        <div
-          v-if="text !== ''"
-          class='row q-pt-sm'
-        >
-          {{text}}
-        </div>
-      </div>
+      <q-list separator>
+        <chat-message-section
+          class='q-pa-none'
+          v-for="(item, index) in message.items"
+          :key="index"
+          :item="item"
+        />
+      </q-list>
     </q-chat-message>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import ChatMessageSection from './ChatMessageSection.vue'
 
 export default {
+  components: {
+    ChatMessageSection
+  },
   methods: {
     ...mapGetters(['getUnixTime']),
     ...mapActions(['updateClock']),
