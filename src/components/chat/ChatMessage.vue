@@ -9,6 +9,26 @@
       :stamp="timeStamp"
     />
     <q-chat-message
+      v-else-if="isImage"
+      class="q-py-sm"
+      :avatar="contact.avatar"
+      :sent="message.outbound"
+      :stamp="timeStamp"
+    >
+      <div class='col'>
+        <div class='row q-pb-sm'>
+          <q-img :src="message.body.image" />
+        </div>
+        <q-separator v-if="text !== ''" />
+        <div
+          v-if="text !== ''"
+          class='row q-pt-sm'
+        >
+          {{text}}
+        </div>
+      </div>
+    </q-chat-message>
+    <q-chat-message
       v-else
       class="q-py-sm"
       :avatar="contact.avatar"
@@ -71,13 +91,6 @@ export default {
         return '1 minute ago'
       }
       return 'just now'
-    },
-    stealthPaymentCaption () {
-      if (this.message.outbound) {
-        return 'Sent ' + this.message.body.amount + ' satoshis'
-      } else {
-        return 'Received ' + this.message.body.amount + ' satoshis'
-      }
     }
   },
   computed: {
@@ -89,13 +102,18 @@ export default {
     isText () {
       return this.message.type === 'text'
     },
+    isImage () {
+      return this.message.type === 'image'
+    },
     text () {
       if (this.message.type === 'text') {
         return this.message.body
       } else if (this.message.type === 'stealth') {
         return this.message.body.memo
+      } else if (this.message.type === 'image') {
+        return this.message.body.caption
       } else {
-        return 'unknown'
+        return 'Unknown'
       }
     }
   },

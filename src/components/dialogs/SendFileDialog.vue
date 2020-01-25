@@ -51,16 +51,18 @@
         color="primary"
         v-close-popup
         :disable="filePath===null"
+        @click="sendImage"
       />
     </q-card-actions>
   </q-card>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import formatting from '../../utils/formatting'
 
 export default {
+  props: ['address'],
   data () {
     return {
       caption: '',
@@ -69,6 +71,9 @@ export default {
     }
   },
   methods: {
+    ...mapActions({
+      sendImageVuex: 'chats/sendImage'
+    }),
     parseImage () {
       // TODO: Check it's an image
       if (this.filePath == null) {
@@ -79,6 +84,9 @@ export default {
       reader.onload = () => {
         this.image = reader.result
       }
+    },
+    async sendImage () {
+      await this.sendImageVuex({ addr: this.address, image: this.image, caption: this.caption })
     }
   },
   computed: {
