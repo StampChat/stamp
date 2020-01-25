@@ -78,10 +78,14 @@
 </template>
 
 <script>
+import Vue from 'vue'
+import VueQrcode from '@chenfengyuan/vue-qrcode'
 import { mapGetters } from 'vuex'
 import { copyToClipboard } from 'quasar'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
 import formatting from '../../utils/formatting'
+
+Vue.component(VueQrcode.name, VueQrcode)
 
 export default {
   props: ['xPrivKey'],

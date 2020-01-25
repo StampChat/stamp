@@ -239,6 +239,9 @@ export default {
     },
     getUTXOs (state) {
       return state.outputs
+    },
+    generatePrivKey: (state) => (count) => {
+      return state.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(count, true)
     }
   }
 }

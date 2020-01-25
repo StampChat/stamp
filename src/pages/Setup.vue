@@ -159,7 +159,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { mapActions, mapGetters } from 'vuex'
-import VueQrcode from '@chenfengyuan/vue-qrcode'
 import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop/index'
 import RelayClient from '../relay/client'
@@ -176,7 +175,6 @@ import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
 const cashlib = require('bitcore-lib-cash')
 
-Vue.component(VueQrcode.name, VueQrcode)
 Vue.use(VueRouter)
 
 export default {

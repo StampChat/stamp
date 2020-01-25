@@ -12,14 +12,17 @@ export default {
   name: 'App',
   methods: {
     ...mapActions({
-      setClient: 'electrumHandler/setClient'
+      setClient: 'electrumHandler/setClient',
+      startListeners: 'wallet/startListeners'
     })
   },
   created () {
-    // this.walletReset()
-
+    // Set electrum client
     let ecl = new ElectrumClient(51002, 'bch0.kister.net', 'tls')
     this.setClient(ecl)
+
+    // Start electrum listeners
+    this.startListeners()
   }
 }
 </script>
