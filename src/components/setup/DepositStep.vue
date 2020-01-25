@@ -88,15 +88,15 @@ import formatting from '../../utils/formatting'
 Vue.component(VueQrcode.name, VueQrcode)
 
 export default {
-  props: ['xPrivKey'],
   data () {
     return {
-      currentAddress: this.generatePrivKey(0).privateKey.toAddress('testnet'), // TODO: Generic over network
+      currentAddress: this.generatePrivKey()(0).privateKey.toAddress('testnet'), // TODO: Generic over network
       paymentAddrCounter: 0,
       recomendedBalance
     }
   },
   methods: {
+    ...mapGetters({ generatePrivKey: 'wallet/generatePrivKey' }),
     copyAddress () {
       copyToClipboard(this.currentAddress).then(() => {
         this.$q.notify({
@@ -112,11 +112,8 @@ export default {
     nextAddress () {
       // Increment address
       this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
-      let privKey = this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(this.paymentAddrCounter, true)
+      let privKey = this.generatePrivKey()(this.paymentAddrCounter)
       this.currentAddress = privKey.privateKey.toAddress('testnet')
-    },
-    generatePrivKey (count) {
-      return this.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(count, true)
     }
   },
   computed: {

@@ -36,7 +36,7 @@
           style="min-height: 300px;"
           :done="step > 3"
         >
-          <deposit-step :xPrivKey="xPrivKey" />
+          <deposit-step />
         </q-step>
 
         <q-step
