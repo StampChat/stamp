@@ -73,6 +73,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import { minSplitter, maxSplitter } from '../utils/constants'
 
 export default {
   methods: {
@@ -106,7 +107,9 @@ export default {
   },
   data: function () {
     return {
-      searchText: ''
+      searchText: '',
+      minSplitter,
+      maxSplitter
     }
   }
 }
