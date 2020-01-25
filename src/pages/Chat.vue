@@ -1,5 +1,14 @@
 <template>
   <q-page>
+
+    <!-- Send file dialog -->
+    <q-dialog
+      v-model="sendFileOpen"
+      persistent
+    >
+      <send-file-dialog />
+    </q-dialog>
+
     <div class="col">
       <q-scroll-area
         ref="chatScroll"
@@ -16,7 +25,14 @@
 
       <div class="row">
         <q-resize-observer @resize="onResize" />
-        <q-toolbar class="bg-white">
+        <q-toolbar class="bg-white q-pl-none">
+          <q-btn
+            dense
+            flat
+            color="primary"
+            icon="attach_file"
+            @click="sendFileOpen = true"
+          />
           <q-input
             ref="inputBox"
             style="width: 100%;"
@@ -33,7 +49,7 @@
               v-if="message != ''"
               dense
               flat
-              color="blue"
+              color="primary"
               icon="send"
               @click="sendMessage"
             />
@@ -47,15 +63,18 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import ChatMessage from '../components/chat/ChatMessage.vue'
+import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 
 export default {
   props: ['activeChat', 'messages', 'tabHeight'],
   components: {
-    ChatMessage
+    ChatMessage,
+    SendFileDialog
   },
   data () {
     return {
-      height: 100
+      height: 100,
+      sendFileOpen: false
     }
   },
   methods: {
