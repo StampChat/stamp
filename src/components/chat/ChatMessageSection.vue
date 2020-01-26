@@ -1,12 +1,25 @@
 <template>
-  <q-item dense>
-    <q-item-section v-if="item.type=='text'">
+  <div>
+    <div
+      :class="single?'q-py-none':'q-py-sm'"
+      v-if="item.type=='text'"
+    >
       {{item.text}}
-    </q-item-section>
-    <q-item-section v-else-if="item.type=='image'">
-      <q-img :src="item.image" />
-    </q-item-section>
-    <q-item-section v-else-if="item.type=='stealth'">
+    </div>
+    <div
+      class='q-py-sm'
+      v-else-if="item.type=='image'"
+    >
+      <q-img
+        :src="item.image"
+        contain
+        style="width: 10vw;"
+      />
+    </div>
+    <div
+      class='q-py-sm'
+      v-else-if="item.type=='stealth'"
+    >
       <div class='col q-pb-xs'>
         <div class='row'>
           <div class='col-auto'>
@@ -22,12 +35,13 @@
           </div>
         </div>
       </div>
-    </q-item-section>
-  </q-item>
+    </div>
+    <q-separator v-if="!end" />
+  </div>
 </template>
 
 <script>
 export default {
-  props: ['item']
+  props: ['item', 'end', 'single']
 }
 </script>

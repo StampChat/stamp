@@ -107,14 +107,20 @@ export default {
 
     stealthPaymentEntry.setEphemeralPubKey(ephemeralPrivKey.toPublicKey().toBuffer())
     stealthPaymentEntry.setTxId(stealthTxId)
-    stealthPaymentEntry.setMemo(memo)
 
     let paymentEntryRaw = stealthPaymentEntry.serializeBinary()
     paymentEntry.setEntryData(paymentEntryRaw)
 
+    // Construct text entry
+    let textEntry = new messages.Entry()
+    textEntry.setKind('text-utf8')
+    let rawText = new TextEncoder('utf-8').encode(memo)
+    textEntry.setEntryData(rawText)
+
     // Aggregate entries
     let entries = new messages.Entries()
     entries.addEntries(paymentEntry)
+    entries.addEntries(textEntry)
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
     let message = await this.constructMessage(payload, privKey, destPubKey)

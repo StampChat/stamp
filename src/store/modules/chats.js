@@ -307,12 +307,10 @@ export default {
           let entryData = entry.getEntryData()
           let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
 
-          let memo = stealthMessage.getMemo()
-          let txId = Buffer.from(stealthMessage.getTxId()).toString('hex')
-
           let electrumHandler = rootGetters['electrumHandler/getClient']
           await new Promise(resolve => setTimeout(resolve, 5000)) // TODO: This is hacky as fuck
 
+          let txId = Buffer.from(stealthMessage.getTxId()).toString('hex')
           let txRaw = await electrumHandler.blockchainTransaction_get(txId)
           let tx = cashlib.Transaction(txRaw)
 
@@ -334,11 +332,6 @@ export default {
             type: 'stealth',
             amount: output.satoshis
           })
-          // TODO: Remove this when memo is in seperate entry
-          newMsg.items.push({
-            type: 'text',
-            text: memo
-          })
         } else if (kind === 'image') {
           let image = imageUtil.entryToImage(entry)
 
@@ -348,8 +341,8 @@ export default {
             image
           })
         }
-        commit('receiveMessage', { addr: senderAddr, newMsg })
       }
+      commit('receiveMessage', { addr: senderAddr, newMsg })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       if (rootGetters['wallet/isSetupComplete'] === false) {
