@@ -36,6 +36,9 @@ export default {
   computed: {
     latestMessageBody () {
       let info = this.getLatestMessage()(this.chatAddr)
+      if (info === null) {
+        return ''
+      }
       if (info.outbound) {
         return 'You: ' + info.text
       } else {
