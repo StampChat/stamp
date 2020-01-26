@@ -84,8 +84,7 @@
 </template>
 
 <script>
-import { defaultAcceptancePrice, defaultRelayUrl } from '../../utils/constants'
-const relayUrlOptions = ['34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']
+import { defaultAcceptancePrice, defaultRelayUrl, relayUrlOptions } from '../../utils/constants'
 
 export default {
   data () {

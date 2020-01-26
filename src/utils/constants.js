@@ -8,3 +8,4 @@ export const recomendedBalance = 2000
 // Relay constants
 export const defaultAcceptancePrice = 100
 export const defaultRelayUrl = '34.67.137.105:8080'
+export const relayUrlOptions = ['34.67.137.105:8080', 'bitcoin.com', 'cashweb.io']

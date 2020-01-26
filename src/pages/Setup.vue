@@ -345,7 +345,7 @@ export default {
       await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
 
       // Apply locally
-      this.setAcceptancePrice(this.acceptancePrice)
+      this.setAcceptancePrice(this.settings.acceptancePrice)
     }
   },
   computed: {
