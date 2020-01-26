@@ -124,6 +124,8 @@ class KeyserverHandler {
     }
     let avatarEntry = entryList.find(isAvatar)
     let rawAvatar = avatarEntry.getEntryData()
+
+    // TODO: Use util function
     function _arrayBufferToBase64 (buffer) {
       var binary = ''
       var bytes = new Uint8Array(buffer)

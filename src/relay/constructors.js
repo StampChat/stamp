@@ -72,6 +72,21 @@ export default {
     }
     return payload
   },
+  async constructTextMessage (text, privKey, destPubKey, scheme) {
+    // Construct text entry
+    let textEntry = new messages.Entry()
+    textEntry.setKind('text-utf8')
+    let rawText = new TextEncoder('utf-8').encode(text)
+    textEntry.setEntryData(rawText)
+
+    // Aggregate entries
+    let entries = new messages.Entries()
+    entries.addEntries(textEntry)
+
+    let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
+    let message = await this.constructMessage(payload, privKey, destPubKey)
+    return message
+  },
   async constructStealthPaymentMessage (amount, memo, privKey, destPubKey, scheme) {
     // Construct payment entry
     let paymentEntry = new messages.Entry()
@@ -92,29 +107,55 @@ export default {
 
     stealthPaymentEntry.setEphemeralPubKey(ephemeralPrivKey.toPublicKey().toBuffer())
     stealthPaymentEntry.setTxId(stealthTxId)
-    stealthPaymentEntry.setMemo(memo)
 
     let paymentEntryRaw = stealthPaymentEntry.serializeBinary()
     paymentEntry.setEntryData(paymentEntryRaw)
 
+    // Construct text entry
+    let textEntry = new messages.Entry()
+    textEntry.setKind('text-utf8')
+    let rawText = new TextEncoder('utf-8').encode(memo)
+    textEntry.setEntryData(rawText)
+
     // Aggregate entries
     let entries = new messages.Entries()
     entries.addEntries(paymentEntry)
+    entries.addEntries(textEntry)
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
     let message = await this.constructMessage(payload, privKey, destPubKey)
     return message
   },
-  async constructTextMessage (text, privKey, destPubKey, scheme) {
+  async constructImageMessage (image, caption, privKey, destPubKey, scheme) {
     // Construct text entry
-    let textEntry = new messages.Entry()
-    textEntry.setKind('text-utf8')
-    let rawText = new TextEncoder('utf-8').encode(text)
-    textEntry.setEntryData(rawText)
+    let imgEntry = new messages.Entry()
+    imgEntry.setKind('image')
+
+    let arr = image.split(',')
+    let avatarType = arr[0].match(/:(.*?);/)[1]
+    let bstr = atob(arr[1])
+    let n = bstr.length
+    let rawAvatar = new Uint8Array(n)
+
+    while (n--) {
+      rawAvatar[n] = bstr.charCodeAt(n)
+    }
+    let imgHeader = new messages.Header()
+    imgHeader.setName('data')
+    imgHeader.setValue(avatarType)
+    imgEntry.setEntryData(rawAvatar)
+    imgEntry.addHeaders(imgHeader)
+
+    // Construct caption entry
+    let captionEntry = new messages.Entry()
+    captionEntry.setKind('text-utf8')
+    let rawText = new TextEncoder('utf-8').encode(caption)
+    captionEntry.setEntryData(rawText)
 
     // Aggregate entries
     let entries = new messages.Entries()
-    entries.addEntries(textEntry)
+    entries.addEntries(imgEntry)
+    entries.addEntries(captionEntry)
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
     let message = await this.constructMessage(payload, privKey, destPubKey)

@@ -1,50 +1,29 @@
 <template>
-  <div>
+  <div class='q-py-sm'>
     <q-chat-message
-      v-if="isText"
-      class="q-py-sm"
-      :avatar="contact.avatar"
-      :text="[text]"
-      :sent="message.outbound"
-      :stamp="timeStamp"
-    />
-    <q-chat-message
-      v-else
-      class="q-py-sm"
       :avatar="contact.avatar"
       :sent="message.outbound"
       :stamp="timeStamp"
     >
-      <div class='col'>
-        <div class='row q-pb-sm'>
-          <div class='col-auto'>
-            <q-icon
-              name='attach_money'
-              size='md'
-              dense
-              color='green'
-            />
-          </div>
-          <div class='col q-px-sm q-pt-sm'>
-            Sent {{ message.body.amount }} satoshis
-          </div>
-        </div>
-        <q-separator v-if="text !== ''" />
-        <div
-          v-if="text !== ''"
-          class='row q-pt-sm'
-        >
-          {{text}}
-        </div>
-      </div>
+      <chat-message-section
+        v-for="(item, index) in message.items"
+        :key="index"
+        :item="item"
+        :end='message.items.length === index + 1'
+        :single='message.items.length === 1'
+      />
     </q-chat-message>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import ChatMessageSection from './ChatMessageSection.vue'
 
 export default {
+  components: {
+    ChatMessageSection
+  },
   methods: {
     ...mapGetters(['getUnixTime']),
     ...mapActions(['updateClock']),
@@ -71,13 +50,6 @@ export default {
         return '1 minute ago'
       }
       return 'just now'
-    },
-    stealthPaymentCaption () {
-      if (this.message.outbound) {
-        return 'Sent ' + this.message.body.amount + ' satoshis'
-      } else {
-        return 'Received ' + this.message.body.amount + ' satoshis'
-      }
     }
   },
   computed: {
@@ -89,13 +61,18 @@ export default {
     isText () {
       return this.message.type === 'text'
     },
+    isImage () {
+      return this.message.type === 'image'
+    },
     text () {
       if (this.message.type === 'text') {
         return this.message.body
       } else if (this.message.type === 'stealth') {
         return this.message.body.memo
+      } else if (this.message.type === 'image') {
+        return this.message.body.caption
       } else {
-        return 'unknown'
+        return 'Unknown'
       }
     }
   },

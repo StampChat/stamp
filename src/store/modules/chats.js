@@ -4,6 +4,7 @@ import relayConstructors from '../../relay/constructors'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
+import imageUtil from '../../utils/image'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -79,25 +80,12 @@ export default {
     switchChatActive (state, addr) {
       state.activeChatAddr = addr
     },
-    sendMessage (state, { addr, text }) {
+    sendMessageLocal (state, { addr, items }) {
       let newMsg = {
         type: 'text',
         outbound: true,
         sent: false,
-        body: text,
-        timestamp: Math.floor(Date.now() / 1000)
-      }
-      state.data[addr].messages.push(newMsg)
-    },
-    sendStealthPayment (state, { addr, amount, memo }) {
-      let newMsg = {
-        type: 'stealth',
-        outbound: true,
-        sent: false,
-        body: {
-          amount,
-          memo
-        },
+        items,
         timestamp: Math.floor(Date.now() / 1000)
       }
       state.data[addr].messages.push(newMsg)
@@ -160,8 +148,15 @@ export default {
     },
     async sendMessage ({ commit, rootGetters }, { addr, text }) {
       // Send locally
-      commit('sendMessage', { addr, text })
+      let items = [
+        {
+          type: 'text',
+          text
+        }
+      ]
+      commit('sendMessageLocal', { addr, items })
 
+      // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let message = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
@@ -176,7 +171,17 @@ export default {
     },
     async sendStealthPayment ({ commit, rootGetters }, { addr, amount, memo }) {
       // Send locally
-      commit('sendStealthPayment', { addr, amount, memo })
+      let items = [
+        {
+          type: 'stealth',
+          amount
+        },
+        {
+          type: 'text',
+          text: memo
+        }
+      ]
+      commit('sendMessageLocal', { addr, items })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -188,6 +193,35 @@ export default {
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
       await client.pushMessages(destAddr, messageSet)
+
+      // TODO: Confirmation
+    },
+    async sendImage ({ commit, rootGetters }, { addr, image, caption }) {
+      // Send locally
+      let items = [
+        {
+          type: 'image',
+          image
+        },
+        {
+          type: 'text',
+          text: caption
+        }
+      ]
+      commit('sendMessageLocal', { addr, items })
+
+      // Construct message
+      let privKey = rootGetters['wallet/getIdentityPrivKey']
+      let destPubKey = rootGetters['contacts/getPubKey'](addr)
+      let message = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1)
+      let messageSet = new messages.MessageSet()
+      messageSet.addMessages(message)
+
+      let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+      let client = rootGetters['relayClient/getClient']
+      await client.pushMessages(destAddr, messageSet)
+
+      // TODO: Confirmation
     },
     switchOrder ({ commit }, addr) {
       commit('switchOrder', addr)
@@ -252,25 +286,31 @@ export default {
       // Decode entries
       let entries = messages.Entries.deserializeBinary(entriesRaw)
       let entriesList = entries.getEntriesList()
+      let newMsg = {
+        outbound: false,
+        send: true,
+        items: [],
+        timestamp
+      }
       for (let index in entriesList) {
         let entry = entriesList[index]
         // If addr data doesn't exist then add it
-        let newMsg
         let kind = entry.getKind()
         if (kind === 'text-utf8') {
           let entryData = entry.getEntryData()
           let text = new TextDecoder().decode(entryData)
-          newMsg = { type: 'text', outbound: false, sent: true, body: text, timestamp }
+          newMsg.items.push({
+            type: 'text',
+            text
+          })
         } else if (kind === 'stealth-payment') {
           let entryData = entry.getEntryData()
           let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
 
-          let memo = stealthMessage.getMemo()
-          let txId = Buffer.from(stealthMessage.getTxId()).toString('hex')
-
           let electrumHandler = rootGetters['electrumHandler/getClient']
           await new Promise(resolve => setTimeout(resolve, 5000)) // TODO: This is hacky as fuck
 
+          let txId = Buffer.from(stealthMessage.getTxId()).toString('hex')
           let txRaw = await electrumHandler.blockchainTransaction_get(txId)
           let tx = cashlib.Transaction(txRaw)
 
@@ -288,19 +328,21 @@ export default {
           }
           dispatch('wallet/addUTXO', stealthOutput, { root: true })
 
-          newMsg = {
+          newMsg.items.push({
             type: 'stealth',
-            outbound: false,
-            sent: true,
-            body: {
-              amount: output.satoshis,
-              memo
-            },
-            timestamp
-          }
+            amount: output.satoshis
+          })
+        } else if (kind === 'image') {
+          let image = imageUtil.entryToImage(entry)
+
+          // TODO: Save to folder instead of in memory
+          newMsg.items.push({
+            type: 'image',
+            image
+          })
         }
-        commit('receiveMessage', { addr: senderAddr, newMsg })
       }
+      commit('receiveMessage', { addr: senderAddr, newMsg })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       if (rootGetters['wallet/isSetupComplete'] === false) {
@@ -313,8 +355,7 @@ export default {
       // If token is null then purchase one
       let token = rootGetters['relayClient/getToken']
 
-      let messagePage =
-            await client.getMessages(myAddressStr, token, lastReceived, null)
+      let messagePage = await client.getMessages(myAddressStr, token, lastReceived, null)
       let messageList = messagePage.getMessagesList()
 
       for (let index in messageList) {

@@ -6,7 +6,7 @@
       v-model="sendFileOpen"
       persistent
     >
-      <send-file-dialog />
+      <send-file-dialog :address="activeChat" />
     </q-dialog>
 
     <div class="col">
