@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
+import { numAddresses, numChangeAddresses } from '../../utils/constants'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -11,6 +12,7 @@ export default {
     xPrivKey: null,
     identityPrivKey: null,
     addresses: {},
+    changeAddresses: {},
     outputs: []
   },
   mutations: {
@@ -23,6 +25,9 @@ export default {
       state.addresses = {}
     },
     setAddress (state, { address, privKey }) {
+      Vue.set(state.addresses, address, { privKey })
+    },
+    setChangeAddress (state, { address, privKey }) {
       Vue.set(state.addresses, address, { privKey })
     },
     setXPrivKey (state, xPrivKey) {
@@ -67,15 +72,25 @@ export default {
     },
     initAddresses ({ commit, getters }) {
       let xPrivKey = getters['getXPrivKey']
-      // TODO: More here
-      for (var i = 0; i < 2; i++) {
+      for (var i = 0; i < numAddresses; i++) {
         let privKey = xPrivKey.deriveChild(44)
+          .deriveChild(0)
           .deriveChild(0)
           .deriveChild(0)
           .deriveChild(i, true)
           .privateKey
         let address = privKey.toAddress('testnet').toLegacyAddress()
         commit('setAddress', { address, privKey })
+      }
+      for (var j = 0; i < numChangeAddresses; i++) {
+        let privKey = xPrivKey.deriveChild(44)
+          .deriveChild(0)
+          .deriveChild(0)
+          .deriveChild(1)
+          .deriveChild(j, true)
+          .privateKey
+        let address = privKey.toAddress('testnet').toLegacyAddress()
+        commit('setChangeAddress', { address, privKey })
       }
     },
     async updateUTXOFromAddr ({ commit, rootGetters }, addr) {
@@ -94,7 +109,7 @@ export default {
       commit('setUTXOsByAddr', { addr, outputs })
     },
     async updateUTXOs ({ getters, dispatch }) {
-      let addresses = Object.keys(getters['getAddresses'])
+      let addresses = Object.keys(getters['getAllAddresses'])
 
       await Promise
         .all(addresses.map(addr => dispatch('updateUTXOFromAddr', addr)))
@@ -105,7 +120,7 @@ export default {
     removeUTXO ({ commit }, output) {
       commit('removeUTXO', output)
     },
-    async startListeners ({ dispatch, getters, rootGetters }) {
+    async startListeners ({ dispatch, getters, rootGetters }, addresses) {
       let client = rootGetters['electrumHandler/getClient']
       await client.subscribe.on(
         'blockchain.address.subscribe',
@@ -113,7 +128,6 @@ export default {
           let address = result[0]
           await dispatch('updateUTXOFromAddr', address)
         })
-      let addresses = Object.keys(getters['getAddresses'])
       await Promise.all(addresses.map(addr => client.blockchainAddress_subscribe(addr)))
     },
     constructTransaction ({ commit, getters }, outputs) {
@@ -231,6 +245,12 @@ export default {
     },
     getAddresses (state) {
       return state.addresses
+    },
+    getChangeAddresses (state) {
+      return state.changeAddresses
+    },
+    getAllAddresses (state) {
+      return { ...state.addresses, ...state.changeAddresses }
     },
     getXPrivKey (state) {
       return state.xPrivKey

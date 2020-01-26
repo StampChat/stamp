@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 const ElectrumClient = require('electrum-client')
 
 export default {
@@ -14,6 +14,9 @@ export default {
     ...mapActions({
       setClient: 'electrumHandler/setClient',
       startListeners: 'wallet/startListeners'
+    }),
+    ...mapGetters({
+      getAllAddresses: 'wallet/getAllAddresses'
     })
   },
   created () {
@@ -22,7 +25,8 @@ export default {
     this.setClient(ecl)
 
     // Start electrum listeners
-    this.startListeners()
+    let addresses = Object.keys(this.getAllAddresses())
+    this.startListeners(addresses)
   }
 }
 </script>

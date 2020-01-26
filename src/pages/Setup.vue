@@ -208,6 +208,7 @@ export default {
       initAddresses: 'wallet/initAddresses',
       startListeners: 'wallet/startListeners',
       completeSetup: 'wallet/completeSetup',
+      updateUTXOs: 'wallet/updateUTXOs',
       setRelayToken: 'relayClient/setToken',
       setAcceptancePrice: 'myProfile/setAcceptancePrice',
       setRelayClient: 'relayClient/setClient'
@@ -216,7 +217,7 @@ export default {
       getKsHandler: 'keyserverHandler/getHandler',
       getMyAddress: 'wallet/getMyAddress',
       getClient: 'electrumHandler/getClient',
-      getAddresses: 'wallet/getAddresses',
+      getAllAddresses: 'wallet/getAllAddresses',
       getIdentityPrivKey: 'wallet/getIdentityPrivKey'
     }),
     async next () {
@@ -239,12 +240,14 @@ export default {
             this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
             this.setXPrivKey(this.xPrivKey)
             this.initAddresses()
+            this.updateUTXOs()
 
             this.$q.loading.show({
               delay: 100,
               message: 'Watching wallet...'
             })
-            await this.startListeners()
+            let addresses = Object.keys(this.getAllAddresses())
+            await this.startListeners(addresses)
 
             this.$q.loading.hide()
             this.$refs.stepper.next()
