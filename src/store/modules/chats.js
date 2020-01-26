@@ -121,7 +121,7 @@ export default {
     },
     clearChat (state, addr) {
       if (addr in state.data) {
-        state.data[addr].messages = []
+        state.data[addr].messages = {}
       }
     },
     deleteChat (state, addr) {
