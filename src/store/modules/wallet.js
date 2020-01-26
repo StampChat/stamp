@@ -113,10 +113,8 @@ export default {
           let address = result[0]
           await dispatch('updateUTXOFromAddr', address)
         })
-      let addresses = getters['getAddresses']
-      for (var addr in addresses) {
-        await client.blockchainAddress_subscribe(addr)
-      }
+      let addresses = Object.keys(getters['getAddresses'])
+      await Promise.all(addresses.map(addr => client.blockchainAddress_subscribe(addr)))
     },
     constructTransaction ({ commit, getters }, outputs) {
       // Collect inputs
