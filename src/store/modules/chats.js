@@ -37,19 +37,38 @@ export default {
     getActiveChat (state) {
       return state.activeChatAddr
     },
-    getLatestMessageBody: (state) => (addr) => {
+    getLatestMessage: (state) => (addr) => {
       let nMessages = Object.keys(state.data[addr].messages).length
-      if (nMessages !== 0) {
-        let latestMessage = state.data[addr].messages[nMessages - 1]
-        if (latestMessage.type === 'text') {
-          return latestMessage.body
-        } else if (latestMessage.type === 'stealth') {
-          return latestMessage.body.memo
-        } else {
-          return ''
+      if (nMessages === 0) {
+        return null
+      }
+
+      let lastMessage = state.data[addr].messages[nMessages - 1]
+      let items = lastMessage.items
+      let lastItem = items[items.length - 1]
+
+      if (lastItem.type === 'text') {
+        let info = {
+          outbound: lastMessage.outbound,
+          text: lastItem.text
         }
-      } else {
-        return ''
+        return info
+      }
+
+      if (lastItem.type === 'image') {
+        let info = {
+          outbound: lastMessage.outbound,
+          text: 'Sent image'
+        }
+        return info
+      }
+
+      if (lastItem.type === 'stealth') {
+        let info = {
+          outbound: lastMessage.outbound,
+          text: 'Sent Bitcoin'
+        }
+        return info
       }
     },
     getAllMessages: (state) => (addr) => {

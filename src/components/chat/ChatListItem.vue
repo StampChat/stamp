@@ -29,13 +29,18 @@ export default {
     ...mapGetters({
       getActiveChat: 'chats/getActiveChat',
       getContact: 'contacts/getContact',
-      getLatestMessageBody: 'chats/getLatestMessageBody'
+      getLatestMessage: 'chats/getLatestMessage'
     }),
     ...mapActions({ switchChatActive: 'chats/switchChatActive' })
   },
   computed: {
     latestMessageBody () {
-      return this.getLatestMessageBody()(this.chatAddr)
+      let info = this.getLatestMessage()(this.chatAddr)
+      if (info.outbound) {
+        return 'You: ' + info.text
+      } else {
+        return this.profile.name + ': ' + info.text
+      }
     },
     profile () {
       return this.getContact()(this.chatAddr)
