@@ -43,7 +43,8 @@ export default {
         return null
       }
 
-      let lastMessage = state.data[addr].messages[nMessages - 1]
+      let lastMessageKey = Object.keys(state.data[addr].messages)[nMessages - 1]
+      let lastMessage = state.data[addr].messages[lastMessageKey]
       let items = lastMessage.items
       let lastItem = items[items.length - 1]
 
@@ -73,7 +74,7 @@ export default {
     },
     getAllMessages: (state) => (addr) => {
       if (addr in state.data) {
-        return state.data[addr].messages
+        return Object.values(state.data[addr].messages)
       } else {
         return []
       }
@@ -99,15 +100,20 @@ export default {
     switchChatActive (state, addr) {
       state.activeChatAddr = addr
     },
-    sendMessageLocal (state, { addr, items }) {
+    sendMessageLocal (state, { addr, index, items }) {
+      let timestamp = Date.now()
       let newMsg = {
         type: 'text',
         outbound: true,
         sent: false,
         items,
-        timestamp: Math.floor(Date.now() / 1000)
+        timestamp
       }
-      state.data[addr].messages.push(newMsg)
+
+      Vue.set(state.data[addr].messages, index, newMsg)
+    },
+    markSent (state, { index, addr }) {
+      state.data[addr].messages[index].sent = true
     },
     switchOrder (state, addr) {
       state.order.splice(state.order.indexOf(addr), 1)
@@ -127,13 +133,16 @@ export default {
       }
       Vue.delete(state.data, addr)
     },
-    receiveMessage (state, { addr, newMsg }) {
-      // Add new message
+    receiveMessage (state, { addr, index, newMsg }) {
       if (!(addr in state.data)) {
-        Vue.set(state.data, addr, { messages: [newMsg], inputMessage: '' })
+        let messages = {}
+        // TODO: Better indexing
+        messages[index] = newMsg
+        Vue.set(state.data, addr, { messages, inputMessage: '' })
         state.order.unshift(addr)
       } else {
-        state.data[addr].messages.push(newMsg)
+        // TODO: Better indexing
+        Vue.set(state.data[addr].messages, index, newMsg)
       }
     },
     setLastReceived (state, lastReceived) {
@@ -141,7 +150,7 @@ export default {
     },
     openChat (state, addr) {
       if (!(addr in state.data)) {
-        Vue.set(state.data, addr, { messages: [], inputMessage: '' })
+        Vue.set(state.data, addr, { messages: {}, inputMessage: '' })
         state.order.unshift(addr)
       }
       state.activeChatAddr = addr
@@ -173,7 +182,8 @@ export default {
           text
         }
       ]
-      commit('sendMessageLocal', { addr, items })
+      let index = Date.now() // TODO: Better indexing
+      commit('sendMessageLocal', { addr, index, items })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -186,7 +196,7 @@ export default {
       let client = rootGetters['relayClient/getClient']
       await client.pushMessages(destAddr, messageSet)
 
-      // TODO: Confirmation
+      commit('markSent', { addr, index })
     },
     async sendStealthPayment ({ commit, rootGetters }, { addr, amount, memo }) {
       // Send locally
@@ -200,7 +210,8 @@ export default {
           text: memo
         }
       ]
-      commit('sendMessageLocal', { addr, items })
+      let index = Date.now() // TODO: Better indexing
+      commit('sendMessageLocal', { addr, index, items })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -213,7 +224,7 @@ export default {
       let client = rootGetters['relayClient/getClient']
       await client.pushMessages(destAddr, messageSet)
 
-      // TODO: Confirmation
+      commit('markSent', { addr, index })
     },
     async sendImage ({ commit, rootGetters }, { addr, image, caption }) {
       // Send locally
@@ -227,7 +238,8 @@ export default {
           text: caption
         }
       ]
-      commit('sendMessageLocal', { addr, items })
+      let index = Date.now() // TODO: Better indexing
+      commit('sendMessageLocal', { addr, index, items })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -240,7 +252,7 @@ export default {
       let client = rootGetters['relayClient/getClient']
       await client.pushMessages(destAddr, messageSet)
 
-      // TODO: Confirmation
+      commit('markSent', { addr, index })
     },
     switchOrder ({ commit }, addr) {
       commit('switchOrder', addr)
@@ -307,7 +319,7 @@ export default {
       let entriesList = entries.getEntriesList()
       let newMsg = {
         outbound: false,
-        send: true,
+        sent: true,
         items: [],
         timestamp
       }
@@ -354,14 +366,15 @@ export default {
         } else if (kind === 'image') {
           let image = imageUtil.entryToImage(entry)
 
-          // TODO: Save to folder instead of in memory
+          // TODO: Save to folder instead of in Vuex
           newMsg.items.push({
             type: 'image',
             image
           })
         }
       }
-      commit('receiveMessage', { addr: senderAddr, newMsg })
+      let index = Date.now()
+      commit('receiveMessage', { addr: senderAddr, index, newMsg })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       if (rootGetters['wallet/isSetupComplete'] === false) {

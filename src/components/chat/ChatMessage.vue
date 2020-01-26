@@ -54,6 +54,9 @@ export default {
   },
   computed: {
     timeStamp () {
+      if (!this.message.sent) {
+        return 'sending...'
+      }
       let unixTime = this.getUnixTime()
       let stamp = this.unixToStamp(this.message.timestamp, unixTime)
       return stamp
