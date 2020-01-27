@@ -46,10 +46,10 @@ export default {
         state.xPrivKey = cashlib.HDPrivateKey.fromObject(state.xPrivKey)
         state.identityPrivKey = cashlib.PrivateKey.fromObject(state.identityPrivKey)
         for (let addr in state.addresses) {
-          state.addresses[addr] = cashlib.PrivateKey.fromObject(state.addresses[addr])
+          Vue.set(state.addresses[addr], 'privKey', cashlib.PrivateKey.fromObject(state.addresses[addr].privKey))
         }
         for (let addr in state.changeAddresses) {
-          state.changeAddresses[addr] = cashlib.PrivateKey.fromObject(state.changeAddresses[addr])
+          Vue.set(state.changeAddresses[addr], 'privKey', cashlib.PrivateKey.fromObject(state.changeAddresses[addr].privKey))
         }
       }
     },
@@ -158,7 +158,7 @@ export default {
     },
     constructTransaction ({ commit, getters }, outputs) {
       // Collect inputs
-      let addresses = getters['getAddresses']
+      let addresses = getters['getAllAddresses']
       let inputUTXOs = []
       let signingKeys = []
       let fee = 800 // TODO: Not const
@@ -215,8 +215,11 @@ export default {
       }
 
       // Add change Output
-      let changeAddr = Object.keys(addresses)[0] // TODO: Better change selection
+      // TODO: Better change selection
+      let changeAddresses = getters['getChangeAddresses']
+      let changeAddr = Object.keys(changeAddresses)[0]
       transaction = transaction.fee(fee).change(changeAddr)
+      signingKeys.push(changeAddresses[changeAddr].privKey)
 
       // Sign
       for (let i in signingKeys) {
