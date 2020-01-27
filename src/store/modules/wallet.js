@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
-import { numAddresses, numChangeAddresses } from '../../utils/constants'
+import { numAddresses, numChangeAddresses, feePerByte, nUtxoGoal } from '../../utils/constants'
 import formatting from '../../utils/formatting'
 
 const cashlib = require('bitcore-lib-cash')
@@ -159,83 +159,74 @@ export default {
     constructTransaction ({ commit, getters }, outputs) {
       // Collect inputs
       let addresses = getters['getAllAddresses']
-      let inputUTXOs = []
-      let signingKeys = []
-      let fee = 800 // TODO: Not const
-      let inputValue = 0
       let utxos = getters['getUTXOs']
-      let totalAmount = outputs.reduce((acc, output) => acc + output.satoshis, 0)
-
-      // TODO: Coin selection
-      for (let i in utxos) {
-        let output = utxos[i]
-
-        // Remove UTXO
-        commit('removeUTXO', output)
-
-        inputValue += output.satoshis
-        let addr = output.address
-        output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
-        inputUTXOs.push(output)
-
-        // Grab private key
-        if (output.type === 'p2pkh') {
-          let signingKey = addresses[addr].privKey
-          signingKeys.push(signingKey)
-        } else if (output.type === 'stamp') {
-          let privKey = getters['getIdentityPrivKey']
-          let payloadDigest = Uint8Array.from(output.payloadDigest)
-          let signingKey = crypto.constructStampPrivKey(payloadDigest, privKey)
-          signingKeys.push(signingKey)
-        } else if (output.type === 'stealth') {
-          let privKey = getters['getIdentityPrivKey']
-          let ephemeralPubKey = PublicKey(output.ephemeralPubKey)
-          let signingKey = crypto.constructStealthPrivKey(ephemeralPubKey, privKey)
-          signingKeys.push(signingKey)
-        } else {
-          // TODO: Handle
-        }
-
-        if (totalAmount + fee < inputValue) {
-          break
-        }
-      }
 
       // Construct Transaction
       let transaction = new cashlib.Transaction()
 
-      // Add inputs
-      for (let i in inputUTXOs) {
-        transaction = transaction.from(inputUTXOs[i])
-      }
+      // Add fee
+      transaction = transaction.feePerByte(feePerByte)
 
-      // Add stamp output
+      // Add outputs
       for (let i in outputs) {
         let output = outputs[i]
         transaction = transaction.addOutput(output)
       }
 
-      // Add change Output
-      // TODO: Better change selection
-      let changeAddresses = getters['getChangeAddresses']
-      let changeAddr = Object.keys(changeAddresses)[0]
-      transaction = transaction.fee(fee).change(changeAddr)
-      signingKeys.push(changeAddresses[changeAddr].privKey)
+      // TODO: Coin selection
+      let signingKeys = []
+      for (let i in utxos) {
+        let output = utxos[i]
 
-      // Sign
-      for (let i in signingKeys) {
-        transaction = transaction.sign(signingKeys[i])
+        // Remove UTXO
+        // TODO: Indexing
+        // TODO: Freezing
+        commit('removeUTXO', output)
+
+        let addr = output.address
+        output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+
+        // Grab private key
+        let signingKey
+        if (output.type === 'p2pkh') {
+          signingKey = addresses[addr].privKey
+        } else if (output.type === 'stamp') {
+          let privKey = getters['getIdentityPrivKey']
+          let payloadDigest = Buffer.from(output.payloadDigest)
+          signingKey = crypto.constructStampPrivKey(payloadDigest, privKey)
+        } else if (output.type === 'stealth') {
+          let privKey = getters['getIdentityPrivKey']
+          let ephemeralPubKey = PublicKey(output.ephemeralPubKey)
+          signingKey = crypto.constructStealthPrivKey(ephemeralPubKey, privKey)
+        } else {
+          // TODO: Handle
+        }
+        transaction = transaction.from(output)
+        signingKeys.push(signingKey)
+
+        let totalFees = transaction._estimateSize() * feePerByte
+        if (transaction.outputAmount + totalFees < transaction.inputAmount) {
+          break
+        }
       }
 
-      // Add change output
-      let changeOutput = {
-        address: changeAddr,
-        outputIndex: 1, // This is because we have only 1 stamp output
-        satoshis: inputValue - fee - totalAmount,
-        txId: transaction.hash,
-        type: 'p2pkh'
+      // Add change outputs
+      let delta = transaction.inputAmount - transaction.outputAmount
+      let nChangeAddresses = Math.max(Math.min(delta / (1024 + 34 * feePerByte) - 1, nUtxoGoal - Object.keys(utxos).length - 1), 0)
+      let changeAddresses = Object.keys(getters['getChangeAddresses'])
+
+      for (let i = 0; i < nChangeAddresses; i++) {
+        // TODO: Randomize
+        let output = new cashlib.Transaction.Output({
+          script: cashlib.Script.buildPublicKeyHashOut(changeAddresses[i]).toHex(),
+          satoshis: 1024
+        })
+        transaction = transaction.addOutput(output)
       }
-      commit('addUTXO', changeOutput)
+      transaction = transaction.change(changeAddresses[0])
+
+      // Sign transaction
+      transaction = transaction.sign(signingKeys)
 
       return transaction
     }
