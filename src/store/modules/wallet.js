@@ -2,6 +2,7 @@ import Vue from 'vue'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import { numAddresses, numChangeAddresses } from '../../utils/constants'
+import formatting from '../../utils/formatting'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -11,11 +12,15 @@ export default {
     complete: false,
     xPrivKey: null,
     identityPrivKey: null,
+    electrumScriptHashes: {},
     addresses: {},
     changeAddresses: {},
     outputs: []
   },
   mutations: {
+    addElectrumScriptHash (state, { scriptHash, address, change }) {
+      Vue.set(state.electrumScriptHashes, scriptHash, { address, change })
+    },
     completeSetup (state) {
       state.complete = true
     },
@@ -28,7 +33,7 @@ export default {
       Vue.set(state.addresses, address, { privKey })
     },
     setChangeAddress (state, { address, privKey }) {
-      Vue.set(state.addresses, address, { privKey })
+      Vue.set(state.changeAddresses, address, { privKey })
     },
     setXPrivKey (state, xPrivKey) {
       state.xPrivKey = xPrivKey
@@ -40,6 +45,12 @@ export default {
       if (state.xPrivKey != null) {
         state.xPrivKey = cashlib.HDPrivateKey.fromObject(state.xPrivKey)
         state.identityPrivKey = cashlib.PrivateKey.fromObject(state.identityPrivKey)
+        for (let addr in state.addresses) {
+          state.addresses[addr] = cashlib.PrivateKey.fromObject(state.addresses[addr])
+        }
+        for (let addr in state.changeAddresses) {
+          state.changeAddresses[addr] = cashlib.PrivateKey.fromObject(state.changeAddresses[addr])
+        }
       }
     },
     setUTXOs (state, outputs) {
@@ -81,8 +92,12 @@ export default {
           .privateKey
         let address = privKey.toAddress('testnet').toLegacyAddress()
         commit('setAddress', { address, privKey })
+
+        // Index by script hash
+        let scriptHash = formatting.toElectrumScriptHash(address)
+        commit('addElectrumScriptHash', { scriptHash, address, change: false })
       }
-      for (var j = 0; i < numChangeAddresses; i++) {
+      for (var j = 0; j < numChangeAddresses; j++) {
         let privKey = xPrivKey.deriveChild(44)
           .deriveChild(0)
           .deriveChild(0)
@@ -91,28 +106,33 @@ export default {
           .privateKey
         let address = privKey.toAddress('testnet').toLegacyAddress()
         commit('setChangeAddress', { address, privKey })
+
+        // Index by script hash
+        let scriptHash = formatting.toElectrumScriptHash(address)
+        commit('addElectrumScriptHash', { scriptHash, address, change: true })
       }
     },
-    async updateUTXOFromAddr ({ commit, rootGetters }, addr) {
+    async updateUTXOFromScriptHash ({ commit, rootGetters, getters }, scriptHash) {
       let client = rootGetters['electrumHandler/getClient']
-      let elOutputs = await client.blockchainAddress_listunspent(addr)
+      let elOutputs = await client.blockchainScripthash_listunspent(scriptHash)
+      let { address } = getters['getAddressByElectrumScriptHash'](scriptHash)
       let outputs = elOutputs.map(elOutput => {
         let output = {
           txId: elOutput.tx_hash,
           outputIndex: elOutput.tx_pos,
           satoshis: elOutput.value,
           type: 'p2pkh',
-          address: addr
+          address
         }
         return output
       })
-      commit('setUTXOsByAddr', { addr, outputs })
+      commit('setUTXOsByAddr', { addr: address, outputs })
     },
     async updateUTXOs ({ getters, dispatch }) {
-      let addresses = Object.keys(getters['getAllAddresses'])
+      let scriptHashes = Object.keys(getters['getElectrumScriptHashes'])
 
       await Promise
-        .all(addresses.map(addr => dispatch('updateUTXOFromAddr', addr)))
+        .all(scriptHashes.map(scriptHash => dispatch('updateUTXOFromScriptHash', scriptHash)))
     },
     addUTXO ({ commit }, output) {
       commit('addUTXO', output)
@@ -120,15 +140,21 @@ export default {
     removeUTXO ({ commit }, output) {
       commit('removeUTXO', output)
     },
-    async startListeners ({ dispatch, getters, rootGetters }, addresses) {
+    async startListeners ({ dispatch, rootGetters }, addresses) {
       let client = rootGetters['electrumHandler/getClient']
       await client.subscribe.on(
-        'blockchain.address.subscribe',
+        'blockchain.scripthash.subscribe',
         async (result) => {
-          let address = result[0]
-          await dispatch('updateUTXOFromAddr', address)
+          let scriptHash = result[0]
+          await dispatch('updateUTXOFromScriptHash', scriptHash)
         })
-      await Promise.all(addresses.map(addr => client.blockchainAddress_subscribe(addr)))
+      await Promise.all(addresses.map(addr => {
+        let scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
+        let scriptHashRaw = scriptHash.toBuffer()
+        let digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
+        let digestHexReversed = digest.reverse().toString('hex')
+        client.blockchainScripthash_subscribe(digestHexReversed)
+      }))
     },
     constructTransaction ({ commit, getters }, outputs) {
       // Collect inputs
@@ -211,6 +237,12 @@ export default {
     }
   },
   getters: {
+    getElectrumScriptHashes (state) {
+      return state.electrumScriptHashes
+    },
+    getAddressByElectrumScriptHash: (state) => (scriptHash) => {
+      return state.electrumScriptHashes[scriptHash]
+    },
     isSetupComplete (state) {
       return state.complete
     },
@@ -225,15 +257,7 @@ export default {
       return state.identityPrivKey
     },
     getPaymentAddress: (state) => (seqNum) => {
-      if (state.xPrivKey !== null) {
-        let privkey = state.xPrivKey.deriveChild(44)
-          .deriveChild(0)
-          .deriveChild(0)
-          .deriveChild(seqNum, true)
-        return privkey.toAddress('testnet')
-      } else {
-        return null
-      }
+      return Object.keys(state.addresses)[seqNum]
     },
     getMyAddress (state) {
       return state.identityPrivKey.toAddress(
@@ -259,7 +283,7 @@ export default {
       return state.outputs
     },
     generatePrivKey: (state) => (count) => {
-      return state.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(count, true)
+      return Object.values(state.addresses)[count].privKey
     }
   }
 }
