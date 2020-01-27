@@ -184,7 +184,8 @@ export default {
           signingKeys.push(signingKey)
         } else if (output.type === 'stamp') {
           let privKey = getters['getIdentityPrivKey']
-          let signingKey = crypto.constructStampPrivKey(output.payloadDigest, privKey)
+          let payloadDigest = Uint8Array.from(output.payloadDigest)
+          let signingKey = crypto.constructStampPrivKey(payloadDigest, privKey)
           signingKeys.push(signingKey)
         } else if (output.type === 'stealth') {
           let privKey = getters['getIdentityPrivKey']
