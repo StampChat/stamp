@@ -77,7 +77,7 @@
         label="Update"
         color="primary"
         v-close-popup
-        @click="sendStealthPayment()"
+        @click="updateProfile()"
       />
     </q-card-actions>
   </q-card>
@@ -98,10 +98,12 @@ export default {
       avatarPath: null
     }
   },
-  getters: {
-    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler' })
-  },
   methods: {
+    ...mapGetters({
+      getKsHandler: 'keyserverHandler/getHandler',
+      getMyAddress: 'wallet/getMyAddress',
+      getIdentityPrivKey: 'wallet/getIdentityPrivKey'
+    }),
     ...mapActions({ setMyProfile: 'myProfile/setMyProfile' }),
     parseImage () {
       if (this.avatarPath == null) {
@@ -125,6 +127,7 @@ export default {
       })
 
       let idAddress = this.getMyAddress()
+      console.log(idAddress)
       let { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
       this.$q.loading.show({
         delay: 100,
@@ -141,7 +144,12 @@ export default {
 
       // Construct metadata
       let idPrivKey = this.getIdentityPrivKey()
-      let metadata = KeyserverHandler.constructProfileMetadata(this.profile, idPrivKey)
+      let profile = {
+        name: this.name,
+        bio: this.bio,
+        avatar: this.avatar
+      }
+      let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
 
       // Put to keyserver
       await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
