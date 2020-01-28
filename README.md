@@ -2,17 +2,11 @@
 
 IRCash is a Bitcoin Cash powered internet relay chat.
 
-**WARNING: IRCash is in alpha development stage. There will be multiple breaking changes from now until a stable release and reserve the right to do so. Running IRCash defaults to the Bitcoin Cash testnet. If you decide to fork and change this default expect to lose funds.**
+**WARNING: IRCash is in early alpha development stage. There will be multiple breaking changes from now until a stable release. Running IRCash currently defaults to the Bitcoin Cash testnet as to protect against lost funds.**
 
-### Installation from Binary
+### Install from Binary
 
-### Linux
-
-### MacOS
-
-### Windows
-
-### Android
+TODO
 
 ## Build from Source
 
@@ -20,6 +14,8 @@ IRCash is a Bitcoin Cash powered internet relay chat.
 
 * [Protobuf compiler](https://github.com/protocolbuffers/protobuf)
 * [Quasar](https://quasar.dev/start/pick-quasar-flavour)
+
+### Cloning the Source
 
 Clone this repository using
 
@@ -29,23 +25,17 @@ cd ircash
 git submodules update --init --recursive
 ```
 
-### Linux
-
-Generate the protobuf files from their schema
+### Generating the Protobuf files
 
 ```bash
 bash ./generate_protobufs.sh
 ```
 
-Build the Electron application via
+### Linux, MacOS and Windows
 
 ```bash
 quasar build -m electron
 ```
-
-### MacOS
-
-### Windows
 
 ### Android
 
