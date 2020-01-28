@@ -21,7 +21,7 @@ export default {
   },
   created () {
     // Set electrum client
-    let ecl = new ElectrumClient(50004, 'electroncash.de', 'tls')
+    let ecl = new ElectrumClient(50001, '35.238.56.17', 'tcp')
     this.setClient(ecl)
 
     // Start electrum listeners

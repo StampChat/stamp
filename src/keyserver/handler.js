@@ -6,7 +6,7 @@ import pop from '../pop/index'
 const cashlib = require('bitcore-lib-cash')
 
 class KeyserverHandler {
-  trustedServers = ['http://34.67.137.105']
+  trustedServers = ['http://34.67.137.105:8080']
   constructor (defaultSampleSize, keyservers) {
     this.keyservers = keyservers || this.trustedServers
     this.defaultSampleSize = defaultSampleSize || 3
