@@ -84,7 +84,9 @@
 </template>
 
 <script>
-// import { mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
+import KeyserverHandler from '../../keyserver/handler'
+import pop from '../../pop/index'
 
 export default {
   props: ['currentProfile'],
@@ -96,6 +98,9 @@ export default {
       avatarPath: null
     }
   },
+  getters: {
+    ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler' })
+  },
   methods: {
     parseImage () {
       if (this.avatarPath == null) {
@@ -106,11 +111,45 @@ export default {
       reader.onload = () => {
         this.avatar = reader.result
       }
+    },
+    async updateProfile () {
+      // Set profile
+      let ksHandler = this.getKsHandler()
+      let serverUrl = ksHandler.chooseServer()
+
+      // Request Payment
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Requesting Payment...'
+      })
+
+      let idAddress = this.getMyAddress()
+      let { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Sending Payment...'
+      })
+
+      let { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
+      let { token } = await pop.sendPayment(paymentUrl, payment)
+
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Uploading Metadata...'
+      })
+
+      // Construct metadata
+      let idPrivKey = this.getIdentityPrivKey()
+      let metadata = KeyserverHandler.constructProfileMetadata(this.profile, idPrivKey)
+
+      // Put to keyserver
+      await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
+
+      this.$q.loading.hide()
     }
   },
   computed: {
     constructProfile () {
-      console.log(this.currentProfile)
       if (this.name === '' || this.avatar === null) {
         return null
       } else {
