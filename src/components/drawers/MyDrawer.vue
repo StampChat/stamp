@@ -36,6 +36,11 @@
       <wallet-dialog />
     </q-dialog>
 
+    <!-- Profile dialog -->
+    <q-dialog v-model="profileOpen">
+      <profile-dialog :currentProfile="getMyProfile" />
+    </q-dialog>
+
     <!-- Drawer -->
     <q-scroll-area style="height: calc(100% - 125px); margin-top: 125px; border-right: 1px solid #ddd">
       <q-list padding>
@@ -101,6 +106,20 @@
         <q-item
           clickable
           v-ripple
+          @click="profileOpen = true"
+        >
+          <q-item-section avatar>
+            <q-icon name="face" />
+          </q-item-section>
+
+          <q-item-section>
+            Profile
+          </q-item-section>
+        </q-item>
+
+        <q-item
+          clickable
+          v-ripple
         >
           <q-item-section avatar>
             <q-icon name="tune" />
@@ -123,6 +142,7 @@ import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import SetFilterDialog from '../dialogs/SetFilterDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import WalletDialog from '../dialogs/WalletDialog.vue'
+import ProfileDialog from '../dialogs/ProfileDialog.vue'
 
 export default {
   components: {
@@ -130,14 +150,16 @@ export default {
     NewContactDialog,
     SetFilterDialog,
     ContactBookDialog,
-    WalletDialog
+    WalletDialog,
+    ProfileDialog
   },
   data () {
     return {
       newContactOpen: false,
       setFilterOpen: false,
       contactBookOpen: false,
-      walletOpen: false
+      walletOpen: false,
+      profileOpen: false
     }
   },
   methods: {
