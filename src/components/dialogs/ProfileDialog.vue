@@ -84,7 +84,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import KeyserverHandler from '../../keyserver/handler'
 import pop from '../../pop/index'
 
@@ -102,6 +102,7 @@ export default {
     ...mapGetters({ getKsHandler: 'keyserverHandler/getHandler' })
   },
   methods: {
+    ...mapActions({ setMyProfile: 'myProfile/setMyProfile' }),
     parseImage () {
       if (this.avatarPath == null) {
         return
@@ -144,6 +145,9 @@ export default {
 
       // Put to keyserver
       await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
+
+      // Set locally
+      this.setMyProfile({ name: this.name, bio: this.bio, avatar: this.avatar })
 
       this.$q.loading.hide()
     }
