@@ -9,7 +9,7 @@
     <q-card-section>
       <div class="row">
         <div class="col">
-          <div class="row q-pa-md">
+          <div class="row">
             <q-input
               outlined
               v-model="name"
@@ -20,7 +20,7 @@
               :rules="[ val => val && val.length > 0 || 'Please type something']"
             />
           </div>
-          <div class="row q-pa-md">
+          <div class="row q-py-md">
             <q-input
               v-model="bio"
               label="Bio"
@@ -31,7 +31,7 @@
             />
           </div>
         </div>
-        <div class="col-4 q-pa-md">
+        <div class="col-4 q-px-md">
           <q-toolbar
             class="bg-primary text-white shadow-2"
             style="border-radius: 10px 10px 0px 0px"
