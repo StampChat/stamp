@@ -17,7 +17,7 @@
       </div>
       <div class="row">
         <q-input
-          style="margin-left: auto; margin-right: auto; min-width: 500px"
+          class='fit q-px-lg'
           filled
           auto-grow
           v-model="currentAddress"
@@ -90,7 +90,7 @@ Vue.component(VueQrcode.name, VueQrcode)
 export default {
   data () {
     return {
-      currentAddress: this.generatePrivKey()(0).privateKey.toAddress('testnet'), // TODO: Generic over network
+      currentAddress: this.generatePrivKey()(0).toAddress('testnet'), // TODO: Generic over network
       paymentAddrCounter: 0,
       recomendedBalance
     }
@@ -113,7 +113,7 @@ export default {
       // Increment address
       this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
       let privKey = this.generatePrivKey()(this.paymentAddrCounter)
-      this.currentAddress = privKey.privateKey.toAddress('testnet')
+      this.currentAddress = privKey.toAddress('testnet')
     }
   },
   computed: {

@@ -1,3 +1,5 @@
+const cashlib = require('bitcore-lib-cash')
+
 export default {
   formatBalance (balance) {
     if (balance < 1_000) {
@@ -11,5 +13,13 @@ export default {
     } else {
       return String(balance / 100_000_000) + ' BCH'
     }
+  },
+  toElectrumScriptHash (addr) {
+    let scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
+    let scriptHashRaw = scriptHash.toBuffer()
+    let digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
+    let digestHexReversed = digest.reverse().toString('hex')
+    return digestHexReversed
   }
+
 }

@@ -51,7 +51,7 @@ export default {
     // Get Outputs
     let requestOutputs = paymentDetails.getOutputsList()
     let outputs = requestOutputs.map(reqOutput => {
-      let script = reqOutput.getScript()
+      let script = Buffer.from(reqOutput.getScript())
       let satoshis = reqOutput.getAmount()
       let output = new cashlib.Transaction.Output({
         script,

@@ -1,7 +1,8 @@
 import Vue from 'vue'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
-import { numAddresses, numChangeAddresses } from '../../utils/constants'
+import { numAddresses, numChangeAddresses, feePerByte, nUtxoGoal } from '../../utils/constants'
+import formatting from '../../utils/formatting'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -11,11 +12,15 @@ export default {
     complete: false,
     xPrivKey: null,
     identityPrivKey: null,
+    electrumScriptHashes: {},
     addresses: {},
     changeAddresses: {},
     outputs: []
   },
   mutations: {
+    addElectrumScriptHash (state, { scriptHash, address, change }) {
+      Vue.set(state.electrumScriptHashes, scriptHash, { address, change })
+    },
     completeSetup (state) {
       state.complete = true
     },
@@ -28,7 +33,7 @@ export default {
       Vue.set(state.addresses, address, { privKey })
     },
     setChangeAddress (state, { address, privKey }) {
-      Vue.set(state.addresses, address, { privKey })
+      Vue.set(state.changeAddresses, address, { privKey })
     },
     setXPrivKey (state, xPrivKey) {
       state.xPrivKey = xPrivKey
@@ -40,6 +45,12 @@ export default {
       if (state.xPrivKey != null) {
         state.xPrivKey = cashlib.HDPrivateKey.fromObject(state.xPrivKey)
         state.identityPrivKey = cashlib.PrivateKey.fromObject(state.identityPrivKey)
+        for (let addr in state.addresses) {
+          Vue.set(state.addresses[addr], 'privKey', cashlib.PrivateKey.fromObject(state.addresses[addr].privKey))
+        }
+        for (let addr in state.changeAddresses) {
+          Vue.set(state.changeAddresses[addr], 'privKey', cashlib.PrivateKey.fromObject(state.changeAddresses[addr].privKey))
+        }
       }
     },
     setUTXOs (state, outputs) {
@@ -81,8 +92,12 @@ export default {
           .privateKey
         let address = privKey.toAddress('testnet').toLegacyAddress()
         commit('setAddress', { address, privKey })
+
+        // Index by script hash
+        let scriptHash = formatting.toElectrumScriptHash(address)
+        commit('addElectrumScriptHash', { scriptHash, address, change: false })
       }
-      for (var j = 0; i < numChangeAddresses; i++) {
+      for (var j = 0; j < numChangeAddresses; j++) {
         let privKey = xPrivKey.deriveChild(44)
           .deriveChild(0)
           .deriveChild(0)
@@ -91,28 +106,33 @@ export default {
           .privateKey
         let address = privKey.toAddress('testnet').toLegacyAddress()
         commit('setChangeAddress', { address, privKey })
+
+        // Index by script hash
+        let scriptHash = formatting.toElectrumScriptHash(address)
+        commit('addElectrumScriptHash', { scriptHash, address, change: true })
       }
     },
-    async updateUTXOFromAddr ({ commit, rootGetters }, addr) {
+    async updateUTXOFromScriptHash ({ commit, rootGetters, getters }, scriptHash) {
       let client = rootGetters['electrumHandler/getClient']
-      let elOutputs = await client.blockchainAddress_listunspent(addr)
+      let elOutputs = await client.blockchainScripthash_listunspent(scriptHash)
+      let { address } = getters['getAddressByElectrumScriptHash'](scriptHash)
       let outputs = elOutputs.map(elOutput => {
         let output = {
           txId: elOutput.tx_hash,
           outputIndex: elOutput.tx_pos,
           satoshis: elOutput.value,
           type: 'p2pkh',
-          address: addr
+          address
         }
         return output
       })
-      commit('setUTXOsByAddr', { addr, outputs })
+      commit('setUTXOsByAddr', { addr: address, outputs })
     },
     async updateUTXOs ({ getters, dispatch }) {
-      let addresses = Object.keys(getters['getAllAddresses'])
+      let scriptHashes = Object.keys(getters['getElectrumScriptHashes'])
 
       await Promise
-        .all(addresses.map(addr => dispatch('updateUTXOFromAddr', addr)))
+        .all(scriptHashes.map(scriptHash => dispatch('updateUTXOFromScriptHash', scriptHash)))
     },
     addUTXO ({ commit }, output) {
       commit('addUTXO', output)
@@ -120,97 +140,104 @@ export default {
     removeUTXO ({ commit }, output) {
       commit('removeUTXO', output)
     },
-    async startListeners ({ dispatch, getters, rootGetters }, addresses) {
+    async startListeners ({ dispatch, rootGetters }, addresses) {
       let client = rootGetters['electrumHandler/getClient']
       await client.subscribe.on(
-        'blockchain.address.subscribe',
+        'blockchain.scripthash.subscribe',
         async (result) => {
-          let address = result[0]
-          await dispatch('updateUTXOFromAddr', address)
+          let scriptHash = result[0]
+          await dispatch('updateUTXOFromScriptHash', scriptHash)
         })
-      await Promise.all(addresses.map(addr => client.blockchainAddress_subscribe(addr)))
+      await Promise.all(addresses.map(addr => {
+        let scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
+        let scriptHashRaw = scriptHash.toBuffer()
+        let digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
+        let digestHexReversed = digest.reverse().toString('hex')
+        client.blockchainScripthash_subscribe(digestHexReversed)
+      }))
     },
     constructTransaction ({ commit, getters }, outputs) {
       // Collect inputs
-      let addresses = getters['getAddresses']
-      let inputUTXOs = []
-      let signingKeys = []
-      let fee = 800 // TODO: Not const
-      let inputValue = 0
+      let addresses = getters['getAllAddresses']
       let utxos = getters['getUTXOs']
-      let totalAmount = outputs.reduce((acc, output) => acc + output.satoshis, 0)
-
-      // TODO: Coin selection
-      for (let i in utxos) {
-        let output = utxos[i]
-
-        // Remove UTXO
-        commit('removeUTXO', output)
-
-        inputValue += output.satoshis
-        let addr = output.address
-        output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
-        inputUTXOs.push(output)
-
-        // Grab private key
-        if (output.type === 'p2pkh') {
-          let signingKey = addresses[addr].privKey
-          signingKeys.push(signingKey)
-        } else if (output.type === 'stamp') {
-          let privKey = getters['getIdentityPrivKey']
-          let signingKey = crypto.constructStampPrivKey(output.payloadDigest, privKey)
-          signingKeys.push(signingKey)
-        } else if (output.type === 'stealth') {
-          let privKey = getters['getIdentityPrivKey']
-          let ephemeralPubKey = PublicKey(output.ephemeralPubKey)
-          let signingKey = crypto.constructStealthPrivKey(ephemeralPubKey, privKey)
-          signingKeys.push(signingKey)
-        } else {
-          // TODO: Handle
-        }
-
-        if (totalAmount + fee < inputValue) {
-          break
-        }
-      }
 
       // Construct Transaction
       let transaction = new cashlib.Transaction()
 
-      // Add inputs
-      for (let i in inputUTXOs) {
-        transaction = transaction.from(inputUTXOs[i])
-      }
+      // Add fee
+      transaction = transaction.feePerByte(feePerByte)
 
-      // Add stamp output
+      // Add outputs
       for (let i in outputs) {
         let output = outputs[i]
         transaction = transaction.addOutput(output)
       }
 
-      // Add change Output
-      let changeAddr = Object.keys(addresses)[0] // TODO: Better change selection
-      transaction = transaction.fee(fee).change(changeAddr)
+      // TODO: Coin selection
+      let signingKeys = []
+      for (let i in utxos) {
+        let output = utxos[i]
 
-      // Sign
-      for (let i in signingKeys) {
-        transaction = transaction.sign(signingKeys[i])
+        // Remove UTXO
+        // TODO: Indexing
+        // TODO: Freezing
+        commit('removeUTXO', output)
+
+        let addr = output.address
+        output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+
+        // Grab private key
+        let signingKey
+        if (output.type === 'p2pkh') {
+          signingKey = addresses[addr].privKey
+        } else if (output.type === 'stamp') {
+          let privKey = getters['getIdentityPrivKey']
+          let payloadDigest = Buffer.from(output.payloadDigest)
+          signingKey = crypto.constructStampPrivKey(payloadDigest, privKey)
+        } else if (output.type === 'stealth') {
+          let privKey = getters['getIdentityPrivKey']
+          let ephemeralPubKey = PublicKey(output.ephemeralPubKey)
+          signingKey = crypto.constructStealthPrivKey(ephemeralPubKey, privKey)
+        } else {
+          // TODO: Handle
+        }
+        transaction = transaction.from(output)
+        signingKeys.push(signingKey)
+
+        let totalFees = transaction._estimateSize() * feePerByte
+        if (transaction.outputAmount + totalFees < transaction.inputAmount) {
+          break
+        }
       }
 
-      // Add change output
-      let changeOutput = {
-        address: changeAddr,
-        outputIndex: 1, // This is because we have only 1 stamp output
-        satoshis: inputValue - fee - totalAmount,
-        txId: transaction.hash,
-        type: 'p2pkh'
+      // Add change outputs
+      let delta = transaction.inputAmount - transaction.outputAmount
+      let nChangeAddresses = Math.max(Math.min(delta / (1024 + 34 * feePerByte) - 1, nUtxoGoal - Object.keys(utxos).length - 1), 0)
+      let changeAddresses = Object.keys(getters['getChangeAddresses'])
+
+      for (let i = 0; i < nChangeAddresses; i++) {
+        // TODO: Randomize
+        let output = new cashlib.Transaction.Output({
+          script: cashlib.Script.buildPublicKeyHashOut(changeAddresses[i]).toHex(),
+          satoshis: 1024
+        })
+        transaction = transaction.addOutput(output)
       }
-      commit('addUTXO', changeOutput)
+      transaction = transaction.change(changeAddresses[0])
+
+      // Sign transaction
+      transaction = transaction.sign(signingKeys)
 
       return transaction
     }
   },
   getters: {
+    getElectrumScriptHashes (state) {
+      return state.electrumScriptHashes
+    },
+    getAddressByElectrumScriptHash: (state) => (scriptHash) => {
+      return state.electrumScriptHashes[scriptHash]
+    },
     isSetupComplete (state) {
       return state.complete
     },
@@ -225,15 +252,7 @@ export default {
       return state.identityPrivKey
     },
     getPaymentAddress: (state) => (seqNum) => {
-      if (state.xPrivKey !== null) {
-        let privkey = state.xPrivKey.deriveChild(44)
-          .deriveChild(0)
-          .deriveChild(0)
-          .deriveChild(seqNum, true)
-        return privkey.toAddress('testnet')
-      } else {
-        return null
-      }
+      return Object.keys(state.addresses)[seqNum]
     },
     getMyAddress (state) {
       return state.identityPrivKey.toAddress(
@@ -259,7 +278,7 @@ export default {
       return state.outputs
     },
     generatePrivKey: (state) => (count) => {
-      return state.xPrivKey.deriveChild(44).deriveChild(0).deriveChild(0).deriveChild(count, true)
+      return Object.values(state.addresses)[count].privKey
     }
   }
 }
