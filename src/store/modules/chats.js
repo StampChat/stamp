@@ -204,12 +204,15 @@ export default {
         {
           type: 'stealth',
           amount
-        },
-        {
-          type: 'text',
-          text: memo
         }
       ]
+      if (memo !== '') {
+        items.push(
+          {
+            type: 'text',
+            text: memo
+          })
+      }
       let index = Date.now() // TODO: Better indexing
       commit('sendMessageLocal', { addr, index, items })
 
@@ -232,12 +235,15 @@ export default {
         {
           type: 'image',
           image
-        },
-        {
-          type: 'text',
-          text: caption
         }
       ]
+      if (caption !== '') {
+        items.push(
+          {
+            type: 'text',
+            text: caption
+          })
+      }
       let index = Date.now() // TODO: Better indexing
       commit('sendMessageLocal', { addr, index, items })
 

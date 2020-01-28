@@ -88,6 +88,8 @@ export default {
     return message
   },
   async constructStealthPaymentMessage (amount, memo, privKey, destPubKey, scheme) {
+    let entries = new messages.Entries()
+
     // Construct payment entry
     let paymentEntry = new messages.Entry()
     paymentEntry.setKind('stealth-payment')
@@ -111,22 +113,25 @@ export default {
     let paymentEntryRaw = stealthPaymentEntry.serializeBinary()
     paymentEntry.setEntryData(paymentEntryRaw)
 
-    // Construct text entry
-    let textEntry = new messages.Entry()
-    textEntry.setKind('text-utf8')
-    let rawText = new TextEncoder('utf-8').encode(memo)
-    textEntry.setEntryData(rawText)
+    // Construct memo entry
+    if (memo !== '') {
+      let memoEntry = new messages.Entry()
+      memoEntry.setKind('text-utf8')
+      let rawText = new TextEncoder('utf-8').encode(memo)
+      memoEntry.setEntryData(rawText)
+      entries.addEntries(memoEntry)
+    }
 
     // Aggregate entries
-    let entries = new messages.Entries()
     entries.addEntries(paymentEntry)
-    entries.addEntries(textEntry)
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
     let message = await this.constructMessage(payload, privKey, destPubKey)
     return message
   },
   async constructImageMessage (image, caption, privKey, destPubKey, scheme) {
+    let entries = new messages.Entries()
+
     // Construct text entry
     let imgEntry = new messages.Entry()
     imgEntry.setKind('image')
@@ -146,16 +151,16 @@ export default {
     imgEntry.setEntryData(rawAvatar)
     imgEntry.addHeaders(imgHeader)
 
-    // Construct caption entry
-    let captionEntry = new messages.Entry()
-    captionEntry.setKind('text-utf8')
-    let rawText = new TextEncoder('utf-8').encode(caption)
-    captionEntry.setEntryData(rawText)
-
-    // Aggregate entries
-    let entries = new messages.Entries()
     entries.addEntries(imgEntry)
-    entries.addEntries(captionEntry)
+
+    // Construct caption entry
+    if (caption !== '') {
+      let captionEntry = new messages.Entry()
+      captionEntry.setKind('text-utf8')
+      let rawText = new TextEncoder('utf-8').encode(caption)
+      captionEntry.setEntryData(rawText)
+      entries.addEntries(captionEntry)
+    }
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
     let message = await this.constructMessage(payload, privKey, destPubKey)
