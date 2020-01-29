@@ -5,7 +5,7 @@ export const maxSplitter = 75
 export const numAddresses = 10
 export const numChangeAddresses = 10
 export const recomendedBalance = 2000
-export const feePerByte = 2
+export const feePerByte = 1.5
 export const nUtxoGoal = 10
 
 // Relay constants
