@@ -95,28 +95,39 @@ export default {
       }
     }
   },
-  created () {
-    // Start internal timer
-    this.startClock()
-
-    // TODO: Remove?
-    this.updateUTXOs()
-
+  async created () {
     // Reinitialize wallet classes
     this.walletReinitialize()
 
     // Reinitialize relay client
     this.relayClientReinitialize()
 
-    // Start profile watcher
-    this.startContactUpdater()
+    this.$q.loading.show({
+      delay: 100,
+      message: 'Updating wallet...'
+    })
+
+    // Update UTXOs
+    await this.updateUTXOs()
 
     // Start websocket listener
+    this.$q.loading.show({
+      delay: 100,
+      message: 'Connecting to relay server...'
+    })
     let client = this.getRelayClient
     client.setUpWebsocket(this.getAddressStr, this.getToken)
 
+    this.$q.loading.hide()
+
     // Get historic messages
     this.refreshChat()
+
+    // Start profile watcher
+    this.startContactUpdater()
+
+    // Start internal timer
+    this.startClock()
   }
 }
 </script>
