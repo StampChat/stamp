@@ -111,7 +111,7 @@ export default {
       Vue.delete(state.utxos, id)
       Vue.set(state.utxos, id, utxo)
     },
-    popFreezeOutput (state, result) {
+    popFreezeUTXO (state, result) {
       // Freeze output and simulatenously return it
       let ids = Object.keys(state.utxos)
       if (ids.length === 0) {
@@ -244,9 +244,14 @@ export default {
       while (true) {
         // Atomically pop item and freeze it
         let result = {}
-        commit('popFreezeOutput', result)
-        if (result === {}) {
-          // TODO: Throw error because no utxo found
+        commit('popFreezeUTXO', result)
+
+        // Throw error if no UTXO found
+        if (Object.entries(result).length === 0) {
+          usedIDs.forEach(id => {
+            commit('unfreezeUTXO', id)
+          })
+          throw Error('insufficient funds')
         }
         let { id, utxo } = result
         usedIDs.push(id)
@@ -273,7 +278,11 @@ export default {
         signingKeys.push(signingKey)
 
         let totalFees = (transaction._estimateSize() + 34) * feePerByte
+        console.log('total fees', totalFees)
+        console.log('total output', transaction.outputAmount + totalFees)
+        console.log('total input', transaction.inputAmount)
         if (transaction.outputAmount + totalFees < transaction.inputAmount) {
+          console.log('broken?')
           break
         }
       }
