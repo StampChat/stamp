@@ -6,6 +6,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import { electrumURL } from './utils/constants'
 const ElectrumClient = require('electrum-client')
 
 export default {
@@ -21,7 +22,7 @@ export default {
   },
   created () {
     // Set electrum client
-    let ecl = new ElectrumClient(50001, '35.238.56.17', 'tcp')
+    let ecl = new ElectrumClient(50001, electrumURL, 'tcp')
     this.setClient(ecl)
 
     // Start electrum listeners
