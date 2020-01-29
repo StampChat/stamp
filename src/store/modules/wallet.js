@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
-import { numAddresses, numChangeAddresses, feePerByte, nUtxoGoal } from '../../utils/constants'
+import { numAddresses, numChangeAddresses, nUtxoGoal, feeUpdateTimerMilliseconds } from '../../utils/constants'
 import formatting from '../../utils/formatting'
 
 const cashlib = require('bitcore-lib-cash')
@@ -20,7 +20,11 @@ export default {
     addresses: {},
     changeAddresses: {},
     utxos: {},
-    frozenUTXOs: {}
+    frozenUTXOs: {},
+    feeInfo: {
+      feePerByte: 2,
+      lastUpdate: 0
+    }
   },
   mutations: {
     addElectrumScriptHash (state, { scriptHash, address, change }) {
@@ -123,6 +127,9 @@ export default {
       // Return result
       result.id = lastId
       result.utxo = frozenUTXO
+    },
+    setFeeInfo (state, feeInfo) {
+      state.feeInfo = feeInfo
     }
   },
   actions: {
@@ -214,7 +221,7 @@ export default {
         client.blockchainScripthash_subscribe(digestHexReversed)
       }))
     },
-    constructTransaction ({ commit, getters, dispatch }, outputs) {
+    constructTransaction ({ commit, getters, dispatch }, { outputs, feePerByte }) {
       // Collect inputs
       let addresses = getters['getAllAddresses']
       let utxos = getters['getUTXOs']
@@ -233,7 +240,7 @@ export default {
 
       // Coin selection
       let signingKeys = []
-      let usedUTXOs = []
+      let usedIDs = []
       while (true) {
         // Atomically pop item and freeze it
         let result = {}
@@ -242,7 +249,7 @@ export default {
           // TODO: Throw error because no utxo found
         }
         let { id, utxo } = result
-        usedUTXOs.push(id)
+        usedIDs.push(id)
 
         let addr = utxo.address
         utxo['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
@@ -291,10 +298,26 @@ export default {
       console.log(transaction)
       console.log('feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
 
-      return transaction
+      return { transaction, usedIDs }
+    },
+    async getFee ({ commit, getters, rootGetters }) {
+      let timeNow = Date.now()
+      let feeInfo = getters['getFeeInfo']
+      if (timeNow - feeInfo.lastUpdate > feeUpdateTimerMilliseconds) {
+        // Update fee
+        let electrumClient = rootGetters['electrumHandler/getClient']
+        let feePerByte = await electrumClient.blockchainEstimatefee(1) * 100_000_000 / 1000 * 1.5 // TODO: Don't do +50%
+        commit('setFeeInfo', { feePerByte, lastUpdate: timeNow })
+        return feePerByte
+      } else {
+        return feeInfo.feePerByte
+      }
     }
   },
   getters: {
+    getFeeInfo (state) {
+      return state.feeInfo
+    },
     getElectrumScriptHashes (state) {
       return state.electrumScriptHashes
     },

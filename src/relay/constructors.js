@@ -15,8 +15,12 @@ export default {
       satoshis: amount
     })
 
-    let stampTx = await store.dispatch('wallet/constructTransaction', [stampOutput])
-    return stampTx
+    // Get Fee
+    let feePerByte = await store.dispatch('wallet/getFee')
+
+    // Construct transaction
+    let { transaction } = await store.dispatch('wallet/constructTransaction', { outputs: [stampOutput], feePerByte })
+    return transaction
   },
   async constructStealthTransaction (ephemeralPrivKey, destPubKey, amount) {
     // Add ephemeral output
@@ -26,8 +30,12 @@ export default {
       satoshis: amount
     })
 
-    let stampTx = await store.dispatch('wallet/constructTransaction', [stampOutput])
-    return stampTx
+    // Get Fee
+    let feePerByte = await store.dispatch('wallet/getFee')
+
+    // Construct transaction
+    let { transaction } = await store.dispatch('wallet/constructTransaction', { outputs: [stampOutput], feePerByte })
+    return transaction
   },
   async constructMessage (payload, privKey, destPubKey) {
     let serializedPayload = payload.serializeBinary()
