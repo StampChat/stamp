@@ -6,6 +6,10 @@ import formatting from '../../utils/formatting'
 
 const cashlib = require('bitcore-lib-cash')
 
+const calcId = function (output) {
+  return output.txId.slice(0, 20) + output.outputIndex
+}
+
 export default {
   namespaced: true,
   state: {
@@ -15,7 +19,8 @@ export default {
     electrumScriptHashes: {},
     addresses: {},
     changeAddresses: {},
-    outputs: []
+    utxos: {},
+    frozenUTXOs: {}
   },
   mutations: {
     addElectrumScriptHash (state, { scriptHash, address, change }) {
@@ -53,18 +58,71 @@ export default {
         }
       }
     },
-    setUTXOs (state, outputs) {
-      state.outputs = outputs
+    refreshUTXOsByAddr (state, { addr, outputs }) {
+      // Delete all utxos by address
+      Object.entries(state.utxos).forEach(entry => {
+        if (entry[1].address === addr) {
+          Vue.delete(state.utxos, entry[0])
+        }
+      })
+
+      let frozenIds = Object.keys(state.frozenUTXOs)
+      let newFrozen = []
+      outputs.forEach(output => {
+        let id = calcId(output)
+        if (frozenIds.includes(id)) {
+          newFrozen.push({ id, output })
+        }
+        Vue.set(state.utxos, calcId(output), output)
+      })
+
+      // Remove all frozen utxos by address
+      Object.entries(state.frozenUTXOs).forEach(entry => {
+        if (entry[1].address === addr) {
+          Vue.delete(state.frozenUTXOs, entry[0])
+        }
+      })
+
+      // Refreeze UTXOs
+      newFrozen.forEach(res => {
+        Vue.set(state.frozenUTXOs, res.id, res.output)
+      })
     },
-    setUTXOsByAddr (state, { addr, outputs }) {
-      state.outputs = state.outputs.filter(output => output.address !== addr)
-      state.outputs = state.outputs.concat(outputs)
+    removeUTXO (state, id) {
+      Vue.delete(state.utxos, id)
     },
-    removeUTXO (state, output) {
-      state.outputs = state.outputs.filter(utxo => utxo !== output)
+    removeFrozenUTXO (state, id) {
+      Vue.delete(state.frozenUTXOs, id)
     },
     addUTXO (state, output) {
-      state.outputs.push(output)
+      Vue.set(state.utxos, calcId(output), output)
+    },
+    freezeUTXO (state, id) {
+      let frozenUTXO = state.utxos[id]
+      Vue.delete(state.utxos, id)
+      Vue.set(state.frozenUTXOs, id, frozenUTXO)
+    },
+    unfreezeUTXO (state, id) {
+      let utxo = state.frozenUTXOs[id]
+      Vue.delete(state.utxos, id)
+      Vue.set(state.utxos, id, utxo)
+    },
+    popFreezeOutput (state, result) {
+      // Freeze output and simulatenously return it
+      let ids = Object.keys(state.utxos)
+      if (ids.length === 0) {
+        return
+      }
+      let lastId = ids[ids.length - 1]
+
+      // Freeze UTXO
+      let frozenUTXO = state.utxos[lastId]
+      Vue.delete(state.utxos, lastId)
+      Vue.set(state.frozenUTXOs, lastId, frozenUTXO)
+
+      // Return result
+      result.id = lastId
+      result.utxo = frozenUTXO
     }
   },
   actions: {
@@ -126,7 +184,7 @@ export default {
         }
         return output
       })
-      commit('setUTXOsByAddr', { addr: address, outputs })
+      commit('refreshUTXOsByAddr', { addr: address, outputs })
     },
     async updateUTXOs ({ getters, dispatch }) {
       let scriptHashes = Object.keys(getters['getElectrumScriptHashes'])
@@ -137,8 +195,8 @@ export default {
     addUTXO ({ commit }, output) {
       commit('addUTXO', output)
     },
-    removeUTXO ({ commit }, output) {
-      commit('removeUTXO', output)
+    removeUTXO ({ commit }, id) {
+      commit('removeUTXO', id)
     },
     async startListeners ({ dispatch, rootGetters }, addresses) {
       let client = rootGetters['electrumHandler/getClient']
@@ -156,7 +214,7 @@ export default {
         client.blockchainScripthash_subscribe(digestHexReversed)
       }))
     },
-    constructTransaction ({ commit, getters }, outputs) {
+    constructTransaction ({ commit, getters, dispatch }, outputs) {
       // Collect inputs
       let addresses = getters['getAllAddresses']
       let utxos = getters['getUTXOs']
@@ -173,38 +231,41 @@ export default {
         transaction = transaction.addOutput(output)
       }
 
-      // TODO: Coin selection
+      // Coin selection
       let signingKeys = []
-      for (let i in utxos) {
-        let output = utxos[i]
+      let usedUTXOs = []
+      while (true) {
+        // Atomically pop item and freeze it
+        let result = {}
+        commit('popFreezeOutput', result)
+        if (result === {}) {
+          // TODO: Throw error because no utxo found
+        }
+        let { id, utxo } = result
+        usedUTXOs.push(id)
 
-        // Remove UTXO
-        // TODO: Indexing
-        // TODO: Freezing
-        commit('removeUTXO', output)
-
-        let addr = output.address
-        output['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+        let addr = utxo.address
+        utxo['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
 
         // Grab private key
         let signingKey
-        if (output.type === 'p2pkh') {
+        if (utxo.type === 'p2pkh') {
           signingKey = addresses[addr].privKey
-        } else if (output.type === 'stamp') {
+        } else if (utxo.type === 'stamp') {
           let privKey = getters['getIdentityPrivKey']
-          let payloadDigest = Buffer.from(output.payloadDigest)
+          let payloadDigest = Buffer.from(utxo.payloadDigest)
           signingKey = crypto.constructStampPrivKey(payloadDigest, privKey)
-        } else if (output.type === 'stealth') {
+        } else if (utxo.type === 'stealth') {
           let privKey = getters['getIdentityPrivKey']
-          let ephemeralPubKey = PublicKey(output.ephemeralPubKey)
+          let ephemeralPubKey = PublicKey(utxo.ephemeralPubKey)
           signingKey = crypto.constructStealthPrivKey(ephemeralPubKey, privKey)
         } else {
           // TODO: Handle
         }
-        transaction = transaction.from(output)
+        transaction = transaction.from(utxo)
         signingKeys.push(signingKey)
 
-        let totalFees = transaction._estimateSize() * feePerByte
+        let totalFees = (transaction._estimateSize() + 40) * feePerByte
         if (transaction.outputAmount + totalFees < transaction.inputAmount) {
           break
         }
@@ -227,6 +288,8 @@ export default {
 
       // Sign transaction
       transaction = transaction.sign(signingKeys)
+      console.log(transaction)
+      console.log('feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
 
       return transaction
     }
@@ -242,11 +305,7 @@ export default {
       return state.complete
     },
     getBalance (state) {
-      if (state.outputs.length) {
-        return state.outputs.reduce((acc, output) => acc + output.satoshis, 0)
-      } else {
-        return 0
-      }
+      return Object.values(state.utxos).reduce((acc, output) => acc + output.satoshis, 0)
     },
     getIdentityPrivKey (state) {
       return state.identityPrivKey
@@ -275,7 +334,7 @@ export default {
       return state.xPrivKey
     },
     getUTXOs (state) {
-      return state.outputs
+      return state.utxos
     },
     generatePrivKey: (state) => (count) => {
       return Object.values(state.addresses)[count].privKey

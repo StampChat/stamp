@@ -30,7 +30,7 @@ class RelayClient {
       let messageList = timedMessageSet.getMessagesList()
       for (let index in messageList) {
         let message = messageList[index]
-        store.dispatch('chats/addMessage', { timestamp, message })
+        store.dispatch('chats/receiveMessage', { timestamp, message })
       }
       let lastReceived = store.getters['chats/getLastReceived'] || 0
       lastReceived = Math.max(lastReceived, timestamp)

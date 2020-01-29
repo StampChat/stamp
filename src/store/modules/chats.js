@@ -269,7 +269,7 @@ export default {
     deleteChat ({ commit }, addr) {
       commit('deleteChat', addr)
     },
-    async addMessage ({ commit, rootGetters, dispatch }, { message, timestamp }) {
+    async receiveMessage ({ commit, rootGetters, dispatch }, { message, timestamp }) {
       let rawSenderPubKey = message.getSenderPubKey()
       let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
       let senderAddr = senderPubKey.toAddress('testnet')
@@ -345,7 +345,6 @@ export default {
           let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
 
           let electrumHandler = rootGetters['electrumHandler/getClient']
-          await new Promise(resolve => setTimeout(resolve, 5000)) // TODO: This is hacky as fuck
 
           let txId = Buffer.from(stealthMessage.getTxId()).toString('hex')
           let txRaw = await electrumHandler.blockchainTransaction_get(txId)
@@ -404,7 +403,7 @@ export default {
 
         let timestamp = timedMessage.getTimestamp()
         let message = timedMessage.getMessage()
-        await dispatch('addMessage', { timestamp, message })
+        await dispatch('receiveMessage', { timestamp, message })
         lastReceived = Math.max(lastReceived, timestamp)
       }
       if (lastReceived) {
