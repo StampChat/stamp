@@ -222,7 +222,7 @@ export default {
         client.blockchainScripthash_subscribe(digestHexReversed)
       }))
     },
-    constructTransaction ({ commit, getters, dispatch }, { outputs, feePerByte }) {
+    constructTransaction ({ commit, getters }, { outputs, feePerByte }) {
       // Collect inputs
       let addresses = getters['getAllAddresses']
       let utxos = getters['getUTXOs']
@@ -279,11 +279,7 @@ export default {
         signingKeys.push(signingKey)
 
         let totalFees = (transaction._estimateSize() + 34) * feePerByte
-        console.log('total fees', totalFees)
-        console.log('total output', transaction.outputAmount + totalFees)
-        console.log('total input', transaction.inputAmount)
         if (transaction.outputAmount + totalFees < transaction.inputAmount) {
-          console.log('broken?')
           break
         }
       }
