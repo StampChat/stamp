@@ -5,8 +5,23 @@ import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
+import { Notify } from 'quasar'
 
 const cashlib = require('bitcore-lib-cash')
+
+const chainTooLongNotify = function () {
+  Notify.create({
+    message: 'Transaction chain too long.',
+    color: 'negative'
+  })
+}
+
+const insuffientFundsNotify = function () {
+  Notify.create({
+    message: 'Insufficent funds.',
+    color: 'negative'
+  })
+}
 
 export default {
   namespaced: true,
@@ -188,15 +203,25 @@ export default {
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
-      let message = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
+      try {
+        var message = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
+      } catch (err) {
+        console.log(err)
+        insuffientFundsNotify()
+        return
+      }
       let messageSet = new messages.MessageSet()
       messageSet.addMessages(message)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
-      await client.pushMessages(destAddr, messageSet)
-
-      commit('markSent', { addr, index })
+      try {
+        await client.pushMessages(destAddr, messageSet)
+        commit('markSent', { addr, index })
+      } catch (err) {
+        console.log(err.response)
+        chainTooLongNotify()
+      }
     },
     async sendStealthPayment ({ commit, rootGetters }, { addr, amount, memo }) {
       // Send locally
@@ -219,15 +244,23 @@ export default {
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
-      let message = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1)
+      try {
+        var message = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1)
+      } catch {
+        insuffientFundsNotify()
+        return
+      }
       let messageSet = new messages.MessageSet()
       messageSet.addMessages(message)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
-      await client.pushMessages(destAddr, messageSet)
-
-      commit('markSent', { addr, index })
+      try {
+        await client.pushMessages(destAddr, messageSet)
+        commit('markSent', { addr, index })
+      } catch (err) {
+        chainTooLongNotify()
+      }
     },
     async sendImage ({ commit, rootGetters }, { addr, image, caption }) {
       // Send locally
@@ -250,15 +283,23 @@ export default {
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
-      let message = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1)
+      try {
+        var message = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1)
+      } catch (err) {
+        insuffientFundsNotify()
+        return
+      }
       let messageSet = new messages.MessageSet()
       messageSet.addMessages(message)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
-      await client.pushMessages(destAddr, messageSet)
-
-      commit('markSent', { addr, index })
+      try {
+        await client.pushMessages(destAddr, messageSet)
+        commit('markSent', { addr, index })
+      } catch (err) {
+        chainTooLongNotify()
+      }
     },
     switchOrder ({ commit }, addr) {
       commit('switchOrder', addr)
@@ -356,7 +397,7 @@ export default {
           let ephemeralPubKey = stealthMessage.getEphemeralPubKey()
           let stealthOutput = {
             address,
-            outputIndex: 0, // 0 is always stealth output
+            outputIndex: 0, // TODO: 0 is always stealth output, change this assumption?
             satoshis: output.satoshis,
             txId,
             type: 'stealth',

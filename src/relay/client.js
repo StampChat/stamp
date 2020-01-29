@@ -126,17 +126,11 @@ class RelayClient {
   async pushMessages (addr, messageSet) {
     let rawMetadata = messageSet.serializeBinary()
     let url = `${this.httpScheme}://${this.url}/${addr}/messages`
-    try {
-      await axios({
-        method: 'put',
-        url: url,
-        data: rawMetadata
-      })
-    } catch (err) {
-      console.log(err)
-      console.log(err.response)
-      // TODO: Do something with err
-    }
+    await axios({
+      method: 'put',
+      url: url,
+      data: rawMetadata
+    })
   }
 }
 
