@@ -76,8 +76,9 @@ export default {
         let id = calcId(output)
         if (frozenIds.includes(id)) {
           newFrozen.push({ id, output })
+        } else {
+          Vue.set(state.utxos, calcId(output), output)
         }
-        Vue.set(state.utxos, calcId(output), output)
       })
 
       // Remove all frozen utxos by address
