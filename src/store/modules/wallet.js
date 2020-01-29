@@ -265,7 +265,7 @@ export default {
         transaction = transaction.from(utxo)
         signingKeys.push(signingKey)
 
-        let totalFees = (transaction._estimateSize() + 40) * feePerByte
+        let totalFees = (transaction._estimateSize() + 34) * feePerByte
         if (transaction.outputAmount + totalFees < transaction.inputAmount) {
           break
         }
