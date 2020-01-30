@@ -1,6 +1,5 @@
 <template>
   <q-page>
-
     <!-- Send file dialog -->
     <q-dialog
       v-model="sendFileOpen"
@@ -20,6 +19,10 @@
           :key="index"
           :message="chatMessage"
           :contact="getContact(chatMessage.outbound)"
+        />
+        <q-scroll-observer
+          debounce="500"
+          @scroll="scrollHandler"
         />
       </q-scroll-area>
 
@@ -57,6 +60,21 @@
         </q-toolbar>
       </div>
     </div>
+    <q-page-sticky
+      position="top-right"
+      :offset="[18, 18]"
+    >
+      <transition name="fade">
+        <q-btn
+          v-if="!bottom"
+          round
+          size="md"
+          icon="keyboard_arrow_down"
+          color="accent"
+          @click="scrollBottom"
+        />
+      </transition>
+    </q-page-sticky>
   </q-page>
 </template>
 
@@ -76,11 +94,13 @@ export default {
   data () {
     return {
       height: 100,
-      sendFileOpen: false
+      sendFileOpen: false,
+      bottom: true
     }
   },
   methods: {
     ...mapActions({
+      readAll: 'chats/readAll',
       sendMessageVuex: 'chats/sendMessage',
       setInputMessage: 'chats/setInputMessage'
     }),
@@ -105,6 +125,15 @@ export default {
       } else {
         return this.getContactVuex(this.activeChat)
       }
+    },
+    scrollHandler (details) {
+      const scrollArea = this.$refs.chatScroll
+      const scrollTarget = scrollArea.getScrollTarget()
+      if (scrollTarget.scrollHeight === details.position + scrollTarget.offsetHeight) {
+        this.bottom = true
+      } else {
+        this.bottom = false
+      }
     }
   },
   computed: {
@@ -125,6 +154,9 @@ export default {
   watch: {
     messages: function (newMsgs, oldMsgs) {
       this.scrollBottom()
+    },
+    activeChat: function (newAddr, oldAddr) {
+      this.readAll(newAddr)
     }
   }
 }
@@ -142,6 +174,14 @@ export default {
 .slide-enter, .slide-leave-to
 /* .slide-fade-leave-active below version 2.1.8 */ {
   transform: translateX(10px);
+  opacity: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
   opacity: 0;
 }
 </style>
