@@ -154,9 +154,7 @@ export default {
   watch: {
     messages: function (newMsgs, oldMsgs) {
       this.scrollBottom()
-    },
-    activeChat: function (newAddr, oldAddr) {
-      this.readAll(newAddr)
+      this.readAll(this.activeChat)
     }
   }
 }

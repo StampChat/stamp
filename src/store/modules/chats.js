@@ -104,7 +104,7 @@ export default {
     readAll (state, addr) {
       let ids = Object.keys(state.data[addr].messages)
 
-      if (Object.keys(state.data[addr].messages).length === 0) {
+      if (ids.length === 0) {
         state.data[addr].lastRead = null
       } else {
         state.data[addr].lastRead = ids[ids.length - 1]
@@ -167,11 +167,6 @@ export default {
       } else {
         // TODO: Better indexing
         Vue.set(state.data[addr].messages, index, newMsg)
-        if (state.activeChatAddr === addr) {
-          let ids = Object.keys(state.data[addr].messages)
-          state.data[addr].lastRead = ids[ids.length - 1]
-          console.log(state.data[addr].lastRead)
-        }
       }
     },
     setLastReceived (state, lastReceived) {
