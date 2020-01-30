@@ -1,4 +1,10 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, nativeTheme } from 'electron'
+
+try {
+  if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
+    require('fs').unlinkSync(require('path').join(app.getPath('userData'), 'DevTools Extensions'))
+  }
+} catch (_) { }
 
 /**
  * Set `__statics` path to static files in production;
@@ -17,14 +23,17 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
-    // frame: false,
     useContentSize: true,
     webPreferences: {
-      nodeIntegration: true,
+      // Change from /quasar.conf.js > electron > nodeIntegration;
+      // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
+      nodeIntegration: QUASAR_NODE_INTEGRATION,
       nodeIntegrationInWorker: true
+
+      // More info: /quasar-cli/developing-electron-apps/electron-preload-script
+      // preload: path.resolve(__dirname, 'electron-preload.js')
     }
   })
-  // mainWindow.setMenuBarVisibility(false)
 
   mainWindow.loadURL(process.env.APP_URL)
 
