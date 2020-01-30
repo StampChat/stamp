@@ -18,6 +18,16 @@
         lines="2"
       >{{ latestMessageBody }}</q-item-label>
     </q-item-section>
+    <q-item-section
+      v-if="numUnread !== 0"
+      side
+      top
+    >
+      <q-badge
+        color="info"
+        :label="numUnread"
+      />
+    </q-item-section>
   </q-item>
 </template>
 
@@ -52,6 +62,6 @@ export default {
       return this.getActiveChat() === this.chatAddr
     }
   },
-  props: ['chatAddr']
+  props: ['chatAddr', 'numUnread']
 }
 </script>

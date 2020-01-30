@@ -18,6 +18,19 @@ export default {
     lastReceived: null
   },
   getters: {
+    getNumUnread: (state) => (addr) => {
+      if (state.data[addr].lastRead === null) {
+        return Object.keys(state.data[addr].messages).length
+      }
+
+      let ids = Object.keys(state.data[addr].messages)
+      let lastUnreadIndex = ids.findIndex(id => state.data[addr].lastRead === id)
+      let numUnread = ids.length - lastUnreadIndex - 1
+      return numUnread
+    },
+    getLastRead: (state) => (addr) => {
+      return state.data[addr].lastRead
+    },
     getChatOrder (state) {
       return state.order
     },
@@ -75,9 +88,9 @@ export default {
     },
     getAllMessages: (state) => (addr) => {
       if (addr in state.data) {
-        return Object.values(state.data[addr].messages)
+        return state.data[addr].messages
       } else {
-        return []
+        return {}
       }
     },
     getLastReceived (state) {
@@ -88,6 +101,15 @@ export default {
     }
   },
   mutations: {
+    readAll (state, addr) {
+      let ids = Object.keys(state.data[addr].messages)
+
+      if (Object.keys(state.data[addr].messages).length === 0) {
+        state.data[addr].lastRead = null
+      } else {
+        state.data[addr].lastRead = ids[ids.length - 1]
+      }
+    },
     setInputMessage (state, { addr, text }) {
       if (addr in state.data) {
         state.data[addr].inputMessage = text
@@ -139,11 +161,17 @@ export default {
         let messages = {}
         // TODO: Better indexing
         messages[index] = newMsg
-        Vue.set(state.data, addr, { messages, inputMessage: '' })
+
+        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null })
         state.order.unshift(addr)
       } else {
         // TODO: Better indexing
         Vue.set(state.data[addr].messages, index, newMsg)
+        if (state.activeChatAddr === addr) {
+          let ids = Object.keys(state.data[addr].messages)
+          state.data[addr].lastRead = ids[ids.length - 1]
+          console.log(state.data[addr].lastRead)
+        }
       }
     },
     setLastReceived (state, lastReceived) {
@@ -151,13 +179,16 @@ export default {
     },
     openChat (state, addr) {
       if (!(addr in state.data)) {
-        Vue.set(state.data, addr, { messages: {}, inputMessage: '' })
+        Vue.set(state.data, addr, { messages: {}, inputMessage: '', lastRead: null })
         state.order.unshift(addr)
       }
       state.activeChatAddr = addr
     }
   },
   actions: {
+    readAll ({ commit }, addr) {
+      commit('readAll', addr)
+    },
     shareContact ({ commit }, { targetAddr, contact, shareAddr }) {
       let text = 'Name: ' + contact.name + '\n' + 'Address: ' + shareAddr
       commit('setInputMessage', { addr: targetAddr, text })

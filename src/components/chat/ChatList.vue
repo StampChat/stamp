@@ -2,8 +2,9 @@
   <q-list>
     <chat-list-item
       v-for="(addr, index) in getChatOrder"
-      v-bind:key="index"
-      v-bind:chatAddr="addr"
+      :key="index"
+      :chatAddr="addr"
+      :numUnread="getNumUnread(addr)"
     />
     <q-item v-if="getChatOrder.length === 0">
       <q-item-section>
@@ -22,7 +23,10 @@ export default {
     ChatListItem
   },
   computed: {
-    ...mapGetters({ getChatOrder: 'chats/getChatOrder' })
+    ...mapGetters({
+      getChatOrder: 'chats/getChatOrder',
+      getNumUnread: 'chats/getNumUnread'
+    })
   },
   props: ['chatAddr']
 }
