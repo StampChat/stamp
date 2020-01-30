@@ -39,6 +39,7 @@
 <script>
 import relayConstructors from '../../relay/constructors'
 import { mapGetters, mapActions } from 'vuex'
+import { relayDisconnectedNotify } from '../../utils/notifications'
 
 export default {
   data () {
@@ -72,7 +73,12 @@ export default {
 
       // Apply remotely
       let client = this.getRelayClient()
-      await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
+      try {
+        await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
+      } catch (err) {
+        relayDisconnectedNotify()
+        return
+      }
 
       // Apply locally
       this.setAcceptancePrice(this.price)

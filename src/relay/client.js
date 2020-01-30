@@ -55,16 +55,12 @@ class RelayClient {
 
   async getFilter (addr) {
     let url = `${this.httpScheme}://${this.url}/${addr}/filters`
-    let response
-    try {
-      response = await axios({
-        method: 'get',
-        url,
-        responseType: 'arraybuffer'
-      })
-    } catch (err) {
-      // TODO: Do something with err
-    }
+    let response = await axios({
+      method: 'get',
+      url,
+      responseType: 'arraybuffer'
+    })
+
     if (response.status === 200) {
       let filtersMsg = filters.Filters.deserializeBinary(response.data)
       return filtersMsg
@@ -74,44 +70,31 @@ class RelayClient {
   async applyFilter (addr, filterApplication, token) {
     let rawApplication = filterApplication.serializeBinary()
     let url = `${this.httpScheme}://${this.url}/${addr}/filters`
-    try {
-      await axios({
-        method: 'put',
-        url: url,
-        headers: {
-          'Authorization': token
-        },
-        data: rawApplication
-      })
-    } catch (err) {
-      // TODO: Do something with err
-      console.log(err)
-      console.log(err.response)
-    }
+    await axios({
+      method: 'put',
+      url: url,
+      headers: {
+        'Authorization': token
+      },
+      data: rawApplication
+    })
   }
 
   async getMessages (addr, token, startTime, endTime) {
     let url = `${this.httpScheme}://${this.url}/${addr}/messages`
+    let response = await axios({
+      method: 'get',
+      url: url,
+      headers: {
+        'Authorization': token
+      },
+      params: {
+        start: startTime,
+        end: endTime
+      },
+      responseType: 'arraybuffer'
+    })
 
-    let response
-    try {
-      response = await axios({
-        method: 'get',
-        url: url,
-        headers: {
-          'Authorization': token
-        },
-        params: {
-          start: startTime,
-          end: endTime
-        },
-        responseType: 'arraybuffer'
-      })
-    } catch (err) {
-      // TODO: Do something with err
-      console.log(err)
-      return
-    }
     if (response.status === 200) {
       let messagePage = messages.MessagePage.deserializeBinary(response.data)
       return messagePage

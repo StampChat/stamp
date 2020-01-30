@@ -2,7 +2,7 @@ import { Notify } from 'quasar'
 
 export const chainTooLongNotify = function () {
   Notify.create({
-    message: 'Transaction chain too long.',
+    message: 'Transaction chain too long or relay fee too low.',
     color: 'negative'
   })
 }

@@ -87,6 +87,7 @@
 import { mapActions, mapGetters } from 'vuex'
 import KeyserverHandler from '../../keyserver/handler'
 import pop from '../../pop/index'
+import { keyserverDisconnectedNotify, insuffientFundsNotify, paymentFailureNotify } from '../../utils/notifications'
 
 export default {
   props: ['currentProfile'],
@@ -127,15 +128,36 @@ export default {
       })
 
       let idAddress = this.getMyAddress()
-      console.log(idAddress)
-      let { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+      try {
+        var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+      } catch (err) {
+        keyserverDisconnectedNotify()
+        this.$q.loading.hide()
+        return
+      }
+
       this.$q.loading.show({
         delay: 100,
         message: 'Sending Payment...'
       })
 
-      let { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
-      let { token } = await pop.sendPayment(paymentUrl, payment)
+      // Construct payment
+      try {
+        var { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
+      } catch (err) {
+        insuffientFundsNotify()
+        this.$q.loading.hide()
+        return
+      }
+
+      // Send payment
+      try {
+        var { token } = await pop.sendPayment(paymentUrl, payment)
+      } catch (err) {
+        paymentFailureNotify()
+        this.$q.loading.hide()
+        return
+      }
 
       this.$q.loading.show({
         delay: 100,
@@ -152,7 +174,13 @@ export default {
       let metadata = KeyserverHandler.constructProfileMetadata(profile, idPrivKey)
 
       // Put to keyserver
-      await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
+      try {
+        await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
+      } catch (err) {
+        keyserverDisconnectedNotify()
+        this.$q.loading.hide()
+        return
+      }
 
       // Set locally
       this.setMyProfile({ name: this.name, bio: this.bio, avatar: this.avatar })
