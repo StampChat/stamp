@@ -5,23 +5,9 @@ import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
-import { Notify } from 'quasar'
+import { insuffientFundsNotify, chainTooLongNotify } from '../../utils/notifications'
 
 const cashlib = require('bitcore-lib-cash')
-
-const chainTooLongNotify = function () {
-  Notify.create({
-    message: 'Transaction chain too long.',
-    color: 'negative'
-  })
-}
-
-const insuffientFundsNotify = function () {
-  Notify.create({
-    message: 'Insufficent funds.',
-    color: 'negative'
-  })
-}
 
 export default {
   namespaced: true,

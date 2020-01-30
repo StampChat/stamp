@@ -83,6 +83,7 @@ import VueQrcode from '@chenfengyuan/vue-qrcode'
 import { mapGetters } from 'vuex'
 import { copyToClipboard } from 'quasar'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
+import { addressCopiedNotify } from '../../utils/notifications'
 import formatting from '../../utils/formatting'
 
 Vue.component(VueQrcode.name, VueQrcode)
@@ -99,11 +100,7 @@ export default {
     ...mapGetters({ generatePrivKey: 'wallet/generatePrivKey' }),
     copyAddress () {
       copyToClipboard(this.currentAddress).then(() => {
-        this.$q.notify({
-          message: '<div class="text-center"> Address copied to clipboard </div>',
-          html: true,
-          color: 'purple'
-        })
+        addressCopiedNotify()
       })
         .catch(() => {
           // fail

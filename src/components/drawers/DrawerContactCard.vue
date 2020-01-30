@@ -58,17 +58,14 @@
 
 <script>
 import { copyToClipboard } from 'quasar'
+import { addressCopiedNotify } from '../../utils/notifications'
 
 export default {
   props: ['avatar', 'name', 'bio', 'address', 'acceptancePrice'],
   methods: {
     copyAddress () {
       copyToClipboard(this.address).then(() => {
-        this.$q.notify({
-          message: '<div class="text-center"> Address copied to clipboard </div>',
-          html: true,
-          color: 'purple'
-        })
+        addressCopiedNotify()
       })
         .catch(() => {
           // fail
