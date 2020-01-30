@@ -17,7 +17,7 @@
       >
         <chat-message
           v-for="(chatMessage, index) in messages"
-          v-bind:key="index"
+          :key="index"
           :message="chatMessage"
           :contact="getContact(chatMessage.outbound)"
         />
@@ -65,6 +65,8 @@ import { mapGetters, mapActions } from 'vuex'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 
+const scrollDuration = 500
+
 export default {
   props: ['activeChat', 'messages', 'tabHeight'],
   components: {
@@ -92,8 +94,7 @@ export default {
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
       const scrollTarget = scrollArea.getScrollTarget()
-      const duration = 300
-      scrollArea.setScrollPosition(scrollTarget.scrollHeight, duration)
+      this.$nextTick(() => scrollArea.setScrollPosition(scrollTarget.scrollHeight, scrollDuration))
     },
     onResize (size) {
       this.height = size.height
