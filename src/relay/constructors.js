@@ -120,6 +120,7 @@ export default {
 
     let paymentEntryRaw = stealthPaymentEntry.serializeBinary()
     paymentEntry.setEntryData(paymentEntryRaw)
+    entries.addEntries(paymentEntry)
 
     // Construct memo entry
     if (memo !== '') {
@@ -129,9 +130,6 @@ export default {
       memoEntry.setEntryData(rawText)
       entries.addEntries(memoEntry)
     }
-
-    // Aggregate entries
-    entries.addEntries(paymentEntry)
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
     let message = await this.constructMessage(payload, privKey, destPubKey)
