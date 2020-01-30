@@ -256,6 +256,7 @@ export default {
         }
         let { id, utxo } = result
         usedIDs.push(id)
+        console.log(utxo)
 
         let addr = utxo.address
         utxo['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
@@ -312,7 +313,7 @@ export default {
       if (timeNow - feeInfo.lastUpdate > feeUpdateTimerMilliseconds) {
         // Update fee
         let electrumClient = rootGetters['electrumHandler/getClient']
-        let feePerByte = await electrumClient.blockchainEstimatefee(1) * 100_000_000 / 1000 * 1.5 // TODO: Don't do +50%
+        let feePerByte = await electrumClient.blockchainEstimatefee(1) * 100_000_000 / 1000 * 1.8 // TODO: Don't do +80%
         commit('setFeeInfo', { feePerByte, lastUpdate: timeNow })
         return feePerByte
       } else {

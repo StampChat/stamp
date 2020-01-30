@@ -83,9 +83,11 @@ export default {
       setInputMessage: 'chats/setInputMessage'
     }),
     sendMessage () {
-      this.sendMessageVuex({ addr: this.activeChat, text: this.message })
-      this.message = ''
-      this.$nextTick(() => this.$refs.inputBox.focus())
+      if (this.message !== '') {
+        this.sendMessageVuex({ addr: this.activeChat, text: this.message })
+        this.message = ''
+        this.$nextTick(() => this.$refs.inputBox.focus())
+      }
     },
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll

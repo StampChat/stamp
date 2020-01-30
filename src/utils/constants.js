@@ -5,7 +5,7 @@ export const maxSplitter = 75
 export const electrumURL = '35.238.56.17'
 export const numAddresses = 10
 export const numChangeAddresses = 10
-export const recomendedBalance = 2000
+export const recomendedBalance = 2_000
 export const nUtxoGoal = 10
 export const feeUpdateTimerMilliseconds = 60_000
 
