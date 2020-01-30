@@ -337,7 +337,7 @@ export default {
 
       // Create filter application
       let idPrivKey = this.getIdentityPrivKey()
-      let filterApplication = relayConstructors.constructPriceFilterApplication(true, this.acceptancePrice, this.acceptancePrice, idPrivKey)
+      let filterApplication = relayConstructors.constructPriceFilterApplication(true, this.settings.acceptancePrice, this.settings.acceptancePrice, idPrivKey)
 
       this.$q.loading.show({
         delay: 100,
