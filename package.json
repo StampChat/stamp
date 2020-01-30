@@ -3,8 +3,7 @@
   "version": "0.0.1",
   "description": "IRCash is a Bitcoin Cash powered internet relay chat",
   "productName": "IRCash",
-  "cordovaId": "org.cordova.ircash",
-  "capacitorId": "",
+  "capacitorId": "org.cashweb.ircash",
   "author": "Harry Barber",
   "private": true,
   "scripts": {
