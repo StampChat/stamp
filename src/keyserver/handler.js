@@ -151,18 +151,14 @@ class KeyserverHandler {
   static async putMetadata (addr, server, metadata, token) {
     let rawMetadata = metadata.serializeBinary()
     let url = `${server}/keys/${addr.toLegacyAddress()}`
-    try {
-      await axios({
-        method: 'put',
-        url: url,
-        headers: {
-          'Authorization': token
-        },
-        data: rawMetadata
-      })
-    } catch (err) {
-      // TODO: Do something with err
-    }
+    await axios({
+      method: 'put',
+      url: url,
+      headers: {
+        'Authorization': token
+      },
+      data: rawMetadata
+    })
   }
 }
 

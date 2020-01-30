@@ -169,6 +169,7 @@ import DepositStep from '../components/setup/DepositStep.vue'
 import ProfileStep from '../components/setup/ProfileStep.vue'
 import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultAcceptancePrice, defaultRelayUrl } from '../utils/constants'
+import { keyserverDisconnectedNotify, insuffientFundsNotify, paymentFailureNotify, relayDisconnectedNotify } from '../utils/notifications'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -236,6 +237,7 @@ export default {
               message: 'Gathering balances...'
             })
 
+            // Prepare wallet
             let xPrivKeyObj = event.data
             this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
             this.setXPrivKey(this.xPrivKey)
@@ -246,24 +248,39 @@ export default {
               delay: 100,
               message: 'Watching wallet...'
             })
+
+            // Listen to addresses
             let addresses = Object.keys(this.getAllAddresses())
-            await this.startListeners(addresses)
+            await this.startListeners(addresses) // TODO: Better handling here
+            this.$refs.stepper.next()
 
             this.$q.loading.hide()
-            this.$refs.stepper.next()
           }
 
           // Send seed
           worker.postMessage(this.seed)
           break
         case 4:
-          await this.setUpProfile()
+          try {
+            await this.setUpProfile()
+          } catch (err) {
+            this.$q.loading.hide()
+            return
+          }
+
+          this.$q.loading.hide()
           this.$refs.stepper.next()
 
           break
         case 5:
           let client = new RelayClient(this.settings.relayUrl)
-          await this.setUpFilter(client)
+
+          try {
+            await this.setUpFilter(client)
+          } catch (err) {
+            this.$q.loading.hide()
+            return
+          }
 
           let profile = this.profile
           profile.acceptancePrice = this.settings.acceptancePrice
@@ -291,14 +308,32 @@ export default {
       })
 
       let idAddress = this.getMyAddress()
-      let { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+      try {
+        var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+      } catch (err) {
+        keyserverDisconnectedNotify()
+        throw err
+      }
       this.$q.loading.show({
         delay: 100,
         message: 'Sending Payment...'
       })
 
-      let { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
-      let { token } = await pop.sendPayment(paymentUrl, payment)
+      // Construct payment
+      try {
+        var { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
+      } catch (err) {
+        insuffientFundsNotify()
+        throw err
+      }
+
+      // Send payment
+      try {
+        var { token } = await pop.sendPayment(paymentUrl, payment)
+      } catch (err) {
+        paymentFailureNotify()
+        throw err
+      }
 
       this.$q.loading.show({
         delay: 100,
@@ -310,9 +345,12 @@ export default {
       let metadata = KeyserverHandler.constructProfileMetadata(this.profile, idPrivKey)
 
       // Put to keyserver
-      await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
-
-      this.$q.loading.hide()
+      try {
+        await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
+      } catch (err) {
+        keyserverDisconnectedNotify()
+        throw err
+      }
     },
     async setUpFilter (client) {
       // Set filter
@@ -322,7 +360,12 @@ export default {
       })
 
       let idAddress = this.getMyAddress()
-      let filterPaymentRequest = await client.filterPaymentRequest(idAddress.toLegacyAddress())
+      try {
+        var filterPaymentRequest = await client.filterPaymentRequest(idAddress.toLegacyAddress())
+      } catch (err) {
+        relayDisconnectedNotify()
+        throw err
+      }
 
       // Send payment
       this.$q.loading.show({
@@ -331,8 +374,18 @@ export default {
       })
 
       // Get token from relay server
-      let { paymentUrl, payment } = await pop.constructPaymentTransaction(filterPaymentRequest.paymentDetails)
-      let { token } = await pop.sendPayment(paymentUrl, payment)
+      try {
+        var { paymentUrl, payment } = await pop.constructPaymentTransaction(filterPaymentRequest.paymentDetails)
+      } catch (err) {
+        insuffientFundsNotify()
+        throw err
+      }
+      try {
+        var { token } = await pop.sendPayment(paymentUrl, payment)
+      } catch (err) {
+        paymentFailureNotify()
+        throw err
+      }
       this.setRelayToken(token)
 
       // Create filter application
@@ -345,7 +398,12 @@ export default {
       })
 
       // Apply remotely
-      await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
+      try {
+        await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
+      } catch (err) {
+        relayDisconnectedNotify()
+        throw err
+      }
 
       // Apply locally
       this.setAcceptancePrice(this.settings.acceptancePrice)

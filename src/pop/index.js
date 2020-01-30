@@ -26,21 +26,15 @@ export default {
   async sendPayment (paymentUrl, payment) {
     var rawPayment = payment.serializeBinary()
     let response
-    try {
-      response = await axios({
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/bitcoincash-payment',
-          'Accept': 'application/bitcoincash-paymentack'
-        },
-        url: paymentUrl,
-        data: rawPayment
-      })
-    } catch (err) {
-      console.log(err)
-      console.log(err.response)
-      // TODO: Do something with err
-    }
+    response = await axios({
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/bitcoincash-payment',
+        'Accept': 'application/bitcoincash-paymentack'
+      },
+      url: paymentUrl,
+      data: rawPayment
+    })
 
     let token = response.headers['authorization']
     let paymentReceipt = response.data
