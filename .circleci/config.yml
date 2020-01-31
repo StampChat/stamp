@@ -68,8 +68,12 @@ jobs:
           name: Build Application
           command: 'quasar build -m electron'
       - store_artifacts:
-          path: ./dist/electron
+          path: ./dist/electron/ircash-linux-x64
           destination: binaries
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./dist/electron/ircash-linux-x64
 
   publish-github:
       docker:
@@ -86,7 +90,7 @@ jobs:
         - run:
             name: "Publish Release on GitHub"
             command: |
-              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./dist/electron/
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./ircash-linux-x64/
 
 workflows:
   version: 2
