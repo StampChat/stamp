@@ -1,8 +1,18 @@
-# IRCash
+<h1 align="center">
+  IRCash
+</h1>
 
-IRCash is a Bitcoin Cash powered internet relay chat.
+<p align="center">
+  A Bitcoin Cash powered internet relay chat.
+</p>
 
-**WARNING: IRCash is in early alpha development stage. There will be multiple breaking changes from now until a stable release. Running IRCash currently defaults to the Bitcoin Cash testnet as to protect against lost funds.**
+<p align="center">
+  <a href="LICENSE">
+    <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg">
+  </a>
+</p>
+
+**WARNING: IRCash is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the Bitcoin Cash testnet as to protect against lost funds.**
 
 ### Install from Binary
 
@@ -37,6 +47,24 @@ bash ./generate_protobufs.sh
 quasar build -m electron
 ```
 
+Your binary will be located in `/dist/ircash-{distribution}/` folder.
+
 ### Android
 
+**Unstable**
+
+```bash
+quasar build -m capacitor -T android
+```
+
+### Android
+
+**Unstable**
+
+```bash
+quasar build -m capacitor -T ios
+```
+
 ## Usage
+
+**TODO**
