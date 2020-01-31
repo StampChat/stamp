@@ -42,6 +42,10 @@ jobs:
           command: 'quasar test --unit jest'
       - store_test_results:
           path: ./test/jest/coverage
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
 
   build:
     executor: cash-executor
@@ -64,7 +68,7 @@ jobs:
           name: Build Application
           command: 'quasar build -m electron'
       - store_artifacts:
-          path: /dist/electron
+          path: ./dist/electron
           destination: binaries
 
   publish-github:
@@ -72,16 +76,17 @@ jobs:
         - image: cibuilds/github:0.10
       steps:
         - attach_workspace:
-            at: ./artifacts
+            at: .
         - run:
             name: "Check tag matches version"
             command: |
+              ls
               VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
 
         - run:
             name: "Publish Release on GitHub"
             command: |
-              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./binaries/
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./dist/electron/
 
 workflows:
   version: 2
