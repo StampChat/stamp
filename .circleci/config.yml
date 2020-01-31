@@ -1,8 +1,13 @@
 version: 2.1
-jobs:
-  setup:
+
+executors:
+  cash-executor:
     docker:
       - image: circleci/node:latest
+
+jobs:
+  setup:
+    executor: cash-executor
     steps:
       - checkout
       - restore_cache:
@@ -18,8 +23,7 @@ jobs:
           paths:
             - ./node_modules
   test:
-    docker:
-      - image: circleci/node:latest
+    executor: cash-executor
     steps:
       - run:
           name: Unit Tests
