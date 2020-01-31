@@ -23,15 +23,15 @@ jobs:
           paths:
             - ./node_modules
       - persist_to_workspace:
-          root: /
+          root: .
           paths:
-            - /
+            - .
 
   test:
     executor: cash-executor
     steps:
       - attach_workspace:
-          at: /
+          at: .
       - run:
           name: Unit Tests
           command: 'quasar test --unit jest'
