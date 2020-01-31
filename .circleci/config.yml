@@ -22,9 +22,16 @@ jobs:
           key: dependency-cache-{{ checksum "package-lock.json" }}
           paths:
             - ./node_modules
+      - persist_to_workspace:
+          root: /
+          paths:
+            - /
+
   test:
     executor: cash-executor
     steps:
+      - attach_workspace:
+          at: /
       - run:
           name: Unit Tests
           command: 'quasar test --unit jest'
