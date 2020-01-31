@@ -1,13 +1,13 @@
 version: 2.1
 
 executors:
-  cash-executor:
+  executor-linux-x64:
     docker:
       - image: circleci/node:latest
 
 jobs:
-  setup:
-    executor: cash-executor
+  setup-linux-x64:
+    executor: executor-linux-x64
     steps:
       - checkout
       - restore_cache:
@@ -29,8 +29,8 @@ jobs:
           paths:
             - .
 
-  test:
-    executor: cash-executor
+  test-linux-x64:
+    executor: executor-linux-x64
     steps:
       - attach_workspace:
           at: .
@@ -47,15 +47,16 @@ jobs:
           paths:
             - .
 
-  build:
-    executor: cash-executor
+  build-linux-x64:
+    executor: executor-linux-x64
     steps:
       - attach_workspace:
           at: .
       - run:
           name: Install Protoc
           command: |
-            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.2/protoc-3.11.2-linux-x86_64.zip
+            PROTOC_VERSION=3.11.2
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.2/protoc-${PROTOC_VERSION}-linux-x86_64.zip
             unzip protoc*.zip
             sudo mv bin/protoc /usr/local/bin/
       - run:
@@ -82,22 +83,29 @@ jobs:
         - attach_workspace:
             at: .
         - run:
-            name: "Publish Release on GitHub"
+            name: Package Binaries
             command: |
               VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION}_linux_x64 ./dist/electron/ircash-linux-x64
+              mkdir packages
+              cd packages
+              tar -zcvf ${VERSION}_linux_x64.gz ../dist/electron/ircash-linux-x64
+              zip -r ${VERSION}_linux_x64.zip ../dist/electron/ircash-linux-x64
+        - run:
+            name: Publish Release on GitHub
+            command: |
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -draft -delete ${VERSION} .
 
 workflows:
   version: 2
   untagged:
     jobs:
-      - setup
-      - test:
+      - setup-linux-x64
+      - test-linux-x64:
           requires:
-            - setup
-      - build:
+            - setup-linux-x64
+      - build-linux-x64:
           requires:
-            - setup
+            - setup-linux-x64
       - publish-github:
           requires:
-            - build
+            - build-linux-x64
