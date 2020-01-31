@@ -82,15 +82,10 @@ jobs:
         - attach_workspace:
             at: .
         - run:
-            name: "Check tag matches version"
-            command: |
-              VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-        - run:
             name: "Publish Release on GitHub"
             command: |
-              echo $VERSION
               VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete $VERSION_linux_x64 ./dist/electron/ircash-linux-x64
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION}_linux_x64 ./dist/electron/ircash-linux-x64
 
 workflows:
   version: 2
