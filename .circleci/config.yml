@@ -47,8 +47,8 @@ jobs:
           name: Install Quasar
           command: 'sudo npm install -g @quasar/cli'
       - run:
-          name: Build
-          commnd: 'quasar build -m electron'
+          name: Build Application
+          command: 'quasar build -m electron'
           
 
 workflows:
