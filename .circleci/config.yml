@@ -44,14 +44,14 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-        name: Install Protoc
-        command: |
-          wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.2/protoc-3.11.2-linux-x86_64.zip
-          unzip protoc*.zip
-          sudo mv bin/protoc /usr/local/bin/
+          name: Install Protoc
+          command: |
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.2/protoc-3.11.2-linux-x86_64.zip
+            unzip protoc*.zip
+            sudo mv bin/protoc /usr/local/bin/
       - run:
-        name: Generate Protobuffers
-        command: bash generate_protobufs.sh
+          name: Generate Protobuffers
+          command: bash generate_protobufs.sh
       - run:
           name: Install Quasar
           command: 'sudo npm install -g @quasar/cli'
