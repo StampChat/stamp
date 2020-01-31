@@ -6,13 +6,13 @@ jobs:
     steps:
       - checkout
       - run:
-        name: install-quasar
-        command: 'sudo npm install -g @quasar/cli'
+          name: Install Quasar
+          command: 'sudo npm install -g @quasar/cli'
       - restore_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
       - run:
-        name: unit-tests
-        command: 'quasar test --unit jest'
+          name: Unit Tests
+          command: 'quasar test --unit jest'
       - save_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
           paths:
