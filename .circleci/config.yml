@@ -76,7 +76,8 @@ jobs:
         - run:
             name: "Check tag matches version"
             command: |
-              VERSION=$(grep -oP '(?<="version": ")[^"]*' package.json)
+              VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+
         - run:
             name: "Publish Release on GitHub"
             command: |
