@@ -1,0 +1,24 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+      - run:
+        name: install-quasar
+        command: 'sudo npm install -g @quasar/cli'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+      - run:
+        name: unit-tests
+        command: 'quasar test --unit jest'
+      - save_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ./node_modules
+      - store_artifacts:
+          path: ./test/jest/coverage
+          prefix: test-results/jest
+      - store_test_results:
+          path: test-results
