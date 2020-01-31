@@ -35,17 +35,30 @@ jobs:
       - run:
           name: Unit Tests
           command: 'quasar test --unit jest'
-      - store_artifacts:
-          path: ./test/jest/coverage
-          prefix: test-results/jest
       - store_test_results:
-          path: test-results
+          path: ./test/jest/coverage
+
+  build:
+    executor: cash-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install Quasar
+          command: 'sudo npm install -g @quasar/cli'
+      - run:
+          name: Build
+          commnd: 'quasar build -m electron'
+          
 
 workflows:
   version: 2
-  run-tests:
+  untagged:
     jobs:
       - setup
       - test:
-         requires:
-          - setup
+          requires:
+            - setup
+      - build:
+          requires:
+            - setup
