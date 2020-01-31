@@ -63,7 +63,24 @@ jobs:
       - run:
           name: Build Application
           command: 'quasar build -m electron'
+      - store_artifacts:
+          path: /dist/electron
+          destination: binaries
 
+  publish-github:
+      docker:
+        - image: cibuilds/github:0.10
+      steps:
+        - attach_workspace:
+            at: ./artifacts
+        - run:
+            name: "Check tag matches version"
+            command: |
+              VERSION=$(grep -oP '(?<="version": ")[^"]*' package.json)
+        - run:
+            name: "Publish Release on GitHub"
+            command: |
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./binaries/
 
 workflows:
   version: 2
@@ -76,3 +93,6 @@ workflows:
       - build:
           requires:
             - setup
+      - publish-github:
+          requires:
+            - build
