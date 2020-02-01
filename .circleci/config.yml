@@ -53,6 +53,14 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Install Wine
+          command: |
+            sudo dpkg --add-architecture i386
+            sudo add-apt-repository -y ppa:ubuntu-wine/ppa
+            sudo apt-get update
+            echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections
+            sudo apt-get install -y wine
+      - run:
           name: Install Protoc
           command: |
             PROTOC_VERSION=3.11.2
