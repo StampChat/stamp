@@ -55,15 +55,8 @@ jobs:
       - run:
           name: Install Wine
           command: |
-            sudo apt update -qq
-            sudo apt install -y gnupg2 software-properties-common apt-transport-https
-            sudo dpkg --add-architecture i386
-            wget -nc https://dl.winehq.org/wine-builds/Release.key
-            sudo apt-key add Release.key
-            sudo apt-add-repository -y https://dl.winehq.org/wine-builds/ubuntu/
-            sudo apt-get update -qq
-            sudo apt-get install -y build-essential cmake git ssh gcc-multilib g++-multilib rapidjson-dev
-            sudo apt-get install -y --install-recommends winehq-devel
+            sudo apk update
+            sudo apk add wine
       - run:
           name: Install Protoc
           command: |
