@@ -56,7 +56,7 @@ jobs:
           name: Install Wine
           command: |
             sudo apt update -qq
-            sudo apt install -y gnupg2 software-properties-common
+            sudo apt install -y gnupg2 software-properties-common apt-transport-https
             sudo dpkg --add-architecture i386
             wget -nc https://dl.winehq.org/wine-builds/Release.key
             sudo apt-key add Release.key
