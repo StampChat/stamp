@@ -64,8 +64,6 @@ jobs:
             apt-get update -qq
             apt-get install -y build-essential cmake git ssh gcc-multilib g++-multilib rapidjson-dev
             apt-get install -y --install-recommends winehq-devel
-            chmod +x build.sh
-            ./build.sh -s32
       - run:
           name: Install Protoc
           command: |
