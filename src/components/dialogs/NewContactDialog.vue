@@ -12,7 +12,7 @@
         v-model="address"
         filled
         dense
-        placeholder="Enter address..."
+        placeholder="Enter Bitcoin Cash address..."
       />
     </q-card-section>
     <q-slide-transition>
