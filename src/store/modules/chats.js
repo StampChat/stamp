@@ -105,6 +105,13 @@ export default {
     }
   },
   mutations: {
+    reset (state) {
+      console.log(state)
+      state.order = []
+      state.activeChatAddr = null
+      state.data = {}
+      state.lastReceived = null
+    },
     readAll (state, addr) {
       let ids = Object.keys(state.data[addr].messages)
 
@@ -188,6 +195,9 @@ export default {
     }
   },
   actions: {
+    reset ({ commit }) {
+      commit('reset')
+    },
     readAll ({ commit }, addr) {
       commit('readAll', addr)
     },
@@ -445,9 +455,6 @@ export default {
       commit('receiveMessage', { addr: senderAddr, index, newMsg })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
-      if (rootGetters['wallet/isSetupComplete'] === false) {
-        return
-      }
       let myAddressStr = rootGetters['wallet/getMyAddressStr']
       let client = rootGetters['relayClient/getClient']
       let lastReceived = getters['getLastReceived'] || 0

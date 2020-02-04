@@ -208,11 +208,12 @@ export default {
       setXPrivKey: 'wallet/setXPrivKey',
       initAddresses: 'wallet/initAddresses',
       startListeners: 'wallet/startListeners',
-      completeSetup: 'wallet/completeSetup',
       updateUTXOs: 'wallet/updateUTXOs',
       setRelayToken: 'relayClient/setToken',
       setAcceptancePrice: 'myProfile/setAcceptancePrice',
-      setRelayClient: 'relayClient/setClient'
+      setRelayClient: 'relayClient/setClient',
+      resetWallet: 'wallet/reset',
+      resetChats: 'chats/reset'
     }),
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
@@ -224,6 +225,9 @@ export default {
     async next () {
       switch (this.step) {
         case 2:
+          // Reset wallet
+          this.resetWallet()
+
           this.$q.loading.show({
             delay: 100,
             message: 'Generating wallet...'
@@ -289,7 +293,6 @@ export default {
           this.setMyProfile(profile)
 
           this.$q.loading.hide()
-          this.completeSetup()
           this.$router.push('/')
           break
         default:
@@ -411,6 +414,11 @@ export default {
   },
   computed: {
     ...mapGetters({ electrumConnected: 'electrumHandler/connected' })
+  },
+  created () {
+    // Reset all messaging
+    this.resetChats()
+    console.log('message reset')
   }
 }
 </script>

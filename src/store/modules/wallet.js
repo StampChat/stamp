@@ -13,7 +13,6 @@ const calcId = function (output) {
 export default {
   namespaced: true,
   state: {
-    complete: false,
     xPrivKey: null,
     identityPrivKey: null,
     electrumScriptHashes: {},
@@ -30,13 +29,18 @@ export default {
     addElectrumScriptHash (state, { scriptHash, address, change }) {
       Vue.set(state.electrumScriptHashes, scriptHash, { address, change })
     },
-    completeSetup (state) {
-      state.complete = true
-    },
     reset (state) {
       state.xPrivKey = null
       state.identityPrivKey = null
+      state.electrumScriptHashes = {}
       state.addresses = {}
+      state.changeAddresses = {}
+      state.utxos = {}
+      state.frozenUTXOs = {}
+      state.feeInfo = {
+        feePerByte: 2,
+        lastUpdate: 0
+      }
     },
     setAddress (state, { address, privKey }) {
       Vue.set(state.addresses, address, { privKey })
@@ -134,9 +138,6 @@ export default {
     }
   },
   actions: {
-    completeSetup ({ commit }) {
-      commit('completeSetup')
-    },
     reset ({ commit }) {
       commit('reset')
     },
@@ -330,9 +331,6 @@ export default {
     },
     getAddressByElectrumScriptHash: (state) => (scriptHash) => {
       return state.electrumScriptHashes[scriptHash]
-    },
-    isSetupComplete (state) {
-      return state.complete
     },
     getBalance (state) {
       return Object.values(state.utxos).reduce((acc, output) => acc + output.satoshis, 0)
