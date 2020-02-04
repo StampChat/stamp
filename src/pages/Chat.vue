@@ -166,7 +166,9 @@ export default {
   watch: {
     messages: function (newMsgs, oldMsgs) {
       this.scrollBottom()
-      this.readAll(this.activeChat)
+      if (Object.entries(newMsgs).length !== 0) {
+        this.readAll(this.activeChat)
+      }
     }
   }
 }
