@@ -1,19 +1,18 @@
 <template>
-  <div class='q-py-sm'>
-    <q-chat-message
-      :avatar="contact.avatar"
-      :sent="message.outbound"
-      :stamp="timeStamp"
-    >
-      <chat-message-section
-        v-for="(item, index) in message.items"
-        :key="index"
-        :item="item"
-        :end='message.items.length === index + 1'
-        :single='message.items.length === 1'
-      />
-    </q-chat-message>
-  </div>
+  <q-chat-message
+    class='q-py-sm'
+    :avatar="contact.avatar"
+    :sent="message.outbound"
+    :stamp="timeStamp"
+  >
+    <chat-message-section
+      v-for="(item, index) in message.items"
+      :key="index"
+      :item="item"
+      :end='message.items.length === index + 1'
+      :single='message.items.length === 1'
+    />
+  </q-chat-message>
 </template>
 
 <script>

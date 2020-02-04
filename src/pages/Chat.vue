@@ -12,8 +12,17 @@
       <q-scroll-area
         ref="chatScroll"
         class="q-px-md row"
-        :style="`background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - ${height}px - ${tabHeight}px); width: 100%;`"
+        :style="`background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - ${height}px - ${tabHeight}px);`"
       >
+        <q-chat-message
+          class='q-py-sm'
+          name="cash:web Devs"
+          :sent="false"
+          :text="[
+            donationMessage
+            ]"
+          size="6"
+        />
         <chat-message
           v-for="(chatMessage, index) in messages"
           :key="index"
@@ -83,6 +92,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
+import { donationMessage } from '../utils/constants'
 
 const scrollDuration = 500
 
@@ -96,7 +106,8 @@ export default {
     return {
       height: 100,
       sendFileOpen: false,
-      bottom: true
+      bottom: true,
+      donationMessage
     }
   },
   methods: {
