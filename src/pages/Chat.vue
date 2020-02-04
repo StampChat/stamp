@@ -19,6 +19,7 @@
           :key="index"
           :message="chatMessage"
           :contact="getContact(chatMessage.outbound)"
+          :timestamp="index"
         />
         <q-scroll-observer
           debounce="500"
