@@ -125,11 +125,12 @@ import { seedCopiedNotify } from '../../utils/notifications'
 const bip39 = require('bip39')
 
 export default {
+  props: ['initType'],
   data () {
     return {
       generatedSeed: bip39.generateMnemonic(),
       importedSeed: '',
-      seedTabs: 'new'
+      seedTabs: this.initType
     }
   },
   methods: {

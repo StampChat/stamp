@@ -24,6 +24,7 @@
           :done="step > 2"
         >
           <seed-step
+            :initType="seedType"
             v-on:seed="seed = $event"
             v-on:switch="seedType = $event"
           />
