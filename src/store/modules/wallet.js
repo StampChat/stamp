@@ -3,12 +3,9 @@ import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import { numAddresses, numChangeAddresses, nUtxoGoal, feeUpdateTimerMilliseconds } from '../../utils/constants'
 import formatting from '../../utils/formatting'
+import { calcId } from '../../utils/wallet'
 
 const cashlib = require('bitcore-lib-cash')
-
-const calcId = function (output) {
-  return output.txId.slice(0, 20) + output.outputIndex
-}
 
 export default {
   namespaced: true,

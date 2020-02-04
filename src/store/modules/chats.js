@@ -106,7 +106,6 @@ export default {
   },
   mutations: {
     reset (state) {
-      console.log(state)
       state.order = []
       state.activeChatAddr = null
       state.data = {}
