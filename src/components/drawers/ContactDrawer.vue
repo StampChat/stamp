@@ -48,6 +48,23 @@
     <!-- Scroll area -->
     <q-scroll-area style="height: calc(100% - 125px); margin-top: 125px; border-right: 1px solid #ddd">
       <q-list padding>
+        <q-item>
+          <q-item-section avatar>
+            <q-icon name="post_add" />
+          </q-item-section>
+          <q-item-section>
+            Stamp Price
+          </q-item-section>
+          <q-item-section>
+            <q-input
+              dense
+              v-model="stampAmount"
+              borderless
+              input-class="text-right"
+              suffix="sats"
+            />
+          </q-item-section>
+        </q-item>
         <q-item
           clickable
           v-ripple
@@ -92,7 +109,6 @@
         </q-item>
 
         <q-separator />
-
         <q-item
           clickable
           v-ripple
@@ -179,12 +195,14 @@ export default {
   methods: {
     ...mapActions({
       setDrawerOpen: 'contactDrawer/setDrawerOpen',
-      shareContact: 'chats/shareContact'
+      shareContact: 'chats/shareContact',
+      setStampAmount: 'chats/setStampAmount'
     })
   },
   computed: {
     ...mapGetters({
-      getDrawerOpen: 'contactDrawer/getDrawerOpen'
+      getDrawerOpen: 'contactDrawer/getDrawerOpen',
+      getStampAmount: 'chats/getStampAmount'
     }),
     drawerOpen: {
       get () {
@@ -192,6 +210,17 @@ export default {
       },
       set (value) {
         this.setDrawerOpen(value)
+      }
+    },
+    stampAmount: {
+      get () {
+        return this.getStampAmount(this.address)
+      },
+      set (amount) {
+        if (isNaN(amount)) {
+          return
+        }
+        this.setStampAmount({ addr: this.address, stampAmount: amount })
       }
     }
   },

@@ -13,3 +13,6 @@ export const feeUpdateTimerMilliseconds = 60_000
 export const defaultAcceptancePrice = 100
 export const defaultRelayUrl = '34.67.137.105'
 export const relayUrlOptions = ['34.67.137.105', 'bitcoin.com', 'cashweb.io']
+
+// Chat constants
+export const defaultStampAmount = 200

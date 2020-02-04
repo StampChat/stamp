@@ -37,7 +37,7 @@ export default {
     let { transaction } = await store.dispatch('wallet/constructTransaction', { outputs: [stampOutput], feePerByte })
     return transaction
   },
-  async constructMessage (payload, privKey, destPubKey) {
+  async constructMessage (payload, privKey, destPubKey, stampAmount) {
     let serializedPayload = payload.serializeBinary()
     let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
     let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
@@ -50,8 +50,7 @@ export default {
     message.setSignature(sig)
     message.setSerializedPayload(serializedPayload)
 
-    let amount = 300
-    let stampTx = await this.constructStampTransaction(payloadDigest, destPubKey, amount)
+    let stampTx = await this.constructStampTransaction(payloadDigest, destPubKey, stampAmount)
     let rawStampTx = stampTx.toBuffer()
     message.setStampTx(rawStampTx)
 
@@ -80,7 +79,7 @@ export default {
     }
     return payload
   },
-  async constructTextMessage (text, privKey, destPubKey, scheme) {
+  async constructTextMessage (text, privKey, destPubKey, scheme, stampAmount) {
     // Construct text entry
     let textEntry = new messages.Entry()
     textEntry.setKind('text-utf8')
@@ -92,10 +91,10 @@ export default {
     entries.addEntries(textEntry)
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
-    let message = await this.constructMessage(payload, privKey, destPubKey)
+    let message = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
     return message
   },
-  async constructStealthPaymentMessage (amount, memo, privKey, destPubKey, scheme) {
+  async constructStealthPaymentMessage (amount, memo, privKey, destPubKey, scheme, stampAmount) {
     let entries = new messages.Entries()
 
     // Construct payment entry
@@ -132,10 +131,10 @@ export default {
     }
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
-    let message = await this.constructMessage(payload, privKey, destPubKey)
+    let message = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
     return message
   },
-  async constructImageMessage (image, caption, privKey, destPubKey, scheme) {
+  async constructImageMessage (image, caption, privKey, destPubKey, scheme, stampAmount) {
     let entries = new messages.Entries()
 
     // Construct text entry
@@ -169,7 +168,7 @@ export default {
     }
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
-    let message = await this.constructMessage(payload, privKey, destPubKey)
+    let message = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
     return message
   },
   constructPriceFilterApplication (isPublic, acceptancePrice, notificationPrice, privKey) {

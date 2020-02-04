@@ -6,6 +6,7 @@ import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify } from '../../utils/notifications'
+import { defaultStampAmount } from '../../utils/constants'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -47,6 +48,9 @@ export default {
       } else {
         return state.data[state.activeChatAddr].inputMessage
       }
+    },
+    getStampAmount: (state) => (addr) => {
+      return state.data[addr].stampAmount
     },
     getActiveChat (state) {
       return state.activeChatAddr
@@ -162,7 +166,7 @@ export default {
         // TODO: Better indexing
         messages[index] = newMsg
 
-        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null })
+        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
         state.order.unshift(addr)
       } else {
         // TODO: Better indexing
@@ -174,10 +178,13 @@ export default {
     },
     openChat (state, addr) {
       if (!(addr in state.data)) {
-        Vue.set(state.data, addr, { messages: {}, inputMessage: '', lastRead: null })
+        Vue.set(state.data, addr, { messages: {}, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
         state.order.unshift(addr)
       }
       state.activeChatAddr = addr
+    },
+    setStampAmount (state, { addr, stampAmount }) {
+      state.data[addr].stampAmount = stampAmount
     }
   },
   actions: {
@@ -201,7 +208,7 @@ export default {
     startChatUpdater ({ dispatch }) {
       setInterval(() => { dispatch('refresh') }, 1_000)
     },
-    async sendMessage ({ commit, rootGetters }, { addr, text }) {
+    async sendMessage ({ commit, rootGetters, getters }, { addr, text }) {
       // Send locally
       let items = [
         {
@@ -215,8 +222,9 @@ export default {
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
+      let stampAmount = getters['getStampAmount'](addr)
       try {
-        var message = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1)
+        var message = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         console.log(err)
         insuffientFundsNotify()
@@ -235,7 +243,7 @@ export default {
         chainTooLongNotify()
       }
     },
-    async sendStealthPayment ({ commit, rootGetters }, { addr, amount, memo }) {
+    async sendStealthPayment ({ commit, rootGetters, getters }, { addr, amount, memo }) {
       // Send locally
       let items = [
         {
@@ -256,8 +264,9 @@ export default {
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
+      let stampAmount = getters['getStampAmount'](addr)
       try {
-        var message = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1)
+        var message = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount)
       } catch {
         insuffientFundsNotify()
         return
@@ -274,7 +283,7 @@ export default {
         chainTooLongNotify()
       }
     },
-    async sendImage ({ commit, rootGetters }, { addr, image, caption }) {
+    async sendImage ({ commit, rootGetters, getters }, { addr, image, caption }) {
       // Send locally
       let items = [
         {
@@ -295,8 +304,9 @@ export default {
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
+      let stampAmount = getters['getStampAmount'](addr)
       try {
-        var message = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1)
+        var message = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         insuffientFundsNotify()
         return
@@ -465,6 +475,9 @@ export default {
     },
     openChat ({ commit }, addr) {
       commit('openChat', addr)
+    },
+    setStampAmount ({ commit }, { addr, stampAmount }) {
+      commit('setStampAmount', { addr, stampAmount })
     }
   }
 }
