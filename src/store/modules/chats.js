@@ -333,7 +333,7 @@ export default {
         var message = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         insuffientFundsNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'image', caption } })
+        commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
         return
       }
       let messageSet = new messages.MessageSet()
@@ -346,7 +346,7 @@ export default {
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
         chainTooLongNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'image', caption } })
+        commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
       }
     },
     switchOrder ({ commit }, addr) {

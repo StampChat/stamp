@@ -41,7 +41,9 @@ export default {
   methods: {
     ...mapActions({
       deleteMessage: 'chats/deleteMessage',
-      sendMessage: 'chats/sendMessage'
+      sendMessage: 'chats/sendMessage',
+      sendStealthPayment: 'chats/sendStealthPayment',
+      sendImage: 'chats/sendImage'
     }),
     resend () {
       this.deleteMessage({ addr: this.address, id: this.id })
@@ -49,6 +51,13 @@ export default {
       switch (retryData.msgType) {
         case 'text':
           this.sendMessage({ addr: this.address, text: retryData.text })
+          break
+        case 'stealth':
+          this.sendStealthPayment({ addr: this.address, amount: retryData.amount, memo: retryData.memo })
+          break
+        case 'image':
+          this.sendImage({ addr: this.address, image: retryData.image, caption: retryData.caption })
+          break
       }
     }
   }
