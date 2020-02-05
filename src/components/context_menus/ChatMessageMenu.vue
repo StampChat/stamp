@@ -39,7 +39,18 @@ import { mapActions } from 'vuex'
 export default {
   props: ['address', 'id', 'message'],
   methods: {
-    ...mapActions({ deleteMessage: 'chats/deleteMessage' })
+    ...mapActions({
+      deleteMessage: 'chats/deleteMessage',
+      sendMessage: 'chats/sendMessage'
+    }),
+    resend () {
+      this.deleteMessage({ addr: this.address, id: this.id })
+      let retryData = this.message.retryData
+      switch (retryData.msgType) {
+        case 'text':
+          this.sendMessage({ addr: this.address, text: retryData.text })
+      }
+    }
   }
 }
 </script>
