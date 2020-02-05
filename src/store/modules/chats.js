@@ -7,7 +7,6 @@ import Vue from 'vue'
 import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
-import { calcId } from '../../utils/wallet'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -137,7 +136,7 @@ export default {
     switchChatActive (state, addr) {
       state.activeChatAddr = addr
     },
-    sendMessageLocal (state, { addr, index, items, walletId }) {
+    sendMessageLocal (state, { addr, index, items, stampOutput }) {
       let timestamp = Date.now()
       let newMsg = {
         type: 'text',
@@ -145,7 +144,7 @@ export default {
         status: 'pending',
         items,
         timestamp,
-        walletId
+        stampOutput
       }
 
       Vue.set(state.data[addr].messages, index, newMsg)
@@ -229,7 +228,7 @@ export default {
     startChatUpdater ({ dispatch }) {
       setInterval(() => { dispatch('refresh') }, 1_000)
     },
-    async sendMessage ({ commit, rootGetters, getters }, { addr, text }) {
+    async sendMessage ({ commit, rootGetters, getters, dispatch }, { addr, text }) {
       // Send locally
       let items = [
         {
@@ -238,14 +237,14 @@ export default {
         }
       ]
       let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items })
+      commit('sendMessageLocal', { addr, index, items, stampOutput: null })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var message = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs } = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         console.log(err)
         insuffientFundsNotify()
@@ -261,11 +260,15 @@ export default {
         await client.pushMessages(destAddr, messageSet)
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
+        // Unfreeze UTXOs
+        // TODO: More subtle
+        usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
+
         chainTooLongNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'text', text } })
       }
     },
-    async sendStealthPayment ({ commit, rootGetters, getters }, { addr, amount, memo }) {
+    async sendStealthPayment ({ commit, rootGetters, getters, dispatch }, { addr, amount, memo }) {
       // Send locally
       let items = [
         {
@@ -281,14 +284,14 @@ export default {
           })
       }
       let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items })
+      commit('sendMessageLocal', { addr, index, items, stampOutput: null })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var message = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs } = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount)
       } catch {
         insuffientFundsNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo } })
@@ -303,11 +306,15 @@ export default {
         await client.pushMessages(destAddr, messageSet)
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
+        // Unfreeze UTXOs
+        // TODO: More subtle
+        usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
+
         chainTooLongNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo } })
       }
     },
-    async sendImage ({ commit, rootGetters, getters }, { addr, image, caption }) {
+    async sendImage ({ commit, rootGetters, getters, dispatch }, { addr, image, caption }) {
       // Send locally
       let items = [
         {
@@ -323,14 +330,14 @@ export default {
           })
       }
       let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items })
+      commit('sendMessageLocal', { addr, index, items, stampOutput: null })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var message = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs } = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         insuffientFundsNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
@@ -345,6 +352,10 @@ export default {
         await client.pushMessages(destAddr, messageSet)
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
+        // Unfreeze UTXOs
+        // TODO: More subtle
+        usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
+
         chainTooLongNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
       }
@@ -399,7 +410,7 @@ export default {
       let output = stampTx.outputs[0]
       let satoshis = output.satoshis
       let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
-      let changeOutput = {
+      let stampOutput = {
         address,
         outputIndex: 0, // 0 is always stamp output
         satoshis,
@@ -407,7 +418,7 @@ export default {
         type: 'stamp',
         payloadDigest
       }
-      dispatch('wallet/addUTXO', changeOutput, { root: true })
+      dispatch('wallet/addUTXO', stampOutput, { root: true })
 
       // Decode entries
       let entries = messages.Entries.deserializeBinary(entriesRaw)
@@ -417,7 +428,7 @@ export default {
         status: 'confirmed',
         items: [],
         timestamp,
-        walletId: calcId(changeOutput)
+        stampOutput
       }
       for (let index in entriesList) {
         let entry = entriesList[index]

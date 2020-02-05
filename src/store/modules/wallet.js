@@ -139,6 +139,9 @@ export default {
     }
   },
   actions: {
+    unfreezeUTXO ({ commit }, id) {
+      commit('unfreezeUTXO', id)
+    },
     setSeedPhrase ({ commit }, seedPhrase) {
       commit('setSeedPhrase', seedPhrase)
     },
