@@ -19,6 +19,7 @@
       <q-item
         clickable
         v-close-popup
+        @click="copyMessage"
       >
         <q-item-section>Copy </q-item-section>
       </q-item>
@@ -35,6 +36,7 @@
 
 <script>
 import { mapActions } from 'vuex'
+import { copyToClipboard } from 'quasar'
 
 export default {
   props: ['address', 'id', 'message'],
@@ -59,6 +61,19 @@ export default {
           this.sendImage({ addr: this.address, image: retryData.image, caption: retryData.caption })
           break
       }
+    },
+    copyMessage () {
+      let text = this.message.items.find(el => el.type === 'text').text
+      copyToClipboard(text).then(() => {
+        this.$q.notify({
+          message: '<div class="text-center"> Message copied to clipboard </div>',
+          html: true,
+          color: 'purple'
+        })
+      })
+        .catch(() => {
+          // fail
+        })
     }
   }
 }
