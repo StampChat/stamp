@@ -3,8 +3,15 @@
     class='q-py-sm'
     :avatar="contact.avatar"
     :sent="message.outbound"
-    :stamp="timeStamp"
+    :stamp="formatedTimestamp"
   >
+    <!-- Context Menu -->
+    <chat-message-menu
+      :address="address"
+      :id="timestamp"
+      :message="message"
+    />
+
     <chat-message-section
       v-for="(item, index) in message.items"
       :key="index"
@@ -25,25 +32,26 @@
         />
       </div>
     </div>
-
   </q-chat-message>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import ChatMessageSection from './ChatMessageSection.vue'
+import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
 import formatting from '../../utils/formatting'
 
 export default {
   components: {
-    ChatMessageSection
+    ChatMessageSection,
+    ChatMessageMenu
   },
   methods: {
     ...mapGetters(['getUnixTime']),
     ...mapActions(['updateClock'])
   },
   computed: {
-    timeStamp () {
+    formatedTimestamp () {
       switch (this.message.status) {
         case 'confirmed':
           let unixTime = this.getUnixTime()
@@ -77,6 +85,6 @@ export default {
   created () {
     this.updateClock()
   },
-  props: ['timestamp', 'message', 'contact']
+  props: ['address', 'timestamp', 'message', 'contact']
 }
 </script>

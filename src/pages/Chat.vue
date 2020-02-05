@@ -26,6 +26,7 @@
         <chat-message
           v-for="(chatMessage, index) in messages"
           :key="index"
+          :address="activeChat"
           :message="chatMessage"
           :contact="getContact(chatMessage.outbound)"
           :timestamp="index"

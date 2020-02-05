@@ -106,6 +106,9 @@ export default {
     }
   },
   mutations: {
+    deleteMessage (state, { addr, id }) {
+      Vue.delete(state.data[addr].messages, id)
+    },
     reset (state) {
       state.order = []
       state.activeChatAddr = null
@@ -200,6 +203,9 @@ export default {
     }
   },
   actions: {
+    deleteMessage ({ commit }, { addr, id }) {
+      commit('deleteMessage', { addr, id })
+    },
     reset ({ commit }) {
       commit('reset')
     },
