@@ -12,6 +12,20 @@
       :end='message.items.length === index + 1'
       :single='message.items.length === 1'
     />
+
+    <div
+      v-if="this.message.status==='error'"
+      class='row justify-end q-pt-xs'
+      style="full-width"
+    >
+      <div class='col-auto'>
+        <q-icon
+          name='error'
+          color="red"
+        />
+      </div>
+    </div>
+
   </q-chat-message>
 </template>
 
@@ -38,7 +52,7 @@ export default {
         case 'pending':
           return 'sending...'
         case 'error':
-          return 'error'
+          return ''
       }
       return 'unknown'
     },
