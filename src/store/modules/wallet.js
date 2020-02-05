@@ -20,9 +20,13 @@ export default {
     feeInfo: {
       feePerByte: 2,
       lastUpdate: 0
-    }
+    },
+    seedPhrase: null
   },
   mutations: {
+    setSeedPhrase (state, seedPhrase) {
+      state.seedPhrase = seedPhrase
+    },
     addElectrumScriptHash (state, { scriptHash, address, change }) {
       Vue.set(state.electrumScriptHashes, scriptHash, { address, change })
     },
@@ -135,6 +139,9 @@ export default {
     }
   },
   actions: {
+    setSeedPhrase ({ commit }, seedPhrase) {
+      commit('setSeedPhrase', seedPhrase)
+    },
     reset ({ commit }) {
       commit('reset')
     },
@@ -320,6 +327,9 @@ export default {
     }
   },
   getters: {
+    getSeedPhrase (state) {
+      return state.seedPhrase
+    },
     getFeeInfo (state) {
       return state.feeInfo
     },

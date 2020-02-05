@@ -214,6 +214,7 @@ export default {
       setAcceptancePrice: 'myProfile/setAcceptancePrice',
       setRelayClient: 'relayClient/setClient',
       resetWallet: 'wallet/reset',
+      setSeedPhrase: 'wallet/setSeedPhrase',
       resetChats: 'chats/reset'
     }),
     ...mapGetters({
@@ -292,6 +293,7 @@ export default {
 
           this.setRelayClient(client)
           this.setMyProfile(profile)
+          this.setSeedPhrase(this.seed)
 
           this.$q.loading.hide()
           this.$router.push('/')

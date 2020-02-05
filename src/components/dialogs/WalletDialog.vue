@@ -3,12 +3,18 @@
     style="width: 500px"
     class="q-px-sm q-pb-md"
   >
+    <!-- New contact dialog -->
+    <q-dialog v-model="seedPhraseOpen">
+      <seed-phrase-dialog />
+    </q-dialog>
+
     <q-card-section>
       <div class="text-h6">Wallet Status</div>
     </q-card-section>
     <q-card-section>
-      <span class='text-bold text-center'> Balance: </span> {{getBalance}}
+      <div class="text-bold text-subtitle1 text-center"> {{getBalance}}</div>
     </q-card-section>
+    <q-separator />
     <q-card-section>
       <div class="row">
         <qrcode
@@ -43,6 +49,13 @@
         </q-input>
       </div>
     </q-card-section>
+    <q-separator />
+    <q-item-section>
+      <q-btn
+        color="primary"
+        @click="seedPhraseOpen = true"
+      > Show Seed </q-btn>
+    </q-item-section>
     <q-card-actions align="right">
       <q-btn
         flat
@@ -57,6 +70,7 @@
 <script>
 import Vue from 'vue'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
+import SeedPhraseDialog from './SeedPhraseDialog.vue'
 import { mapGetters } from 'vuex'
 import formatting from '../../utils/formatting'
 import { numAddresses } from '../../utils/constants'
@@ -65,10 +79,14 @@ import { copyToClipboard } from 'quasar'
 Vue.component(VueQrcode.name, VueQrcode)
 
 export default {
+  components: {
+    SeedPhraseDialog
+  },
   data () {
     return {
       currentAddress: this.generatePrivKey()(0).toAddress('testnet'), // TODO: Generic over network
-      paymentAddrCounter: 0
+      paymentAddrCounter: 0,
+      seedPhraseOpen: false
     }
   },
   computed: {
