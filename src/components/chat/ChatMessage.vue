@@ -30,12 +30,17 @@ export default {
   },
   computed: {
     timeStamp () {
-      if (!this.message.sent) {
-        return 'sending...'
+      switch (this.message.status) {
+        case 'confirmed':
+          let unixTime = this.getUnixTime()
+          let stamp = formatting.unixToStamp(this.timestamp, unixTime)
+          return stamp
+        case 'pending':
+          return 'sending...'
+        case 'error':
+          return 'error'
       }
-      let unixTime = this.getUnixTime()
-      let stamp = formatting.unixToStamp(this.timestamp, unixTime)
-      return stamp
+      return 'unknown'
     },
     isText () {
       return this.message.type === 'text'

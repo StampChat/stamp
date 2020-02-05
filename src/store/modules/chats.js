@@ -7,6 +7,7 @@ import Vue from 'vue'
 import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
+import { calcId } from '../../utils/wallet'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -133,20 +134,25 @@ export default {
     switchChatActive (state, addr) {
       state.activeChatAddr = addr
     },
-    sendMessageLocal (state, { addr, index, items }) {
+    sendMessageLocal (state, { addr, index, items, walletId }) {
       let timestamp = Date.now()
       let newMsg = {
         type: 'text',
         outbound: true,
-        sent: false,
+        status: 'pending',
         items,
-        timestamp
+        timestamp,
+        walletId
       }
 
       Vue.set(state.data[addr].messages, index, newMsg)
     },
-    markSent (state, { index, addr }) {
-      state.data[addr].messages[index].sent = true
+    setStatus (state, { index, addr, status }) {
+      state.data[addr].messages[index].status = status
+    },
+    setStatusError (state, { index, addr, retryData }) {
+      state.data[addr].messages[index].status = 'error'
+      Vue.set(state.data[addr].messages[index], 'retryData', retryData)
     },
     switchOrder (state, addr) {
       state.order.splice(state.order.indexOf(addr), 1)
@@ -237,6 +243,7 @@ export default {
       } catch (err) {
         console.log(err)
         insuffientFundsNotify()
+        commit('setStatusError', { addr, index, retryData: { msgType: 'text', text } })
         return
       }
       let messageSet = new messages.MessageSet()
@@ -246,10 +253,10 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
-        commit('markSent', { addr, index })
+        commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
-        console.log(err.response)
         chainTooLongNotify()
+        commit('setStatusError', { addr, index, retryData: { msgType: 'text', text } })
       }
     },
     async sendStealthPayment ({ commit, rootGetters, getters }, { addr, amount, memo }) {
@@ -278,6 +285,7 @@ export default {
         var message = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount)
       } catch {
         insuffientFundsNotify()
+        commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo } })
         return
       }
       let messageSet = new messages.MessageSet()
@@ -287,9 +295,10 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
-        commit('markSent', { addr, index })
+        commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
         chainTooLongNotify()
+        commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo } })
       }
     },
     async sendImage ({ commit, rootGetters, getters }, { addr, image, caption }) {
@@ -318,6 +327,7 @@ export default {
         var message = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         insuffientFundsNotify()
+        commit('setStatusError', { addr, index, retryData: { msgType: 'image', caption } })
         return
       }
       let messageSet = new messages.MessageSet()
@@ -327,9 +337,10 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
-        commit('markSent', { addr, index })
+        commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
         chainTooLongNotify()
+        commit('setStatusError', { addr, index, retryData: { msgType: 'image', caption } })
       }
     },
     switchOrder ({ commit }, addr) {
@@ -397,9 +408,10 @@ export default {
       let entriesList = entries.getEntriesList()
       let newMsg = {
         outbound: false,
-        sent: true,
+        status: 'confirmed',
         items: [],
-        timestamp
+        timestamp,
+        walletId: calcId(changeOutput)
       }
       for (let index in entriesList) {
         let entry = entriesList[index]
