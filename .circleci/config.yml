@@ -1,0 +1,155 @@
+version: 2.1
+
+executors:
+  executor-linux-x64:
+    docker:
+      - image: circleci/node:latest
+
+jobs:
+  setup-linux-x64:
+    executor: executor-linux-x64
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: Pull Submodules
+          command: |
+            git submodule init
+            git submodule update --remote
+      - run:
+          name: Install NPM packages
+          command: yarn install
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - ./node_modules
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  test-linux-x64:
+    executor: executor-linux-x64
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install Quasar
+          command: sudo yarn global add @quasar/cli
+      - run:
+          name: Unit Tests
+          command: quasar test --unit jest
+      - store_test_results:
+          path: ./test/jest/coverage
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  build-linux-x64:
+    executor: executor-linux-x64
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install Wine
+          command: |
+            sudo dpkg --add-architecture i386
+            sudo apt update
+            sudo apt install -y wine32
+            sudo apt install -y wine
+      - run:
+          name: Install Protoc
+          command: |
+            PROTOC_VERSION=3.11.2
+            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.2/protoc-${PROTOC_VERSION}-linux-x86_64.zip
+            unzip protoc*.zip
+            sudo mv bin/protoc /usr/local/bin/
+      - run:
+          name: Generate Protobuffers
+          command: bash generate_protobufs.sh
+      - run:
+          name: Install Quasar
+          command: sudo yarn global add @quasar/cli
+      - run:
+          name: Build Linux
+          command: |
+            quasar build -m electron -b builder -T linux
+            mkdir packages_uncompressed
+            VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+            mv ./dist/electron/Packaged/ircash_${VERSION}_amd64.snap ./packages_uncompressed/ircash-${VERSION}-amd64.snap
+            mv ./dist/electron/Packaged/ircash-${VERSION}.AppImage ./packages_uncompressed
+      - run:
+          name: Build Windows 32-bit
+          command: |
+            quasar build -m electron -b builder -T win32
+            VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+            mv "./dist/electron/Packaged/ircash Setup ${VERSION}.exe" ./packages_uncompressed/ircash-${VERSION}-amd64-32bit.exe
+      - run:
+          name: Build Windows 64-bit
+          command: |
+            quasar build -m electron -b builder -T win
+            VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+            mv "./dist/electron/Packaged/ircash Setup ${VERSION}.exe" ./packages_uncompressed/ircash-${VERSION}-amd64-32bit.exe
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./packages_uncompressed
+
+  publish-github:
+      docker:
+        - image: cibuilds/github:0.10
+      steps:
+        - attach_workspace:
+            at: .
+        - run:
+            name: Sanity Check
+            command: |
+              VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+              if [ v${VERSION} != ${CIRCLE_TAG} ]; then exit 1; fi
+        - run:
+            name: Package Binaries
+            command: |
+              VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+              mkdir packages
+              for i in ./packages_uncompressed/*; do tar -zcvf ./packages/${i##*/}.tar.gz ./packages_uncompressed/${i##*/}; done
+              for i in ./packages_uncompressed/*; do zip -r ./packages/${i##*/}.zip ./packages_uncompressed/${i##*/}; done
+        - run:
+            name: Publish Release on GitHub
+            command: |
+              VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -draft -delete ${VERSION} ./packages
+
+workflows:
+  version: 2
+  untagged:
+    jobs:
+      - setup-linux-x64
+      - test-linux-x64:
+          requires:
+            - setup-linux-x64
+  tagged:
+    jobs:
+      - setup-linux-x64:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - build-linux-x64:
+          requires:
+            - setup-linux-x64
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - publish-github:
+          requires:
+            - build-linux-x64
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
