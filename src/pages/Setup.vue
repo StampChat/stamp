@@ -421,7 +421,6 @@ export default {
   created () {
     // Reset all messaging
     this.resetChats()
-    console.log('message reset')
   }
 }
 </script>

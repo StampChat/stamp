@@ -114,7 +114,7 @@ export default {
     },
     unfreezeUTXO (state, id) {
       let utxo = state.frozenUTXOs[id]
-      Vue.delete(state.utxos, id)
+      Vue.delete(state.frozenUTXOs, id)
       Vue.set(state.utxos, id, utxo)
     },
     popFreezeUTXO (state, result) {
@@ -238,7 +238,9 @@ export default {
         let utxo = frozenUTXOs[id]
         let scriptHash = formatting.toElectrumScriptHash(utxo.address)
         let elOutputs = await client.blockchainScripthash_listunspent(scriptHash)
-        if (elOutputs.some(output => (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex))) {
+        if (elOutputs.some(output => {
+          return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
+        })) {
           // Found utxo
           dispatch('unfreezeUTXO', id)
         } else {
@@ -416,8 +418,8 @@ export default {
     getUTXO (state, id) {
       return state.utxos[id]
     },
-    getFrozenUTXO (state, id) {
-      return state.utxos[id]
+    getFrozenUTXO: (state) => (id) => {
+      return state.frozenUTXOs[id]
     },
     generatePrivKey: (state) => (count) => {
       return Object.values(state.addresses)[count].privKey

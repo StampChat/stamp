@@ -39,6 +39,12 @@ export default {
     let stampPrivKey = PrivateKey(stampPrivBn)
     return stampPrivKey
   },
+  constructStampAddress (payloadDigest, privKey) {
+    let digestBn = cashlib.crypto.BN.fromBuffer(payloadDigest)
+    let stampPrivBn = privKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN()) // TODO: Check this
+    let stampAddress = PrivateKey(stampPrivBn).toAddress('testnet')
+    return stampAddress
+  },
   encrypt (plainText, privKey, destPubKey) {
     // Generate new (random) emphemeral key
     let ephemeralPrivKey = PrivateKey()

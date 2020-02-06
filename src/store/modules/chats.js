@@ -260,9 +260,10 @@ export default {
         await client.pushMessages(destAddr, messageSet)
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
+        console.log(err.response)
         // Unfreeze UTXOs
         // TODO: More subtle
-        usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
+        usedIDs.forEach(id => dispatch('wallet/fixFrozenUTXO', id, { root: true }))
 
         chainTooLongNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'text', text } })
