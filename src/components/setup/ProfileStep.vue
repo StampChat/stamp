@@ -59,12 +59,14 @@
 
 <script>
 export default {
+  props: ['initProfile'],
   data () {
     return {
-      name: '',
+      name: (this.initProfile !== null) ? this.initProfile.name : '',
       bio: '',
-      avatar: null,
-      avatarPath: null
+      avatar: (this.initProfile !== null) ? this.initProfile.avatar : null,
+      avatarPath: null,
+      foundProfileOpen: this.initProfile !== null
     }
   },
   methods: {

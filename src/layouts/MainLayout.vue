@@ -64,11 +64,16 @@ export default {
     ...mapActions(['setSplitterRatio', 'startClock']),
     ...mapActions({
       walletReinitialize: 'wallet/reinitialize',
+      electrumReinitialize: 'electrumHandler/reinitialize',
       relayClientReinitialize: 'relayClient/reinitialize',
       startContactUpdater: 'contacts/startContactUpdater',
       refreshChat: 'chats/refresh',
       updateHDUTXOs: 'wallet/updateHDUTXOs',
-      fixFrozenUTXOs: 'wallet/fixFrozenUTXOs'
+      fixFrozenUTXOs: 'wallet/fixFrozenUTXOs',
+      startListeners: 'wallet/startListeners'
+    }),
+    ...mapGetters({
+      getAllAddresses: 'wallet/getAllAddresses'
     }),
     onResize (size) {
       this.tabHeight = height(this.$refs.tabs.$el)
@@ -97,22 +102,14 @@ export default {
     }
   },
   async created () {
+    // Electrum reinitialize
+    this.electrumReinitialize()
+
     // Reinitialize wallet classes
     this.walletReinitialize()
 
     // Reinitialize relay client
     this.relayClientReinitialize()
-
-    this.$q.loading.show({
-      delay: 100,
-      message: 'Updating wallet...'
-    })
-
-    // Update UTXOs
-    await this.updateHDUTXOs()
-
-    // Fix frozen UTXOs
-    await this.fixFrozenUTXOs()
 
     // Start websocket listener
     this.$q.loading.show({
@@ -122,10 +119,25 @@ export default {
     let client = this.getRelayClient
     client.setUpWebsocket(this.getAddressStr, this.getToken)
 
-    this.$q.loading.hide()
-
     // Get historic messages
-    this.refreshChat()
+    await this.refreshChat()
+
+    this.$q.loading.show({
+      delay: 100,
+      message: 'Updating wallet...'
+    })
+
+    // Start electrum listeners
+    let addresses = Object.keys(this.getAllAddresses())
+    this.startListeners(addresses)
+
+    // Update UTXOs
+    await this.updateHDUTXOs()
+
+    // Fix frozen UTXOs
+    await this.fixFrozenUTXOs()
+
+    this.$q.loading.hide()
 
     // Start profile watcher
     this.startContactUpdater()

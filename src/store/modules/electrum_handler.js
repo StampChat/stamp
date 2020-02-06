@@ -1,3 +1,5 @@
+const ElectrumClient = require('electrum-client')
+
 export default {
   namespaced: true,
   state: { client: null, connected: false },
@@ -7,6 +9,9 @@ export default {
     },
     setConnected (state, connected) {
       state.connected = connected
+    },
+    reinitialize (state) {
+      state.client = new ElectrumClient(state.client.port, state.client.host, 'tcp')
     }
   },
   actions: {
@@ -14,10 +19,17 @@ export default {
       commit('setConnected', connected)
     },
     setClient ({ commit, dispatch }, client) {
-      client.connect()
+      commit('setClient', client)
+      dispatch('connect')
+    },
+    reinitialize ({ commit, dispatch }) {
+      commit('reinitialize')
+      dispatch('connect')
+    },
+    connect ({ getters, dispatch }) {
+      getters['getClient'].connect()
         .then(() => { dispatch('setConnected', true) })
         .catch(() => dispatch('setConnected', false))
-      commit('setClient', client)
     }
   },
   getters: {
