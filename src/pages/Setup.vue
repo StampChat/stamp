@@ -71,7 +71,7 @@
             />
             <q-btn
               v-else-if="step === 2"
-              @click="next()"
+              @click="nextWallet()"
               color="primary"
               :label="seedType==='new'?'New Wallet':'Import Wallet'"
               :disable="!electrumConnected || seed === null"
@@ -85,14 +85,14 @@
             />
             <q-btn
               v-else-if="step === 4"
-              @click="next()"
+              @click="nextProfile()"
               color="primary"
               :disable="!electrumConnected || profile === null"
               label="Continue"
             />
             <q-btn
               v-else
-              @click="next()"
+              @click="nextSettings()"
               color="primary"
               :disable="!electrumConnected || settings === null"
               :label="step === 5 ? 'Finish' : 'Continue'"
@@ -228,107 +228,103 @@ export default {
       getAllAddresses: 'wallet/getAllAddresses',
       getIdentityPrivKey: 'wallet/getIdentityPrivKey'
     }),
-    async next () {
-      switch (this.step) {
-        case 2:
-          // Reset wallet
-          this.resetWallet()
+    next () {
+      this.$refs.stepper.next()
+    },
+    async nextWallet () {
+      // Reset wallet
+      this.resetWallet()
 
-          this.$q.loading.show({
-            delay: 100,
-            message: 'Generating wallet...'
-          })
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Generating wallet...'
+      })
 
-          // Setup worker
-          let worker = new WalletGenWorker()
-          worker.onmessage = async (event) => {
-            this.$q.loading.show({
-              delay: 100,
-              message: 'Gathering balances...'
-            })
+      // Setup worker
+      let worker = new WalletGenWorker()
+      worker.onmessage = async (event) => {
+        this.$q.loading.show({
+          delay: 100,
+          message: 'Gathering balances...'
+        })
 
-            // Prepare wallet
-            let xPrivKeyObj = event.data
-            this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
-            this.setXPrivKey(this.xPrivKey)
-            this.initAddresses()
-            this.updateHDUTXOs()
+        // Prepare wallet
+        let xPrivKeyObj = event.data
+        this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
+        this.setXPrivKey(this.xPrivKey)
+        this.initAddresses()
+        this.updateHDUTXOs()
 
-            this.$q.loading.show({
-              delay: 100,
-              message: 'Watching wallet...'
-            })
+        this.$q.loading.show({
+          delay: 100,
+          message: 'Watching wallet...'
+        })
 
-            // Listen to addresses
-            let addresses = Object.keys(this.getAllAddresses())
-            await this.startListeners(addresses) // TODO: Better handling here
+        // Listen to addresses
+        let addresses = Object.keys(this.getAllAddresses())
+        await this.startListeners(addresses) // TODO: Better handling here
 
-            // Check for existing profile
-            this.$q.loading.show({
-              delay: 100,
-              message: 'Searching for existing profile...'
-            })
-            let ksHandler = this.getKsHandler()
-            let idAddress = this.getMyAddress()
+        // Check for existing profile
+        this.$q.loading.show({
+          delay: 100,
+          message: 'Searching for existing profile...'
+        })
+        let ksHandler = this.getKsHandler()
+        let idAddress = this.getMyAddress()
 
-            try {
-              let foundProfile = await ksHandler.getContact(idAddress)
-              this.initProfile = foundProfile
-              this.profile = foundProfile
-            } catch (err) {
-              if (err.response.status === 404) {
-                // No initial profile
-                this.initProfile = null
-              } else {
-                this.$q.loading.hide()
-                keyserverDisconnectedNotify()
-                return
-              }
-            }
-
-            this.$refs.stepper.next()
-
+        try {
+          let foundProfile = await ksHandler.getContact(idAddress)
+          this.initProfile = foundProfile
+          this.profile = foundProfile
+        } catch (err) {
+          if (err.response.status === 404) {
+            // No initial profile
+            this.initProfile = null
+          } else {
             this.$q.loading.hide()
-          }
-
-          // Send seed
-          worker.postMessage(this.seed)
-          break
-        case 4:
-          try {
-            await this.setUpProfile()
-          } catch (err) {
-            this.$q.loading.hide()
+            keyserverDisconnectedNotify()
             return
           }
+        }
 
-          this.$q.loading.hide()
-          this.$refs.stepper.next()
+        this.$refs.stepper.next()
 
-          break
-        case 5:
-          let client = new RelayClient(this.settings.relayUrl)
-
-          try {
-            await this.setUpFilter(client)
-          } catch (err) {
-            this.$q.loading.hide()
-            return
-          }
-
-          let profile = this.profile
-          profile.acceptancePrice = this.settings.acceptancePrice
-
-          this.setRelayClient(client)
-          this.setMyProfile(profile)
-          this.setSeedPhrase(this.seed)
-
-          this.$q.loading.hide()
-          this.$router.push('/')
-          break
-        default:
-          this.$refs.stepper.next()
+        this.$q.loading.hide()
       }
+
+      // Send seed
+      worker.postMessage(this.seed)
+    },
+    async nextProfile () {
+      try {
+        await this.setUpProfile()
+      } catch (err) {
+        this.$q.loading.hide()
+        return
+      }
+
+      this.$q.loading.hide()
+      this.$refs.stepper.next()
+    },
+    async nextSettings () {
+      let client = new RelayClient(this.settings.relayUrl)
+
+      try {
+        await this.setUpFilter(client)
+      } catch (err) {
+        this.$q.loading.hide()
+        return
+      }
+
+      let profile = this.profile
+      profile.acceptancePrice = this.settings.acceptancePrice
+
+      this.setRelayClient(client)
+      this.setMyProfile(profile)
+      this.setSeedPhrase(this.seed)
+
+      this.$q.loading.hide()
+      this.$router.push('/')
     },
     async setUpProfile () {
       // Set profile
