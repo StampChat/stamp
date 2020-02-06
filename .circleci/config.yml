@@ -104,6 +104,11 @@ jobs:
         - attach_workspace:
             at: .
         - run:
+            name: Sanity Check
+            command: |
+              VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+              if [ $VERSION == ${CIRCLE_TAG} ]; then exit 1; fi
+        - run:
             name: Package Binaries
             command: |
               VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
@@ -130,3 +135,5 @@ workflows:
       - publish-github:
           requires:
             - build-linux-x64
+          tags:
+            only: /^\d+\.\d+\.\d+$/
