@@ -172,8 +172,10 @@ import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
 import ProfileStep from '../components/setup/ProfileStep.vue'
 import SettingsStep from '../components/setup/SettingsStep.vue'
-import { defaultAcceptancePrice, defaultRelayUrl } from '../utils/constants'
+import { defaultAcceptancePrice, defaultRelayUrl, electrumURL } from '../utils/constants'
 import { keyserverDisconnectedNotify, insuffientFundsNotify, paymentFailureNotify, relayDisconnectedNotify } from '../utils/notifications'
+
+const ElectrumClient = require('electrum-client')
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -216,6 +218,7 @@ export default {
       updateHDUTXOs: 'wallet/updateHDUTXOs',
       setRelayToken: 'relayClient/setToken',
       setAcceptancePrice: 'myProfile/setAcceptancePrice',
+      setElectrumClient: 'electrumHandler/setClient',
       setRelayClient: 'relayClient/setClient',
       resetWallet: 'wallet/reset',
       setSeedPhrase: 'wallet/setSeedPhrase',
@@ -445,6 +448,10 @@ export default {
   created () {
     // Reset all messaging
     this.resetChats()
+
+    // Set electrum client
+    let ecl = new ElectrumClient(50001, electrumURL, 'tcp')
+    this.setClient(ecl)
   }
 }
 </script>
