@@ -10,6 +10,7 @@
   <a href="https://circleci.com/gh/cashweb/ircash">
     <img alt="Build Status" src="https://circleci.com/gh/cashweb/ircash.svg?style=svg">
   </a>
+
   <a href="LICENSE">
     <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg">
   </a>
@@ -19,7 +20,9 @@
 
 ### Install from Binary
 
-TODO
+1. Download the appropriate binary for your machine from the [latest releases](https://github.com/cashweb/ircash/releases).
+2. Unzip your package.
+3. Run it.
 
 ## Build from Source
 

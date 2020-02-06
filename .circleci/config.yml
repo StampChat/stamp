@@ -125,13 +125,22 @@ workflows:
   version: 2
   main:
     jobs:
-      - setup-linux-x64
+      - setup-linux-x64:
+          filters:
+            tags:
+              only: /.*/
       - test-linux-x64:
           requires:
             - setup-linux-x64
+          filters:
+            tags:
+              only: /.*/
       - build-linux-x64:
           requires:
             - setup-linux-x64
+          filters:
+            tags:
+              only: /.*/
       - publish-github:
           requires:
             - build-linux-x64
