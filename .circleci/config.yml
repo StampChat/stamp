@@ -107,7 +107,7 @@ jobs:
             name: Sanity Check
             command: |
               VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-              if [ v$VERSION == ${CIRCLE_TAG} ]; then exit 1; fi
+              if [ v${VERSION} != ${CIRCLE_TAG} ]; then exit 1; fi
         - run:
             name: Package Binaries
             command: |
