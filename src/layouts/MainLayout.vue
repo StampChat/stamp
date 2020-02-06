@@ -103,6 +103,17 @@ export default {
     // Reinitialize relay client
     this.relayClientReinitialize()
 
+    // Start websocket listener
+    this.$q.loading.show({
+      delay: 100,
+      message: 'Connecting to relay server...'
+    })
+    let client = this.getRelayClient
+    client.setUpWebsocket(this.getAddressStr, this.getToken)
+
+    // Get historic messages
+    this.refreshChat()
+
     this.$q.loading.show({
       delay: 100,
       message: 'Updating wallet...'
@@ -114,18 +125,7 @@ export default {
     // Fix frozen UTXOs
     await this.fixFrozenUTXOs()
 
-    // Start websocket listener
-    this.$q.loading.show({
-      delay: 100,
-      message: 'Connecting to relay server...'
-    })
-    let client = this.getRelayClient
-    client.setUpWebsocket(this.getAddressStr, this.getToken)
-
     this.$q.loading.hide()
-
-    // Get historic messages
-    this.refreshChat()
 
     // Start profile watcher
     this.startContactUpdater()
