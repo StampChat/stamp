@@ -11,7 +11,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}-0
+          key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: Pull Submodules
           command: |
@@ -19,9 +19,9 @@ jobs:
             git submodule update --remote
       - run:
           name: Install NPM packages
-          command: npm install
+          command: yarn install
       - save_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}-0
+          key: dependency-cache-{{ checksum "yarn.json" }}
           paths:
             - ./node_modules
       - persist_to_workspace:
@@ -36,7 +36,7 @@ jobs:
           at: .
       - run:
           name: Install Quasar
-          command: sudo npm install -g @quasar/cli
+          command: sudo yarn global add @quasar/cli
       - run:
           name: Unit Tests
           command: quasar test --unit jest
@@ -71,7 +71,7 @@ jobs:
           command: bash generate_protobufs.sh
       - run:
           name: Install Quasar
-          command: sudo npm install -g @quasar/cli
+          command: sudo yarn install -g @quasar/cli
       - run:
           name: Build Application
           command: quasar build -m electron -b builder -T all
