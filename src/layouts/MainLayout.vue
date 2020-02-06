@@ -67,7 +67,8 @@ export default {
       relayClientReinitialize: 'relayClient/reinitialize',
       startContactUpdater: 'contacts/startContactUpdater',
       refreshChat: 'chats/refresh',
-      updateUTXOs: 'wallet/updateUTXOs'
+      updateHDUTXOs: 'wallet/updateHDUTXOs',
+      fixFrozenUTXOs: 'wallet/fixFrozenUTXOs'
     }),
     onResize (size) {
       this.tabHeight = height(this.$refs.tabs.$el)
@@ -108,7 +109,10 @@ export default {
     })
 
     // Update UTXOs
-    await this.updateUTXOs()
+    await this.updateHDUTXOs()
+
+    // Fix frozen UTXOs
+    await this.fixFrozenUTXOs()
 
     // Start websocket listener
     this.$q.loading.show({

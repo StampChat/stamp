@@ -142,6 +142,9 @@ export default {
     unfreezeUTXO ({ commit }, id) {
       commit('unfreezeUTXO', id)
     },
+    removeFrozenUTXO ({ commit }, id) {
+      commit('removeFrozenUTXO', id)
+    },
     setSeedPhrase ({ commit }, seedPhrase) {
       commit('setSeedPhrase', seedPhrase)
     },
@@ -202,11 +205,46 @@ export default {
       })
       commit('refreshUTXOsByAddr', { addr: address, outputs })
     },
-    async updateUTXOs ({ getters, dispatch }) {
+    async updateHDUTXOs ({ getters, dispatch }) {
+      // Check HD Wallet
       let scriptHashes = Object.keys(getters['getElectrumScriptHashes'])
-
       await Promise
         .all(scriptHashes.map(scriptHash => dispatch('updateUTXOFromScriptHash', scriptHash)))
+    },
+    async fixFrozenUTXO ({ getters, rootGetters, dispatch }, id) {
+      // Unfreeze UTXO if confirmed to be unspent else delete
+      // WARNING: This is not thread-safe, do not call when others hold the UTXO
+      let client = rootGetters['electrumHandler/getClient']
+
+      let utxo = getters['getFrozenUTXO'](id)
+      let scriptHash = formatting.toElectrumScriptHash(utxo.address)
+      let elOutputs = await client.blockchainScripthash_listunspent(scriptHash)
+      if (elOutputs.some(output => {
+        return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
+      })) {
+        // Found utxo
+        dispatch('unfreezeUTXO', id)
+      } else {
+        dispatch('removeFrozenUTXO', id)
+      }
+    },
+    async fixFrozenUTXOs ({ dispatch, getters, rootGetters }) {
+      // Unfreeze UTXO if confirmed to be unspent else delete, for all UTXOs
+      // WARNING: This is not thread-safe, do not call when others hold the UTXO
+      let client = rootGetters['electrumHandler/getClient']
+
+      let frozenUTXOs = getters['getFrozenUTXOs']
+      await Promise.all(Object.keys(frozenUTXOs).map(async id => {
+        let utxo = frozenUTXOs[id]
+        let scriptHash = formatting.toElectrumScriptHash(utxo.address)
+        let elOutputs = await client.blockchainScripthash_listunspent(scriptHash)
+        if (elOutputs.some(output => (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex))) {
+          // Found utxo
+          dispatch('unfreezeUTXO', id)
+        } else {
+          dispatch('removeFrozenUTXO', id)
+        }
+      }))
     },
     addUTXO ({ commit }, output) {
       commit('addUTXO', output)
@@ -231,11 +269,6 @@ export default {
       }))
     },
     constructTransaction ({ commit, getters }, { outputs, feePerByte }) {
-      // Collect inputs
-      let addresses = getters['getAllAddresses']
-      let utxos = getters['getUTXOs']
-
-      // Construct Transaction
       let transaction = new cashlib.Transaction()
 
       // Add fee
@@ -248,6 +281,8 @@ export default {
       }
 
       // Coin selection
+      let addresses = getters['getAllAddresses']
+
       let signingKeys = []
       let usedIDs = []
       while (true) {
@@ -295,6 +330,7 @@ export default {
 
       // Add change outputs
       let delta = transaction.inputAmount - transaction.outputAmount
+      let utxos = getters['getUTXOs'] // TODO: Make length getter
       let nChangeAddresses = Math.max(Math.min(delta / (1024 + 34 * feePerByte) - 1, nUtxoGoal - Object.keys(utxos).length - 1), 0)
       let changeAddresses = Object.keys(getters['getChangeAddresses'])
 
@@ -373,6 +409,15 @@ export default {
     },
     getUTXOs (state) {
       return state.utxos
+    },
+    getFrozenUTXOs (state) {
+      return state.frozenUTXOs
+    },
+    getUTXO (state, id) {
+      return state.utxos[id]
+    },
+    getFrozenUTXO (state, id) {
+      return state.utxos[id]
     },
     generatePrivKey: (state) => (count) => {
       return Object.values(state.addresses)[count].privKey

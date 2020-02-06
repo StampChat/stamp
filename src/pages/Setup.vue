@@ -209,7 +209,7 @@ export default {
       setXPrivKey: 'wallet/setXPrivKey',
       initAddresses: 'wallet/initAddresses',
       startListeners: 'wallet/startListeners',
-      updateUTXOs: 'wallet/updateUTXOs',
+      updateHDUTXOs: 'wallet/updateHDUTXOs',
       setRelayToken: 'relayClient/setToken',
       setAcceptancePrice: 'myProfile/setAcceptancePrice',
       setRelayClient: 'relayClient/setClient',
@@ -248,7 +248,7 @@ export default {
             this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
             this.setXPrivKey(this.xPrivKey)
             this.initAddresses()
-            this.updateUTXOs()
+            this.updateHDUTXOs()
 
             this.$q.loading.show({
               delay: 100,
