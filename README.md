@@ -18,7 +18,7 @@
 
 **WARNING: IRCash is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the Bitcoin Cash testnet as to protect against lost funds.**
 
-### Install from Binary
+## Install from Binary
 
 1. Download the appropriate binary for your machine from the [latest releases](https://github.com/cashweb/ircash/releases).
 2. Unzip your package.
@@ -72,7 +72,7 @@ quasar build -m electron -b builder -T {target here}
 
 Note that one cannot cross-compile to MacOS and that building from Linux to Windows requires [Wine](https://www.winehq.org/).
 
-More information can be [found here](https://www.electron.build/) and [here](https://quasar.dev/quasar-cli/developing-electron-apps/build-commands).
+More information can be found [here](https://www.electron.build/) and [here](https://quasar.dev/quasar-cli/developing-electron-apps/build-commands).
 
 ### Android
 
@@ -82,7 +82,7 @@ More information can be [found here](https://www.electron.build/) and [here](htt
 quasar build -m capacitor -T android
 ```
 
-### Android
+### iOS
 
 **Unstable**
 
