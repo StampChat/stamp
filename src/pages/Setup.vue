@@ -451,7 +451,7 @@ export default {
 
     // Set electrum client
     let ecl = new ElectrumClient(50001, electrumURL, 'tcp')
-    this.setClient(ecl)
+    this.setElectrumClient(ecl)
   }
 }
 </script>
