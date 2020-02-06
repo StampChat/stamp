@@ -73,15 +73,29 @@ jobs:
           name: Install Quasar
           command: sudo yarn global add @quasar/cli
       - run:
-          name: Build Application
-          command: quasar build -m electron -b builder -T all
-      - store_artifacts:
-          path: ./dist/electron/ircash-linux-x64
-          destination: binaries
+          name: Build Linux
+          command: |
+            quasar build -m electron -b builder -T linux
+            mkdir packages_uncompressed
+            VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+            mv ./dist/electron/Packaged/ircash_${VERSION}_amd64.snap ./packages_uncompressed/ircash-${VERSION}-amd64.snap
+            mv ./dist/electron/Packaged/ircash_${VERSION}.AppImage ./packages_uncompressed/ircash-${VERSION}.AppImage
+      - run:
+          name: Build Windows 32-bit
+          command: |
+            quasar build -m electron -b builder -T win32
+            VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+            mv "./dist/electron/Packaged/ircash Setup ${VERSION}.exe" ./packages_uncompressed/ircash-${VERSION}-amd64-32bit.exe
+      - run:
+          name: Build Windows 64-bit
+          command: |
+            quasar build -m electron -b builder -T win
+            VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
+            mv "./dist/electron/Packaged/ircash Setup ${VERSION}.exe" ./packages_uncompressed/ircash-${VERSION}-amd64-32bit.exe
       - persist_to_workspace:
           root: .
           paths:
-            - ./dist/electron/ircash-linux-x64
+            - ./packages_uncompressed
 
   publish-github:
       docker:
@@ -94,17 +108,8 @@ jobs:
             command: |
               VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
               mkdir packages
-              cd packages
-              tar -zcvf ircash-${VERSION}-darwin-x64.tar.gz ../dist/electron/ircash-darwin-x64
-              zip -r ircash-${VERSION}-darwin-x64.zip ../dist/electron/ircash-darwin-x64
-              tar -zcvf ircash-${VERSION}-linux-x64.tar.gz ../dist/electron/ircash-darwin-x64
-              zip -r ircash-${VERSION}-linux-x64.zip ../dist/electron/ircash-linux-x64
-              tar -zcvf ircash-${VERSION}-mas-x64.tar.gz ../dist/electron/ircash-mas-x64
-              zip -r ircash-${VERSION}-mas-x64.zip ../dist/electron/ircash-mas-x64
-              tar -zcvf ircash-${VERSION}-mas-x64.tar.gz ../dist/electron/ircash-mas-x64
-              zip -r ircash-${VERSION}-mas-x64.zip ../dist/electron/ircash-mas-x64
-              tar -zcvf ircash-${VERSION}-win-x64.tar.gz ../dist/electron/ircash-win
-              zip -r ircash-${VERSION}-win-x64.zip ../dist/electron/ircash-win
+              for i in ./packages_uncompressed/*; do tar -zcvf ./packages/${i##*/}.tar.gz ./packages_uncompressed/${i##*/}; done
+              for i in ./packages_uncompressed/*; do zip -r ./packages/${i##*/}.zip ./packages_uncompressed/${i##*/}; done
         - run:
             name: Publish Release on GitHub
             command: |
