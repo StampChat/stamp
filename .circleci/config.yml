@@ -123,24 +123,28 @@ jobs:
 
 workflows:
   version: 2
-  main:
+  untagged:
+    jobs:
+      - setup-linux-x64
+      - test-linux-x64:
+          requires:
+            - setup-linux-x64
+  tagged:
     jobs:
       - setup-linux-x64:
           filters:
             tags:
-              only: /.*/
-      - test-linux-x64:
-          requires:
-            - setup-linux-x64
-          filters:
-            tags:
-              only: /.*/
+              only: /^v.*/
+            branches:
+              ignore: /.*/
       - build-linux-x64:
           requires:
             - setup-linux-x64
           filters:
             tags:
-              only: /.*/
+              only: /^v.*/
+            branches:
+              ignore: /.*/
       - publish-github:
           requires:
             - build-linux-x64
