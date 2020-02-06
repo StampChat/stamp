@@ -47,7 +47,10 @@
           style="min-height: 300px;"
           :done="step > 4"
         >
-          <profile-step v-on:profile="profile = $event" />
+          <profile-step
+            v-on:profile="profile = $event"
+            :initProfile="initProfile"
+          />
         </q-step>
         <q-step
           :name="5"
@@ -197,6 +200,7 @@ export default {
       generatedWarning: true,
       xPrivKey: null,
       profile: null,
+      initProfile: null,
       settings: {
         acceptancePrice: defaultAcceptancePrice,
         relayUrl: defaultRelayUrl
@@ -258,6 +262,30 @@ export default {
             // Listen to addresses
             let addresses = Object.keys(this.getAllAddresses())
             await this.startListeners(addresses) // TODO: Better handling here
+
+            // Check for existing profile
+            this.$q.loading.show({
+              delay: 100,
+              message: 'Searching for existing profile...'
+            })
+            let ksHandler = this.getKsHandler()
+            let idAddress = this.getMyAddress()
+
+            try {
+              let foundProfile = await ksHandler.getContact(idAddress)
+              this.initProfile = foundProfile
+              this.profile = foundProfile
+            } catch (err) {
+              if (err.response.status === 404) {
+                // No initial profile
+                this.initProfile = null
+              } else {
+                this.$q.loading.hide()
+                keyserverDisconnectedNotify()
+                return
+              }
+            }
+
             this.$refs.stepper.next()
 
             this.$q.loading.hide()
