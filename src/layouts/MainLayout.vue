@@ -1,5 +1,8 @@
 <template>
   <q-layout view="hHr LpR lff">
+    <q-dialog v-model="walletConnectOpen">
+      <wallet-connect-dialog />
+    </q-dialog>
     <my-drawer />
     <contact-drawer
       v-if="getActiveChat !== null"
@@ -39,25 +42,27 @@ import ChatList from '../components/chat/ChatList.vue'
 import MyDrawer from '../components/drawers/MyDrawer.vue'
 import ContactDrawer from '../components/drawers/ContactDrawer.vue'
 import MainHeader from '../components/MainHeader.vue'
+import WalletConnectDialog from '../components/dialogs/WalletConnectDialog.vue'
 import { mapActions, mapGetters } from 'vuex'
 import { dom } from 'quasar'
 const { height } = dom
 import { minSplitter, maxSplitter } from '../utils/constants'
 
 export default {
-  name: 'MainLayout',
   components: {
     Chat,
     ChatList,
     ContactDrawer,
     MyDrawer,
-    MainHeader
+    MainHeader,
+    WalletConnectDialog
   },
   data () {
     return {
       tabHeight: 50,
       minSplitter,
-      maxSplitter
+      maxSplitter,
+      walletConnectOpen: false
     }
   },
   methods: {
@@ -86,8 +91,8 @@ export default {
       getAddressStr: 'wallet/getMyAddressStr',
       getActiveChat: 'chats/getActiveChat',
       getContact: 'contacts/getContact',
-      getAllMessages: 'chats/getAllMessages'
-
+      getAllMessages: 'chats/getAllMessages',
+      walletConnected: 'electrumHandler/connected'
     }),
     ...mapGetters([
       'getSplitterRatio'
@@ -99,6 +104,12 @@ export default {
       set (value) {
         this.setSplitterRatio(value)
       }
+    }
+  },
+  watch: {
+    walletConnected (newVal, oldVal) {
+      // TODO: Debounce
+      this.walletConnectOpen = !newVal
     }
   },
   async created () {
