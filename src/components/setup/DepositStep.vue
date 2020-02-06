@@ -59,12 +59,12 @@
           style="margin-left: auto; margin-right: auto; margin-top: 50px;"
           show-value
           :value="percentageBalance"
-          size="225px"
+          size="18.5vw"
           :thickness="0.25"
           color="green"
           track-color="grey"
         >
-          <span class="text-h4">{{ formatBalance }}</span>
+          <span class="text-h5">{{ formatBalance }}</span>
         </q-circular-progress>
       </div>
       <div class="row">
