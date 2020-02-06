@@ -57,7 +57,7 @@ jobs:
           command: |
             sudo dpkg --add-architecture i386
             sudo apt update
-            sudo apt install wine32
+            sudo apt install -y wine32
             sudo apt install -y wine
       - run:
           name: Install Protoc
