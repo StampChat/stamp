@@ -79,7 +79,7 @@ jobs:
             mkdir packages_uncompressed
             VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
             mv ./dist/electron/Packaged/ircash_${VERSION}_amd64.snap ./packages_uncompressed/ircash-${VERSION}-amd64.snap
-            mv ./dist/electron/Packaged/ircash_${VERSION}.AppImage ./packages_uncompressed/ircash-${VERSION}.AppImage
+            mv ./dist/electron/Packaged/ircash-${VERSION}.AppImage ./packages_uncompressed
       - run:
           name: Build Windows 32-bit
           command: |
