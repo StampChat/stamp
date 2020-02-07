@@ -11,7 +11,13 @@
       :address="address"
       :id="timestamp"
       :message="message"
+      @dialogClick="transactionDialog = true"
     />
+
+    <!-- Transaction Dialog -->
+    <q-dialog v-model="transactionDialog">
+      <transaction-dialog :transaction="message.stampTx" />
+    </q-dialog>
 
     <chat-message-section
       v-for="(item, index) in message.items"
@@ -40,12 +46,19 @@
 import { mapGetters, mapActions } from 'vuex'
 import ChatMessageSection from './ChatMessageSection.vue'
 import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
+import TransactionDialog from '../dialogs/TransactionDialog.vue'
 import formatting from '../../utils/formatting'
 
 export default {
   components: {
     ChatMessageSection,
-    ChatMessageMenu
+    ChatMessageMenu,
+    TransactionDialog
+  },
+  data () {
+    return {
+      transactionDialog: false
+    }
   },
   methods: {
     ...mapGetters(['getUnixTime']),

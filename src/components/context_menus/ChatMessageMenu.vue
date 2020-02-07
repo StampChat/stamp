@@ -8,12 +8,19 @@
       style="min-width: 100px"
     >
       <q-item
+        clickable
+        v-close-popup
+        @click="$emit('dialogClick')"
+      >
+        <q-item-section> Stamp Transaction </q-item-section>
+      </q-item>
+      <q-item
         v-if='message.retryData !== undefined'
         clickable
         v-close-popup
         @click="resend"
       >
-        <q-item-section>Resend</q-item-section>
+        <q-item-section> Resend </q-item-section>
       </q-item>
       <q-separator />
       <q-item
@@ -21,7 +28,7 @@
         v-close-popup
         @click="copyMessage"
       >
-        <q-item-section>Copy </q-item-section>
+        <q-item-section> Copy </q-item-section>
       </q-item>
       <q-item
         clickable
