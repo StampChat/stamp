@@ -68,9 +68,9 @@ export default {
   methods: {
     ...mapActions(['setSplitterRatio', 'startClock']),
     ...mapActions({
-      walletReinitialize: 'wallet/reinitialize',
-      electrumReinitialize: 'electrumHandler/reinitialize',
-      relayClientReinitialize: 'relayClient/reinitialize',
+      walletRehydrate: 'wallet/rehydrate',
+      electrumRehydrate: 'electrumHandler/rehydrate',
+      relayClientRehydrate: 'relayClient/rehydrate',
       startContactUpdater: 'contacts/startContactUpdater',
       refreshChat: 'chats/refresh',
       updateHDUTXOs: 'wallet/updateHDUTXOs',
@@ -113,14 +113,14 @@ export default {
     }
   },
   async created () {
-    // Electrum reinitialize
-    this.electrumReinitialize()
+    // Rehydrate electrum
+    this.electrumRehydrate()
 
-    // Reinitialize wallet classes
-    this.walletReinitialize()
+    // Rehydrate wallet classes
+    this.walletRehydrate()
 
-    // Reinitialize relay client
-    this.relayClientReinitialize()
+    // Rehydrate relay client
+    this.relayClientRehydrate()
 
     // Start websocket listener
     this.$q.loading.show({

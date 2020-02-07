@@ -55,7 +55,7 @@ export default {
         .deriveChild(0, true)
         .privateKey // TODO: Proper path for this
     },
-    reinitialize (state) {
+    rehydrate (state) {
       if (state.xPrivKey != null) {
         state.xPrivKey = cashlib.HDPrivateKey.fromObject(state.xPrivKey)
         state.identityPrivKey = cashlib.PrivateKey.fromObject(state.identityPrivKey)
@@ -151,8 +151,8 @@ export default {
     reset ({ commit }) {
       commit('reset')
     },
-    reinitialize ({ commit }) {
-      commit('reinitialize')
+    rehydrate ({ commit }) {
+      commit('rehydrate')
     },
     // TODO: Set callbacks
     setXPrivKey ({ commit }, xPrivKey) {

@@ -13,7 +13,7 @@ export default {
     setConnected (state, connected) {
       state.connected = connected
     },
-    reinitialize (state) {
+    rehydrate (state) {
       state.client = new ElectrumClient(state.client.port, state.client.host, 'tcp')
       state.client.onError = function (err) {
         console.log(err)
@@ -29,8 +29,8 @@ export default {
       commit('setClient', client)
       dispatch('connect')
     },
-    reinitialize ({ commit, dispatch }) {
-      commit('reinitialize')
+    rehydrate ({ commit, dispatch }) {
+      commit('rehydrate')
       dispatch('connect')
     },
     connect ({ getters, dispatch }) {

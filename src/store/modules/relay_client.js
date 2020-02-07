@@ -13,7 +13,7 @@ export default {
     setToken (state, token) {
       state.token = token
     },
-    reinitialize (state) {
+    rehydrate (state) {
       if (state.client !== null) {
         state.client = new RelayClient(state.client.url)
       }
@@ -26,8 +26,8 @@ export default {
     setToken ({ commit }, token) {
       commit('setToken', token)
     },
-    reinitialize ({ commit }) {
-      commit('reinitialize')
+    rehydrate ({ commit }) {
+      commit('rehydrate')
     }
   },
   getters: {
