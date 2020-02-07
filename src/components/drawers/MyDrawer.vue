@@ -170,9 +170,7 @@ export default {
     }),
     ...mapGetters({
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',
-      getMyAddress: 'wallet/getMyAddress',
-      getRelayToken: 'relayClient/getToken',
-      getRelayClient: 'relayClient/getClient'
+      getMyAddress: 'wallet/getMyAddress'
     })
   },
   computed: {

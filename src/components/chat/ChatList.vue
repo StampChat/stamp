@@ -5,14 +5,31 @@
       <wallet-dialog />
     </q-dialog>
 
+    <!-- Wallet reconnect dialog -->
+    <q-dialog v-model="walletConnectOpen">
+      <wallet-connect-dialog />
+    </q-dialog>
+
     <q-item
       clickable
       v-ripple
-      @click="walletOpen=true"
     >
-      <q-item-section>
+      <q-item-section @click="walletOpen=true">
         <q-item-label>Balance</q-item-label>
         <q-item-label caption>{{ getBalance }}</q-item-label>
+      </q-item-section>
+      <q-item-section
+        v-if="!walletConnected"
+        side
+        clickable
+        @click="walletConnectOpen=true"
+      >
+        <q-btn
+          icon='account_balance_wallet'
+          flat
+          round
+          color="red"
+        />
       </q-item-section>
     </q-item>
     <q-separator />
@@ -27,6 +44,9 @@
         <q-item-label>Add contacts from the drawer above...</q-item-label>
       </q-item-section>
     </q-item>
+    <q-item>
+
+    </q-item>
   </q-list>
 </template>
 
@@ -34,24 +54,27 @@
 import ChatListItem from './ChatListItem.vue'
 import { mapGetters } from 'vuex'
 import formatting from '../../utils/formatting'
-import WalletDialog from '../dialogs/WalletDialog'
+import WalletDialog from '../dialogs/WalletDialog.vue'
+import WalletConnectDialog from '../dialogs/WalletConnectDialog.vue'
 
 export default {
   components: {
     ChatListItem,
-    WalletDialog
+    WalletDialog,
+    WalletConnectDialog
   },
   data () {
     return {
-      walletOpen: false
+      walletOpen: false,
+      walletConnectOpen: false
     }
   },
   computed: {
     ...mapGetters({
       getChatOrder: 'chats/getChatOrder',
       getNumUnread: 'chats/getNumUnread',
-      getBalanceVuex: 'wallet/getBalance'
-
+      getBalanceVuex: 'wallet/getBalance',
+      walletConnected: 'electrumHandler/connected'
     }),
     getBalance () {
       return formatting.formatBalance(this.getBalanceVuex)
