@@ -136,7 +136,7 @@ export default {
     switchChatActive (state, addr) {
       state.activeChatAddr = addr
     },
-    sendMessageLocal (state, { addr, index, items, stampOutput }) {
+    sendMessageLocal (state, { addr, index, items, stampTx }) {
       let timestamp = Date.now()
       let newMsg = {
         type: 'text',
@@ -144,10 +144,13 @@ export default {
         status: 'pending',
         items,
         timestamp,
-        stampOutput
+        stampTx
       }
 
       Vue.set(state.data[addr].messages, index, newMsg)
+    },
+    setStampTx (state, { addr, index, stampTx }) {
+      state.data[addr].messages[index].stampTx = stampTx
     },
     setStatus (state, { index, addr, status }) {
       state.data[addr].messages[index].status = status
@@ -180,7 +183,7 @@ export default {
         // TODO: Better indexing
         messages[index] = newMsg
 
-        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
+        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null })
         state.order.unshift(addr)
       } else {
         // TODO: Better indexing
@@ -237,14 +240,14 @@ export default {
         }
       ]
       let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items, stampOutput: null })
+      commit('sendMessageLocal', { addr, index, items, stampTx: null })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, usedIDs } = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs, stampTx } = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         console.log(err)
         insuffientFundsNotify()
@@ -258,6 +261,7 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
+        commit('setStampTx', { addr, index, stampTx })
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
         console.log(err.response)
@@ -292,7 +296,7 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, usedIDs } = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs, stampTx } = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount)
       } catch {
         insuffientFundsNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo } })
@@ -305,6 +309,7 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
+        commit('setStampTx', { addr, index, stampTx })
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
         // Unfreeze UTXOs
@@ -338,7 +343,7 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, usedIDs } = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs, stampTx } = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         insuffientFundsNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
@@ -351,6 +356,7 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
+        commit('setStampTx', { addr, index, stampTx })
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
         // Unfreeze UTXOs
@@ -429,7 +435,7 @@ export default {
         status: 'confirmed',
         items: [],
         timestamp,
-        stampOutput
+        stampTx
       }
       for (let index in entriesList) {
         let entry = entriesList[index]
@@ -481,7 +487,7 @@ export default {
         }
       }
       let index = Date.now()
-      commit('receiveMessage', { addr: senderAddr, index, newMsg })
+      commit('receiveMessage', { addr: senderAddr, index, newMsg, stampTx })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       let myAddressStr = rootGetters['wallet/getMyAddressStr']

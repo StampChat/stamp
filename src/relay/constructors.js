@@ -54,7 +54,7 @@ export default {
     let rawStampTx = transaction.toBuffer()
     message.setStampTx(rawStampTx)
 
-    return { message, usedIDs }
+    return { message, usedIDs, stampTx: transaction }
   },
   constructPayload (entries, privKey, destPubKey, scheme) {
     let payload = new messages.Payload()
@@ -91,8 +91,8 @@ export default {
     entries.addEntries(textEntry)
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
-    let { message, usedIDs } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
-    return { message, usedIDs }
+    let { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
+    return { message, usedIDs, stampTx }
   },
   async constructStealthPaymentMessage (amount, memo, privKey, destPubKey, scheme, stampAmount) {
     let entries = new messages.Entries()
@@ -131,8 +131,8 @@ export default {
     }
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
-    let { message, usedIDs } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
-    return { message, usedIDs }
+    let { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
+    return { message, usedIDs, stampTx }
   },
   async constructImageMessage (image, caption, privKey, destPubKey, scheme, stampAmount) {
     let entries = new messages.Entries()
@@ -168,8 +168,8 @@ export default {
     }
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
-    let { message, usedIDs } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
-    return { message, usedIDs }
+    let { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
+    return { message, usedIDs, stampTx }
   },
   constructPriceFilterApplication (isPublic, acceptancePrice, notificationPrice, privKey) {
     // Construct PriceFilter

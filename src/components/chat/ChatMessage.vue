@@ -1,6 +1,7 @@
 <template>
   <q-chat-message
     class='q-py-sm'
+    :name="stampPrice"
     :avatar="contact.avatar"
     :sent="message.outbound"
     :stamp="formatedTimestamp"
@@ -79,6 +80,13 @@ export default {
         return this.message.body.caption
       } else {
         return 'Unknown'
+      }
+    },
+    stampPrice () {
+      if (this.message.stampTx !== null) {
+        return this.message.stampTx.outputs[0].satoshis + ' sats'
+      } else {
+        return ''
       }
     }
   },
