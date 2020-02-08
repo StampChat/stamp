@@ -173,9 +173,13 @@ import DepositStep from '../components/setup/DepositStep.vue'
 import ProfileStep from '../components/setup/ProfileStep.vue'
 import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultAcceptancePrice, defaultRelayUrl, electrumURL } from '../utils/constants'
-import { keyserverDisconnectedNotify, insuffientFundsNotify, paymentFailureNotify, relayDisconnectedNotify } from '../utils/notifications'
-
-const ElectrumClient = require('electrum-client')
+import {
+  keyserverDisconnectedNotify,
+  insuffientFundsNotify,
+  paymentFailureNotify,
+  relayDisconnectedNotify,
+  walletDisconnectedNotify
+} from '../utils/notifications'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -218,7 +222,9 @@ export default {
       updateHDUTXOs: 'wallet/updateHDUTXOs',
       setRelayToken: 'relayClient/setToken',
       setAcceptancePrice: 'myProfile/setAcceptancePrice',
-      setElectrumClient: 'electrumHandler/setClient',
+      newElectrumClient: 'electrumHandler/new',
+      electrumConnect: 'electrumHandler/connect',
+      electrumKeepAlive: 'electrumHandler/keepAlive',
       setRelayClient: 'relayClient/setClient',
       resetWallet: 'wallet/reset',
       setSeedPhrase: 'wallet/setSeedPhrase',
@@ -256,7 +262,12 @@ export default {
         this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
         this.setXPrivKey(this.xPrivKey)
         this.initAddresses()
-        this.updateHDUTXOs()
+        try {
+          this.updateHDUTXOs()
+        } catch (err) {
+          console.log(err)
+          walletDisconnectedNotify()
+        }
 
         this.$q.loading.show({
           delay: 100,
@@ -264,8 +275,13 @@ export default {
         })
 
         // Listen to addresses
-        let addresses = Object.keys(this.getAllAddresses())
-        await this.startListeners(addresses) // TODO: Better handling here
+        try {
+          let addresses = Object.keys(this.getAllAddresses())
+          await this.startListeners(addresses) // TODO: Better handling here
+        } catch (err) {
+          console.log(err)
+          walletDisconnectedNotify()
+        }
 
         // Check for existing profile
         this.$q.loading.show({
@@ -356,6 +372,7 @@ export default {
       try {
         var { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
       } catch (err) {
+        console.log(err)
         insuffientFundsNotify()
         throw err
       }
@@ -445,13 +462,14 @@ export default {
   computed: {
     ...mapGetters({ electrumConnected: 'electrumHandler/connected' })
   },
-  created () {
+  async created () {
     // Reset all messaging
     this.resetChats()
 
     // Set electrum client
-    let ecl = new ElectrumClient(50001, electrumURL, 'tcp')
-    this.setElectrumClient(ecl)
+    this.newElectrumClient({ host: electrumURL, port: 50001, protocol: 'tcp' })
+    await this.electrumConnect()
+    this.electrumKeepAlive()
   }
 }
 </script>

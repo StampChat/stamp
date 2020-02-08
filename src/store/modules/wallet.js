@@ -191,7 +191,7 @@ export default {
     },
     async updateUTXOFromScriptHash ({ commit, rootGetters, getters }, scriptHash) {
       let client = rootGetters['electrumHandler/getClient']
-      let elOutputs = await client.blockchainScripthash_listunspent(scriptHash)
+      var elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
       let { address } = getters['getAddressByElectrumScriptHash'](scriptHash)
       let outputs = elOutputs.map(elOutput => {
         let output = {
@@ -218,7 +218,7 @@ export default {
 
       let utxo = getters['getFrozenUTXO'](id)
       let scriptHash = formatting.toElectrumScriptHash(utxo.address)
-      let elOutputs = await client.blockchainScripthash_listunspent(scriptHash)
+      let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
       if (elOutputs.some(output => {
         return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
       })) {
@@ -232,12 +232,11 @@ export default {
       // Unfreeze UTXO if confirmed to be unspent else delete, for all UTXOs
       // WARNING: This is not thread-safe, do not call when others hold the UTXO
       let client = rootGetters['electrumHandler/getClient']
-
       let frozenUTXOs = getters['getFrozenUTXOs']
       await Promise.all(Object.keys(frozenUTXOs).map(async id => {
         let utxo = frozenUTXOs[id]
         let scriptHash = formatting.toElectrumScriptHash(utxo.address)
-        let elOutputs = await client.blockchainScripthash_listunspent(scriptHash)
+        let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
         if (elOutputs.some(output => {
           return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
         })) {
@@ -255,8 +254,8 @@ export default {
       commit('removeUTXO', id)
     },
     async startListeners ({ dispatch, rootGetters }, addresses) {
-      let client = rootGetters['electrumHandler/getClient']
-      await client.subscribe.on(
+      let ecl = rootGetters['electrumHandler/getClient']
+      await ecl.events.on(
         'blockchain.scripthash.subscribe',
         async (result) => {
           let scriptHash = result[0]
@@ -267,7 +266,7 @@ export default {
         let scriptHashRaw = scriptHash.toBuffer()
         let digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
         let digestHexReversed = digest.reverse().toString('hex')
-        client.blockchainScripthash_subscribe(digestHexReversed)
+        ecl.methods.blockchain_scripthash_subscribe(digestHexReversed)
       }))
     },
     constructTransaction ({ commit, getters }, { outputs, feePerByte }) {
@@ -359,7 +358,7 @@ export default {
       if (timeNow - feeInfo.lastUpdate > feeUpdateTimerMilliseconds) {
         // Update fee
         let electrumClient = rootGetters['electrumHandler/getClient']
-        let feePerByte = await electrumClient.blockchainEstimatefee(1) * 100_000_000 / 1000 * 1.8 // TODO: Don't do +80%
+        let feePerByte = await electrumClient.methods.blockchain_estimatefee(1) * 100_000_000 / 1000 * 1.8 // TODO: Don't do +80%
         commit('setFeeInfo', { feePerByte, lastUpdate: timeNow })
         return feePerByte
       } else {

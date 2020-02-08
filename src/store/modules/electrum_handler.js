@@ -1,24 +1,31 @@
-const ElectrumClient = require('electrum-client')
+import { ElectrumClient } from 'electrumjs'
+import { pingInterval } from '../../utils/constants'
 
 export default {
   namespaced: true,
   state: {
+    host: null,
+    port: null,
+    protocol: null,
     client: null,
     connected: false
   },
   mutations: {
-    setClient (state, client) {
-      state.client = client
+    new (state, { port, host, protocol }) {
+      let ecl = new ElectrumClient(host, port, protocol)
+      state.client = ecl
+      state.host = host
+      state.port = port
+      state.protocol = protocol
     },
     setConnected (state, connected) {
       state.connected = connected
     },
     rehydrate (state) {
-      state.client = new ElectrumClient(state.client.port, state.client.host, 'tcp')
-      state.client.onError = function (err) {
-        console.log(err)
-        state.connected = false
-      }
+      state.client = new ElectrumClient(state.host, state.port, state.protocol)
+    },
+    setErrorCallback (state, callback) {
+      state.client.onError = callback
     }
   },
   actions: {
@@ -27,16 +34,53 @@ export default {
     },
     setClient ({ commit, dispatch }, client) {
       commit('setClient', client)
-      dispatch('connect')
+      commit('setErrorCallback', function (_err) {
+        dispatch('setConnected', false)
+      })
     },
-    rehydrate ({ commit, dispatch }) {
+    new ({ commit }, { port, host, protocol }) {
+      commit('new', { port, host, protocol })
+      commit('setErrorCallback', function (err) {
+        console.log(err)
+        commit('setConnected', false)
+      })
+    },
+    rehydrate ({ commit }) {
       commit('rehydrate')
-      dispatch('connect')
+      commit('setErrorCallback', function (_err) {
+        commit('setConnected', false)
+      })
     },
-    connect ({ getters, dispatch }) {
-      getters['getClient'].connect()
-        .then(() => dispatch('setConnected', true))
-        .catch(() => dispatch('setConnected', false))
+    async connect ({ getters, commit }) {
+      try {
+        await getters['getClient'].connect()
+        commit('setConnected', true)
+      } catch (err) {
+        console.log(err)
+        commit('setConnected', false)
+      }
+    },
+    async checkConnection ({ getters }) {
+      try {
+        await getters['getClient'].methods.server_ping()
+        return true
+      } catch (err) {
+        console.log(err)
+        return false
+      }
+    },
+    keepAlive ({ dispatch, getters }) {
+      setInterval(async () => {
+        if (getters['connected']) {
+          if (await dispatch('checkConnection')) {
+            dispatch('setConnected', true)
+          } else {
+            dispatch('setConnected', false)
+          }
+        } else {
+          dispatch('connect')
+        }
+      }, pingInterval)
     }
   },
   getters: {

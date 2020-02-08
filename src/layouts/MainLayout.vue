@@ -70,6 +70,8 @@ export default {
     ...mapActions({
       walletRehydrate: 'wallet/rehydrate',
       electrumRehydrate: 'electrumHandler/rehydrate',
+      electrumConnect: 'electrumHandler/connect',
+      electrumKeepAlive: 'electrumHandler/keepAlive',
       relayClientRehydrate: 'relayClient/rehydrate',
       startContactUpdater: 'contacts/startContactUpdater',
       refreshChat: 'chats/refresh',
@@ -115,6 +117,8 @@ export default {
   async created () {
     // Rehydrate electrum
     this.electrumRehydrate()
+    this.electrumConnect()
+    this.electrumKeepAlive()
 
     // Rehydrate wallet classes
     this.walletRehydrate()
@@ -127,26 +131,34 @@ export default {
       delay: 100,
       message: 'Connecting to relay server...'
     })
-    let client = this.getRelayClient
-    client.setUpWebsocket(this.getAddressStr, this.getToken)
+    try {
+      let client = this.getRelayClient
+      client.setUpWebsocket(this.getAddressStr, this.getToken)
 
-    // Get historic messages
-    await this.refreshChat()
+      // Get historic messages
+      await this.refreshChat()
+    } catch (err) {
+      console.log(err)
+    }
 
     this.$q.loading.show({
       delay: 100,
       message: 'Updating wallet...'
     })
 
-    // Start electrum listeners
-    let addresses = Object.keys(this.getAllAddresses())
-    this.startListeners(addresses)
+    try {
+      // Start electrum listeners
+      let addresses = Object.keys(this.getAllAddresses())
+      this.startListeners(addresses)
 
-    // Update UTXOs
-    await this.updateHDUTXOs()
+      // Update UTXOs
+      await this.updateHDUTXOs()
 
-    // Fix frozen UTXOs
-    await this.fixFrozenUTXOs()
+      // Fix frozen UTXOs
+      await this.fixFrozenUTXOs()
+    } catch (err) {
+      console.log(err)
+    }
 
     this.$q.loading.hide()
 

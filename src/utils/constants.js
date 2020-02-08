@@ -1,8 +1,11 @@
 export const minSplitter = 20
 export const maxSplitter = 75
 
-// Wallet constants
+// Electrum constants
 export const electrumURL = '35.238.56.17'
+export const pingInterval = 10_000
+
+// Wallet constants
 export const numAddresses = 10
 export const numChangeAddresses = 10
 export const recomendedBalance = 2_000
