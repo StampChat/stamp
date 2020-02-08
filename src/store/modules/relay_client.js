@@ -4,9 +4,13 @@ export default {
   namespaced: true,
   state: {
     client: null,
-    token: null
+    token: null,
+    connected: true
   },
   mutations: {
+    setConnected (state, connected) {
+      state.connected = connected
+    },
     setClient (state, client) {
       state.client = client
     },
@@ -20,6 +24,9 @@ export default {
     }
   },
   actions: {
+    setConnected ({ commit }, connected) {
+      commit('setConnected', connected)
+    },
     setClient ({ commit }, client) {
       commit('setClient', client)
     },
@@ -31,6 +38,9 @@ export default {
     }
   },
   getters: {
+    connected (state) {
+      return state.connected
+    },
     getClient (state) {
       return state.client
     },

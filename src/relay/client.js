@@ -38,6 +38,16 @@ class RelayClient {
         store.commit('chats/setLastReceived', lastReceived + 1)
       }
     }
+    socket.onerror = function (err) {
+      console.error(err)
+      store.dispatch('relayClient/setConnected', false)
+    }
+    socket.onclose = function (close) {
+      store.dispatch('relayClient/setConnected', false)
+    }
+    socket.onopen = function (open) {
+      store.dispatch('relayClient/setConnected', true)
+    }
   }
 
   async getAcceptancePrice (addr) {
