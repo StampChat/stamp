@@ -1,25 +1,32 @@
 <template>
-  <q-card style="min-width: 80%">
-    <q-card-section>
-      <div class="text-h6">Image</div>
-    </q-card-section>
-    <q-card-section>
-      <q-img :src="image" />
-    </q-card-section>
-
-    <q-card-actions align="right">
+  <q-img
+    :src="image"
+    native-context-menu
+    @mouseenter="showBtn = true"
+    @mouseleave="showBtn = false"
+  >
+    <div
+      v-if="showBtn"
+      class="absolute-bottom all-pointer-events"
+    >
       <q-btn
-        flat
+        size='md'
+        class='float-right'
+        color='primary'
         label="Close"
-        color="primary"
         v-close-popup
       />
-    </q-card-actions>
-  </q-card>
+    </div>
+  </q-img>
 </template>
 
 <script>
 export default {
-  props: ['image']
+  props: ['image'],
+  data () {
+    return {
+      showBtn: false
+    }
+  }
 }
 </script>
