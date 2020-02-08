@@ -77,6 +77,7 @@ export default {
       refreshChat: 'chats/refresh',
       updateHDUTXOs: 'wallet/updateHDUTXOs',
       fixFrozenUTXOs: 'wallet/fixFrozenUTXOs',
+      fixUTXOs: 'wallet/fixUTXOs',
       startListeners: 'wallet/startListeners'
     }),
     ...mapGetters({
@@ -126,7 +127,7 @@ export default {
     // Rehydrate relay client
     this.relayClientRehydrate()
 
-    // Start websocket listener
+    // Start relay listener
     this.$q.loading.show({
       delay: 100,
       message: 'Connecting to relay server...'
@@ -134,8 +135,16 @@ export default {
     try {
       let client = this.getRelayClient
       client.setUpWebsocket(this.getAddressStr, this.getToken)
+    } catch (err) {
+      console.error(err)
+    }
 
-      // Get historic messages
+    // Get historic messages
+    this.$q.loading.show({
+      delay: 100,
+      message: 'Getting messages...'
+    })
+    try {
       await this.refreshChat()
     } catch (err) {
       console.error(err)
@@ -156,6 +165,9 @@ export default {
 
       // Fix frozen UTXOs
       await this.fixFrozenUTXOs()
+
+      // Fix UTXOs
+      await this.fixUTXOs()
     } catch (err) {
       console.error(err)
     }

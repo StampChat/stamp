@@ -229,7 +229,7 @@ export default {
       }
     },
     async fixFrozenUTXOs ({ dispatch, getters, rootGetters }) {
-      // Unfreeze UTXO if confirmed to be unspent else delete, for all UTXOs
+      // Unfreeze UTXO if confirmed to be unspent else delete, for all frozen UTXOs
       // WARNING: This is not thread-safe, do not call when others hold the UTXO
       let client = rootGetters['electrumHandler/getClient']
       let frozenUTXOs = getters['getFrozenUTXOs']
@@ -244,6 +244,25 @@ export default {
           dispatch('unfreezeUTXO', id)
         } else {
           dispatch('removeFrozenUTXO', id)
+        }
+      }))
+    },
+    async fixUTXOs ({ dispatch, getters, rootGetters }) {
+      // Unfreeze UTXO if confirmed to be unspent else delete, for all (non-p2pkh) UTXOs
+      // WARNING: This is not thread-safe, do not call when others hold the UTXO
+      let client = rootGetters['electrumHandler/getClient']
+      let utxos = getters['getUTXOs']
+      await Promise.all(Object.keys(utxos).map(async id => {
+        let utxo = utxos[id]
+        if (utxo.type !== 'p2pkh') {
+          let scriptHash = formatting.toElectrumScriptHash(utxo.address)
+          let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
+          if (!elOutputs.some(output => {
+            return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
+          })) {
+            // No such utxo
+            dispatch('removeUTXO', id)
+          }
         }
       }))
     },
