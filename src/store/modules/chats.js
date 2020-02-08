@@ -183,7 +183,7 @@ export default {
         // TODO: Better indexing
         messages[index] = newMsg
 
-        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null })
+        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
         state.order.unshift(addr)
       } else {
         // TODO: Better indexing
