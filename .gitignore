@@ -40,3 +40,8 @@ yarn-error.log*
 src/keyserver/*_pb.js
 src/relay/*_pb.js
 src/pop/*_pb.js
+
+# Auto-generated icons
+src-electron/icons
+src/statics/icons/
+src/statics/app-logo-128x128.png

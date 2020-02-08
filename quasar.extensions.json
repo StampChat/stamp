@@ -7,5 +7,29 @@
   "@quasar/testing-unit-jest": {
     "babel": "babelrc",
     "options": []
+  },
+  "@quasar/icon-genie": {
+    "minify_dev": "pngquant",
+    "minify_build": "zopfli",
+    "cordova": {
+      "background_color": "#000074",
+      "splashscreen_type": "pure"
+    },
+    "build_always": true,
+    "__internal": {
+      "dev": {
+        "electron": {
+          "iconHash": "5a2d8884a80dd7bf12ff46e77d5ad2c4"
+        },
+        "spa": {
+          "iconHash": "5a2d8884a80dd7bf12ff46e77d5ad2c4"
+        }
+      },
+      "build": {
+        "electron": {
+          "iconHash": "5a2d8884a80dd7bf12ff46e77d5ad2c4"
+        }
+      }
+    }
   }
 }
