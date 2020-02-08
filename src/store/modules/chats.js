@@ -214,10 +214,11 @@ export default {
     readAll ({ commit }, addr) {
       commit('readAll', addr)
     },
-    shareContact ({ commit }, { targetAddr, contact, shareAddr }) {
-      let text = 'Name: ' + contact.name + '\n' + 'Address: ' + shareAddr
-      commit('setInputMessage', { addr: targetAddr, text })
-      commit('switchChatActive', targetAddr)
+    shareContact ({ commit, rootGetters }, { currentAddr, shareAddr }) {
+      let contact = rootGetters['contacts/getContact'](currentAddr)
+      let text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
+      commit('setInputMessage', { addr: shareAddr, text })
+      commit('switchChatActive', shareAddr)
     },
     setInputMessage ({ commit }, { addr, text }) {
       commit('setInputMessage', { addr, text })

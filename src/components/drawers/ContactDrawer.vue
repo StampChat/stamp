@@ -42,7 +42,7 @@
 
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
-      <contact-book-dialog :contactClick="function (targetAddr, contact) { return shareContact({targetAddr, contact, shareAddr: address }) }" />
+      <contact-book-dialog :contactClick="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }" />
     </q-dialog>
 
     <!-- Scroll area -->
