@@ -49,7 +49,6 @@ export default {
     message.setSenderPubKey(rawPubkey)
     message.setSignature(sig)
     message.setSerializedPayload(serializedPayload)
-    console.log('construct')
     let { transaction, usedIDs } = await this.constructStampTransaction(payloadDigest, destPubKey, stampAmount)
     let rawStampTx = transaction.toBuffer()
     message.setStampTx(rawStampTx)
