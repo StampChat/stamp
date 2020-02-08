@@ -289,7 +289,7 @@ export default {
           })
       }
       let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items, stampOutput: null })
+      commit('sendMessageLocal', { addr, index, items, stampTx: null })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -297,7 +297,8 @@ export default {
       let stampAmount = getters['getStampAmount'](addr)
       try {
         var { message, usedIDs, stampTx } = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount)
-      } catch {
+      } catch (err) {
+        console.log(err)
         insuffientFundsNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo } })
         return
@@ -336,7 +337,7 @@ export default {
           })
       }
       let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items, stampOutput: null })
+      commit('sendMessageLocal', { addr, index, items, stampTx: null })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -345,6 +346,8 @@ export default {
       try {
         var { message, usedIDs, stampTx } = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
+        console.log(err)
+
         insuffientFundsNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
         return
