@@ -16,7 +16,7 @@
       >
         <q-chat-message
           class='q-py-sm'
-          name="cash:web Devs"
+          avatar="~/assets/cashweb-avatar.png"
           :sent="false"
           :text="[
             donationMessage
