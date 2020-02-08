@@ -10,10 +10,16 @@
       class='q-py-sm'
       v-else-if="item.type=='image'"
     >
+      <!-- Image dialog -->
+      <q-dialog v-model="imageDialog">
+        <image-dialog :image="item.image" />
+      </q-dialog>
+
       <q-img
         :src="item.image"
         contain
         style="width: 10vw;"
+        @click="imageDialog = true"
       />
     </div>
     <div
@@ -41,7 +47,17 @@
 </template>
 
 <script>
+import ImageDialog from '../../components/dialogs/ImageDialog'
+
 export default {
-  props: ['item', 'end', 'single']
+  props: ['item', 'end', 'single'],
+  components: {
+    ImageDialog
+  },
+  data () {
+    return {
+      imageDialog: false
+    }
+  }
 }
 </script>

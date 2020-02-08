@@ -8,6 +8,7 @@
       style="min-width: 100px"
     >
       <q-item
+        v-if="message.stampTx != null"
         clickable
         v-close-popup
         @click="$emit('dialogClick')"
