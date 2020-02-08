@@ -63,7 +63,7 @@ export default {
           this.sendMessage({ addr: this.address, text: retryData.text })
           break
         case 'stealth':
-          this.sendStealthPayment({ addr: this.address, amount: retryData.amount, memo: retryData.memo })
+          this.sendStealthPayment({ addr: this.address, amount: retryData.amount, memo: retryData.memo, stealthTxId: retryData.stealthTxId })
           break
         case 'image':
           this.sendImage({ addr: this.address, image: retryData.image, caption: retryData.caption })

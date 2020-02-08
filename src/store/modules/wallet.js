@@ -271,6 +271,8 @@ export default {
     },
     constructTransaction ({ commit, getters }, { outputs, feePerByte }) {
       let transaction = new cashlib.Transaction()
+      console.log(outputs)
+      console.log(feePerByte)
 
       // Add fee
       transaction = transaction.feePerByte(feePerByte)
@@ -293,6 +295,7 @@ export default {
 
         // Throw error if no UTXO found
         if (Object.entries(result).length === 0) {
+          // Unfreeze all UTXOs
           usedIDs.forEach(id => {
             commit('unfreezeUTXO', id)
           })
@@ -349,7 +352,6 @@ export default {
       transaction = transaction.sign(signingKeys)
       console.log(transaction)
       console.log('feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
-
       return { transaction, usedIDs }
     },
     async getFee ({ commit, getters, rootGetters }) {

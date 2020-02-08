@@ -41,7 +41,7 @@ export default {
     new ({ commit }, { port, host, protocol }) {
       commit('new', { port, host, protocol })
       commit('setErrorCallback', function (err) {
-        console.log(err)
+        console.error(err)
         commit('setConnected', false)
       })
     },
@@ -56,7 +56,7 @@ export default {
         await getters['getClient'].connect()
         commit('setConnected', true)
       } catch (err) {
-        console.log(err)
+        console.error(err)
         commit('setConnected', false)
       }
     },
@@ -65,7 +65,7 @@ export default {
         await getters['getClient'].methods.server_ping()
         return true
       } catch (err) {
-        console.log(err)
+        console.error(err)
         return false
       }
     },

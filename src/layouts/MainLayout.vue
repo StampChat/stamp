@@ -138,7 +138,7 @@ export default {
       // Get historic messages
       await this.refreshChat()
     } catch (err) {
-      console.log(err)
+      console.error(err)
     }
 
     this.$q.loading.show({
@@ -157,7 +157,7 @@ export default {
       // Fix frozen UTXOs
       await this.fixFrozenUTXOs()
     } catch (err) {
-      console.log(err)
+      console.error(err)
     }
 
     this.$q.loading.hide()

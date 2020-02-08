@@ -265,7 +265,7 @@ export default {
         try {
           this.updateHDUTXOs()
         } catch (err) {
-          console.log(err)
+          console.error(err)
           walletDisconnectedNotify()
         }
 
@@ -279,7 +279,7 @@ export default {
           let addresses = Object.keys(this.getAllAddresses())
           await this.startListeners(addresses) // TODO: Better handling here
         } catch (err) {
-          console.log(err)
+          console.error(err)
           walletDisconnectedNotify()
         }
 
@@ -372,7 +372,7 @@ export default {
       try {
         var { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
       } catch (err) {
-        console.log(err)
+        console.error(err)
         insuffientFundsNotify()
         throw err
       }

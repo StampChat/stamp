@@ -249,7 +249,7 @@ export default {
       try {
         var { message, usedIDs, stampTx } = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
-        console.log(err)
+        console.error(err)
         insuffientFundsNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'text', text } })
         return
@@ -273,7 +273,7 @@ export default {
         commit('setStatusError', { addr, index, retryData: { msgType: 'text', text } })
       }
     },
-    async sendStealthPayment ({ commit, rootGetters, getters, dispatch }, { addr, amount, memo }) {
+    async sendStealthPayment ({ commit, rootGetters, getters, dispatch }, { addr, amount, memo, stamptxId }) {
       // Send locally
       let items = [
         {
@@ -296,11 +296,11 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, usedIDs, stampTx } = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs, stampTx } = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount, stamptxId)
       } catch (err) {
-        console.log(err)
+        console.error(err)
         insuffientFundsNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo } })
+        commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo, stampTxID: err.stampTxId } })
         return
       }
       let messageSet = new messages.MessageSet()
@@ -346,7 +346,7 @@ export default {
       try {
         var { message, usedIDs, stampTx } = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
-        console.log(err)
+        console.error(err)
 
         insuffientFundsNotify()
         commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
@@ -458,7 +458,13 @@ export default {
           let electrumHandler = rootGetters['electrumHandler/getClient']
 
           let txId = Buffer.from(stealthMessage.getTxId()).toString('hex')
-          let txRaw = await electrumHandler.blockchainTransaction_get(txId)
+          try {
+            var txRaw = await electrumHandler.methods.blockchain_transaction_get(txId)
+          } catch (err) {
+            console.err(err)
+            // TODO: Awaiting confirmation check
+            // TODO: Logic relating to this
+          }
           let tx = cashlib.Transaction(txRaw)
 
           // Add stealth output
@@ -474,7 +480,6 @@ export default {
             ephemeralPubKey
           }
           dispatch('wallet/addUTXO', stealthOutput, { root: true })
-
           newMsg.items.push({
             type: 'stealth',
             amount: output.satoshis

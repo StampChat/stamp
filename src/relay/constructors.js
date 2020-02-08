@@ -93,7 +93,7 @@ export default {
     let { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
     return { message, usedIDs, stampTx }
   },
-  async constructStealthPaymentMessage (amount, memo, privKey, destPubKey, scheme, stampAmount) {
+  async constructStealthPaymentMessage (amount, memo, privKey, destPubKey, scheme, stampAmount, stealthTxId) {
     let entries = new messages.Entries()
 
     // Construct payment entry
@@ -103,13 +103,25 @@ export default {
     let stealthPaymentEntry = new stealth.StealthPaymentEntry()
     let ephemeralPrivKey = cashlib.PrivateKey()
 
-    let stealthTx = await this.constructStealthTransaction(ephemeralPrivKey, destPubKey, amount)
-    let stealthTxId = Buffer.from(stealthTx.id, 'hex')
-    let electrumHandler = store.getters['electrumHandler/getClient']
+    // Construct stealth transaction if ID not given
+    if (stealthTxId === undefined) {
+      var { transaction: stealthTx, usedIDs: stampUsedIDs } = await this.constructStealthTransaction(ephemeralPrivKey, destPubKey, amount)
+      stealthTxId = Buffer.from(stealthTx.id, 'hex')
 
-    // Broadcast transaction
-    let stealthTxHex = stealthTx.toString()
-    await electrumHandler.blockchainTransaction_broadcast(stealthTxHex)
+      // Broadcast transaction
+      let stealthTxHex = stealthTx.toString()
+      try {
+        let electrumHandler = store.getters['electrumHandler/getClient']
+        await electrumHandler.methods.blockchain_transaction_broadcast(stealthTxHex)
+      } catch (err) {
+        console.error(err)
+        // Unfreeze UTXOs if stealth tx broadcast fails
+        stampUsedIDs.forEach(id => {
+          store.dispatch('unfreezeUTXO', id)
+        })
+        throw err
+      }
+    }
 
     await new Promise(resolve => setTimeout(resolve, 5000)) // TODO: This is hacky as fuck
 
@@ -130,7 +142,14 @@ export default {
     }
 
     let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
-    let { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
+    try {
+      var { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
+    } catch (err) {
+      throw Error({
+        stealthTxId,
+        innerErr: err
+      })
+    }
     return { message, usedIDs, stampTx }
   },
   async constructImageMessage (image, caption, privKey, destPubKey, scheme, stampAmount) {
