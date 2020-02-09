@@ -360,6 +360,7 @@ export default {
       try {
         var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
       } catch (err) {
+        console.error(err)
         keyserverDisconnectedNotify()
         throw err
       }
@@ -381,6 +382,7 @@ export default {
       try {
         var { token } = await pop.sendPayment(paymentUrl, payment)
       } catch (err) {
+        console.error(err)
         paymentFailureNotify()
         throw err
       }
@@ -398,6 +400,7 @@ export default {
       try {
         await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
       } catch (err) {
+        console.error(err)
         keyserverDisconnectedNotify()
         throw err
       }
@@ -413,6 +416,7 @@ export default {
       try {
         var filterPaymentRequest = await client.filterPaymentRequest(idAddress.toLegacyAddress())
       } catch (err) {
+        console.error(err)
         relayDisconnectedNotify()
         throw err
       }
@@ -427,12 +431,14 @@ export default {
       try {
         var { paymentUrl, payment } = await pop.constructPaymentTransaction(filterPaymentRequest.paymentDetails)
       } catch (err) {
+        console.error(err)
         insuffientFundsNotify()
         throw err
       }
       try {
         var { token } = await pop.sendPayment(paymentUrl, payment)
       } catch (err) {
+        console.error(err)
         paymentFailureNotify()
         throw err
       }

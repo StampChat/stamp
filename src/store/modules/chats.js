@@ -265,7 +265,7 @@ export default {
         commit('setStampTx', { addr, index, stampTx })
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
-        console.log(err.response)
+        console.err(err.response)
         // Unfreeze UTXOs
         // TODO: More subtle
         usedIDs.forEach(id => dispatch('wallet/fixFrozenUTXO', id, { root: true }))

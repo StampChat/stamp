@@ -290,8 +290,6 @@ export default {
     },
     constructTransaction ({ commit, getters }, { outputs, feePerByte }) {
       let transaction = new cashlib.Transaction()
-      console.log(outputs)
-      console.log(feePerByte)
 
       // Add fee
       transaction = transaction.feePerByte(feePerByte)
@@ -379,7 +377,13 @@ export default {
       if (timeNow - feeInfo.lastUpdate > feeUpdateTimerMilliseconds) {
         // Update fee
         let electrumClient = rootGetters['electrumHandler/getClient']
-        let feePerByte = await electrumClient.methods.blockchain_estimatefee(1) * 100_000_000 / 1000 * 1.8 // TODO: Don't do +80%
+        let feePerByte
+        try {
+          feePerByte = await electrumClient.methods.blockchain_estimatefee(1) * 100_000_000 / 1000 * 1.8 // TODO: Don't do +80%
+        } catch (err) {
+          console.error(err)
+          feePerByte = 1 * 1.8
+        }
         commit('setFeeInfo', { feePerByte, lastUpdate: timeNow })
         return feePerByte
       } else {

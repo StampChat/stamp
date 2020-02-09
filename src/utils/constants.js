@@ -2,7 +2,7 @@ export const minSplitter = 20
 export const maxSplitter = 75
 
 // Electrum constants
-export const electrumURL = '35.238.56.17'
+export const electrumURL = 'testnet.imaginary.cash'
 export const pingInterval = 10_000
 
 // Wallet constants
