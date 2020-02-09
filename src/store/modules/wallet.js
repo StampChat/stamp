@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
-import { numAddresses, numChangeAddresses, nUtxoGoal, feeUpdateTimerMilliseconds } from '../../utils/constants'
+import { numAddresses, numChangeAddresses, nUtxoGoal, feeUpdateTimerMilliseconds, defaultFeePerByte } from '../../utils/constants'
 import formatting from '../../utils/formatting'
 import { calcId } from '../../utils/wallet'
 
@@ -382,7 +382,7 @@ export default {
           feePerByte = await electrumClient.methods.blockchain_estimatefee(1) * 100_000_000 / 1000 * 1.8 // TODO: Don't do +80%
         } catch (err) {
           console.error(err)
-          feePerByte = 1 * 1.8
+          feePerByte = defaultFeePerByte
         }
         commit('setFeeInfo', { feePerByte, lastUpdate: timeNow })
         return feePerByte
