@@ -1,5 +1,6 @@
 import { Notify } from 'quasar'
 import { notificationTimeout } from './constants'
+const remote = require('electron').remote
 
 export const chainTooLongNotify = function () {
   Notify.create({
@@ -67,6 +68,8 @@ export const desktopNotify = function (title, body, icon, callback) {
   })
   notify.onclick = () => {
     notify.close()
+    var window = remote.getCurrentWindow()
+    window.show()
     callback()
   }
   setTimeout(notify.close.bind(notify), notificationTimeout)

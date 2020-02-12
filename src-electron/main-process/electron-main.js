@@ -44,13 +44,13 @@ function createWindow () {
 
   let contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Open',
+      label: 'Open IRCash',
       click: function () {
         mainWindow.show()
       }
     },
     {
-      label: 'Quit',
+      label: 'Quit IRCash',
       click: function () {
         mainWindow.destroy()
         app.quit()
@@ -65,7 +65,7 @@ function createWindow () {
     mainWindow.hide()
   })
 
-  mainWindow.on('closed', () => {
+  mainWindow.on('closed', function () {
     mainWindow = null
   })
 }
