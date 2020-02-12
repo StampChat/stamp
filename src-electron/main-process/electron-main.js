@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeTheme, Tray, Menu } from 'electron'
+import { app, BrowserWindow, nativeImage, nativeTheme, Tray, Menu } from 'electron'
 const path = require('path')
 
 try {
@@ -15,33 +15,33 @@ if (process.env.PROD) {
   global.__statics = require('path').join(__dirname, 'statics').replace(/\\/g, '\\\\')
 }
 
+function getNativeIconPath() {
+  switch (process.platform) {
+    case 'linux':
+      return path.join(__dirname, '../icons/icon.png')
+    case 'darwin':
+      return path.join(__dirname, '../ircash.icns')
+    case 'win32':
+      return path.join(__dirname, '../icons/icon.ico')
+  }
+}
+
+function getNativeTrayIcon(path) {
+  const fullsizeImage = nativeImage.createFromPath(path)
+  switch (process.platform) {
+    case 'linux':
+      return fullsizeImage.resize({ width: 18, height: 18 })
+    case 'darwin':
+      return fullsizeImage.resize({ width: 18, height: 18 })
+    case 'win32':
+      return fullsizeImage.resize({ width: 18, height: 18 })
+  }
+}
+
 let mainWindow
 let tray = null
 
-function createWindow () {
-  /**
-   * Initial window options
-   */
-  const iconPath = path.join(__dirname, '../icons/icon.png')
-  tray = new Tray(iconPath)
-  mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 600,
-    useContentSize: true,
-    icon: iconPath,
-    webPreferences: {
-      // Change from /quasar.conf.js > electron > nodeIntegration;
-      // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
-      nodeIntegration: QUASAR_NODE_INTEGRATION,
-      nodeIntegrationInWorker: true
-
-      // More info: /quasar-cli/developing-electron-apps/electron-preload-script
-      // preload: path.resolve(__dirname, 'electron-preload.js')
-    }
-  })
-
-  mainWindow.loadURL(process.env.APP_URL)
-
+function createWindow() {
   let contextMenu = Menu.buildFromTemplate([
     {
       label: 'Open IRCash',
@@ -58,7 +58,26 @@ function createWindow () {
     }
   ])
 
+  mainWindow = new BrowserWindow({
+    width: 1000,
+    height: 600,
+    useContentSize: true,
+    icon: getNativeIconPath(),
+    webPreferences: {
+      // Change from /quasar.conf.js > electron > nodeIntegration;
+      // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
+      nodeIntegration: QUASAR_NODE_INTEGRATION,
+      nodeIntegrationInWorker: true
+
+      // More info: /quasar-cli/developing-electron-apps/electron-preload-script
+      // preload: path.resolve(__dirname, 'electron-preload.js')
+    }
+  })
+
+  tray = new Tray(getNativeTrayIcon(path.join(__dirname, '../icons/icon.png')))
   tray.setContextMenu(contextMenu)
+
+  mainWindow.loadURL(process.env.APP_URL)
 
   mainWindow.on('close', function (event) {
     event.preventDefault()
