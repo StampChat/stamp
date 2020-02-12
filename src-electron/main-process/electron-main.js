@@ -23,7 +23,6 @@ function createWindow () {
    * Initial window options
    */
   const iconPath = path.join(__dirname, '../icons/icon.png')
-  tray = new Tray(iconPath)
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
@@ -58,7 +57,11 @@ function createWindow () {
     }
   ])
 
-  tray.setContextMenu(contextMenu)
+  if (process.platform === 'darwin') {
+    app.dock.setMenu(contextMenu)
+  } else {
+    tray = new Tray(iconPath)
+  }
 
   mainWindow.on('close', function (event) {
     event.preventDefault()
