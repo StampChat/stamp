@@ -5,6 +5,7 @@ const remote = require('electron').remote
 export const chainTooLongNotify = function () {
   Notify.create({
     message: '<div class="text-center"> Transaction chain too long or relay fee too low. </div>',
+    html: true,
     color: 'negative'
   })
 }
@@ -12,6 +13,7 @@ export const chainTooLongNotify = function () {
 export const insuffientFundsNotify = function () {
   Notify.create({
     message: '<div class="text-center"> Insufficent funds. </div>',
+    html: true,
     color: 'negative'
   })
 }
@@ -19,6 +21,7 @@ export const insuffientFundsNotify = function () {
 export const walletDisconnectedNotify = function () {
   Notify.create({
     message: '<div class="text-center"> Unable to contact wallet server. </div>',
+    html: true,
     color: 'negative'
   })
 }
@@ -26,6 +29,7 @@ export const walletDisconnectedNotify = function () {
 export const keyserverDisconnectedNotify = function () {
   Notify.create({
     message: '<div class="text-center"> Unable to contact keyserver. </div>',
+    html: true,
     color: 'negative'
   })
 }
@@ -33,6 +37,7 @@ export const keyserverDisconnectedNotify = function () {
 export const relayDisconnectedNotify = function () {
   Notify.create({
     message: '<div class="text-center"> Unable to contact relay server. </div>',
+    html: true,
     color: 'negative'
   })
 }
@@ -40,6 +45,7 @@ export const relayDisconnectedNotify = function () {
 export const paymentFailureNotify = function () {
   Notify.create({
     message: '<div class="text-center"> Payment was rejected. </div>',
+    html: true,
     color: 'negative'
   })
 }
