@@ -60,6 +60,17 @@ export const seedCopiedNotify = function () {
   })
 }
 
+export const sentTransactionNotify = function (tx) {
+  Notify.create({
+    message: '<div class="text-center"> Sent transaction </div>',
+    html: true,
+    color: 'accent',
+    actions: [
+      { label: 'View', color: 'secondary', handler: () => { /* ... */ } }
+    ]
+  })
+}
+
 export const desktopNotify = function (title, body, icon, callback) {
   let notify = new window.Notification(title, {
     title,
@@ -67,10 +78,10 @@ export const desktopNotify = function (title, body, icon, callback) {
     icon
   })
   notify.onclick = () => {
-    notify.close()
     var window = remote.getCurrentWindow()
     window.show()
     callback()
+    notify.close()
   }
   setTimeout(notify.close.bind(notify), notificationTimeout)
 }

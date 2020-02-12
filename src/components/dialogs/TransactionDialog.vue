@@ -1,7 +1,7 @@
 <template>
   <q-card style="min-width: 50%">
     <q-card-section>
-      <div class="text-h6">Stamp Transaction</div>
+      <div class="text-h6">{{title}}</div>
     </q-card-section>
     <q-card-section>
       <q-list>
@@ -27,6 +27,6 @@
 
 <script>
 export default {
-  props: ['transaction']
+  props: ['title', 'transaction']
 }
 </script>

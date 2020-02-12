@@ -16,7 +16,10 @@
 
     <!-- Transaction Dialog -->
     <q-dialog v-model="transactionDialog">
-      <transaction-dialog :transaction="message.stampTx" />
+      <transaction-dialog
+        title="Stamp Transaction"
+        :transaction="message.stampTx"
+      />
     </q-dialog>
 
     <chat-message-section

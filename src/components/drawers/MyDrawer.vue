@@ -31,6 +31,11 @@
       <contact-book-dialog :contactClick="function (addr, contact) { return openChat(addr) }" />
     </q-dialog>
 
+    <!-- Contact book dialog -->
+    <q-dialog v-model="sendAddressOpen">
+      <send-address-dialog />
+    </q-dialog>
+
     <!-- Wallet dialog -->
     <q-dialog v-model="walletOpen">
       <wallet-dialog />
@@ -72,6 +77,20 @@
         </q-item>
 
         <q-separator />
+
+        <q-item
+          clickable
+          v-ripple
+          @click="sendAddressOpen = true"
+        >
+          <q-item-section avatar>
+            <q-icon name="send" />
+          </q-item-section>
+
+          <q-item-section>
+            Send to Address
+          </q-item-section>
+        </q-item>
 
         <q-item
           clickable
@@ -143,6 +162,7 @@ import SetFilterDialog from '../dialogs/SetFilterDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import WalletDialog from '../dialogs/WalletDialog.vue'
 import ProfileDialog from '../dialogs/ProfileDialog.vue'
+import SendAddressDialog from '../dialogs/SendAddressDialog.vue'
 
 export default {
   components: {
@@ -151,12 +171,14 @@ export default {
     SetFilterDialog,
     ContactBookDialog,
     WalletDialog,
-    ProfileDialog
+    ProfileDialog,
+    SendAddressDialog
   },
   data () {
     return {
       newContactOpen: false,
       setFilterOpen: false,
+      sendAddressOpen: false,
       contactBookOpen: false,
       walletOpen: false,
       profileOpen: false
