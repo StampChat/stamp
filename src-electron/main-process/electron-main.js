@@ -1,4 +1,5 @@
-import { app, BrowserWindow, nativeTheme } from 'electron'
+import { app, BrowserWindow, nativeTheme, Tray, Menu } from 'electron'
+const path = require('path')
 
 try {
   if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -15,15 +16,19 @@ if (process.env.PROD) {
 }
 
 let mainWindow
+let tray = null
 
 function createWindow () {
   /**
    * Initial window options
    */
+  const iconPath = path.join(__dirname, '../icons/icon.png')
+  tray = new Tray(iconPath)
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
     useContentSize: true,
+    icon: iconPath,
     webPreferences: {
       // Change from /quasar.conf.js > electron > nodeIntegration;
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
@@ -36,6 +41,29 @@ function createWindow () {
   })
 
   mainWindow.loadURL(process.env.APP_URL)
+
+  let contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open',
+      click: function () {
+        mainWindow.show()
+      }
+    },
+    {
+      label: 'Quit',
+      click: function () {
+        mainWindow.destroy()
+        app.quit()
+      }
+    }
+  ])
+
+  tray.setContextMenu(contextMenu)
+
+  mainWindow.on('close', function (event) {
+    event.preventDefault()
+    mainWindow.hide()
+  })
 
   mainWindow.on('closed', () => {
     mainWindow = null
