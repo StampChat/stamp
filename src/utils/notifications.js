@@ -1,4 +1,5 @@
 import { Notify } from 'quasar'
+import { notificationTimeout } from './constants'
 
 export const chainTooLongNotify = function () {
   Notify.create({
@@ -56,4 +57,17 @@ export const seedCopiedNotify = function () {
     html: true,
     color: 'accent'
   })
+}
+
+export const desktopNotify = function (title, body, icon, callback) {
+  let notify = new window.Notification(title, {
+    title,
+    body,
+    icon
+  })
+  notify.onclick = () => {
+    notify.close()
+    callback()
+  }
+  setTimeout(notify.close.bind(notify), notificationTimeout)
 }
