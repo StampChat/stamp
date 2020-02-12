@@ -452,10 +452,12 @@ export default {
             type: 'text',
             text
           })
-          let contact = rootGetters['contacts/getContact'](senderAddr)
-          desktopNotify(contact.name, text, contact.avatar, () => {
-            dispatch('openChat', senderAddr)
-          })
+          if (!document.hasFocus()) {
+            let contact = rootGetters['contacts/getContact'](senderAddr)
+            desktopNotify(contact.name, text, contact.avatar, () => {
+              dispatch('openChat', senderAddr)
+            })
+          }
         } else if (kind === 'stealth-payment') {
           let entryData = entry.getEntryData()
           let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
