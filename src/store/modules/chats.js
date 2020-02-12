@@ -5,7 +5,7 @@ import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
-import { insuffientFundsNotify, chainTooLongNotify } from '../../utils/notifications'
+import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
 
 const cashlib = require('bitcore-lib-cash')
@@ -452,6 +452,12 @@ export default {
             type: 'text',
             text
           })
+          if (!document.hasFocus()) {
+            let contact = rootGetters['contacts/getContact'](senderAddr)
+            desktopNotify(contact.name, text, contact.avatar, () => {
+              dispatch('openChat', senderAddr)
+            })
+          }
         } else if (kind === 'stealth-payment') {
           let entryData = entry.getEntryData()
           let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)

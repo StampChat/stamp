@@ -20,9 +20,6 @@
       "dev": {
         "electron": {
           "iconHash": "5a2d8884a80dd7bf12ff46e77d5ad2c4"
-        },
-        "spa": {
-          "iconHash": "5a2d8884a80dd7bf12ff46e77d5ad2c4"
         }
       },
       "build": {

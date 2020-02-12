@@ -21,3 +21,6 @@ export const relayUrlOptions = ['34.67.137.105', 'bitcoin.com', 'cashweb.io']
 // Chat constants
 export const defaultStampAmount = 200
 export const donationMessage = 'Thank you for participating in our vision of the future of online communications. Please consider donating to our efforts by sending real BCH to bitcoincash:qq7vt04md0pt6fk5szhcx4cgsfuzmppy5u4hxshr4a'
+
+// Notification constants
+export const notificationTimeout = 4000
