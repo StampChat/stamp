@@ -105,6 +105,7 @@ export default {
 
       let name = vCard.data.fn._data
 
+      // TODO
       // let bio = vCard.data.note._data
       let bio = ''
 
