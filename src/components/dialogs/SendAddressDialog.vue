@@ -46,7 +46,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
-import { sentTransactionNotify } from '../../utils/notifications'
+import { sentTransactionNotify, sentTransactionFailureNotify } from '../../utils/notifications'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -94,6 +94,7 @@ export default {
         await electrumHandler.methods.blockchain_transaction_broadcast(txHex)
         sentTransactionNotify(transaction)
       } catch (err) {
+        sentTransactionFailureNotify(transaction)
         console.error(err)
         // Unfreeze UTXOs if stealth tx broadcast fails
         usedIDs.forEach(id => {

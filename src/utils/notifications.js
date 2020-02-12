@@ -4,42 +4,42 @@ const remote = require('electron').remote
 
 export const chainTooLongNotify = function () {
   Notify.create({
-    message: 'Transaction chain too long or relay fee too low.',
+    message: '<div class="text-center"> Transaction chain too long or relay fee too low. </div>',
     color: 'negative'
   })
 }
 
 export const insuffientFundsNotify = function () {
   Notify.create({
-    message: 'Insufficent funds.',
+    message: '<div class="text-center"> Insufficent funds. </div>',
     color: 'negative'
   })
 }
 
 export const walletDisconnectedNotify = function () {
   Notify.create({
-    message: 'Unable to contact wallet server.',
+    message: '<div class="text-center"> Unable to contact wallet server. </div>',
     color: 'negative'
   })
 }
 
 export const keyserverDisconnectedNotify = function () {
   Notify.create({
-    message: 'Unable to contact keyserver.',
+    message: '<div class="text-center"> Unable to contact keyserver. </div>',
     color: 'negative'
   })
 }
 
 export const relayDisconnectedNotify = function () {
   Notify.create({
-    message: 'Unable to contact relay server.',
+    message: '<div class="text-center"> Unable to contact relay server. </div>',
     color: 'negative'
   })
 }
 
 export const paymentFailureNotify = function () {
   Notify.create({
-    message: 'Payment was rejected.',
+    message: '<div class="text-center"> Payment was rejected. </div>',
     color: 'negative'
   })
 }
@@ -65,6 +65,17 @@ export const sentTransactionNotify = function (tx) {
     message: '<div class="text-center"> Sent transaction </div>',
     html: true,
     color: 'accent',
+    actions: [
+      { label: 'View', color: 'secondary', handler: () => { /* ... */ } }
+    ]
+  })
+}
+
+export const sentTransactionFailureNotify = function (tx) {
+  Notify.create({
+    message: '<div class="text-center"> Failed to send transaction </div>',
+    html: true,
+    color: 'negative',
     actions: [
       { label: 'View', color: 'secondary', handler: () => { /* ... */ } }
     ]
