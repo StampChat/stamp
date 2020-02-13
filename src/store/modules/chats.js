@@ -10,6 +10,14 @@ import { defaultStampAmount } from '../../utils/constants'
 
 const cashlib = require('bitcore-lib-cash')
 
+function calculateUnreadValue (state, addr) {
+  const totalValueUnread = Object.entries(state.data[addr].messages)
+    .filter(([timestamp]) => state.data[addr].lastRead < timestamp)
+    .map(([timestamp, message]) => message.stampTx.outputs[0].satoshis)
+    .reduce((totalSats, curStampSats) => totalSats + curStampSats, 0)
+  return totalValueUnread
+}
+
 export default {
   namespaced: true,
   state: {
@@ -29,8 +37,27 @@ export default {
       let numUnread = ids.length - lastUnreadIndex - 1
       return numUnread
     },
+    getUnreadValue: (state) => (addr) => {
+      return calculateUnreadValue(state, addr)
+    },
     getLastRead: (state) => (addr) => {
       return state.data[addr].lastRead
+    },
+    getValuedChatOrder (state) {
+      return state.order.map(
+        addr => ({
+          address: addr,
+          unreadValue: calculateUnreadValue(state, addr)
+        })
+      ).sort(({ address: addressA, unreadValue: valueA }, { address: addressB, unreadValue: valueB }) => {
+        if (state.activeChatAddr === addressA) {
+          return -Infinity
+        }
+        if (state.activeChatAddr === addressB) {
+          return Infinity
+        }
+        return valueB - valueA
+      })
     },
     getChatOrder (state) {
       return state.order
