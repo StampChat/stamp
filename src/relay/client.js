@@ -3,6 +3,7 @@ import messages from './messages_pb'
 import filters from './filters_pb'
 import pop from '../pop/index'
 import store from '../store/index'
+import { pingTimeout, relayReconnectInterval } from '../utils/constants'
 
 const WebSocket = window.require('ws')
 
@@ -38,16 +39,35 @@ class RelayClient {
         store.commit('chats/setLastReceived', lastReceived + 1)
       }
     }
+
+    const disconnectHandler = () => {
+      store.dispatch('relayClient/setConnected', false)
+      setTimeout(() => {
+        this.setUpWebsocket(addr, token)
+      }, relayReconnectInterval)
+    }
+
     socket.onerror = function (err) {
       console.error(err)
-      store.dispatch('relayClient/setConnected', false)
+      disconnectHandler()
     }
     socket.onclose = function (close) {
-      store.dispatch('relayClient/setConnected', false)
+      disconnectHandler()
     }
     socket.onopen = function (open) {
       store.dispatch('relayClient/setConnected', true)
     }
+
+    // Setup ping timeout
+    this.pingTimeout = setTimeout(() => {
+      socket.terminate()
+    }, pingTimeout)
+    socket.on('ping', () => {
+      clearTimeout(this.pingTimeout)
+      this.pingTimeout = setTimeout(() => {
+        socket.terminate()
+      }, pingTimeout)
+    })
   }
 
   async getAcceptancePrice (addr) {

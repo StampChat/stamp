@@ -1,5 +1,5 @@
 import { ElectrumClient } from 'electrumjs'
-import { pingInterval } from '../../utils/constants'
+import { electrumPingInterval } from '../../utils/constants'
 
 export default {
   namespaced: true,
@@ -81,7 +81,7 @@ export default {
           await dispatch('connect')
         }
         await dispatch('keepAlive')
-      }, pingInterval)
+      }, electrumPingInterval)
     }
   },
   getters: {

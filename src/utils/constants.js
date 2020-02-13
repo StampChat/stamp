@@ -3,7 +3,7 @@ export const maxSplitter = 75
 
 // Electrum constants
 export const electrumURL = 'testnet.imaginary.cash'
-export const pingInterval = 10_000
+export const electrumPingInterval = 10_000
 
 // Wallet constants
 export const numAddresses = 10
@@ -14,6 +14,8 @@ export const feeUpdateTimerMilliseconds = 60_000
 export const defaultFeePerByte = 2
 
 // Relay constants
+export const pingTimeout = 20_000
+export const relayReconnectInterval = 10_000
 export const defaultAcceptancePrice = 100
 export const defaultRelayUrl = '34.67.137.105'
 export const relayUrlOptions = ['34.67.137.105', 'bitcoin.com', 'cashweb.io']
