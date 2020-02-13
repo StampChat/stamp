@@ -1,6 +1,6 @@
 {
   "name": "ircash",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.2",
   "description": "IRCash is a Bitcoin Cash powered relay chat.",
   "productName": "ircash",
   "cordovaId": "org.cashweb.ircash",
