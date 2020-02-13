@@ -1,4 +1,5 @@
 export default {
+  namespaced: true,
   state: { splitterRatio: 20 },
   mutations: {
     setSplitterRatio (state, ratio) {

@@ -1,4 +1,5 @@
 export default {
+  namespaced: true,
   state: { now: Date.now() },
   mutations: {
     updateClock (state) {

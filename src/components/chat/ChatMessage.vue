@@ -64,8 +64,11 @@ export default {
     }
   },
   methods: {
-    ...mapGetters(['getUnixTime']),
-    ...mapActions(['updateClock'])
+    ...mapGetters({ getUnixTime: 'clock/getUnixTime' }),
+    ...mapActions({
+      updateClock: 'clock/updateClock'
+
+    })
   },
   computed: {
     formatedTimestamp () {

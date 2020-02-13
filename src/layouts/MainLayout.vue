@@ -66,8 +66,9 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['setSplitterRatio', 'startClock']),
     ...mapActions({
+      setSplitterRatio: 'splitter/setSplitterRatio',
+      startClock: 'clock/startClock',
       walletRehydrate: 'wallet/rehydrate',
       electrumRehydrate: 'electrumHandler/rehydrate',
       electrumConnect: 'electrumHandler/connect',
@@ -97,9 +98,7 @@ export default {
       getAllMessages: 'chats/getAllMessages',
       walletConnected: 'electrumHandler/connected'
     }),
-    ...mapGetters([
-      'getSplitterRatio'
-    ]),
+    ...mapGetters({ getSplitterRatio: 'splitter/getSplitterRatio' }),
     splitterRatio: {
       get () {
         return this.getSplitterRatio

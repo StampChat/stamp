@@ -8,24 +8,22 @@ Vue.use(Vuex)
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
   filter: (mutation) => {
-    console.log(mutation.type)
-    switch (mutation.type) {
-      case 'chats/sendMessageLocal':
-        return true
-      case 'chats/receiveMessage':
-        return true
-      case 'chats/deleteMessage':
-        return true
-      case 'chats/deleteChat':
-        return true
-      case 'chats/clearChat':
-        return true
-    }
-    if (mutation.type.startsWith('wallet/')) {
-      return true
+    let namespace = mutation.type.split('/')[0]
+    switch (namespace) {
+      case 'clock':
+        return false
+      case 'contactDrawer':
+        return false
     }
 
-    return false
+    switch (mutation.type) {
+      case 'chats/setInputMessage':
+        return false
+      case 'chats/setInputMessageActive':
+        return false
+    }
+
+    return true
   }
 })
 
