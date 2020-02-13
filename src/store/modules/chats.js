@@ -292,7 +292,7 @@ export default {
         commit('setStampTx', { addr, index, stampTx })
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
-        console.err(err.response)
+        console.error(err.response)
         // Unfreeze UTXOs
         // TODO: More subtle
         usedIDs.forEach(id => dispatch('wallet/fixFrozenUTXO', id, { root: true }))
@@ -495,7 +495,7 @@ export default {
           try {
             var txRaw = await electrumHandler.methods.blockchain_transaction_get(txId)
           } catch (err) {
-            console.err(err)
+            console.error(err)
             // TODO: Awaiting confirmation check
             // TODO: Logic relating to this
           }
