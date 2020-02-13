@@ -13,7 +13,13 @@ const cashlib = require('bitcore-lib-cash')
 function calculateUnreadAggregates (state, addr) {
   const unreadAggregates = Object.entries(state.data[addr].messages)
     .filter(([timestamp]) => state.data[addr].lastRead < timestamp)
-    .map(([timestamp, message]) => message.stampTx.outputs[0].satoshis)
+    .map(([timestamp, message]) => {
+      if (message.stampTx) {
+        return message.stampTx.outputs[0].satoshis
+      } else {
+        return 0
+      }
+    })
     .reduce(
       ({ totalUnreadValue, totalUnreadMessages }, curStampSats) => ({
         totalUnreadValue: totalUnreadValue + curStampSats,
