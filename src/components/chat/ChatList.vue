@@ -41,7 +41,8 @@
         v-for="(contact) in getSortedChatOrder"
         :key="contact.address"
         :chatAddr="contact.address"
-        :numUnread="contact.unreadValue"
+        :valueUnread="formatBalance(contact.totalUnreadValue)"
+        :numUnread="contact.totalUnreadMessages"
       />
       <q-item v-if="getChatOrder.length === 0">
         <q-item-section>
@@ -75,6 +76,12 @@ export default {
   methods: {
     onResize (size) {
       this.height = size.height
+    },
+    formatBalance (balance) {
+      if (!balance) {
+        return balance
+      }
+      return formatting.formatBalance(balance)
     }
   },
   computed: {
@@ -82,7 +89,6 @@ export default {
       getChatOrder: 'chats/getChatOrder',
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getNumUnread: 'chats/getNumUnread',
-      getUnreadValue: 'chats/getUnreadValue',
       getBalanceVuex: 'wallet/getBalance',
       walletConnected: 'electrumHandler/connected'
     }),

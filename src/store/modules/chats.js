@@ -10,12 +10,21 @@ import { defaultStampAmount } from '../../utils/constants'
 
 const cashlib = require('bitcore-lib-cash')
 
-function calculateUnreadValue (state, addr) {
-  const totalValueUnread = Object.entries(state.data[addr].messages)
+function calculateUnreadAggregates (state, addr) {
+  const unreadAggregates = Object.entries(state.data[addr].messages)
     .filter(([timestamp]) => state.data[addr].lastRead < timestamp)
     .map(([timestamp, message]) => message.stampTx.outputs[0].satoshis)
-    .reduce((totalSats, curStampSats) => totalSats + curStampSats, 0)
-  return totalValueUnread
+    .reduce(
+      ({ totalUnreadValue, totalUnreadMessages }, curStampSats) => ({
+        totalUnreadValue: totalUnreadValue + curStampSats,
+        totalUnreadMessages: totalUnreadMessages + 1
+      }),
+      {
+        totalUnreadValue: 0,
+        totalUnreadMessages: 0
+      }
+    )
+  return unreadAggregates
 }
 
 export default {
@@ -37,25 +46,23 @@ export default {
       let numUnread = ids.length - lastUnreadIndex - 1
       return numUnread
     },
-    getUnreadValue: (state) => (addr) => {
-      return calculateUnreadValue(state, addr)
-    },
     getLastRead: (state) => (addr) => {
       return state.data[addr].lastRead
     },
     getSortedChatOrder (state) {
-      return state.order.map(
+      const sortedOrder = state.order.map(
         addr => ({
           address: addr,
-          unreadValue: calculateUnreadValue(state, addr),
+          ...calculateUnreadAggregates(state, addr),
           lastRead: state.data[addr].lastRead
         })
-      ).sort(({ unreadValue: valueA, lastRead: lastReadA }, { unreadValue: valueB, lastRead: lastReadB }) => {
+      ).sort(({ totalUnreadValue: valueA, lastRead: lastReadA }, { totalUnreadValue: valueB, lastRead: lastReadB }) => {
         if (valueA === valueB) {
           return lastReadB - lastReadA
         }
         return valueB - valueA
       })
+      return sortedOrder
     },
     getChatOrder (state) {
       return state.order
