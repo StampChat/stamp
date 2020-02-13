@@ -38,10 +38,10 @@
         :style="`background-size:cover; height: calc(100vh - ${height}px); border: 0; margin: 0; padding: 0; `"
     >
       <chat-list-item
-        v-for="(addr, index) in getChatOrder"
-        :key="index"
-        :chatAddr="addr"
-        :numUnread="getNumUnread(addr)"
+        v-for="(contact) in getValuedChatOrder"
+        :key="contact.address"
+        :chatAddr="contact.address"
+        :numUnread="contact.unreadValue"
       />
       <q-item v-if="getChatOrder.length === 0">
         <q-item-section>
@@ -80,7 +80,9 @@ export default {
   computed: {
     ...mapGetters({
       getChatOrder: 'chats/getChatOrder',
+      getValuedChatOrder: 'chats/getValuedChatOrder',
       getNumUnread: 'chats/getNumUnread',
+      getUnreadValue: 'chats/getUnreadValue',
       getBalanceVuex: 'wallet/getBalance',
       walletConnected: 'electrumHandler/connected'
     }),
