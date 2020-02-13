@@ -10,6 +10,11 @@
       <wallet-connect-dialog />
     </q-dialog>
 
+    <!-- Relay reconnect dialog -->
+    <q-dialog v-model="relayConnectOpen">
+      <relay-connect-dialog />
+    </q-dialog>
+
     <q-item
       clickable
       v-ripple
@@ -32,10 +37,10 @@
         />
       </q-item-section>
       <q-item-section
-        v-if="walletConnected"
+        v-if="!relayConnected"
         side
         clickable
-        @click="walletConnectOpen=true"
+        @click="relayConnectOpen=true"
       >
         <q-btn
           icon='email'
@@ -72,19 +77,22 @@ import { mapGetters } from 'vuex'
 import formatting from '../../utils/formatting'
 import WalletDialog from '../dialogs/WalletDialog.vue'
 import WalletConnectDialog from '../dialogs/WalletConnectDialog.vue'
+import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 
 export default {
   props: ['tabHeight', 'chatAddr'],
   components: {
     ChatListItem,
     WalletDialog,
-    WalletConnectDialog
+    WalletConnectDialog,
+    RelayConnectDialog
   },
   data () {
     return {
       balanceHeight: 100,
       walletOpen: false,
-      walletConnectOpen: false
+      walletConnectOpen: false,
+      relayConnectOpen: false
     }
   },
   methods: {
@@ -104,7 +112,8 @@ export default {
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getNumUnread: 'chats/getNumUnread',
       getBalanceVuex: 'wallet/getBalance',
-      walletConnected: 'electrumHandler/connected'
+      walletConnected: 'electrumHandler/connected',
+      relayConnected: 'relayClient/connected'
     }),
     getBalance () {
       return formatting.formatBalance(this.getBalanceVuex)
