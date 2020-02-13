@@ -33,20 +33,22 @@
       </q-item-section>
     </q-item>
     <q-separator />
-    <chat-list-item
-      v-for="(addr, index) in getChatOrder"
-      :key="index"
-      :chatAddr="addr"
-      :numUnread="getNumUnread(addr)"
-    />
-    <q-item v-if="getChatOrder.length === 0">
-      <q-item-section>
-        <q-item-label>Add contacts from the drawer above...</q-item-label>
-      </q-item-section>
-    </q-item>
-    <q-item>
-
-    </q-item>
+    <q-scroll-area
+        class="q-px-md row"
+        :style="`background-size:cover; height: calc(100vh - ${height}px); border: 0; margin: 0; padding: 0; `"
+    >
+      <chat-list-item
+        v-for="(addr, index) in getChatOrder"
+        :key="index"
+        :chatAddr="addr"
+        :numUnread="getNumUnread(addr)"
+      />
+      <q-item v-if="getChatOrder.length === 0">
+        <q-item-section>
+          <q-item-label>Add contacts from the drawer above...</q-item-label>
+        </q-item-section>
+      </q-item>
+    </q-scroll-area>
   </q-list>
 </template>
 
@@ -65,8 +67,14 @@ export default {
   },
   data () {
     return {
+      height: 100,
       walletOpen: false,
       walletConnectOpen: false
+    }
+  },
+  methods: {
+    onResize (size) {
+      this.height = size.height
     }
   },
   computed: {
