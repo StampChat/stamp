@@ -70,7 +70,7 @@ export default {
       }
     },
     keepAlive ({ dispatch, getters }) {
-      setInterval(async () => {
+      setTimeout(async () => {
         if (getters['connected']) {
           if (await dispatch('checkConnection')) {
             dispatch('setConnected', true)
@@ -78,8 +78,9 @@ export default {
             dispatch('setConnected', false)
           }
         } else {
-          dispatch('connect')
+          await dispatch('connect')
         }
+        await dispatch('keepAlive')
       }, pingInterval)
     }
   },
