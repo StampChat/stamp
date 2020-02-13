@@ -43,18 +43,16 @@ export default {
     getLastRead: (state) => (addr) => {
       return state.data[addr].lastRead
     },
-    getValuedChatOrder (state) {
+    getSortedChatOrder (state) {
       return state.order.map(
         addr => ({
           address: addr,
-          unreadValue: calculateUnreadValue(state, addr)
+          unreadValue: calculateUnreadValue(state, addr),
+          lastRead: state.data[addr].lastRead
         })
-      ).sort(({ address: addressA, unreadValue: valueA }, { address: addressB, unreadValue: valueB }) => {
-        if (state.activeChatAddr === addressA) {
-          return -Infinity
-        }
-        if (state.activeChatAddr === addressB) {
-          return Infinity
+      ).sort(({ unreadValue: valueA, lastRead: lastReadA }, { unreadValue: valueB, lastRead: lastReadB }) => {
+        if (valueA === valueB) {
+          return lastReadB - lastReadA
         }
         return valueB - valueA
       })
