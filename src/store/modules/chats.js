@@ -492,9 +492,11 @@ export default {
           })
           if (!document.hasFocus()) {
             let contact = rootGetters['contacts/getContact'](senderAddr)
-            desktopNotify(contact.name, text, contact.avatar, () => {
-              dispatch('openChat', senderAddr)
-            })
+            if (contact.notify) {
+              desktopNotify(contact.name, text, contact.avatar, () => {
+                dispatch('openChat', senderAddr)
+              })
+            }
           }
         } else if (kind === 'stealth-payment') {
           let entryData = entry.getEntryData()

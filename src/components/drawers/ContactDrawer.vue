@@ -195,6 +195,7 @@ export default {
   methods: {
     ...mapActions({
       setDrawerOpen: 'contactDrawer/setDrawerOpen',
+      setNotify: 'contacts/setNotify',
       shareContact: 'chats/shareContact',
       setStampAmount: 'chats/setStampAmount'
     })
@@ -202,6 +203,7 @@ export default {
   computed: {
     ...mapGetters({
       getDrawerOpen: 'contactDrawer/getDrawerOpen',
+      getNotify: 'contacts/getNotify',
       getStampAmount: 'chats/getStampAmount'
     }),
     drawerOpen: {
@@ -210,6 +212,14 @@ export default {
       },
       set (value) {
         this.setDrawerOpen(value)
+      }
+    },
+    notifications: {
+      get () {
+        return this.getNotify(this.address)
+      },
+      set (value) {
+        this.setNotify({ addr: this.address, value })
       }
     },
     stampAmount: {
@@ -226,7 +236,6 @@ export default {
   },
   data: function () {
     return {
-      notifications: false,
       confirmClearOpen: false,
       confirmDeleteOpen: false,
       contactBookOpen: false,

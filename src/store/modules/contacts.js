@@ -18,6 +18,9 @@ export default {
     }
   },
   getters: {
+    getNotify: (state) => (addr) => {
+      return state.profiles[addr].notify
+    },
     isContact: (state) => (addr) => {
       return (addr in state.profiles)
     },
@@ -50,21 +53,32 @@ export default {
     },
     updateContact (state, { addr, profile }) {
       if (addr in state.profiles) {
-        Vue.set(state.profiles, addr, profile)
+        state.profiles[addr] = {
+          ...state.profiles[addr],
+          ...profile
+        }
+        console.log(state.profiles[addr])
       }
+    },
+    setNotify (state, { addr, value }) {
+      state.profiles[addr].notify = value
     },
     deleteContact (state, addr) {
       Vue.delete(state.profiles, addr)
     }
   },
   actions: {
+    setNotify ({ commit }, { addr, value }) {
+      commit('setNotify', { addr, value })
+    },
     addLoadingContact ({ commit }, { addr, pubKey }) {
       let profile = {
         name: 'Loading...',
         bio: null,
         avatar: null,
         acceptancePrice: 'Unknown',
-        pubKey
+        pubKey,
+        notify: true
       }
       commit('addContact', { addr, profile })
     },
