@@ -31,11 +31,24 @@
           color="red"
         />
       </q-item-section>
+      <q-item-section
+        v-if="walletConnected"
+        side
+        clickable
+        @click="walletConnectOpen=true"
+      >
+        <q-btn
+          icon='email'
+          flat
+          round
+          color="red"
+        />
+      </q-item-section>
     </q-item>
     <q-separator />
     <q-scroll-area
-        class="q-px-md row"
-        :style="`background-size:cover; height: calc(100vh - ${height}px); border: 0; margin: 0; padding: 0; `"
+      class="q-px-none row"
+      :style="`height: calc(100vh - ${balanceHeight}px - ${tabHeight}px);`"
     >
       <chat-list-item
         v-for="(contact) in getSortedChatOrder"
@@ -61,6 +74,7 @@ import WalletDialog from '../dialogs/WalletDialog.vue'
 import WalletConnectDialog from '../dialogs/WalletConnectDialog.vue'
 
 export default {
+  props: ['tabHeight', 'chatAddr'],
   components: {
     ChatListItem,
     WalletDialog,
@@ -68,7 +82,7 @@ export default {
   },
   data () {
     return {
-      height: 100,
+      balanceHeight: 100,
       walletOpen: false,
       walletConnectOpen: false
     }
@@ -95,7 +109,6 @@ export default {
     getBalance () {
       return formatting.formatBalance(this.getBalanceVuex)
     }
-  },
-  props: ['chatAddr']
+  }
 }
 </script>

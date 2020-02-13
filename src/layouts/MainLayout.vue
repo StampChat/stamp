@@ -20,7 +20,7 @@
         :limits="[minSplitter, maxSplitter]"
       >
         <template v-slot:before>
-          <chat-list />
+          <chat-list :tabHeight="tabHeight" />
         </template>
 
         <template v-slot:after>
