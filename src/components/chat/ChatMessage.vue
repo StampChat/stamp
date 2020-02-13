@@ -102,7 +102,7 @@ export default {
       if (this.message.stampTx !== null) {
         return this.message.stampTx.outputs[0].satoshis + ' sats'
       } else {
-        return ''
+        return '&nbsp'
       }
     }
   },
