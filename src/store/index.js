@@ -14,6 +14,8 @@ const vuexLocal = new VuexPersistence({
         return false
       case 'contactDrawer':
         return false
+      case 'myDrawer':
+        return false
     }
 
     switch (mutation.type) {
