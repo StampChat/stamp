@@ -23,6 +23,8 @@ const vuexLocal = new VuexPersistence({
         return false
       case 'chats/setInputMessageActive':
         return false
+      case 'contacts/updateContact':
+        return false
     }
 
     return true
