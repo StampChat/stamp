@@ -57,7 +57,6 @@ export default {
           ...state.profiles[addr],
           ...profile
         }
-        console.log(state.profiles[addr])
       }
     },
     setNotify (state, { addr, value }) {

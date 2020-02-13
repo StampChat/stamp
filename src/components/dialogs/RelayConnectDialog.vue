@@ -39,7 +39,6 @@ export default {
     connect () {
       let client = this.getClient()
       let token = this.getToken()
-      console.log(client)
       client.setUpWebsocket(this.getAddr(), token)
     }
   }
