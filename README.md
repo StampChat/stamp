@@ -38,7 +38,7 @@ Clone this repository using
 ```bash
 git clone https://github.com/cashweb/ircash.git
 cd ircash
-git submodules update --init --recursive
+git submodule update --init --recursive
 ```
 
 ### Generating the Protobuf files
