@@ -16,9 +16,8 @@ function calculateUnreadAggregates (state, addr) {
     .map(([timestamp, message]) => {
       if (message.stampTx) {
         return message.stampTx.outputs[0].satoshis
-      } else {
-        return 0
       }
+      return 0
     })
     .reduce(
       ({ totalUnreadValue, totalUnreadMessages }, curStampSats) => ({

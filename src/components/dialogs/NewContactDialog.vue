@@ -131,6 +131,7 @@ export default {
       getRelayClient: 'relayClient/getClient'
     }),
     addContact () {
+      this.profile.notify = true
       let cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
       this.addContactVuex({ addr: cashAddress, profile: this.profile })
     }
