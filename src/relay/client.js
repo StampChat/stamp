@@ -49,7 +49,6 @@ class RelayClient {
 
     socket.onerror = function (err) {
       console.error(err)
-      disconnectHandler()
     }
     socket.onclose = function (close) {
       disconnectHandler()
