@@ -173,7 +173,7 @@ export default {
 
     this.$q.loading.hide()
 
-    // Start profile watcher
+    // Start contact watcher
     this.startContactUpdater()
 
     // Start internal timer

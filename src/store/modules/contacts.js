@@ -6,40 +6,51 @@ import Vue from 'vue'
 export default {
   namespaced: true,
   state: {
-    profiles: {
+    contacts: {
       // Example:
       // 'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
-      //   name: 'Anon',
-      //   bio: '',
-      //   avatar: ...,
-      //   acceptancePrice: ...,
-      //   pubKey: ...
+      //   keyserver: {
+      //     name: 'Anon',
+      //     bio: '',
+      //     avatar: ...,
+      //     pubKey: ...,
+      //   },
+      //   relay: {
+      //     acceptancePrice: ...,
+      //   },
+      //   notify: true
       // },
     }
   },
   getters: {
     getNotify: (state) => (addr) => {
-      return state.profiles[addr].notify
+      return state.contacts[addr].notify
     },
     isContact: (state) => (addr) => {
-      return (addr in state.profiles)
+      return (addr in state.contacts)
     },
     getContact: (state) => (addr) => {
-      return state.profiles[addr]
+      return state.contacts[addr]
+    },
+    getContactKeyserver: (state) => (addr) => {
+      return state.contacts[addr].keyserver
+    },
+    getContactRelay: (state) => (addr) => {
+      return state.contacts[addr].keyserver
     },
     getPubKey: (state) => (addr) => {
-      let arr = Uint8Array.from(Object.values(state.profiles[addr].pubKey))
+      let arr = Uint8Array.from(Object.values(state.contacts[addr].keyserver.pubKey))
       return PublicKey.fromBuffer(arr)
     },
     getAll (state) {
-      return state.profiles
+      return state.contacts
     },
     searchContacts: (state) => (search) => {
       let result = {}
-      let contacts = state.profiles
+      let contacts = state.contacts
       for (let key in contacts) {
         let lowerSearch = search.toLowerCase()
-        if (contacts[key].name.toLowerCase().includes(lowerSearch) || key.toLowerCase().includes(lowerSearch)) {
+        if (contacts[key].keyserver.name.toLowerCase().includes(lowerSearch) || key.toLowerCase().includes(lowerSearch)) {
           result[key] = contacts[key]
         }
       }
@@ -48,22 +59,27 @@ export default {
     }
   },
   mutations: {
-    addContact (state, { addr, profile }) {
-      Vue.set(state.profiles, addr, profile)
+    addContact (state, { addr, contact }) {
+      Vue.set(state.contacts, addr, contact)
     },
-    updateContact (state, { addr, profile }) {
-      if (addr in state.profiles) {
-        state.profiles[addr] = {
-          ...state.profiles[addr],
-          ...profile
-        }
+    updateContactKeyserver (state, { addr, keyserver }) {
+      if (addr in state.contacts) {
+        state.contacts[addr].keyserver = keyserver
+      }
+    },
+    updateContactRelay (state, { addr, relay }) {
+      if (addr in state.contacts) {
+        state.contacts[addr].relay = relay
       }
     },
     setNotify (state, { addr, value }) {
-      state.profiles[addr].notify = value
+      state.contacts[addr].notify = value
     },
     deleteContact (state, addr) {
-      Vue.delete(state.profiles, addr)
+      Vue.delete(state.contacts, addr)
+    },
+    setPubKey (state, { addr, pubKey }) {
+      state.contacts[addr].keyserver.pubKey = pubKey
     }
   },
   actions: {
@@ -71,29 +87,33 @@ export default {
       commit('setNotify', { addr, value })
     },
     addLoadingContact ({ commit }, { addr, pubKey }) {
-      let profile = {
-        name: 'Loading...',
-        bio: null,
-        avatar: null,
-        acceptancePrice: 'Unknown',
-        pubKey,
+      let contact = {
+        keyserver: {
+          name: 'Loading...',
+          bio: null,
+          avatar: null,
+          pubKey
+        },
+        relay: {
+          acceptancePrice: 'Unknown'
+        },
         notify: true
       }
-      commit('addContact', { addr, profile })
+      commit('addContact', { addr, contact })
     },
     deleteContact ({ commit }, addr) {
       commit('chats/clearChat', addr, { root: true })
       commit('chats/deleteChat', addr, { root: true })
       commit('deleteContact', addr)
     },
-    addContact ({ commit }, { addr, profile }) {
+    addContact ({ commit }, { addr, contact }) {
+      commit('addContact', { addr, contact })
       commit('chats/openChat', addr, { root: true })
-      commit('addContact', { addr, profile })
     },
     deleteChat ({ commit }, addr) {
       commit('chats/deleteChat', addr, { root: true })
     },
-    async refresh ({ commit, rootGetters }, addr) {
+    async refresh ({ commit, rootGetters, getters }, addr) {
       // Make this generic over networks
 
       // Get metadata
@@ -140,6 +160,25 @@ export default {
       let value = avatarEntry.getHeadersList()[0].getValue()
       let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
 
+      let keyserver = {
+        name,
+        bio,
+        avatar: avatarDataURL,
+        pubKey
+      }
+      let oldKeyserver = getters['getContactKeyserver'](addr)
+
+      // If keyserver values changed, then update
+      if (
+        keyserver.name !== oldKeyserver.name ||
+        keyserver.bio !== oldKeyserver.bio ||
+        keyserver.avatar !== oldKeyserver.avatar
+      ) {
+        console.log(keyserver)
+        console.log(oldKeyserver)
+        commit('updateContactKeyserver', { addr, keyserver })
+      }
+
       // Get fee
       let acceptancePrice
       try {
@@ -151,14 +190,14 @@ export default {
         acceptancePrice = 'Unknown'
       }
 
-      let profile = {
-        name,
-        bio,
-        avatar: avatarDataURL,
-        acceptancePrice,
-        pubKey
+      // If relay values changed, then update
+      let relay = {
+        acceptancePrice
       }
-      commit('updateContact', { addr, profile })
+      let oldRelay = getters['getContactRelay'](addr)
+      if (relay !== oldRelay) {
+        commit('updateContactRelay', { addr, relay })
+      }
     },
     startContactUpdater ({ dispatch, getters }) {
       setInterval(() => {

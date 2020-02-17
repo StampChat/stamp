@@ -138,14 +138,13 @@ class KeyserverHandler {
     let value = avatarEntry.getHeadersList()[0].getValue()
     let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
 
-    let profile = {
+    let keyserver = {
       name,
       bio,
       avatar: avatarDataURL,
-      acceptancePrice: 'Unknown',
       pubKey
     }
-    return profile
+    return keyserver
   }
 
   static async putMetadata (addr, server, metadata, token) {

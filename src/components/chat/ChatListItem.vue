@@ -8,11 +8,11 @@
   >
     <q-item-section avatar>
       <q-avatar rounded>
-        <img :src="profile.avatar">
+        <img :src="contact.avatar">
       </q-avatar>
     </q-item-section>
     <q-item-section>
-      <q-item-label>{{ profile.name }}</q-item-label>
+      <q-item-label>{{ contact.name }}</q-item-label>
       <q-item-label
         caption
         lines="2"
@@ -43,30 +43,30 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
   methods: {
-    ...mapGetters({
-      getActiveChat: 'chats/getActiveChat',
-      getContact: 'contacts/getContact',
-      getLatestMessage: 'chats/getLatestMessage'
-    }),
     ...mapActions({ switchChatActive: 'chats/switchChatActive' })
   },
   computed: {
+    ...mapGetters({
+      getContactKeyserver: 'contacts/getContactKeyserver',
+      getActiveChat: 'chats/getActiveChat',
+      getLatestMessage: 'chats/getLatestMessage'
+    }),
     latestMessageBody () {
-      let info = this.getLatestMessage()(this.chatAddr)
+      let info = this.getLatestMessage(this.chatAddr)
       if (info === null) {
         return ''
       }
       if (info.outbound) {
         return 'You: ' + info.text
       } else {
-        return this.profile.name + ': ' + info.text
+        return this.contact.name + ': ' + info.text
       }
     },
-    profile () {
-      return this.getContact()(this.chatAddr)
+    contact () {
+      return this.getContactKeyserver(this.chatAddr)
     },
     isActive () {
-      return this.getActiveChat() === this.chatAddr
+      return this.getActiveChat === this.chatAddr
     }
   },
   props: ['chatAddr', 'numUnread', 'valueUnread']

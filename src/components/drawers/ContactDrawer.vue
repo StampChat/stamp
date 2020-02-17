@@ -14,7 +14,7 @@
     >
       <send-bitcoin-dialog
         :address="address"
-        :contact="contact"
+        :contact="contact.keyserver"
       />
     </q-dialog>
 
@@ -25,7 +25,7 @@
     >
       <clear-history-dialog
         :address="address"
-        :name="contact.name"
+        :name="contact.keyserver.name"
       />
     </q-dialog>
 
@@ -36,7 +36,7 @@
     >
       <delete-chat-dialog
         :address="address"
-        :name="contact.name"
+        :name="contact.keyserver.name"
       />
     </q-dialog>
 
@@ -159,9 +159,9 @@
     <!-- Contact card -->
     <drawer-contact-card
       :address="address"
-      :name="contact.name"
-      :avatar="contact.avatar"
-      :acceptancePrice="contact.acceptancePrice"
+      :name="contact.keyserver.name"
+      :avatar="contact.keyserver.avatar"
+      :acceptancePrice="contact.relay.acceptancePrice"
     />
   </q-drawer>
 </template>

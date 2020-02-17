@@ -252,7 +252,7 @@ export default {
       commit('readAll', addr)
     },
     shareContact ({ commit, rootGetters }, { currentAddr, shareAddr }) {
-      let contact = rootGetters['contacts/getContact'](currentAddr)
+      let contact = rootGetters['contacts/getContactKeyserver'](currentAddr)
       let text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
       commit('setInputMessage', { addr: shareAddr, text })
       commit('switchChatActive', shareAddr)
@@ -490,7 +490,7 @@ export default {
             text
           })
           if (!document.hasFocus()) {
-            let contact = rootGetters['contacts/getContact'](senderAddr)
+            let contact = rootGetters['contacts/getContactKeyserver'](senderAddr)
             if (contact.notify) {
               desktopNotify(contact.name, text, contact.avatar, () => {
                 dispatch('openChat', senderAddr)

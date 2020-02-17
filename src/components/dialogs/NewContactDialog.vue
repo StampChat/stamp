@@ -18,7 +18,7 @@
     <q-slide-transition>
       <q-card-section
         class="q-py-none"
-        v-if="(profile === null) && address !== ''"
+        v-if="(contact === null) && address !== ''"
       >
         <q-item>
           <q-item-section avatar>
@@ -36,7 +36,7 @@
       </q-card-section>
       <q-card-section
         class="q-py-none"
-        v-else-if="profile === 'loading'"
+        v-else-if="contact === 'loading'"
       >
         <q-item>
           <q-item-section avatar>
@@ -54,21 +54,21 @@
 
       </q-card-section>
       <q-card-section
-        v-else-if="profile !== null"
+        v-else-if="contact !== null"
         class="q-py-none"
       >
         <q-item>
           <q-item-section avatar>
             <q-avatar rounded>
               <img
-                :src="profile.avatar"
+                :src="contact.keyserver.avatar"
                 size="xl"
               >
             </q-avatar>
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{profile.name}}</q-item-label>
-            <q-item-label caption>Inbox Fee: {{profile.acceptancePrice}}</q-item-label>
+            <q-item-label>{{contact.keyserver.name}}</q-item-label>
+            <q-item-label caption>Inbox Fee: {{contact.relay.acceptancePrice}}</q-item-label>
           </q-item-section>
         </q-item>
       </q-card-section>
@@ -82,7 +82,7 @@
       />
       <q-btn
         flat
-        :disable="profile === null"
+        :disable="contact === null"
         label="Add"
         color="primary"
         @click="addContact()"
@@ -101,24 +101,30 @@ export default {
   data () {
     return {
       address: '',
-      profile: null
+      contact: null
     }
   },
   watch: {
     address: async function (newAddress, oldAddress) {
       if (newAddress === '') {
-        this.profile = null
+        this.contact = null
         return
       }
-      this.profile = 'loading'
+      this.contact = 'loading'
       try {
         let ksHandler = this.getKsHandler()
         let relayClient = this.getRelayClient()
-        let profile = await ksHandler.getContact(newAddress)
-        profile.acceptancePrice = await relayClient.getAcceptancePrice(newAddress)
-        this.profile = profile
+        let keyserver = await ksHandler.getContact(newAddress)
+        let relay = {
+          acceptancePrice: await relayClient.getAcceptancePrice(newAddress)
+        }
+        this.contact = {
+          keyserver,
+          relay,
+          notify: true
+        }
       } catch {
-        this.profile = null
+        this.contact = null
       }
     }
   },
@@ -131,9 +137,8 @@ export default {
       getRelayClient: 'relayClient/getClient'
     }),
     addContact () {
-      this.profile.notify = true
       let cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
-      this.addContactVuex({ addr: cashAddress, profile: this.profile })
+      this.addContactVuex({ addr: cashAddress, contact: this.contact })
     }
   }
 }

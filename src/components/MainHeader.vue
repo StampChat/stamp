@@ -77,10 +77,6 @@ import { minSplitter, maxSplitter } from '../utils/constants'
 
 export default {
   methods: {
-    ...mapGetters({
-      getContact: 'contacts/getContact',
-      getActiveChat: 'chats/getActiveChat'
-    }),
     ...mapActions({
       setSplitterRatio: 'splitter/setSplitterRatio',
       toggleMyDrawerOpen: 'myDrawer/toggleDrawerOpen',
@@ -88,10 +84,14 @@ export default {
     })
   },
   computed: {
-    ...mapGetters({ getSplitterRatio: 'splitter/getSplitterRatio' }),
+    ...mapGetters({
+      getContactKeyserver: 'contacts/getContactKeyserver',
+      getSplitterRatio: 'splitter/getSplitterRatio',
+      getActiveChat: 'chats/getActiveChat'
+    }),
     activeProfileName () {
-      if (this.getActiveChat() !== null) {
-        return this.getContact()(this.getActiveChat()).name
+      if (this.getActiveChat !== null) {
+        return this.getContactKeyserver(this.getActiveChat).name
       } else {
         return ''
       }
