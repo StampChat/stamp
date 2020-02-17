@@ -490,9 +490,9 @@ export default {
             text
           })
           if (!document.hasFocus()) {
-            let contact = rootGetters['contacts/getContactKeyserver'](senderAddr)
+            let contact = rootGetters['contacts/getContact'](senderAddr)
             if (contact.notify) {
-              desktopNotify(contact.name, text, contact.avatar, () => {
+              desktopNotify(contact.keyserver.name, text, contact.keyserver.avatar, () => {
                 dispatch('openChat', senderAddr)
               })
             }

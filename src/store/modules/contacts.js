@@ -174,8 +174,6 @@ export default {
         keyserver.bio !== oldKeyserver.bio ||
         keyserver.avatar !== oldKeyserver.avatar
       ) {
-        console.log(keyserver)
-        console.log(oldKeyserver)
         commit('updateContactKeyserver', { addr, keyserver })
       }
 
