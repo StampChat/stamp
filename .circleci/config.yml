@@ -78,20 +78,20 @@ jobs:
             quasar build -m electron -b builder -T linux
             mkdir packages_uncompressed
             VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-            mv ./dist/electron/Packaged/ircash_${VERSION}_amd64.snap ./packages_uncompressed/ircash-${VERSION}-amd64.snap
-            mv ./dist/electron/Packaged/ircash-${VERSION}.AppImage ./packages_uncompressed
+            mv ./dist/electron/Packaged/stamp_${VERSION}_amd64.snap ./packages_uncompressed/stamp-${VERSION}-amd64.snap
+            mv ./dist/electron/Packaged/stamp-${VERSION}.AppImage ./packages_uncompressed
       - run:
           name: Build Windows 32-bit
           command: |
             quasar build -m electron -b builder -T win32
             VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-            mv "./dist/electron/Packaged/ircash Setup ${VERSION}.exe" ./packages_uncompressed/ircash-${VERSION}-amd64-32bit.exe
+            mv "./dist/electron/Packaged/stamp Setup ${VERSION}.exe" ./packages_uncompressed/stamp-${VERSION}-amd64-32bit.exe
       - run:
           name: Build Windows 64-bit
           command: |
             quasar build -m electron -b builder -T win
             VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-            mv "./dist/electron/Packaged/ircash Setup ${VERSION}.exe" ./packages_uncompressed/ircash-${VERSION}-amd64-32bit.exe
+            mv "./dist/electron/Packaged/stamp Setup ${VERSION}.exe" ./packages_uncompressed/stamp-${VERSION}-amd64-32bit.exe
       - persist_to_workspace:
           root: .
           paths:

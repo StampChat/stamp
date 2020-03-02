@@ -112,13 +112,13 @@
             v-if="step === 1"
             class="bg-primary text-white q-px-lg"
           >
-            Welcome to IRCash!
+            Welcome to Stamp!
           </q-banner>
           <q-banner
             v-else-if="step === 2"
             class="bg-primary text-white q-px-lg"
           >
-            How would you like to add a key to IRCash? </q-banner>
+            How would you like to generate a wallet? </q-banner>
           <q-banner
             v-else-if="step === 3"
             class="bg-primary text-white q-px-lg"

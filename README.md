@@ -7,8 +7,8 @@
 </p>
 
 <p align="center">
-  <a href="https://circleci.com/gh/cashweb/ircash">
-    <img alt="Build Status" src="https://circleci.com/gh/cashweb/ircash.svg?style=svg">
+  <a href="https://circleci.com/gh/cashweb/stamp">
+    <img alt="Build Status" src="https://circleci.com/gh/cashweb/stamp.svg?style=svg">
   </a>
 
   <a href="LICENSE">

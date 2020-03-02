@@ -1,9 +1,9 @@
 {
-  "name": "ircash",
+  "name": "stamp",
   "version": "0.0.1-alpha.2",
-  "description": "IRCash is a Bitcoin Cash powered relay chat.",
-  "productName": "ircash",
-  "cordovaId": "org.cashweb.ircash",
+  "description": "Stamp is a Bitcoin Cash powered relay chat.",
+  "productName": "Stamp",
+  "cordovaId": "org.cashweb.stamp",
   "capacitorId": "",
   "author": "Harry Barber <harrybarber@protonmail.com>",
   "private": true,
