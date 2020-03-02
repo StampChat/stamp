@@ -161,11 +161,11 @@ export default {
     initAddresses ({ commit, getters }) {
       let xPrivKey = getters['getXPrivKey']
       for (var i = 0; i < numAddresses; i++) {
-        let privKey = xPrivKey.deriveChild(44)
+        let privKey = xPrivKey.deriveChild(44, true)
+          .deriveChild(145, true)
+          .deriveChild(0, true)
           .deriveChild(0)
-          .deriveChild(0)
-          .deriveChild(0)
-          .deriveChild(i, true)
+          .deriveChild(i)
           .privateKey
         let address = privKey.toAddress('testnet').toLegacyAddress()
         commit('setAddress', { address, privKey })
@@ -175,11 +175,11 @@ export default {
         commit('addElectrumScriptHash', { scriptHash, address, change: false })
       }
       for (var j = 0; j < numChangeAddresses; j++) {
-        let privKey = xPrivKey.deriveChild(44)
-          .deriveChild(0)
-          .deriveChild(0)
+        let privKey = xPrivKey.deriveChild(44, true)
+          .deriveChild(145, true)
+          .deriveChild(0, true)
           .deriveChild(1)
-          .deriveChild(j, true)
+          .deriveChild(j)
           .privateKey
         let address = privKey.toAddress('testnet').toLegacyAddress()
         commit('setChangeAddress', { address, privKey })
