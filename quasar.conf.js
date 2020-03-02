@@ -104,9 +104,9 @@ module.exports = function (ctx) {
       workboxPluginMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
       workboxOptions: {}, // only for GenerateSW
       manifest: {
-        name: 'ircash',
-        short_name: 'ircash',
-        description: 'IRCash is a Bitcoin Cash powered relay chat.',
+        name: 'Stamp',
+        short_name: 'Stamp',
+        description: 'Stamp is a Bitcoin Cash powered relay chat.',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#ffffff',
@@ -144,7 +144,7 @@ module.exports = function (ctx) {
     // Full list of options: https://quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
     cordova: {
       // noIosLegacyBuildFlag: true, // uncomment only if you know what you are doing
-      id: 'org.cashweb.ircash'
+      id: 'org.cashweb.stamp'
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor
@@ -172,7 +172,7 @@ module.exports = function (ctx) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'ircash',
+        appId: 'stamp',
         extraFiles: [
           { from: 'src-electron/icons', to: 'resources/icons' }
         ]

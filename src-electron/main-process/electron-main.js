@@ -44,13 +44,13 @@ let tray = null
 function createWindow() {
   let contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Open IRCash',
+      label: 'Open Stamp',
       click: function () {
         mainWindow.show()
       }
     },
     {
-      label: 'Quit IRCash',
+      label: 'Quit Stamp',
       click: function () {
         mainWindow.destroy()
         app.quit()

@@ -1,5 +1,5 @@
 <h1 align="center">
-  IRCash
+  Stamp
 </h1>
 
 <p align="center">
@@ -7,8 +7,8 @@
 </p>
 
 <p align="center">
-  <a href="https://circleci.com/gh/cashweb/ircash">
-    <img alt="Build Status" src="https://circleci.com/gh/cashweb/ircash.svg?style=svg">
+  <a href="https://circleci.com/gh/cashweb/stamp">
+    <img alt="Build Status" src="https://circleci.com/gh/cashweb/stamp.svg?style=svg">
   </a>
 
   <a href="LICENSE">
@@ -16,11 +16,11 @@
   </a>
 </p>
 
-**WARNING: IRCash is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the Bitcoin Cash testnet as to protect against lost funds.**
+**WARNING: Stamp is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the Bitcoin Cash testnet as to protect against lost funds.**
 
 ## Install from Binary
 
-1. Download the appropriate binary for your machine from the [latest releases](https://github.com/cashweb/ircash/releases).
+1. Download the appropriate binary for your machine from the [latest releases](https://github.com/cashweb/stamp/releases).
 2. Unzip your package.
 3. Run it.
 
