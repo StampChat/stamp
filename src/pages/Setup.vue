@@ -436,7 +436,7 @@ export default {
         throw err
       }
       try {
-        var { token } = await pop.sendPayment(paymentUrl, payment)
+        var { token } = await client.sendPayment(paymentUrl, payment)
       } catch (err) {
         console.error(err)
         paymentFailureNotify()
@@ -457,6 +457,7 @@ export default {
       try {
         await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
       } catch (err) {
+        console.error(err)
         relayDisconnectedNotify()
         throw err
       }

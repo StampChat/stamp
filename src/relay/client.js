@@ -135,6 +135,12 @@ class RelayClient {
     return pop.getPaymentRequest(url, 'get')
   }
 
+  async sendPayment (paymentUrl, payment) {
+    // TODO: Relative vs absolute
+    let url = `${this.httpScheme}://${this.url}${paymentUrl}`
+    return pop.sendPayment(url, payment)
+  }
+
   async pushMessages (addr, messageSet) {
     let rawMetadata = messageSet.serializeBinary()
     let url = `${this.httpScheme}://${this.url}/${addr}/messages`

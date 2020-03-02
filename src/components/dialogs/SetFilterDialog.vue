@@ -76,6 +76,7 @@ export default {
       try {
         await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
       } catch (err) {
+        console.error(err)
         relayDisconnectedNotify()
         return
       }
