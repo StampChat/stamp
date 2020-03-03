@@ -55,9 +55,48 @@ export default {
 
     return { message, usedIDs, stampTx: transaction }
   },
-  constructPayload (entries, privKey, destPubKey, scheme) {
+  constructOutboxMessage (payload, privKey) {
+    let serializedPayload = payload.serializeBinary()
+    let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
+    let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
+    ecdsa.sign()
+
+    let message = new messages.Message()
+    let sig = ecdsa.sig.toCompact(1).slice(1)
+    let rawPubkey = privKey.toPublicKey().toBuffer()
+    message.setSenderPubKey(rawPubkey)
+    message.setSignature(sig)
+    message.setSerializedPayload(serializedPayload)
+
+    return message
+  },
+  constructPayload (entries, privKey, destPubKey, scheme, timestamp) {
     let payload = new messages.Payload()
-    payload.setTimestamp(Math.floor(Date.now() / 1000))
+    payload.setTimestamp(timestamp)
+    let rawDestPubKey = destPubKey.toBuffer()
+    payload.setDestination(rawDestPubKey)
+
+    // Serialize and encrypt
+    let rawEntries = entries.serializeBinary()
+    if (scheme === 0) {
+      payload.setEntries(rawEntries)
+    } else if (scheme === 1) {
+      let { cipherText, ephemeralPubKey } = crypto.encrypt(rawEntries, privKey, destPubKey)
+      let ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
+
+      payload.setEntries(cipherText)
+      payload.setSecretSeed(ephemeralPubKeyRaw)
+      payload.setScheme(messages.Payload.EncryptionScheme.EPHEMERALDH)
+    } else {
+      // TODO: Raise error
+      return
+    }
+    return payload
+  },
+  constructOutboxPayload (entries, privKey, scheme, timestamp) {
+    let payload = new messages.Payload()
+    payload.setTimestamp(timestamp)
+    let destPubKey = privKey.toPublicKey()
     let rawDestPubKey = destPubKey.toBuffer()
     payload.setDestination(rawDestPubKey)
 
@@ -89,9 +128,16 @@ export default {
     let entries = new messages.Entries()
     entries.addEntries(textEntry)
 
-    let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
+    // Construct message
+    let timestamp = Math.floor(Date.now() / 1000)
+    let payload = this.constructPayload(entries, privKey, destPubKey, scheme, timestamp)
     let { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
-    return { message, usedIDs, stampTx }
+
+    // Construct outbox message
+    let outboxPayload = this.constructOutboxPayload(entries, privKey, scheme, timestamp)
+    let outboxMessage = await this.constructOutboxMessage(outboxPayload, privKey)
+
+    return { message, outboxMessage, usedIDs, stampTx }
   },
   async constructStealthPaymentMessage (amount, memo, privKey, destPubKey, scheme, stampAmount, stealthTxId) {
     let entries = new messages.Entries()
@@ -141,7 +187,9 @@ export default {
       entries.addEntries(memoEntry)
     }
 
-    let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
+    // Construct message
+    let timestamp = Math.floor(Date.now() / 1000)
+    let payload = this.constructPayload(entries, privKey, destPubKey, scheme, timestamp)
     try {
       var { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
     } catch (err) {
@@ -150,7 +198,12 @@ export default {
         innerErr: err
       })
     }
-    return { message, usedIDs, stampTx }
+
+    // Construct outbox message
+    let outboxPayload = this.constructOutboxPayload(entries, privKey, scheme, timestamp)
+    let outboxMessage = await this.constructOutboxMessage(outboxPayload, privKey)
+
+    return { message, outboxMessage, usedIDs, stampTx }
   },
   async constructImageMessage (image, caption, privKey, destPubKey, scheme, stampAmount) {
     let entries = new messages.Entries()
@@ -185,9 +238,16 @@ export default {
       entries.addEntries(captionEntry)
     }
 
-    let payload = this.constructPayload(entries, privKey, destPubKey, scheme)
+    // Construct message
+    let timestamp = Math.floor(Date.now() / 1000)
+    let payload = this.constructPayload(entries, privKey, destPubKey, scheme, timestamp)
     let { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
-    return { message, usedIDs, stampTx }
+
+    // Construct outbox message
+    let outboxPayload = this.constructOutboxPayload(entries, privKey, scheme, timestamp)
+    let outboxMessage = await this.constructOutboxMessage(outboxPayload, privKey)
+
+    return { message, outboxMessage, usedIDs, stampTx }
   },
   constructPriceFilterApplication (isPublic, acceptancePrice, notificationPrice, privKey) {
     // Construct PriceFilter
