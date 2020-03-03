@@ -118,8 +118,8 @@ class RelayClient {
         'Authorization': token
       },
       params: {
-        start: startTime,
-        end: endTime
+        start_time: startTime,
+        end_time: endTime
       },
       responseType: 'arraybuffer'
     })
