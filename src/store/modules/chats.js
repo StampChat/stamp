@@ -285,7 +285,7 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, usedIDs, stampTx } = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
+        var { message, outboxMessage, usedIDs, stampTx } = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
@@ -294,6 +294,7 @@ export default {
       }
       let messageSet = new messages.MessageSet()
       messageSet.addMessages(message)
+      messageSet.addMessages(outboxMessage)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
@@ -334,7 +335,7 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, usedIDs, stampTx } = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount, stamptxId)
+        var { message, outboxMessage, usedIDs, stampTx } = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount, stamptxId)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
@@ -343,6 +344,7 @@ export default {
       }
       let messageSet = new messages.MessageSet()
       messageSet.addMessages(message)
+      messageSet.addMessages(outboxMessage)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
@@ -382,7 +384,7 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, usedIDs, stampTx } = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
+        var { message, outboxMessage, usedIDs, stampTx } = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         console.error(err)
 
@@ -392,6 +394,7 @@ export default {
       }
       let messageSet = new messages.MessageSet()
       messageSet.addMessages(message)
+      messageSet.addMessages(outboxMessage)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
