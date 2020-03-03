@@ -15,12 +15,12 @@ class RelayClient {
   }
 
   async filterPaymentRequest (addr) {
-    let url = `${this.httpScheme}://${this.url}/${addr}/filters`
+    let url = `${this.httpScheme}://${this.url}/filters/${addr}`
     return pop.getPaymentRequest(url, 'put')
   }
 
   setUpWebsocket (addr, token) {
-    let url = `${this.wsScheme}://${this.url}/${addr}/ws`
+    let url = `${this.wsScheme}://${this.url}/ws/${addr}`
     let opts = { headers: { Authorization: token } }
     let socket = new WebSocket(url, opts)
 
@@ -83,7 +83,7 @@ class RelayClient {
   }
 
   async getFilter (addr) {
-    let url = `${this.httpScheme}://${this.url}/${addr}/filters`
+    let url = `${this.httpScheme}://${this.url}/filters/${addr}`
     let response = await axios({
       method: 'get',
       url,
@@ -98,7 +98,7 @@ class RelayClient {
 
   async applyFilter (addr, filterApplication, token) {
     let rawApplication = filterApplication.serializeBinary()
-    let url = `${this.httpScheme}://${this.url}/${addr}/filters`
+    let url = `${this.httpScheme}://${this.url}/filters/${addr}`
     await axios({
       method: 'put',
       url: url,
@@ -110,7 +110,7 @@ class RelayClient {
   }
 
   async getMessages (addr, token, startTime, endTime) {
-    let url = `${this.httpScheme}://${this.url}/${addr}/messages`
+    let url = `${this.httpScheme}://${this.url}/messages/${addr}`
     let response = await axios({
       method: 'get',
       url: url,
@@ -131,7 +131,7 @@ class RelayClient {
   }
 
   async messagePaymentRequest (addr) {
-    let url = `${this.httpScheme}://${this.url}/${addr}/messages`
+    let url = `${this.httpScheme}://${this.url}/messages/${addr}`
     return pop.getPaymentRequest(url, 'get')
   }
 
@@ -143,7 +143,7 @@ class RelayClient {
 
   async pushMessages (addr, messageSet) {
     let rawMetadata = messageSet.serializeBinary()
-    let url = `${this.httpScheme}://${this.url}/${addr}/messages`
+    let url = `${this.httpScheme}://${this.url}/messages/${addr}`
     await axios({
       method: 'put',
       url: url,
