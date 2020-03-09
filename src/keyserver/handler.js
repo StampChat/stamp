@@ -1,6 +1,5 @@
 import axios from 'axios'
 import addressmetadata from './addressmetadata_pb'
-import VCard from 'vcf'
 import pop from '../pop/index'
 
 const cashlib = require('bitcore-lib-cash')
@@ -12,42 +11,17 @@ class KeyserverHandler {
     this.defaultSampleSize = defaultSampleSize || 3
   }
 
-  static constructProfileMetadata (profile, privKey) {
-    // Construct vCard
-    let vCard = new VCard()
-    vCard.set('fn', profile.name)
-    vCard.set('note', profile.bio)
-    let rawCard = new TextEncoder().encode(vCard.toString())
-
-    let cardEntry = new addressmetadata.Entry()
-    cardEntry.setKind('vcard')
-    cardEntry.setEntryData(rawCard)
-
-    // Construct avatar
-    let imgEntry = new addressmetadata.Entry()
-    imgEntry.setKind('avatar')
-
-    let arr = profile.avatar.split(',')
-    let avatarType = arr[0].match(/:(.*?);/)[1]
-    let bstr = atob(arr[1])
-    let n = bstr.length
-    let rawAvatar = new Uint8Array(n)
-
-    while (n--) {
-      rawAvatar[n] = bstr.charCodeAt(n)
-    }
-    let imgHeader = new addressmetadata.Header()
-    imgHeader.setName('data')
-    imgHeader.setValue(avatarType)
-    imgEntry.setEntryData(rawAvatar)
-    imgEntry.addHeaders(imgHeader)
+  static constructRelayUrlMetadata (relayUrl, privKey) {
+    let relayUrlEntry = new addressmetadata.Entry()
+    relayUrlEntry.setKind('relay-server')
+    const rawRelayUrl = new TextEncoder().encode(relayUrl)
+    relayUrlEntry.setEntryData(rawRelayUrl)
 
     // Construct payload
     let payload = new addressmetadata.Payload()
     payload.setTimestamp(Math.floor(Date.now() / 1000))
     payload.setTtl(31556952) // 1 year
-    payload.addEntries(cardEntry)
-    payload.addEntries(imgEntry)
+    payload.addEntries(relayUrlEntry)
 
     let serializedPayload = payload.serializeBinary()
     let hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
@@ -95,56 +69,20 @@ class KeyserverHandler {
     return KeyserverHandler.fetchMetadata(server, addr)
   }
 
-  async getContact (addr) {
+  async getRelayUrl (addr) {
     // Get metadata
     let metadata = await this.uniformSample(addr)
-
-    // Get PubKey
-    let pubKey = metadata.getPubKey()
-
     let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
 
     // Find vCard
-    function isVCard (entry) {
-      return entry.getKind() === 'vcard'
+    function isRelay (entry) {
+      return entry.getKind() === 'relay-server'
     }
     let entryList = payload.getEntriesList()
-    let rawCard = entryList.find(isVCard).getEntryData() // TODO: Cancel if not found
-    let strCard = new TextDecoder().decode(rawCard)
-    let vCard = new VCard().parse(strCard)
+    let raw = entryList.find(isRelay).getEntryData() // TODO: Cancel if not found
+    let relayUrl = new TextDecoder().decode(raw)
 
-    let name = vCard.data.fn._data
-
-    // let bio = vCard.data.note._data
-    let bio = ''
-
-    // Get avatar
-    function isAvatar (entry) {
-      return entry.getKind() === 'avatar'
-    }
-    let avatarEntry = entryList.find(isAvatar)
-    let rawAvatar = avatarEntry.getEntryData()
-
-    // TODO: Use util function
-    function _arrayBufferToBase64 (buffer) {
-      var binary = ''
-      var bytes = new Uint8Array(buffer)
-      var len = bytes.byteLength
-      for (var i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i])
-      }
-      return window.btoa(binary)
-    }
-    let value = avatarEntry.getHeadersList()[0].getValue()
-    let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
-
-    let keyserver = {
-      name,
-      bio,
-      avatar: avatarDataURL,
-      pubKey
-    }
-    return keyserver
+    return relayUrl
   }
 
   static async putMetadata (addr, server, metadata, token) {
