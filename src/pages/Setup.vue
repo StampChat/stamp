@@ -42,15 +42,12 @@
 
         <q-step
           :name="4"
-          title="Create a Profile"
-          icon="person"
+          title="Choose a relay server"
+          icon="email"
           style="min-height: 300px;"
           :done="step > 4"
         >
-          <profile-step
-            v-on:profile="profile = $event"
-            :initProfile="initProfile"
-          />
+          <choose-relay-step v-on:relayServer="relayServer = $event" />
         </q-step>
         <q-step
           :name="5"
@@ -85,7 +82,7 @@
             />
             <q-btn
               v-else-if="step === 4"
-              @click="nextProfile()"
+              @click="nextRelay()"
               color="primary"
               :disable="!electrumConnected || profile === null"
               label="Continue"
@@ -129,13 +126,13 @@
             v-else-if="step === 4"
             class="bg-primary text-white q-px-lg"
           >
-            Create your profile...
+            Choose a relay server...
           </q-banner>
           <q-banner
             v-else
             class="bg-primary text-white q-px-lg"
           >
-            Tweak your settings...
+            Create your profile...
           </q-banner>
           <q-banner
             v-if="step === 2"
@@ -170,7 +167,8 @@ import relayConstructors from '../relay/constructors'
 import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
-import ProfileStep from '../components/setup/ProfileStep.vue'
+import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
+// import ProfileStep from '../components/setup/ProfileStep.vue'
 import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultAcceptancePrice, defaultRelayUrl, electrumURL } from '../utils/constants'
 import {
@@ -193,7 +191,8 @@ export default {
     IntroductionStep,
     SeedStep,
     DepositStep,
-    ProfileStep,
+    ChooseRelayStep,
+    // ProfileStep,
     SettingsStep
   },
   data () {
@@ -291,28 +290,116 @@ export default {
         let ksHandler = this.getKsHandler()
         let idAddress = this.getMyAddress()
 
+        // Try find relay URL on keyserver
         try {
-          let foundProfile = await ksHandler.getContact(idAddress)
+          var foundRelayUrl = await ksHandler.getRelayUrl(idAddress)
+        } catch (err) {
+          if (err.response.status === 404) {
+            // No initial profile
+            this.initProfile = null
+
+            this.$refs.stepper.next()
+            this.$q.loading.hide()
+          } else {
+            this.$q.loading.hide()
+            keyserverDisconnectedNotify()
+          }
+          return
+        }
+
+        // Get profile from relay server
+        let relayClient = new RelayClient(foundRelayUrl)
+        try {
+          let foundProfile = await relayClient.getContact(idAddress)
           this.initProfile = foundProfile
           this.profile = foundProfile
         } catch (err) {
           if (err.response.status === 404) {
             // No initial profile
             this.initProfile = null
+
+            this.$refs.stepper.next()
+            this.$q.loading.hide()
           } else {
             this.$q.loading.hide()
-            keyserverDisconnectedNotify()
-            return
+            relayDisconnectedNotify()
           }
         }
-
-        this.$refs.stepper.next()
-
-        this.$q.loading.hide()
       }
 
       // Send seed
       worker.postMessage(this.seed)
+    },
+    async nextKeyserver () {
+      try {
+        await this.setUpKeyserver()
+      } catch (err) {
+        this.$q.loading.hide()
+        return
+      }
+
+      this.$q.loading.hide()
+      this.$refs.stepper.next()
+    },
+    async setUpKeyserver () {
+      // Set profile
+      let ksHandler = this.getKsHandler()
+      let serverUrl = ksHandler.chooseServer()
+
+      // Request Payment
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Requesting Payment...'
+      })
+
+      let idAddress = this.getMyAddress()
+      try {
+        var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+      } catch (err) {
+        console.error(err)
+        keyserverDisconnectedNotify()
+        throw err
+      }
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Sending Payment...'
+      })
+
+      // Construct payment
+      try {
+        var { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
+      } catch (err) {
+        console.error(err)
+        insuffientFundsNotify()
+        throw err
+      }
+
+      // Send payment
+      try {
+        var { token } = await pop.sendPayment(paymentUrl, payment)
+      } catch (err) {
+        console.error(err)
+        paymentFailureNotify()
+        throw err
+      }
+
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Uploading Metadata...'
+      })
+
+      // Construct metadata
+      let idPrivKey = this.getIdentityPrivKey()
+      let metadata = KeyserverHandler.constructRelayUrlMetadata(this.profile, idPrivKey)
+
+      // Put to keyserver
+      try {
+        await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
+      } catch (err) {
+        console.error(err)
+        keyserverDisconnectedNotify()
+        throw err
+      }
     },
     async nextProfile () {
       try {
@@ -432,6 +519,7 @@ export default {
         var { paymentUrl, payment } = await pop.constructPaymentTransaction(filterPaymentRequest.paymentDetails)
       } catch (err) {
         console.error(err)
+        console.error(err.response)
         insuffientFundsNotify()
         throw err
       }
