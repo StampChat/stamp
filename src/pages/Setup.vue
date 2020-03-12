@@ -51,7 +51,7 @@
         </q-step>
         <q-step
           :name="5"
-          title="Settings"
+          title="Setup Profile"
           icon="build"
           style="min-height: 300px;"
         >
@@ -82,9 +82,9 @@
             />
             <q-btn
               v-else-if="step === 4"
-              @click="nextRelay()"
+              @click="nextKeyserver()"
               color="primary"
-              :disable="!electrumConnected || profile === null"
+              :disable="!electrumConnected"
               label="Continue"
             />
             <q-btn
@@ -206,6 +206,7 @@ export default {
       xPrivKey: null,
       profile: null,
       initProfile: null,
+      relayUrl: null,
       settings: {
         acceptancePrice: defaultAcceptancePrice,
         relayUrl: defaultRelayUrl
@@ -293,9 +294,18 @@ export default {
         // Try find relay URL on keyserver
         try {
           var foundRelayUrl = await ksHandler.getRelayUrl(idAddress)
+
+          // No URL entry
+          if (!foundRelayUrl) {
+            this.initProfile = null
+
+            this.$refs.stepper.next()
+            this.$q.loading.hide()
+            return
+          }
         } catch (err) {
+          // No URL found
           if (err.response.status === 404) {
-            // No initial profile
             this.initProfile = null
 
             this.$refs.stepper.next()
@@ -310,19 +320,21 @@ export default {
         // Get profile from relay server
         let relayClient = new RelayClient(foundRelayUrl)
         try {
-          let foundProfile = await relayClient.getContact(idAddress)
+          let foundProfile = await relayClient.getProfile(idAddress)
           this.initProfile = foundProfile
           this.profile = foundProfile
         } catch (err) {
-          if (err.response.status === 404) {
-            // No initial profile
+          if (!err.response) {
+            // Relay URL malformed
+            this.$refs.stepper.next()
+            this.$q.loading.hide()
+            relayDisconnectedNotify()
+          } else if (err.response.status === 404) {
+            // Relay URL points to missing profile
             this.initProfile = null
 
             this.$refs.stepper.next()
             this.$q.loading.hide()
-          } else {
-            this.$q.loading.hide()
-            relayDisconnectedNotify()
           }
         }
       }
@@ -334,6 +346,7 @@ export default {
       try {
         await this.setUpKeyserver()
       } catch (err) {
+        console.log(err)
         this.$q.loading.hide()
         return
       }
@@ -390,7 +403,7 @@ export default {
 
       // Construct metadata
       let idPrivKey = this.getIdentityPrivKey()
-      let metadata = KeyserverHandler.constructRelayUrlMetadata(this.profile, idPrivKey)
+      let metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
 
       // Put to keyserver
       try {
