@@ -74,9 +74,14 @@ class RelayClient {
     return metadata
   }
 
-  async getContact (addr) {
-    // Get metadata
-    let metadata = await this.uniformSample(addr)
+  async getProfile (addr) {
+    let url = `${this.httpScheme}://${this.url}/profile/${addr}`
+    let response = await axios({
+      method: 'get',
+      url,
+      responseType: 'arraybuffer'
+    })
+    let metadata = addressmetadata.AddressMetadata.deserializeBinary(response.data)
 
     // Get PubKey
     let pubKey = metadata.getPubKey()
