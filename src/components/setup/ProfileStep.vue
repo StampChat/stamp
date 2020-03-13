@@ -167,6 +167,9 @@ export default {
     },
     avatar (newAvatar, oldAvatar) {
       this.value.profile = this.constructProfile
+    },
+    acceptancePrice (newPrice, oldPrice) {
+      this.value.inbox.acceptancePrice = this.acceptancePrice
     }
   }
 }

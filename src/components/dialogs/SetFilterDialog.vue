@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import relayConstructors from '../../relay/constructors'
+import { constructPriceFilter } from '../../relay/constructors'
 import { mapGetters, mapActions } from 'vuex'
 import { relayDisconnectedNotify } from '../../utils/notifications'
 
@@ -69,7 +69,8 @@ export default {
       let privKey = this.getIdentityPrivKey()
 
       // Create filter application
-      let filterApplication = relayConstructors.constructPriceFilterApplication(true, this.price, this.price, privKey)
+      // TODO: Fix this
+      let filterApplication = constructPriceFilter(true, this.price, this.price, privKey)
 
       // Apply remotely
       let client = this.getRelayClient()
