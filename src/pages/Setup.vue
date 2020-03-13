@@ -52,12 +52,19 @@
         <q-step
           :name="5"
           title="Setup Profile"
+          icon="person"
+          style="min-height: 300px;"
+        >
+          <profile-step v-model="profile" />
+        </q-step>
+        <q-step
+          :name="6"
+          title="Settings"
           icon="build"
           style="min-height: 300px;"
         >
-          <settings-step v-on:settings="settings = $event" />
+          <settings-step />
         </q-step>
-
         <template v-slot:navigation>
           <q-stepper-navigation>
             <q-btn
@@ -168,7 +175,7 @@ import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
 import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
-// import ProfileStep from '../components/setup/ProfileStep.vue'
+import ProfileStep from '../components/setup/ProfileStep.vue'
 import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultAcceptancePrice, defaultRelayUrl, electrumURL } from '../utils/constants'
 import {
@@ -192,7 +199,7 @@ export default {
     SeedStep,
     DepositStep,
     ChooseRelayStep,
-    // ProfileStep,
+    ProfileStep,
     SettingsStep
   },
   data () {
@@ -205,7 +212,6 @@ export default {
       generatedWarning: true,
       xPrivKey: null,
       profile: null,
-      initProfile: null,
       relayUrl: defaultRelayUrl,
       settings: {
         acceptancePrice: defaultAcceptancePrice,
