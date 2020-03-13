@@ -47,7 +47,7 @@
           style="min-height: 300px;"
           :done="step > 4"
         >
-          <choose-relay-step v-on:relayServer="relayServer = $event" />
+          <choose-relay-step v-model="relayUrl" />
         </q-step>
         <q-step
           :name="5"
@@ -206,7 +206,7 @@ export default {
       xPrivKey: null,
       profile: null,
       initProfile: null,
-      relayUrl: null,
+      relayUrl: defaultRelayUrl,
       settings: {
         acceptancePrice: defaultAcceptancePrice,
         relayUrl: defaultRelayUrl
@@ -346,7 +346,7 @@ export default {
       try {
         await this.setUpKeyserver()
       } catch (err) {
-        console.log(err)
+        console.error(err)
         this.$q.loading.hide()
         return
       }
