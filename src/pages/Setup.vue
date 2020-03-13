@@ -55,7 +55,7 @@
           icon="person"
           style="min-height: 300px;"
         >
-          <profile-step v-model="profile" />
+          <profile-step v-model="relayData" />
         </q-step>
         <q-step
           :name="6"
@@ -90,6 +90,13 @@
             <q-btn
               v-else-if="step === 4"
               @click="nextKeyserver()"
+              color="primary"
+              :disable="!electrumConnected"
+              label="Continue"
+            />
+            <q-btn
+              v-else-if="step === 4"
+              @click="nextRelay()"
               color="primary"
               :disable="!electrumConnected"
               label="Continue"
@@ -170,7 +177,7 @@ import { mapActions, mapGetters } from 'vuex'
 import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop/index'
 import RelayClient from '../relay/client'
-import relayConstructors from '../relay/constructors'
+import { constructProfileMetadata, constructPriceFilter } from '../relay/constructors'
 import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
@@ -211,12 +218,17 @@ export default {
       seed: null,
       generatedWarning: true,
       xPrivKey: null,
-      profile: null,
-      relayUrl: defaultRelayUrl,
-      settings: {
-        acceptancePrice: defaultAcceptancePrice,
-        relayUrl: defaultRelayUrl
-      }
+      relayData: {
+        profile: {
+          name: '',
+          bio: '',
+          avatar: null
+        },
+        inbox: {
+          acceptancePrice: defaultAcceptancePrice
+        }
+      },
+      relayUrl: defaultRelayUrl
     }
   },
   methods: {
@@ -420,7 +432,7 @@ export default {
         throw err
       }
     },
-    async nextProfile () {
+    async nextRelay () {
       try {
         await this.setUpProfile()
       } catch (err) {
@@ -431,87 +443,9 @@ export default {
       this.$q.loading.hide()
       this.$refs.stepper.next()
     },
-    async nextSettings () {
-      let client = new RelayClient(this.settings.relayUrl)
+    async setupRelay () {
+      let client = new RelayClient(this.relayUrl)
 
-      try {
-        await this.setUpFilter(client)
-      } catch (err) {
-        this.$q.loading.hide()
-        return
-      }
-
-      let profile = this.profile
-      profile.acceptancePrice = this.settings.acceptancePrice
-
-      this.setRelayClient(client)
-      this.setMyProfile(profile)
-      this.setSeedPhrase(this.seed)
-
-      this.$q.loading.hide()
-      this.$router.push('/')
-    },
-    async setUpProfile () {
-      // Set profile
-      let ksHandler = this.getKsHandler()
-      let serverUrl = ksHandler.chooseServer()
-
-      // Request Payment
-      this.$q.loading.show({
-        delay: 100,
-        message: 'Requesting Payment...'
-      })
-
-      let idAddress = this.getMyAddress()
-      try {
-        var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
-      } catch (err) {
-        console.error(err)
-        keyserverDisconnectedNotify()
-        throw err
-      }
-      this.$q.loading.show({
-        delay: 100,
-        message: 'Sending Payment...'
-      })
-
-      // Construct payment
-      try {
-        var { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
-      } catch (err) {
-        console.error(err)
-        insuffientFundsNotify()
-        throw err
-      }
-
-      // Send payment
-      try {
-        var { token } = await pop.sendPayment(paymentUrl, payment)
-      } catch (err) {
-        console.error(err)
-        paymentFailureNotify()
-        throw err
-      }
-
-      this.$q.loading.show({
-        delay: 100,
-        message: 'Uploading Metadata...'
-      })
-
-      // Construct metadata
-      let idPrivKey = this.getIdentityPrivKey()
-      let metadata = KeyserverHandler.constructProfileMetadata(this.profile, idPrivKey)
-
-      // Put to keyserver
-      try {
-        await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
-      } catch (err) {
-        console.error(err)
-        keyserverDisconnectedNotify()
-        throw err
-      }
-    },
-    async setUpFilter (client) {
       // Set filter
       this.$q.loading.show({
         delay: 100,
@@ -520,7 +454,7 @@ export default {
 
       let idAddress = this.getMyAddress()
       try {
-        var filterPaymentRequest = await client.filterPaymentRequest(idAddress.toLegacyAddress())
+        var profilePaymentRequest = await client.profilePaymentRequest(idAddress.toLegacyAddress())
       } catch (err) {
         console.error(err)
         relayDisconnectedNotify()
@@ -535,7 +469,7 @@ export default {
 
       // Get token from relay server
       try {
-        var { paymentUrl, payment } = await pop.constructPaymentTransaction(filterPaymentRequest.paymentDetails)
+        var { paymentUrl, payment } = await pop.constructPaymentTransaction(profilePaymentRequest.paymentDetails)
       } catch (err) {
         console.error(err)
         console.error(err.response)
@@ -551,9 +485,11 @@ export default {
       }
       this.setRelayToken(token)
 
-      // Create filter application
+      // Create metadata
       let idPrivKey = this.getIdentityPrivKey()
-      let filterApplication = relayConstructors.constructPriceFilterApplication(true, this.settings.acceptancePrice, this.settings.acceptancePrice, idPrivKey)
+
+      let priceFilter = constructPriceFilter(true, this.price, this.price, idPrivKey)
+      let metadata = constructProfileMetadata(this.relayData.profile, priceFilter, idPrivKey)
 
       this.$q.loading.show({
         delay: 100,
@@ -562,7 +498,7 @@ export default {
 
       // Apply remotely
       try {
-        await client.applyFilter(idAddress.toLegacyAddress(), filterApplication, token)
+        await client.putProfile(idAddress.toLegacyAddress(), metadata, token)
       } catch (err) {
         console.error(err)
         relayDisconnectedNotify()
@@ -571,6 +507,16 @@ export default {
 
       // Apply locally
       this.setAcceptancePrice(this.settings.acceptancePrice)
+
+      let profile = this.profile
+      profile.acceptancePrice = this.settings.acceptancePrice
+
+      this.setRelayClient(client)
+      this.setMyProfile(profile)
+      this.setSeedPhrase(this.seed)
+
+      this.$q.loading.hide()
+      this.$router.push('/')
     }
   },
   computed: {

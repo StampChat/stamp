@@ -1,12 +1,12 @@
 import messages from '../../relay/messages_pb'
 import stealth from '../../relay/stealth_pb'
-import relayConstructors from '../../relay/constructors'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
+import { constructStealthPaymentMessage, constructImageMessage, constructTextMessage } from '../../relay/constructors'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -285,7 +285,7 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, outboxMessage, usedIDs, stampTx } = await relayConstructors.constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
+        var { message, outboxMessage, usedIDs, stampTx } = await constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
@@ -335,7 +335,7 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, outboxMessage, usedIDs, stampTx } = await relayConstructors.constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount, stamptxId)
+        var { message, outboxMessage, usedIDs, stampTx } = await constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount, stamptxId)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
@@ -384,7 +384,7 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, outboxMessage, usedIDs, stampTx } = await relayConstructors.constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
+        var { message, outboxMessage, usedIDs, stampTx } = await constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         console.error(err)
 

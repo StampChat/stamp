@@ -1,14 +1,12 @@
 import axios from 'axios'
 import messages from './messages_pb'
 import addressmetadata from '../keyserver/addressmetadata_pb'
-import VCard from 'vcf'
-import filters from './filters_pb'
 import pop from '../pop/index'
 import store from '../store/index'
 import { pingTimeout, relayReconnectInterval } from '../utils/constants'
+import VCard from 'vcf'
 
 const WebSocket = window.require('ws')
-const cashlib = require('bitcore-lib-cash')
 
 class RelayClient {
   constructor (url) {
@@ -17,61 +15,9 @@ class RelayClient {
     this.wsScheme = 'ws'
   }
 
-  async filterPaymentRequest (addr) {
-    let url = `${this.httpScheme}://${this.url}/filters/${addr}`
+  async profilePaymentRequest (addr) {
+    let url = `${this.httpScheme}://${this.url}/profile/${addr}`
     return pop.getPaymentRequest(url, 'put')
-  }
-
-  static constructProfileMetadata (profile, privKey) {
-    // Construct vCard
-    let vCard = new VCard()
-    vCard.set('fn', profile.name)
-    vCard.set('note', profile.bio)
-    let rawCard = new TextEncoder().encode(vCard.toString())
-
-    let cardEntry = new addressmetadata.Entry()
-    cardEntry.setKind('vcard')
-    cardEntry.setEntryData(rawCard)
-
-    // Construct avatar
-    let imgEntry = new addressmetadata.Entry()
-    imgEntry.setKind('avatar')
-
-    let arr = profile.avatar.split(',')
-    let avatarType = arr[0].match(/:(.*?);/)[1]
-    let bstr = atob(arr[1])
-    let n = bstr.length
-    let rawAvatar = new Uint8Array(n)
-
-    while (n--) {
-      rawAvatar[n] = bstr.charCodeAt(n)
-    }
-    let imgHeader = new addressmetadata.Header()
-    imgHeader.setName('data')
-    imgHeader.setValue(avatarType)
-    imgEntry.setEntryData(rawAvatar)
-    imgEntry.addHeaders(imgHeader)
-
-    // Construct payload
-    let payload = new addressmetadata.Payload()
-    payload.setTimestamp(Math.floor(Date.now() / 1000))
-    payload.setTtl(31556952) // 1 year
-    payload.addEntries(cardEntry)
-    payload.addEntries(imgEntry)
-
-    let serializedPayload = payload.serializeBinary()
-    let hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
-    let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
-    ecdsa.sign()
-
-    let metadata = new addressmetadata.AddressMetadata()
-    let sig = ecdsa.sig.toCompact(1).slice(1)
-    metadata.setPubKey(privKey.toPublicKey().toBuffer())
-    metadata.setSignature(sig)
-    metadata.setScheme(1)
-    metadata.setSerializedPayload(serializedPayload)
-
-    return metadata
   }
 
   async getProfile (addr) {
@@ -194,30 +140,16 @@ class RelayClient {
     return acceptancePrice
   }
 
-  async getFilter (addr) {
-    let url = `${this.httpScheme}://${this.url}/filters/${addr}`
-    let response = await axios({
-      method: 'get',
-      url,
-      responseType: 'arraybuffer'
-    })
-
-    if (response.status === 200) {
-      let filtersMsg = filters.Filters.deserializeBinary(response.data)
-      return filtersMsg
-    }
-  }
-
-  async applyFilter (addr, filterApplication, token) {
-    let rawApplication = filterApplication.serializeBinary()
-    let url = `${this.httpScheme}://${this.url}/filters/${addr}`
+  async putProfile (addr, profile, token) {
+    let rawProfile = profile.serializeBinary()
+    let url = `${this.httpScheme}://${this.url}/profile/${addr}`
     await axios({
       method: 'put',
       url: url,
       headers: {
         'Authorization': token
       },
-      data: rawApplication
+      data: rawProfile
     })
   }
 
