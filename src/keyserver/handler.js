@@ -81,7 +81,7 @@ class KeyserverHandler {
     let entryList = payload.getEntriesList()
     let entry = entryList.find(isRelay)
     if (!entry) {
-      return undefined
+      return null
     }
     let entryData = entry.getEntryData()
     let relayUrl = new TextDecoder().decode(entryData)

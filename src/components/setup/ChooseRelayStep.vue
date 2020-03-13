@@ -2,7 +2,7 @@
   <div class="row q-pa-md">
     <q-select
       outlined
-      v-model="relayUrl"
+      v-model="value"
       use-input
       hide-selected
       fill-input
@@ -25,13 +25,18 @@
 </template>
 
 <script>
-import { defaultAcceptancePrice, defaultRelayUrl, relayUrlOptions } from '../../utils/constants'
+import { defaultAcceptancePrice, relayUrlOptions } from '../../utils/constants'
 
 export default {
+  props: {
+    // This is the relay URL
+    value: {
+      type: String
+    }
+  },
   data () {
     return {
       acceptancePrice: defaultAcceptancePrice,
-      relayUrl: defaultRelayUrl,
       options: []
     }
   },
@@ -51,8 +56,8 @@ export default {
     }
   },
   watch: {
-    relayUrl (newUrl, oldUrl) {
-      this.$emit('relayUrl', this.relayUrl)
+    value (newUrl, oldUrl) {
+      this.$emit('input', this.relayUrl)
     }
   }
 }
