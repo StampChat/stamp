@@ -95,7 +95,7 @@
               label="Continue"
             />
             <q-btn
-              v-else-if="step === 4"
+              v-else-if="step === 5"
               @click="nextRelay()"
               color="primary"
               :disable="!electrumConnected"
@@ -228,7 +228,12 @@ export default {
           acceptancePrice: defaultAcceptancePrice
         }
       },
-      relayUrl: defaultRelayUrl
+      relayUrl: defaultRelayUrl,
+      settings: {
+        // TODO
+        // appearance: null,
+        // security: null
+      }
     }
   },
   methods: {
@@ -434,8 +439,9 @@ export default {
     },
     async nextRelay () {
       try {
-        await this.setUpProfile()
+        await this.setupRelay()
       } catch (err) {
+        console.error(err)
         this.$q.loading.hide()
         return
       }
@@ -488,7 +494,8 @@ export default {
       // Create metadata
       let idPrivKey = this.getIdentityPrivKey()
 
-      let priceFilter = constructPriceFilter(true, this.price, this.price, idPrivKey)
+      let acceptancePrice = this.relayData.inbox.acceptancePrice
+      let priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
       let metadata = constructProfileMetadata(this.relayData.profile, priceFilter, idPrivKey)
 
       this.$q.loading.show({
@@ -506,10 +513,9 @@ export default {
       }
 
       // Apply locally
-      this.setAcceptancePrice(this.settings.acceptancePrice)
-
-      let profile = this.profile
-      profile.acceptancePrice = this.settings.acceptancePrice
+      this.setAcceptancePrice(acceptancePrice)
+      let profile = this.relayData.profile
+      profile.acceptancePrice = acceptancePrice
 
       this.setRelayClient(client)
       this.setMyProfile(profile)
