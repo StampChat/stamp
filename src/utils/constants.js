@@ -17,8 +17,18 @@ export const defaultFeePerByte = 2
 export const pingTimeout = 20_000
 export const relayReconnectInterval = 10_000
 export const defaultAcceptancePrice = 100
-export const defaultRelayUrl = '34.67.137.105'
-export const relayUrlOptions = ['34.67.137.105', 'bitcoin.com', 'cashweb.io']
+export const defaultRelayUrl = 'localhost'
+export const relayUrlOptions = ['localhost', '34.67.137.105', 'bitcoin.com', 'cashweb.io']
+export const defaultRelayData = {
+  profile: {
+    name: '',
+    bio: '',
+    avatar: null
+  },
+  inbox: {
+    acceptancePrice: defaultAcceptancePrice
+  }
+}
 
 // Chat constants
 export const defaultStampAmount = 5000
