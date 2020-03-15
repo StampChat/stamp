@@ -20,7 +20,7 @@ class RelayClient {
     return pop.getPaymentRequest(url, 'put')
   }
 
-  async getProfile (addr) {
+  async getRelayData (addr) {
     let url = `${this.httpScheme}://${this.url}/profile/${addr}`
     let response = await axios({
       method: 'get',
@@ -68,11 +68,18 @@ class RelayClient {
     let value = avatarEntry.getHeadersList()[0].getValue()
     let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
 
-    let keyserver = {
+    let profile = {
       name,
       bio,
       avatar: avatarDataURL,
       pubKey
+    }
+    let inbox = {
+      acceptancePrice: 100 // TODO: Parse
+    }
+    let keyserver = {
+      profile,
+      inbox
     }
     return keyserver
   }

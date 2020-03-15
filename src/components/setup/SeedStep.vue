@@ -125,12 +125,20 @@ import { seedCopiedNotify } from '../../utils/notifications'
 const bip39 = require('bip39')
 
 export default {
-  props: ['initType'],
+  props: {
+    // value: {
+    // type: 'new',
+    // importedSeed: '',
+    // valid: false
+    // generatedSeed: '',
+    // }
+    value: Object
+  },
   data () {
     return {
       generatedSeed: bip39.generateMnemonic(),
-      importedSeed: '',
-      seedTabs: this.initType
+      importedSeed: this.value.importedSeed,
+      seedTabs: this.value.type
     }
   },
   methods: {
@@ -144,7 +152,7 @@ export default {
     },
     nextMnemonic () {
       this.generatedSeed = bip39.generateMnemonic()
-      this.$emit('seed', this.generatedSeed)
+      this.value.generatedSeed = this.generatedSeed
     },
     pasteImported () {
       var el = document.createElement('textarea')
@@ -157,30 +165,20 @@ export default {
   },
   computed: {
     isImportedValid () {
-      let validated = this.validateImportedSeed
-      this.$emit('seed', validated)
-      return validated !== null
-    },
-    validateImportedSeed () {
-      if (bip39.validateMnemonic(this.importedSeed)) {
-        return this.importedSeed
-      } else {
-        return null
-      }
+      return bip39.validateMnemonic(this.importedSeed)
     }
   },
   watch: {
     seedTabs (newTab, oldTab) {
-      this.$emit('switch', newTab)
-      if (newTab === 'new') {
-        this.$emit('seed', this.generatedSeed)
-      } else {
-        this.$emit('seed', this.validateImportedSeed)
-      }
+      this.value.type = newTab
+    },
+    importedSeed (newSeed, oldSeed) {
+      this.value.valid = this.isImportedValid
+      this.value.importedSeed = this.importedSeed
     }
   },
   created () {
-    this.$emit('seed', this.generatedSeed)
+    this.value.generatedSeed = this.generatedSeed
   }
 }
 </script>

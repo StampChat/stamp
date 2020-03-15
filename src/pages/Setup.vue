@@ -23,11 +23,7 @@
           icon="vpn_key"
           :done="step > 2"
         >
-          <seed-step
-            :initType="seedType"
-            v-on:seed="seed = $event"
-            v-on:switch="seedType = $event"
-          />
+          <seed-step v-model='seedData' />
         </q-step>
 
         <q-step
@@ -77,8 +73,8 @@
               v-else-if="step === 2"
               @click="nextWallet()"
               color="primary"
-              :label="seedType==='new'?'New Wallet':'Import Wallet'"
-              :disable="!electrumConnected || seed === null"
+              :label="seedData.type==='new'?'New Wallet':'Import Wallet'"
+              :disable="!(electrumConnected && ((seedData.type === 'new') || (seedData.type === 'import' && seedData.valid)))"
             />
             <q-btn
               v-else-if="step === 3"
@@ -184,7 +180,7 @@ import DepositStep from '../components/setup/DepositStep.vue'
 import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
 import ProfileStep from '../components/setup/ProfileStep.vue'
 import SettingsStep from '../components/setup/SettingsStep.vue'
-import { defaultAcceptancePrice, defaultRelayUrl, electrumURL } from '../utils/constants'
+import { defaultRelayData, defaultRelayUrl, electrumURL } from '../utils/constants'
 import {
   keyserverDisconnectedNotify,
   insuffientFundsNotify,
@@ -214,20 +210,15 @@ export default {
       step: 1,
       name: '',
       bio: '',
-      seedType: 'new',
-      seed: null,
+      seedData: {
+        type: 'new',
+        generatedSeed: '',
+        importedSeed: '',
+        valid: false
+      },
       generatedWarning: true,
       xPrivKey: null,
-      relayData: {
-        profile: {
-          name: '',
-          bio: '',
-          avatar: null
-        },
-        inbox: {
-          acceptancePrice: defaultAcceptancePrice
-        }
-      },
+      relayData: defaultRelayData,
       relayUrl: defaultRelayUrl,
       settings: {
         // TODO
@@ -304,6 +295,7 @@ export default {
         } catch (err) {
           console.error(err)
           walletDisconnectedNotify()
+          return
         }
 
         // Check for existing profile
@@ -320,7 +312,7 @@ export default {
 
           // No URL entry
           if (!foundRelayUrl) {
-            this.initProfile = null
+            this.relayData = defaultRelayData
 
             this.$refs.stepper.next()
             this.$q.loading.hide()
@@ -329,7 +321,7 @@ export default {
         } catch (err) {
           // No URL found
           if (err.response.status === 404) {
-            this.initProfile = null
+            this.relayData = defaultRelayData
 
             this.$refs.stepper.next()
             this.$q.loading.hide()
@@ -343,9 +335,8 @@ export default {
         // Get profile from relay server
         let relayClient = new RelayClient(foundRelayUrl)
         try {
-          let foundProfile = await relayClient.getProfile(idAddress)
-          this.initProfile = foundProfile
-          this.profile = foundProfile
+          let relayData = await relayClient.getRelayData(idAddress)
+          this.relayData = relayData
         } catch (err) {
           if (!err.response) {
             // Relay URL malformed
@@ -354,7 +345,7 @@ export default {
             relayDisconnectedNotify()
           } else if (err.response.status === 404) {
             // Relay URL points to missing profile
-            this.initProfile = null
+            this.relayData = defaultRelayData
 
             this.$refs.stepper.next()
             this.$q.loading.hide()
@@ -363,7 +354,13 @@ export default {
       }
 
       // Send seed
-      worker.postMessage(this.seed)
+      let seed
+      if (this.seedData.type === 'new') {
+        seed = this.seedData.generatedSeed
+      } else {
+        seed = this.seedData.importedSeed
+      }
+      worker.postMessage(seed)
     },
     async nextKeyserver () {
       try {
