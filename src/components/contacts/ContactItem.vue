@@ -40,16 +40,16 @@
           rounded
           size="55px"
         >
-          <img :src="contact.keyserver.avatar">
+          <img :src="contact.profile.avatar">
         </q-avatar>
       </q-item-section>
       <q-item-section @click="contactClick(address, contact)">
-        <q-item-label>{{contact.keyserver.name}}</q-item-label>
+        <q-item-label>{{contact.profile.name}}</q-item-label>
         <q-item-label
           lines="1"
           caption
         ><span class="text-weight-bold">Address: </span>{{address}}</q-item-label>
-        <q-item-label caption><span class="text-weight-bold">Inbox Price: </span>{{contact.relay.acceptancePrice}}</q-item-label>
+        <q-item-label caption><span class="text-weight-bold">Inbox Price: </span>{{contact.inbox.acceptancePrice}}</q-item-label>
       </q-item-section>
       <q-item-section
         side
