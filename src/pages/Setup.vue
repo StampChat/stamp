@@ -452,7 +452,7 @@ export default {
 
       let idAddress = this.getMyAddress()
       try {
-        var profilePaymentRequest = await client.profilePaymentRequest(idAddress.toLegacyAddress())
+        var relayPaymentRequest = await client.profilePaymentRequest(idAddress.toLegacyAddress())
       } catch (err) {
         console.error(err)
         relayDisconnectedNotify()
@@ -467,7 +467,7 @@ export default {
 
       // Get token from relay server
       try {
-        var { paymentUrl, payment } = await pop.constructPaymentTransaction(profilePaymentRequest.paymentDetails)
+        var { paymentUrl, payment } = await pop.constructPaymentTransaction(relayPaymentRequest.paymentDetails)
       } catch (err) {
         console.error(err)
         console.error(err.response)
