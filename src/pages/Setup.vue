@@ -50,6 +50,7 @@
           title="Setup Profile"
           icon="person"
           style="min-height: 300px;"
+          :done="step > 5"
         >
           <profile-step v-model="relayData" />
         </q-step>
@@ -102,7 +103,7 @@
               @click="nextSettings()"
               color="primary"
               :disable="!electrumConnected || settings === null"
-              :label="step === 5 ? 'Finish' : 'Continue'"
+              label='Finish'
             />
             <q-btn
               v-if="step > 1"
@@ -139,10 +140,16 @@
             Choose a relay server...
           </q-banner>
           <q-banner
-            v-else
+            v-else-if="step === 5"
             class="bg-primary text-white q-px-lg"
           >
             Create your profile...
+          </q-banner>
+          <q-banner
+            v-else
+            class="bg-primary text-white q-px-lg"
+          >
+            Tweak settings...
           </q-banner>
           <q-banner
             v-if="step === 2"
@@ -512,8 +519,8 @@ export default {
       this.setRelayClient(client)
       this.setMyProfile(profile)
       this.setSeedPhrase(this.seed)
-
-      this.$q.loading.hide()
+    },
+    nextSettings () {
       this.$router.push('/')
     }
   },
