@@ -298,10 +298,10 @@ export default {
           return
         }
 
-        // Check for existing profile
+        // Check for existing metadata
         this.$q.loading.show({
           delay: 100,
-          message: 'Searching for existing profile...'
+          message: 'Searching for existing keyserver metadata...'
         })
         let ksHandler = this.getKsHandler()
         let idAddress = this.getMyAddress()
@@ -309,46 +309,24 @@ export default {
         // Try find relay URL on keyserver
         try {
           var foundRelayUrl = await ksHandler.getRelayUrl(idAddress)
+          this.relayUrl = foundRelayUrl
 
           // No URL entry
           if (!foundRelayUrl) {
-            this.relayData = defaultRelayData
-
-            this.$refs.stepper.next()
-            this.$q.loading.hide()
-            return
+            this.relayUrl = defaultRelayUrl
           }
+          this.$refs.stepper.next()
+          this.$q.loading.hide()
         } catch (err) {
           // No URL found
           if (err.response.status === 404) {
-            this.relayData = defaultRelayData
+            this.relayUrl = defaultRelayUrl
 
             this.$refs.stepper.next()
             this.$q.loading.hide()
           } else {
             this.$q.loading.hide()
             keyserverDisconnectedNotify()
-          }
-          return
-        }
-
-        // Get profile from relay server
-        let relayClient = new RelayClient(foundRelayUrl)
-        try {
-          let relayData = await relayClient.getRelayData(idAddress)
-          this.relayData = relayData
-        } catch (err) {
-          if (!err.response) {
-            // Relay URL malformed
-            this.$refs.stepper.next()
-            this.$q.loading.hide()
-            relayDisconnectedNotify()
-          } else if (err.response.status === 404) {
-            // Relay URL points to missing profile
-            this.relayData = defaultRelayData
-
-            this.$refs.stepper.next()
-            this.$q.loading.hide()
           }
         }
       }
@@ -379,17 +357,37 @@ export default {
       let ksHandler = this.getKsHandler()
       let serverUrl = ksHandler.chooseServer()
 
+      // Check for existing metadata
+      this.$q.loading.show({
+        delay: 100,
+        message: 'Searching for existing relay data...'
+      })
+
+      // Get profile from relay server
+      // We do this first to prevent uploading broken URL to keyserver
+      let idAddress = this.getMyAddress()
+      let relayClient = new RelayClient(this.relayUrl)
+      try {
+        let relayData = await relayClient.getRelayData(idAddress)
+        this.relayData = relayData
+      } catch (err) {
+        this.relayData = defaultRelayData
+        if (!err.response) {
+          // Relay URL malformed
+          relayDisconnectedNotify()
+          throw err
+        }
+      }
+
       // Request Payment
       this.$q.loading.show({
         delay: 100,
         message: 'Requesting Payment...'
       })
 
-      let idAddress = this.getMyAddress()
       try {
         var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
       } catch (err) {
-        console.error(err)
         keyserverDisconnectedNotify()
         throw err
       }
@@ -402,7 +400,6 @@ export default {
       try {
         var { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
       } catch (err) {
-        console.error(err)
         insuffientFundsNotify()
         throw err
       }
@@ -411,7 +408,6 @@ export default {
       try {
         var { token } = await pop.sendPayment(paymentUrl, payment)
       } catch (err) {
-        console.error(err)
         paymentFailureNotify()
         throw err
       }
@@ -429,7 +425,6 @@ export default {
       try {
         await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
       } catch (err) {
-        console.error(err)
         keyserverDisconnectedNotify()
         throw err
       }
