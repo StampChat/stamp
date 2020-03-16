@@ -112,8 +112,6 @@
 </template>
 
 <script>
-import { defaultAcceptancePrice } from '../../utils/constants'
-
 export default {
   props: {
     // value: {
@@ -130,10 +128,10 @@ export default {
   },
   data () {
     return {
-      name: '',
-      bio: '',
-      avatar: null,
-      acceptancePrice: defaultAcceptancePrice,
+      name: this.value.profile.name,
+      bio: this.value.profile.bio,
+      avatar: this.value.profile.avatar,
+      acceptancePrice: this.value.inbox.acceptancePrice,
       tab: 'profile'
     }
   },
@@ -156,20 +154,28 @@ export default {
         bio: this.bio,
         avatar: this.avatar
       }
+    },
+    constructData () {
+      return {
+        profile: this.constructProfile,
+        inbox: {
+          acceptancePrice: this.acceptancePrice
+        }
+      }
     }
   },
   watch: {
     name (newUrl, oldUrl) {
-      this.value.profile = this.constructProfile
+      this.$emit('input', this.constructData)
     },
     bio (newPrice, oldPrice) {
-      this.value.profile = this.constructProfile
+      this.$emit('input', this.constructData)
     },
     avatar (newAvatar, oldAvatar) {
-      this.value.profile = this.constructProfile
+      this.$emit('input', this.constructData)
     },
     acceptancePrice (newPrice, oldPrice) {
-      this.value.inbox.acceptancePrice = this.acceptancePrice
+      this.$emit('input', this.constructData)
     }
   }
 }

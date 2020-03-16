@@ -2,7 +2,7 @@
   <div class="row q-pa-md">
     <q-select
       outlined
-      v-model="value"
+      v-model="relayURL"
       use-input
       hide-selected
       fill-input
@@ -36,6 +36,7 @@ export default {
   },
   data () {
     return {
+      relayURL: this.value,
       acceptancePrice: defaultAcceptancePrice,
       options: []
     }
@@ -56,8 +57,8 @@ export default {
     }
   },
   watch: {
-    value (newUrl, oldUrl) {
-      this.$emit('input', this.relayUrl)
+    relayURL (newUrl, oldUrl) {
+      this.$emit('input', this.relayURL)
     }
   }
 }

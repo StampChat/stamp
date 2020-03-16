@@ -6,7 +6,7 @@
   >
     <template v-slot:before>
       <q-tabs
-        v-model="seedTabs"
+        v-model="tab"
         vertical
         class="text-primary"
       >
@@ -24,7 +24,7 @@
     </template>
     <template v-slot:after>
       <q-tab-panels
-        v-model="seedTabs"
+        v-model="tab"
         animated
         transition-prev="jump-up"
         transition-next="jump-up"
@@ -138,7 +138,7 @@ export default {
     return {
       generatedSeed: bip39.generateMnemonic(),
       importedSeed: this.value.importedSeed,
-      seedTabs: this.value.type
+      tab: this.value.type
     }
   },
   methods: {
@@ -152,7 +152,7 @@ export default {
     },
     nextMnemonic () {
       this.generatedSeed = bip39.generateMnemonic()
-      this.value.generatedSeed = this.generatedSeed
+      this.$emit('input', this.computedValues)
     },
     pasteImported () {
       var el = document.createElement('textarea')
@@ -166,19 +166,26 @@ export default {
   computed: {
     isImportedValid () {
       return bip39.validateMnemonic(this.importedSeed)
+    },
+    computedValues () {
+      return {
+        type: this.tab,
+        importedSeed: this.importedSeed,
+        valid: this.isImportedValid,
+        generatedSeed: this.generatedSeed
+      }
     }
   },
   watch: {
-    seedTabs (newTab, oldTab) {
-      this.value.type = newTab
+    tab (newTab, oldTab) {
+      this.$emit('input', this.computedValues)
     },
     importedSeed (newSeed, oldSeed) {
-      this.value.valid = this.isImportedValid
-      this.value.importedSeed = this.importedSeed
+      this.$emit('input', this.computedValues)
     }
   },
   created () {
-    this.value.generatedSeed = this.generatedSeed
+    this.$emit('input', this.computedValues)
   }
 }
 </script>
