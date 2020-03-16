@@ -5,6 +5,7 @@ import crypto from './crypto'
 import store from '../store/index'
 import VCard from 'vcf'
 import addressmetadata from '../keyserver/addressmetadata_pb'
+import wrapper from '../pop/wrapper_pb'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -299,21 +300,26 @@ export const constructProfileMetadata = function (profile, priceFilter, privKey)
   imgEntry.setEntryData(rawAvatar)
   imgEntry.addHeaders(imgHeader)
 
+  // Construct price filter
+  let filterEntry = new addressmetadata.Entry()
+  filterEntry.setKind('price-filter')
+  let rawPriceFilter = priceFilter.serializeBinary()
+  filterEntry.setEntryData(rawPriceFilter)
+
   // Construct payload
   let payload = new addressmetadata.Payload()
   payload.setTimestamp(Math.floor(Date.now() / 1000))
   payload.setTtl(31556952) // 1 year
   payload.addEntries(cardEntry)
   payload.addEntries(imgEntry)
-
-  // TODO: Serialize and insert price filter as entry data
+  payload.addEntries(filterEntry)
 
   let serializedPayload = payload.serializeBinary()
   let hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
   let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
   ecdsa.sign()
 
-  let metadata = new addressmetadata.AddressMetadata()
+  let metadata = new wrapper.AuthWrapper()
   let sig = ecdsa.sig.toCompact(1).slice(1)
   metadata.setPubKey(privKey.toPublicKey().toBuffer())
   metadata.setSignature(sig)

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import messages from './messages_pb'
 import addressmetadata from '../keyserver/addressmetadata_pb'
+import wrapper from '../pop/wrapper_pb'
 import pop from '../pop/index'
 import store from '../store/index'
 import { pingTimeout, relayReconnectInterval } from '../utils/constants'
@@ -27,7 +28,7 @@ class RelayClient {
       url,
       responseType: 'arraybuffer'
     })
-    let metadata = addressmetadata.AddressMetadata.deserializeBinary(response.data)
+    let metadata = wrapper.AuthWrapper.deserializeBinary(response.data)
 
     // Get PubKey
     let pubKey = metadata.getPubKey()
