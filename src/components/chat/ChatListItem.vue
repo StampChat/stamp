@@ -47,7 +47,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      getContactKeyserver: 'contacts/getContactKeyserver',
+      getContactProfile: 'contacts/getContactProfile',
       getActiveChat: 'chats/getActiveChat',
       getLatestMessage: 'chats/getLatestMessage'
     }),
@@ -63,7 +63,7 @@ export default {
       }
     },
     contact () {
-      return this.getContactKeyserver(this.chatAddr)
+      return this.getContactProfile(this.chatAddr)
     },
     isActive () {
       return this.getActiveChat === this.chatAddr
