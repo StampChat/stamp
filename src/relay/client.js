@@ -78,11 +78,11 @@ class RelayClient {
     let inbox = {
       acceptancePrice: 100 // TODO: Parse
     }
-    let keyserver = {
+    let relayData = {
       profile,
       inbox
     }
-    return keyserver
+    return relayData
   }
 
   setUpWebsocket (addr, token) {
