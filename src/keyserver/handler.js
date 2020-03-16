@@ -1,5 +1,6 @@
 import axios from 'axios'
 import addressmetadata from './addressmetadata_pb'
+import wrapper from '../pop/wrapper_pb'
 import pop from '../pop/index'
 
 const cashlib = require('bitcore-lib-cash')
@@ -28,7 +29,7 @@ class KeyserverHandler {
     let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
     ecdsa.sign()
 
-    let metadata = new addressmetadata.AddressMetadata()
+    let metadata = new wrapper.AuthWrapper()
     let sig = ecdsa.sig.toCompact(1).slice(1)
     metadata.setPubKey(privKey.toPublicKey().toBuffer())
     metadata.setSignature(sig)
@@ -48,7 +49,7 @@ class KeyserverHandler {
       }
     )
     if (response.status === 200) {
-      let metadata = addressmetadata.AddressMetadata.deserializeBinary(response.data)
+      let metadata = wrapper.AuthWrapper.deserializeBinary(response.data)
       return metadata
     }
   }
