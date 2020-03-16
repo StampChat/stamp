@@ -1,6 +1,5 @@
 import { PublicKey } from 'bitcore-lib-cash'
-import addressmetadata from '../../keyserver/addressmetadata_pb'
-import VCard from 'vcf'
+import RelayClient from '../../relay/client'
 import Vue from 'vue'
 
 export default {
@@ -9,13 +8,13 @@ export default {
     contacts: {
       // Example:
       // 'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
-      //   keyserver: {
+      //   profile: {
       //     name: 'Anon',
       //     bio: '',
       //     avatar: ...,
       //     pubKey: ...,
       //   },
-      //   relay: {
+      //   inbox: {
       //     acceptancePrice: ...,
       //   },
       //   notify: true
@@ -32,14 +31,14 @@ export default {
     getContact: (state) => (addr) => {
       return state.contacts[addr]
     },
-    getContactKeyserver: (state) => (addr) => {
-      return state.contacts[addr].keyserver
+    getContactProfile: (state) => (addr) => {
+      return state.contacts[addr].profile
     },
-    getContactRelay: (state) => (addr) => {
-      return state.contacts[addr].keyserver
+    getContactInbox: (state) => (addr) => {
+      return state.contacts[addr].inbox
     },
     getPubKey: (state) => (addr) => {
-      let arr = Uint8Array.from(Object.values(state.contacts[addr].keyserver.pubKey))
+      let arr = Uint8Array.from(Object.values(state.contacts[addr].profile.pubKey))
       return PublicKey.fromBuffer(arr)
     },
     getAll (state) {
@@ -50,7 +49,7 @@ export default {
       let contacts = state.contacts
       for (let key in contacts) {
         let lowerSearch = search.toLowerCase()
-        if (contacts[key].keyserver.name.toLowerCase().includes(lowerSearch) || key.toLowerCase().includes(lowerSearch)) {
+        if (contacts[key].profile.name.toLowerCase().includes(lowerSearch) || key.toLowerCase().includes(lowerSearch)) {
           result[key] = contacts[key]
         }
       }
@@ -62,14 +61,14 @@ export default {
     addContact (state, { addr, contact }) {
       Vue.set(state.contacts, addr, contact)
     },
-    updateContactKeyserver (state, { addr, keyserver }) {
+    updateContactProfile (state, { addr, profile }) {
       if (addr in state.contacts) {
-        state.contacts[addr].keyserver = keyserver
+        state.contacts[addr].profile = profile
       }
     },
-    updateContactRelay (state, { addr, relay }) {
+    updateContactRelay (state, { addr, inbox }) {
       if (addr in state.contacts) {
-        state.contacts[addr].relay = relay
+        state.contacts[addr].inbox = inbox
       }
     },
     setNotify (state, { addr, value }) {
@@ -79,7 +78,7 @@ export default {
       Vue.delete(state.contacts, addr)
     },
     setPubKey (state, { addr, pubKey }) {
-      state.contacts[addr].keyserver.pubKey = pubKey
+      state.contacts[addr].profile.pubKey = pubKey
     }
   },
   actions: {
@@ -88,13 +87,13 @@ export default {
     },
     addLoadingContact ({ commit }, { addr, pubKey }) {
       let contact = {
-        keyserver: {
+        profile: {
           name: 'Loading...',
           bio: null,
           avatar: null,
           pubKey
         },
-        relay: {
+        inbox: {
           acceptancePrice: 'Unknown'
         },
         notify: true
@@ -118,83 +117,29 @@ export default {
 
       // Get metadata
       let handler = rootGetters['keyserverHandler/getHandler']
-      let metadata = await handler.uniformSample(addr)
-
-      // Get PubKey
-      let pubKey = metadata.getPubKey()
-
-      let payload = addressmetadata.Payload.deserializeBinary(
-        metadata.getSerializedPayload())
-
-      // Find vCard
-      function isVCard (entry) {
-        return entry.getKind() === 'vcard'
-      }
-      let entryList = payload.getEntriesList()
-      let rawCard = entryList.find(isVCard)
-        .getEntryData() // TODO: Cancel if not found
-      let strCard = new TextDecoder().decode(rawCard)
-      let vCard = new VCard().parse(strCard)
-
-      let name = vCard.data.fn._data
-
-      // TODO
-      // let bio = vCard.data.note._data
-      let bio = ''
-
-      // Get avatar
-      function isAvatar (entry) {
-        return entry.getKind() === 'avatar'
-      }
-      let avatarEntry = entryList.find(isAvatar)
-      let rawAvatar = avatarEntry.getEntryData()
-      function _arrayBufferToBase64 (buffer) {
-        var binary = ''
-        var bytes = new Uint8Array(buffer)
-        var len = bytes.byteLength
-        for (var i = 0; i < len; i++) {
-          binary += String.fromCharCode(bytes[i])
-        }
-        return window.btoa(binary)
-      }
-      let value = avatarEntry.getHeadersList()[0].getValue()
-      let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
-
-      let keyserver = {
-        name,
-        bio,
-        avatar: avatarDataURL,
-        pubKey
-      }
-      let oldKeyserver = getters['getContactKeyserver'](addr)
-
-      // If keyserver values changed, then update
-      if (
-        keyserver.name !== oldKeyserver.name ||
-        keyserver.bio !== oldKeyserver.bio ||
-        keyserver.avatar !== oldKeyserver.avatar
-      ) {
-        commit('updateContactKeyserver', { addr, keyserver })
-      }
-
-      // Get fee
-      let acceptancePrice
       try {
-        let client = rootGetters['relayClient/getClient']
-        let filters = await client.getFilter(addr)
-        let priceFilter = filters.getPriceFilter()
-        acceptancePrice = priceFilter.getAcceptancePrice()
+        let relayURL = await handler.getRelayUrl(addr)
+        let relayClient = new RelayClient(relayURL)
+        var relayData = relayClient.getRelayData(addr)
       } catch (err) {
-        acceptancePrice = 'Unknown'
+        console.error(err)
+        return
+      }
+
+      let oldRelayData = getters['getContact'](addr)
+
+      // If profile values changed, then update
+      if (
+        relayData.profile.name !== oldRelayData.profile.name ||
+        relayData.profile.bio !== oldRelayData.profile.bio ||
+        relayData.profile.avatar !== oldRelayData.profile.avatar
+      ) {
+        commit('updateContactProfile', { addr, profile: relayData.profile })
       }
 
       // If relay values changed, then update
-      let relay = {
-        acceptancePrice
-      }
-      let oldRelay = getters['getContactRelay'](addr)
-      if (relay !== oldRelay) {
-        commit('updateContactRelay', { addr, relay })
+      if (relayData.inbox !== oldRelayData.inbox) {
+        commit('updateContactRelay', { addr, inbox: relayData.inbox })
       }
     },
     startContactUpdater ({ dispatch, getters }) {

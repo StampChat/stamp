@@ -252,7 +252,7 @@ export default {
       commit('readAll', addr)
     },
     shareContact ({ commit, rootGetters }, { currentAddr, shareAddr }) {
-      let contact = rootGetters['contacts/getContactKeyserver'](currentAddr)
+      let contact = rootGetters['contacts/getContactProfile'](currentAddr)
       let text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
       commit('setInputMessage', { addr: shareAddr, text })
       commit('switchChatActive', shareAddr)

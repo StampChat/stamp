@@ -85,13 +85,13 @@ export default {
   },
   computed: {
     ...mapGetters({
-      getContactKeyserver: 'contacts/getContactKeyserver',
+      getContactProfile: 'contacts/getContactProfile',
       getSplitterRatio: 'splitter/getSplitterRatio',
       getActiveChat: 'chats/getActiveChat'
     }),
     activeProfileName () {
       if (this.getActiveChat !== null) {
-        return this.getContactKeyserver(this.getActiveChat).name
+        return this.getContactProfile(this.getActiveChat).name
       } else {
         return ''
       }
