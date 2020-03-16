@@ -61,14 +61,14 @@
           <q-item-section avatar>
             <q-avatar rounded>
               <img
-                :src="contact.keyserver.avatar"
+                :src="contact.profile.avatar"
                 size="xl"
               >
             </q-avatar>
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{contact.keyserver.name}}</q-item-label>
-            <q-item-label caption>Inbox Fee: {{contact.relay.acceptancePrice}}</q-item-label>
+            <q-item-label>{{contact.profile.name}}</q-item-label>
+            <q-item-label caption>Inbox Fee: {{contact.inbox.acceptancePrice}}</q-item-label>
           </q-item-section>
         </q-item>
       </q-card-section>
@@ -94,6 +94,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
+import RelayClient from '../../relay/client'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -113,16 +114,11 @@ export default {
       this.contact = 'loading'
       try {
         let ksHandler = this.getKsHandler()
-        let relayClient = this.getRelayClient()
-        let keyserver = await ksHandler.getContact(newAddress)
-        let relay = {
-          acceptancePrice: await relayClient.getAcceptancePrice(newAddress)
-        }
-        this.contact = {
-          keyserver,
-          relay,
-          notify: true
-        }
+        let relayURL = await ksHandler.getRelayUrl(newAddress)
+        let relayClient = new RelayClient(relayURL)
+        let relayData = await relayClient.getRelayData(newAddress)
+        relayData.notify = true
+        this.contact = relayData
       } catch {
         this.contact = null
       }
