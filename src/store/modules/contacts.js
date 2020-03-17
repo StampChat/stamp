@@ -120,7 +120,7 @@ export default {
       try {
         let relayURL = await handler.getRelayUrl(addr)
         let relayClient = new RelayClient(relayURL)
-        var relayData = relayClient.getRelayData(addr)
+        var relayData = await relayClient.getRelayData(addr)
       } catch (err) {
         console.error(err)
         return
