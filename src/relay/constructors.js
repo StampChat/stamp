@@ -1,4 +1,4 @@
-import messages from './messages_pb'
+import messaging from './messaging_pb'
 import stealth from './stealth_pb'
 import filters from './filters_pb'
 import crypto from './crypto'
@@ -47,7 +47,7 @@ export const constructMessage = async function (payload, privKey, destPubKey, st
   let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
   ecdsa.sign()
 
-  let message = new messages.Message()
+  let message = new messaging.Message()
   let sig = ecdsa.sig.toCompact(1).slice(1)
   let rawPubkey = privKey.toPublicKey().toBuffer()
   message.setSenderPubKey(rawPubkey)
@@ -66,7 +66,7 @@ export const constructOutboxMessage = async function (payload, privKey) {
   let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
   ecdsa.sign()
 
-  let message = new messages.Message()
+  let message = new messaging.Message()
   let sig = ecdsa.sig.toCompact(1).slice(1)
   let rawPubkey = privKey.toPublicKey().toBuffer()
   message.setSenderPubKey(rawPubkey)
@@ -77,7 +77,7 @@ export const constructOutboxMessage = async function (payload, privKey) {
 }
 
 export const constructPayload = async function (entries, privKey, destPubKey, scheme, timestamp) {
-  let payload = new messages.Payload()
+  let payload = new messaging.Payload()
   payload.setTimestamp(timestamp)
   let rawDestPubKey = destPubKey.toBuffer()
   payload.setDestination(rawDestPubKey)
@@ -92,7 +92,7 @@ export const constructPayload = async function (entries, privKey, destPubKey, sc
 
     payload.setEntries(cipherText)
     payload.setSecretSeed(ephemeralPubKeyRaw)
-    payload.setScheme(messages.Payload.EncryptionScheme.EPHEMERALDH)
+    payload.setScheme(messaging.Payload.EncryptionScheme.EPHEMERALDH)
   } else {
     // TODO: Raise error
     return
@@ -101,7 +101,7 @@ export const constructPayload = async function (entries, privKey, destPubKey, sc
 }
 
 export const constructOutboxPayload = async function (entries, privKey, scheme, timestamp) {
-  let payload = new messages.Payload()
+  let payload = new messaging.Payload()
   payload.setTimestamp(timestamp)
   let destPubKey = privKey.toPublicKey()
   let rawDestPubKey = destPubKey.toBuffer()
@@ -117,7 +117,7 @@ export const constructOutboxPayload = async function (entries, privKey, scheme, 
 
     payload.setEntries(cipherText)
     payload.setSecretSeed(ephemeralPubKeyRaw)
-    payload.setScheme(messages.Payload.EncryptionScheme.EPHEMERALDH)
+    payload.setScheme(messaging.Payload.EncryptionScheme.EPHEMERALDH)
   } else {
     // TODO: Raise error
     return
@@ -127,13 +127,13 @@ export const constructOutboxPayload = async function (entries, privKey, scheme, 
 
 export const constructTextMessage = async function (text, privKey, destPubKey, scheme, stampAmount) {
   // Construct text entry
-  let textEntry = new messages.Entry()
+  let textEntry = new messaging.Entry()
   textEntry.setKind('text-utf8')
   let rawText = new TextEncoder('utf-8').encode(text)
   textEntry.setEntryData(rawText)
 
   // Aggregate entries
-  let entries = new messages.Entries()
+  let entries = new messaging.Entries()
   entries.addEntries(textEntry)
 
   // Construct message
@@ -149,10 +149,10 @@ export const constructTextMessage = async function (text, privKey, destPubKey, s
 }
 
 export const constructStealthPaymentMessage = async function (amount, memo, privKey, destPubKey, scheme, stampAmount, stealthTxId) {
-  let entries = new messages.Entries()
+  let entries = new messaging.Entries()
 
   // Construct payment entry
-  let paymentEntry = new messages.Entry()
+  let paymentEntry = new messaging.Entry()
   paymentEntry.setKind('stealth-payment')
 
   let stealthPaymentEntry = new stealth.StealthPaymentEntry()
@@ -189,7 +189,7 @@ export const constructStealthPaymentMessage = async function (amount, memo, priv
 
   // Construct memo entry
   if (memo !== '') {
-    let memoEntry = new messages.Entry()
+    let memoEntry = new messaging.Entry()
     memoEntry.setKind('text-utf8')
     let rawText = new TextEncoder('utf-8').encode(memo)
     memoEntry.setEntryData(rawText)
@@ -216,10 +216,10 @@ export const constructStealthPaymentMessage = async function (amount, memo, priv
 }
 
 export const constructImageMessage = async function (image, caption, privKey, destPubKey, scheme, stampAmount) {
-  let entries = new messages.Entries()
+  let entries = new messaging.Entries()
 
   // Construct text entry
-  let imgEntry = new messages.Entry()
+  let imgEntry = new messaging.Entry()
   imgEntry.setKind('image')
 
   let arr = image.split(',')
@@ -231,7 +231,7 @@ export const constructImageMessage = async function (image, caption, privKey, de
   while (n--) {
     rawAvatar[n] = bstr.charCodeAt(n)
   }
-  let imgHeader = new messages.Header()
+  let imgHeader = new messaging.Header()
   imgHeader.setName('data')
   imgHeader.setValue(avatarType)
   imgEntry.setEntryData(rawAvatar)
@@ -241,7 +241,7 @@ export const constructImageMessage = async function (image, caption, privKey, de
 
   // Construct caption entry
   if (caption !== '') {
-    let captionEntry = new messages.Entry()
+    let captionEntry = new messaging.Entry()
     captionEntry.setKind('text-utf8')
     let rawText = new TextEncoder('utf-8').encode(caption)
     captionEntry.setEntryData(rawText)

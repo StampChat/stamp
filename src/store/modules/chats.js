@@ -1,4 +1,4 @@
-import messages from '../../relay/messages_pb'
+import messaging from '../../relay/messaging_pb'
 import stealth from '../../relay/stealth_pb'
 import crypto from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
@@ -292,7 +292,7 @@ export default {
         commit('setStatusError', { addr, index, retryData: { msgType: 'text', text } })
         return
       }
-      let messageSet = new messages.MessageSet()
+      let messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
       messageSet.addMessages(outboxMessage)
 
@@ -342,7 +342,7 @@ export default {
         commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo, stampTxID: err.stampTxId } })
         return
       }
-      let messageSet = new messages.MessageSet()
+      let messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
       messageSet.addMessages(outboxMessage)
 
@@ -392,7 +392,7 @@ export default {
         commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
         return
       }
-      let messageSet = new messages.MessageSet()
+      let messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
       messageSet.addMessages(outboxMessage)
 
@@ -437,7 +437,7 @@ export default {
 
       // Decode message
       let rawPayload = message.getSerializedPayload()
-      let payload = messages.Payload.deserializeBinary(rawPayload)
+      let payload = messaging.Payload.deserializeBinary(rawPayload)
       let scheme = payload.getScheme()
       let entriesRaw
       if (scheme === 0) {
@@ -472,7 +472,7 @@ export default {
       dispatch('wallet/addUTXO', stampOutput, { root: true })
 
       // Decode entries
-      let entries = messages.Entries.deserializeBinary(entriesRaw)
+      let entries = messaging.Entries.deserializeBinary(entriesRaw)
       let entriesList = entries.getEntriesList()
       let newMsg = {
         outbound: false,
