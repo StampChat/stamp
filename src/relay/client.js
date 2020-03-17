@@ -1,5 +1,5 @@
 import axios from 'axios'
-import messages from './messages_pb'
+import messaging from './messaging_pb'
 import addressmetadata from '../keyserver/addressmetadata_pb'
 import wrapper from '../pop/wrapper_pb'
 import pop from '../pop/index'
@@ -92,7 +92,7 @@ class RelayClient {
 
     socket.onmessage = function (event) {
       let buffer = event.data
-      let timedMessageSet = messages.TimedMessageSet.deserializeBinary(buffer)
+      let timedMessageSet = messaging.TimedMessageSet.deserializeBinary(buffer)
       let timestamp = timedMessageSet.getTimestamp()
       let messageList = timedMessageSet.getMessagesList()
       for (let index in messageList) {
@@ -177,7 +177,7 @@ class RelayClient {
     })
 
     if (response.status === 200) {
-      let messagePage = messages.MessagePage.deserializeBinary(response.data)
+      let messagePage = messaging.MessagePage.deserializeBinary(response.data)
       return messagePage
     }
   }
