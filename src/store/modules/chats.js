@@ -425,6 +425,12 @@ export default {
       let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
       let senderAddr = senderPubKey.toAddress('testnet')
         .toCashAddress() // TODO: Make generic
+      let myAddress = rootGetters['wallet/getMyAddressStr']
+
+      if (senderAddr == myAddress) {
+        console.log('self send')
+        return
+      }
 
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](senderAddr)) {
@@ -455,21 +461,35 @@ export default {
 
       // Add UTXO
       let payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
-      let stampTxRaw = Buffer.from(message.getStampTx())
-      let stampTx = cashlib.Transaction(stampTxRaw)
-      let txId = stampTx.hash
-      let output = stampTx.outputs[0]
-      let satoshis = output.satoshis
-      let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
-      let stampOutput = {
-        address,
-        outputIndex: 0, // 0 is always stamp output
-        satoshis,
-        txId,
-        type: 'stamp',
-        payloadDigest
+      console.log(message)
+      let stampOutpoints = message.getStampOutpointsList()
+      let outpoints = []
+      for (let i in stampOutpoints) {
+        let stampOutpoint = stampOutpoints[i]
+        let stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
+        let stampTx = cashlib.Transaction(stampTxRaw)
+        let txId = stampTx.hash
+        let vouts = stampOutpoint.getVoutsList()
+        outpoints.push({
+          stampTx,
+          vouts
+        })
+        for (let j in vouts) {
+          let outputIndex = vouts[j]
+          let output = stampTx.outputs[outputIndex]
+          let satoshis = output.satoshis
+          let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
+          let stampOutput = {
+            address,
+            outputIndex,
+            satoshis,
+            txId,
+            type: 'stamp',
+            payloadDigest
+          }
+          dispatch('wallet/addUTXO', stampOutput, { root: true })
+        }
       }
-      dispatch('wallet/addUTXO', stampOutput, { root: true })
 
       // Decode entries
       let entries = messaging.Entries.deserializeBinary(entriesRaw)
@@ -479,7 +499,7 @@ export default {
         status: 'confirmed',
         items: [],
         timestamp,
-        stampTx
+        outpoints
       }
       for (let index in entriesList) {
         let entry = entriesList[index]
@@ -544,7 +564,7 @@ export default {
         }
       }
       let index = Date.now()
-      commit('receiveMessage', { addr: senderAddr, index, newMsg, stampTx })
+      commit('receiveMessage', { addr: senderAddr, index, newMsg })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       let myAddressStr = rootGetters['wallet/getMyAddressStr']

@@ -102,8 +102,16 @@ export default {
       }
     },
     stampPrice () {
-      if (this.message.stampTx !== null) {
-        return this.message.stampTx.outputs[0].satoshis + ' sats'
+      console.log(this.message)
+      if (this.message.outpoints !== null) {
+        let amount = this.message.outpoints.reduce((a, stampOutpoint) => {
+          console.log('hey')
+          console.log(stampOutpoint)
+          return stampOutpoint.vouts.reduce((b, vout) => {
+            return stampOutpoint.stampTx.outputs[vout] + b
+          }, 0) + a
+        }, 0)
+        return amount + ' sats'
       } else {
         return '&nbsp'
       }

@@ -53,14 +53,19 @@ export const constructMessage = async function (payload, privKey, destPubKey, st
   message.setSenderPubKey(rawPubkey)
   message.setSignature(sig)
   message.setSerializedPayload(serializedPayload)
-  let { transaction, usedIDs } = await this.constructStampTransaction(payloadDigest, destPubKey, stampAmount)
+
+  let { transaction, usedIDs } = await constructStampTransaction(payloadDigest, destPubKey, stampAmount)
   let rawStampTx = transaction.toBuffer()
-  message.setStampTx(rawStampTx)
+  let stampOutpoints = new messaging.StampOutpoints()
+  stampOutpoints.setStampTx(rawStampTx)
+  stampOutpoints.addVouts(0)
+
+  message.addStampOutpoints(stampOutpoints)
 
   return { message, usedIDs, stampTx: transaction }
 }
 
-export const constructOutboxMessage = async function (payload, privKey) {
+export const constructOutboxMessage = function (payload, privKey) {
   let serializedPayload = payload.serializeBinary()
   let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
   let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
@@ -76,7 +81,7 @@ export const constructOutboxMessage = async function (payload, privKey) {
   return message
 }
 
-export const constructPayload = async function (entries, privKey, destPubKey, scheme, timestamp) {
+export const constructPayload = function (entries, privKey, destPubKey, scheme, timestamp) {
   let payload = new messaging.Payload()
   payload.setTimestamp(timestamp)
   let rawDestPubKey = destPubKey.toBuffer()
@@ -100,7 +105,7 @@ export const constructPayload = async function (entries, privKey, destPubKey, sc
   return payload
 }
 
-export const constructOutboxPayload = async function (entries, privKey, scheme, timestamp) {
+export const constructOutboxPayload = function (entries, privKey, scheme, timestamp) {
   let payload = new messaging.Payload()
   payload.setTimestamp(timestamp)
   let destPubKey = privKey.toPublicKey()
@@ -138,12 +143,12 @@ export const constructTextMessage = async function (text, privKey, destPubKey, s
 
   // Construct message
   let timestamp = Math.floor(Date.now() / 1000)
-  let payload = this.constructPayload(entries, privKey, destPubKey, scheme, timestamp)
-  let { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
+  let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
+  let { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
 
   // Construct outbox message
-  let outboxPayload = this.constructOutboxPayload(entries, privKey, scheme, timestamp)
-  let outboxMessage = await this.constructOutboxMessage(outboxPayload, privKey)
+  let outboxPayload = constructOutboxPayload(entries, privKey, scheme, timestamp)
+  let outboxMessage = constructOutboxMessage(outboxPayload, privKey)
 
   return { message, outboxMessage, usedIDs, stampTx }
 }
@@ -160,7 +165,7 @@ export const constructStealthPaymentMessage = async function (amount, memo, priv
 
   // Construct stealth transaction if ID not given
   if (stealthTxId === undefined) {
-    var { transaction: stealthTx, usedIDs: stampUsedIDs } = await this.constructStealthTransaction(ephemeralPrivKey, destPubKey, amount)
+    var { transaction: stealthTx, usedIDs: stampUsedIDs } = await constructStealthTransaction(ephemeralPrivKey, destPubKey, amount)
     stealthTxId = Buffer.from(stealthTx.id, 'hex')
 
     // Broadcast transaction
@@ -198,9 +203,9 @@ export const constructStealthPaymentMessage = async function (amount, memo, priv
 
   // Construct message
   let timestamp = Math.floor(Date.now() / 1000)
-  let payload = this.constructPayload(entries, privKey, destPubKey, scheme, timestamp)
+  let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
   try {
-    var { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
+    var { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
   } catch (err) {
     throw Error({
       stealthTxId,
@@ -209,8 +214,8 @@ export const constructStealthPaymentMessage = async function (amount, memo, priv
   }
 
   // Construct outbox message
-  let outboxPayload = this.constructOutboxPayload(entries, privKey, scheme, timestamp)
-  let outboxMessage = await this.constructOutboxMessage(outboxPayload, privKey)
+  let outboxPayload = constructOutboxPayload(entries, privKey, scheme, timestamp)
+  let outboxMessage = constructOutboxMessage(outboxPayload, privKey)
 
   return { message, outboxMessage, usedIDs, stampTx }
 }
@@ -250,12 +255,12 @@ export const constructImageMessage = async function (image, caption, privKey, de
 
   // Construct message
   let timestamp = Math.floor(Date.now() / 1000)
-  let payload = this.constructPayload(entries, privKey, destPubKey, scheme, timestamp)
-  let { message, usedIDs, stampTx } = await this.constructMessage(payload, privKey, destPubKey, stampAmount)
+  let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
+  let { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
 
   // Construct outbox message
-  let outboxPayload = this.constructOutboxPayload(entries, privKey, scheme, timestamp)
-  let outboxMessage = await this.constructOutboxMessage(outboxPayload, privKey)
+  let outboxPayload = constructOutboxPayload(entries, privKey, scheme, timestamp)
+  let outboxMessage = constructOutboxMessage(outboxPayload, privKey)
 
   return { message, outboxMessage, usedIDs, stampTx }
 }
