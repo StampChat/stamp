@@ -52,6 +52,7 @@ import ChatMessageSection from './ChatMessageSection.vue'
 import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
 import TransactionDialog from '../dialogs/TransactionDialog.vue'
 import formatting from '../../utils/formatting'
+import { stampPrice } from '../../utils/wallet'
 
 export default {
   components: {
@@ -103,12 +104,8 @@ export default {
       }
     },
     stampPrice () {
-      if (this.message.outpoints !== null) {
-        let amount = this.message.outpoints.reduce((a, stampOutpoint) => {
-          return stampOutpoint.vouts.reduce((b, vout) => {
-            return stampOutpoint.stampTx.outputs[vout].satoshis + b
-          }, 0) + a
-        }, 0)
+      let amount = stampPrice(this.message.outpoints)
+      if (amount) {
         return amount + ' sats'
       } else {
         // We return newline so that the message doesn't move when switching

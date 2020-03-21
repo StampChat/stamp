@@ -6,31 +6,29 @@ import Vue from 'vue'
 import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
+import { stampPrice } from '../../utils/wallet'
 import { constructStealthPaymentMessage, constructImageMessage, constructTextMessage } from '../../relay/constructors'
 
 const cashlib = require('bitcore-lib-cash')
 
 function calculateUnreadAggregates (state, addr) {
-  // const unreadAggregates = Object.entries(state.data[addr].messages)
-  //   .filter(([timestamp]) => state.data[addr].lastRead < timestamp)
-  //   .map(([timestamp, message]) => {
-  //     if (message.stampTx) {
-  //       return message.stampTx.outputs[0].satoshis
-  //     }
-  //     return 0
-  //   })
-  //   .reduce(
-  //     ({ totalUnreadValue, totalUnreadMessages }, curStampSats) => ({
-  //       totalUnreadValue: totalUnreadValue + curStampSats,
-  //       totalUnreadMessages: totalUnreadMessages + 1
-  //     }),
-  //     {
-  //       totalUnreadValue: 0,
-  //       totalUnreadMessages: 0
-  //     }
-  //   )
-  // return unreadAggregates
-  return 0
+  const unreadAggregates = Object.entries(state.data[addr].messages)
+    .filter(([timestamp]) => state.data[addr].lastRead < timestamp)
+    .map(([timestamp, message]) => {
+      return stampPrice(message.outpoints) || 0
+    })
+    .reduce(
+      ({ totalUnreadValue, totalUnreadMessages }, curStampSats) => ({
+        totalUnreadValue: totalUnreadValue + curStampSats,
+        totalUnreadMessages: totalUnreadMessages + 1
+      }),
+      {
+        totalUnreadValue: 0,
+        totalUnreadMessages: 0
+      }
+    )
+  console.log(unreadAggregates)
+  return unreadAggregates
 }
 
 export default {
