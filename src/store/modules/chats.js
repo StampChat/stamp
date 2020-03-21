@@ -293,11 +293,20 @@ export default {
       }
       let messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
-      messageSet.addMessages(outboxMessage)
+
+      // Construct self messages
+      let myAddr = rootGetters['wallet/getMyAddressStr']
+      let selfMessageSet = new messaging.MessageSet()
+      selfMessageSet.addMessages(outboxMessage)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
+
       try {
+        // Send to outbox
+        await client.pushMessages(myAddr, selfMessageSet)
+
+        // Send to destination address
         await client.pushMessages(destAddr, messageSet)
         let outpoint = {
           stampTx,
