@@ -11,25 +11,26 @@ import { constructStealthPaymentMessage, constructImageMessage, constructTextMes
 const cashlib = require('bitcore-lib-cash')
 
 function calculateUnreadAggregates (state, addr) {
-  const unreadAggregates = Object.entries(state.data[addr].messages)
-    .filter(([timestamp]) => state.data[addr].lastRead < timestamp)
-    .map(([timestamp, message]) => {
-      if (message.stampTx) {
-        return message.stampTx.outputs[0].satoshis
-      }
-      return 0
-    })
-    .reduce(
-      ({ totalUnreadValue, totalUnreadMessages }, curStampSats) => ({
-        totalUnreadValue: totalUnreadValue + curStampSats,
-        totalUnreadMessages: totalUnreadMessages + 1
-      }),
-      {
-        totalUnreadValue: 0,
-        totalUnreadMessages: 0
-      }
-    )
-  return unreadAggregates
+  // const unreadAggregates = Object.entries(state.data[addr].messages)
+  //   .filter(([timestamp]) => state.data[addr].lastRead < timestamp)
+  //   .map(([timestamp, message]) => {
+  //     if (message.stampTx) {
+  //       return message.stampTx.outputs[0].satoshis
+  //     }
+  //     return 0
+  //   })
+  //   .reduce(
+  //     ({ totalUnreadValue, totalUnreadMessages }, curStampSats) => ({
+  //       totalUnreadValue: totalUnreadValue + curStampSats,
+  //       totalUnreadMessages: totalUnreadMessages + 1
+  //     }),
+  //     {
+  //       totalUnreadValue: 0,
+  //       totalUnreadMessages: 0
+  //     }
+  //   )
+  // return unreadAggregates
+  return 0
 }
 
 export default {
@@ -173,7 +174,7 @@ export default {
     switchChatActive (state, addr) {
       state.activeChatAddr = addr
     },
-    sendMessageLocal (state, { addr, index, items, stampTx }) {
+    sendMessageLocal (state, { addr, index, items, outpoints }) {
       let timestamp = Date.now()
       let newMsg = {
         type: 'text',
@@ -181,13 +182,13 @@ export default {
         status: 'pending',
         items,
         timestamp,
-        stampTx
+        outpoints
       }
 
       Vue.set(state.data[addr].messages, index, newMsg)
     },
-    setStampTx (state, { addr, index, stampTx }) {
-      state.data[addr].messages[index].stampTx = stampTx
+    setOutpoints (state, { addr, index, outpoints }) {
+      state.data[addr].messages[index].outpoints = outpoints
     },
     setStatus (state, { index, addr, status }) {
       state.data[addr].messages[index].status = status
@@ -278,7 +279,7 @@ export default {
         }
       ]
       let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items, stampTx: null })
+      commit('sendMessageLocal', { addr, index, items, outpoints: null })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -300,7 +301,11 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
-        commit('setStampTx', { addr, index, stampTx })
+        let outpoint = {
+          stampTx,
+          vouts: [0]
+        }
+        commit('setOutpoints', { addr, index, outpoints: [outpoint] })
         commit('setStatus', { addr, index, status: 'confirmed' })
       } catch (err) {
         console.error(err.response)
@@ -328,7 +333,7 @@ export default {
           })
       }
       let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items, stampTx: null })
+      commit('sendMessageLocal', { addr, index, items, outpoints: null })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -377,7 +382,7 @@ export default {
           })
       }
       let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items, stampTx: null })
+      commit('sendMessageLocal', { addr, index, items, outpoints: null })
 
       // Construct message
       let privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -427,7 +432,7 @@ export default {
         .toCashAddress() // TODO: Make generic
       let myAddress = rootGetters['wallet/getMyAddressStr']
 
-      if (senderAddr == myAddress) {
+      if (senderAddr === myAddress) {
         console.log('self send')
         return
       }

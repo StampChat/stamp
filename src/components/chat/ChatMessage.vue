@@ -16,6 +16,7 @@
 
     <!-- Transaction Dialog -->
     <q-dialog v-model="transactionDialog">
+      <!-- Switch to outpoints -->
       <transaction-dialog
         title="Stamp Transaction"
         :transaction="message.stampTx"
@@ -102,17 +103,15 @@ export default {
       }
     },
     stampPrice () {
-      console.log(this.message)
       if (this.message.outpoints !== null) {
         let amount = this.message.outpoints.reduce((a, stampOutpoint) => {
-          console.log('hey')
-          console.log(stampOutpoint)
           return stampOutpoint.vouts.reduce((b, vout) => {
-            return stampOutpoint.stampTx.outputs[vout] + b
+            return stampOutpoint.stampTx.outputs[vout].satoshis + b
           }, 0) + a
         }, 0)
         return amount + ' sats'
       } else {
+        // We return newline so that the message doesn't move when switching
         return '&nbsp'
       }
     }
