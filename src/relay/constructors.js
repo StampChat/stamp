@@ -1,7 +1,7 @@
 import messaging from './messaging_pb'
 import stealth from './stealth_pb'
 import filters from './filters_pb'
-import crypto from './crypto'
+import { constructStampPubKey, constructStealthPubKey, encrypt } from './crypto'
 import store from '../store/index'
 import VCard from 'vcf'
 import addressmetadata from '../keyserver/addressmetadata_pb'
@@ -9,9 +9,9 @@ import wrapper from '../pop/wrapper_pb'
 
 const cashlib = require('bitcore-lib-cash')
 
-export const constructStampTransaction = async function (payloadDigest, destPubKey, amount) {
+export const constructStampTransaction = async function (outpointDigest, destPubKey, amount) {
   // Stamp output
-  let stampAddress = crypto.constructStampPubKey(payloadDigest, destPubKey).toAddress('testnet')
+  let stampAddress = constructStampPubKey(outpointDigest, destPubKey).toAddress('testnet')
   let stampOutput = new cashlib.Transaction.Output({
     script: cashlib.Script(new cashlib.Address(stampAddress)),
     satoshis: amount
@@ -27,7 +27,7 @@ export const constructStampTransaction = async function (payloadDigest, destPubK
 
 export const constructStealthTransaction = async function (ephemeralPrivKey, destPubKey, amount) {
   // Add ephemeral output
-  let stealthAddress = crypto.constructStealthPubKey(ephemeralPrivKey, destPubKey).toAddress('testnet')
+  let stealthAddress = constructStealthPubKey(ephemeralPrivKey, destPubKey).toAddress('testnet')
   let stampOutput = new cashlib.Transaction.Output({
     script: cashlib.Script(new cashlib.Address(stealthAddress)),
     satoshis: amount
@@ -39,6 +39,20 @@ export const constructStealthTransaction = async function (ephemeralPrivKey, des
   // Construct transaction
   let { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs: [stampOutput], feePerByte })
   return { transaction, usedIDs }
+}
+
+export const constructOutpointDigest = function (stampNum, vout, payloadDigest) {
+  // TODO: Bounds checks?
+  let stampNumRaw = new Uint8Array(new Uint32Array([stampNum]).buffer)
+  let voutRaw = new Uint8Array(new Uint32Array([vout]).buffer)
+
+  let preimage = new Uint8Array(8 + payloadDigest.length)
+  preimage.set(stampNumRaw)
+  preimage.set(voutRaw, 4)
+  preimage.set(payloadDigest, 8)
+
+  let digest = cashlib.crypto.Hash.sha256(preimage)
+  return digest
 }
 
 export const constructMessage = async function (payload, privKey, destPubKey, stampAmount) {
@@ -54,7 +68,8 @@ export const constructMessage = async function (payload, privKey, destPubKey, st
   message.setSignature(sig)
   message.setSerializedPayload(serializedPayload)
 
-  let { transaction, usedIDs } = await constructStampTransaction(payloadDigest, destPubKey, stampAmount)
+  let outpointDigest = constructOutpointDigest(0, 0, payloadDigest)
+  let { transaction, usedIDs } = await constructStampTransaction(outpointDigest, destPubKey, stampAmount)
   let rawStampTx = transaction.toBuffer()
   let stampOutpoints = new messaging.StampOutpoints()
   stampOutpoints.setStampTx(rawStampTx)
@@ -92,7 +107,7 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
   if (scheme === 0) {
     payload.setEntries(rawEntries)
   } else if (scheme === 1) {
-    let { cipherText, ephemeralPubKey } = crypto.encrypt(rawEntries, privKey, destPubKey)
+    let { cipherText, ephemeralPubKey } = encrypt(rawEntries, privKey, destPubKey)
     let ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
 
     payload.setEntries(cipherText)
@@ -117,7 +132,7 @@ export const constructOutboxPayload = function (entries, privKey, scheme, timest
   if (scheme === 0) {
     payload.setEntries(rawEntries)
   } else if (scheme === 1) {
-    let { cipherText, ephemeralPubKey } = crypto.encrypt(rawEntries, privKey, destPubKey)
+    let { cipherText, ephemeralPubKey } = encrypt(rawEntries, privKey, destPubKey)
     let ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
 
     payload.setEntries(cipherText)
