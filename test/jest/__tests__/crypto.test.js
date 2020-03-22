@@ -1,4 +1,8 @@
-import crypto from '../../../src/relay/crypto'
+import {
+  encrypt, decrypt, constructStampPubKey,
+  constructStampPrivKey, constructStealthPubKey,
+  constructStealthPrivKey
+} from '../../../src/relay/crypto'
 import { PrivateKey } from 'bitcore-lib-cash'
 
 const cashlib = require('bitcore-lib-cash')
@@ -11,7 +15,7 @@ test('Encrypt', () => {
   let raw = new ArrayBuffer(8)
   let privKey = PrivateKey()
   let destPubKey = PrivateKey().toPublicKey()
-  crypto.encrypt(raw, privKey, destPubKey)
+  encrypt(raw, privKey, destPubKey)
 })
 
 test('Decrypt', () => {
@@ -24,8 +28,8 @@ test('Decrypt', () => {
   let sourcePubKey = sourcePrivKey.toPublicKey()
   let destPrivKey = PrivateKey()
   let destPubKey = destPrivKey.toPublicKey()
-  let { cipherText, ephemeralPubKey } = crypto.encrypt(raw, sourcePrivKey, destPubKey)
-  let plainText = crypto.decrypt(cipherText, destPrivKey, sourcePubKey, ephemeralPubKey)
+  let { cipherText, ephemeralPubKey } = encrypt(raw, sourcePrivKey, destPubKey)
+  let plainText = decrypt(cipherText, destPrivKey, sourcePubKey, ephemeralPubKey)
   expect(plainText).toStrictEqual(raw)
 })
 
@@ -34,8 +38,8 @@ test('Stamp Signatures', () => {
   let digest = cashlib.crypto.Hash.sha256(preimage)
   let privKey = PrivateKey()
   let publicKey = privKey.toPublicKey()
-  let stampPublicKey = crypto.constructStampPubKey(digest, publicKey)
-  let stampPrivKey = crypto.constructStampPrivKey(digest, privKey)
+  let stampPublicKey = constructStampPubKey(digest, publicKey)
+  let stampPrivKey = constructStampPrivKey(digest, privKey)
   let stampPublicKeyDerived = stampPrivKey.toPublicKey()
   expect(stampPublicKey.toBuffer()).toStrictEqual(stampPublicKeyDerived.toBuffer())
 })
@@ -47,9 +51,9 @@ test('StealthKey', () => {
   let ephemeralPrivKey = PrivateKey()
   let ephemeralPubKey = ephemeralPrivKey.toPublicKey()
 
-  let stealthPubKey = crypto.constructStealthPubKey(ephemeralPrivKey, destPubKey)
+  let stealthPubKey = constructStealthPubKey(ephemeralPrivKey, destPubKey)
 
-  let stealthPrivKey = crypto.constructStealthPrivKey(ephemeralPubKey, destPrivKey)
+  let stealthPrivKey = constructStealthPrivKey(ephemeralPubKey, destPrivKey)
   let stealthPubKeyExpected = stealthPrivKey.toPublicKey()
 
   expect(stealthPubKey.toBuffer()).toStrictEqual(stealthPubKeyExpected.toBuffer())

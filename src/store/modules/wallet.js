@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import crypto from '../../relay/crypto'
+import { constructStampPrivKey, constructStealthPrivKey } from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import { numAddresses, numChangeAddresses, nUtxoGoal, feeUpdateTimerMilliseconds, defaultFeePerByte } from '../../utils/constants'
 import formatting from '../../utils/formatting'
@@ -332,11 +332,11 @@ export default {
         } else if (utxo.type === 'stamp') {
           let privKey = getters['getIdentityPrivKey']
           let payloadDigest = Buffer.from(utxo.payloadDigest)
-          signingKey = crypto.constructStampPrivKey(payloadDigest, privKey)
+          signingKey = constructStampPrivKey(payloadDigest, privKey)
         } else if (utxo.type === 'stealth') {
           let privKey = getters['getIdentityPrivKey']
           let ephemeralPubKey = PublicKey(utxo.ephemeralPubKey)
-          signingKey = crypto.constructStealthPrivKey(ephemeralPubKey, privKey)
+          signingKey = constructStealthPrivKey(ephemeralPubKey, privKey)
         } else {
           // TODO: Handle
         }

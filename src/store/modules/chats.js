@@ -1,6 +1,6 @@
 import messaging from '../../relay/messaging_pb'
 import stealth from '../../relay/stealth_pb'
-import crypto from '../../relay/crypto'
+import { decrypt } from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
@@ -27,7 +27,6 @@ function calculateUnreadAggregates (state, addr) {
         totalUnreadMessages: 0
       }
     )
-  console.log(unreadAggregates)
   return unreadAggregates
 }
 
@@ -466,14 +465,13 @@ export default {
         let secretSeed = payload.getSecretSeed()
         let ephemeralPubKey = PublicKey.fromBuffer(secretSeed)
         let privKey = rootGetters['wallet/getIdentityPrivKey']
-        entriesRaw = crypto.decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
+        entriesRaw = decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
       } else {
         // TODO: Raise error
       }
 
       // Add UTXO
       let payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
-      console.log(message)
       let stampOutpoints = message.getStampOutpointsList()
       let outpoints = []
       for (let i in stampOutpoints) {
