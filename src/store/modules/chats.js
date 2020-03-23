@@ -439,7 +439,7 @@ export default {
       let myAddress = rootGetters['wallet/getMyAddressStr']
 
       if (senderAddr === myAddress) {
-        console.log('self send')
+        // TODO: Process self sends
         return
       }
 
@@ -504,8 +504,9 @@ export default {
       // Decode entries
       let entries = messaging.Entries.deserializeBinary(entriesRaw)
       let entriesList = entries.getEntriesList()
+      let outbound = (senderAddr === myAddress)
       let newMsg = {
-        outbound: false,
+        outbound,
         status: 'confirmed',
         items: [],
         timestamp,
