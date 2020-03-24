@@ -93,7 +93,7 @@ class RelayClient {
     socket.onmessage = function (event) {
       let buffer = event.data
       let timedMessageSet = messaging.TimedMessageSet.deserializeBinary(buffer)
-      let timestamp = timedMessageSet.getTimestamp()
+      let timestamp = timedMessageSet.getServerTime()
       let messageList = timedMessageSet.getMessagesList()
       for (let index in messageList) {
         let message = messageList[index]

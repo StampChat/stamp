@@ -594,7 +594,7 @@ export default {
         // TODO: Check correct destination
         // let destPubKey = timedMessage.getDestination()
 
-        let timestamp = timedMessage.getTimestamp()
+        let timestamp = timedMessage.getServerTime()
         let message = timedMessage.getMessage()
         await dispatch('receiveMessage', { timestamp, message })
         lastReceived = Math.max(lastReceived, timestamp)
