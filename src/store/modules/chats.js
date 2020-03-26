@@ -8,6 +8,7 @@ import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../utils/wallet'
 import { constructStealthPaymentMessage, constructImageMessage, constructTextMessage } from '../../relay/constructors'
+import RelayClient from '../../relay/client'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -452,9 +453,29 @@ export default {
         dispatch('contacts/refresh', senderAddr, { root: true })
       }
 
-      // Decode message
-      let rawPayload = message.getSerializedPayload()
-      let payload = messaging.Payload.deserializeBinary(rawPayload)
+      const rawPayload = message.getSerializedPayload()
+      let payload
+
+      // Get payload if serialized payload is missing
+      if (rawPayload.length == 0) {
+        const payloadDigest = message.getPayloadDigest()
+        if (payloadDigest.length == 0) {
+          // TODO: Handle
+          return
+        }
+        const senderRelayUrl = rootGetters('contacts/getRelayURL')(senderAddr)
+        const relayClient = new RelayClient(senderRelayUrl)
+        try {
+          payload = relayClient.getPayload(senderAddr, payloadDigest)
+        } catch (err) {
+          console.error(err)
+          // TODO: Handle
+          return
+        }
+      } else {
+        payload = messaging.Payload.deserializeBinary(rawPayload)
+      }
+
       let scheme = payload.getScheme()
       let entriesRaw
       if (scheme === 0) {
