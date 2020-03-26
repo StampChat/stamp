@@ -148,11 +148,14 @@ class RelayClient {
     return acceptancePrice
   }
 
-  async getPayload (addr, digest) {
+  async getPayload (addr, token, digest) {
     let url = `${this.httpScheme}://${this.url}/payloads/${addr}`
     let response = await axios({
       method: 'get',
       url,
+      headers: {
+        'Authorization': token
+      },
       params: {
         digest
       },
