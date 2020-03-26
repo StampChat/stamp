@@ -433,16 +433,11 @@ export default {
       commit('deleteChat', addr)
     },
     async receiveMessage ({ commit, rootGetters, dispatch }, { message, timestamp }) {
-      let rawSenderPubKey = message.getSenderPubKey()
-      let senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
-      let senderAddr = senderPubKey.toAddress('testnet')
+      const rawSenderPubKey = message.getSenderPubKey()
+      const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
+      const senderAddr = senderPubKey.toAddress('testnet')
         .toCashAddress() // TODO: Make generic
-      let myAddress = rootGetters['wallet/getMyAddressStr']
-
-      if (senderAddr === myAddress) {
-        // TODO: Process self sends
-        return
-      }
+      const myAddress = rootGetters['wallet/getMyAddressStr']
 
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](senderAddr)) {
@@ -457,16 +452,17 @@ export default {
       let payload
 
       // Get payload if serialized payload is missing
-      if (rawPayload.length == 0) {
+      if (rawPayload.length === 0) {
         const payloadDigest = message.getPayloadDigest()
-        if (payloadDigest.length == 0) {
+        if (payloadDigest.length === 0) {
           // TODO: Handle
           return
         }
-        const senderRelayUrl = rootGetters('contacts/getRelayURL')(senderAddr)
+        const senderRelayUrl = rootGetters['contacts/getRelayURL'](senderAddr)
         const relayClient = new RelayClient(senderRelayUrl)
         try {
           payload = relayClient.getPayload(senderAddr, payloadDigest)
+          console.log(payload)
         } catch (err) {
           console.error(err)
           // TODO: Handle
@@ -474,6 +470,14 @@ export default {
         }
       } else {
         payload = messaging.Payload.deserializeBinary(rawPayload)
+      }
+
+      const desintationRaw = payload.getDestination()
+      const destinationAddr = cashlib.PublicKey.fromBuffer(desintationRaw).toAddress()
+      if (senderAddr === myAddress && myAddress === destinationAddr) {
+        // TODO: Process self sends
+        console.log('self send')
+        return
       }
 
       let scheme = payload.getScheme()
