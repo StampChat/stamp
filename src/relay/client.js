@@ -154,7 +154,7 @@ class RelayClient {
       method: 'get',
       url,
       params: {
-        digest,
+        digest
       },
       responseType: 'arraybuffer'
     })
