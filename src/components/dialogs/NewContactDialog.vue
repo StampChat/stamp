@@ -119,6 +119,7 @@ export default {
         let relayData = await relayClient.getRelayData(newAddress)
         relayData.notify = true
         this.contact = relayData
+        this.contact.relayURL = relayURL
       } catch {
         this.contact = null
       }

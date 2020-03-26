@@ -148,6 +148,20 @@ class RelayClient {
     return acceptancePrice
   }
 
+  async getPayload (addr, digest) {
+    let url = `${this.httpScheme}://${this.url}/payloads/${addr}`
+    let response = await axios({
+      method: 'get',
+      url,
+      params: {
+        digest,
+      },
+      responseType: 'arraybuffer'
+    })
+    let payload = messaging.Payload.deserializeBinary(response.data)
+    return payload
+  }
+
   async putProfile (addr, profile, token) {
     let rawProfile = profile.serializeBinary()
     let url = `${this.httpScheme}://${this.url}/profile/${addr}`
