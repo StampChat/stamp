@@ -435,8 +435,7 @@ export default {
     async receiveMessage ({ commit, rootGetters, dispatch }, { message, timestamp }) {
       const rawSenderPubKey = message.getSenderPubKey()
       const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
-      const senderAddr = senderPubKey.toAddress('testnet')
-        .toCashAddress() // TODO: Make generic
+      const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
       const myAddress = rootGetters['wallet/getMyAddressStr']
 
       // Check whether contact exists
@@ -461,7 +460,8 @@ export default {
         const senderRelayUrl = rootGetters['contacts/getRelayURL'](senderAddr)
         const relayClient = new RelayClient(senderRelayUrl)
         try {
-          payload = relayClient.getPayload(senderAddr, payloadDigest)
+          let token = rootGetters['relay/getToken']
+          payload = await relayClient.getPayload(senderAddr, token, payloadDigest)
           console.log(payload)
         } catch (err) {
           console.error(err)
@@ -473,7 +473,7 @@ export default {
       }
 
       const desintationRaw = payload.getDestination()
-      const destinationAddr = cashlib.PublicKey.fromBuffer(desintationRaw).toAddress()
+      const destinationAddr = cashlib.PublicKey.fromBuffer(desintationRaw).toAddress().toCashAddress()
       if (senderAddr === myAddress && myAddress === destinationAddr) {
         // TODO: Process self sends
         console.log('self send')

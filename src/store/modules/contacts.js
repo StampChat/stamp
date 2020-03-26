@@ -26,7 +26,7 @@ export default {
       return state.contacts[addr].notify
     },
     getRelayURL: (state) => (addr) => {
-      return state.contracts[addr].relayURL
+      return state.contacts[addr].relayURL
     },
     isContact: (state) => (addr) => {
       return (addr in state.contacts)
