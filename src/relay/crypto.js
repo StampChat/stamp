@@ -94,10 +94,7 @@ export const encrypt = function (plainText, privKey, destPubKey) {
   cipher.finish()
   let cipherText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
 
-  // Get empheral public key point
-  let ephemeralPubKey = ephemeralPrivKey.toPublicKey()
-
-  return { cipherText, ephemeralPubKey }
+  return { cipherText, ephemeralPrivKey }
 }
 
 export const decrypt = function (cipherText, destPrivKey, sourcePubkey, ephemeralPubKey) {
@@ -114,7 +111,21 @@ export const decrypt = function (cipherText, destPrivKey, sourcePubkey, ephemera
   return plainText
 }
 
-export const encryptEphemeralKey = function (ephemeralPrivKey, privKey, entriesDigest) {
+export const decryptWithEphemPrivKey = function (cipherText, ephemeralPrivKey, privKey, destPubKey) {
+    // Construct DH key
+    let { key, iv } = constructDHKeyFromEphemPrivKey(ephemeralPrivKey, privKey, destPubKey)
+
+    // Encrypt entries
+    let cipher = forge.aes.createDecryptionCipher(key, 'CBC')
+    cipher.start(iv)
+    let rawBuffer = new forge.util.ByteBuffer(cipherText)
+    cipher.update(rawBuffer)
+    cipher.finish()
+    let plainText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
+    return plainText
+}
+
+export const encryptEphemPubKey = function (ephemeralPrivKey, privKey, entriesDigest) {
   // Construct AES key
   let mergedKey = Buffer.concat([privKey.toBuffer(), entriesDigest]) // p || H(entries)
 

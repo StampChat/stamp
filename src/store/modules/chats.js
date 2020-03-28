@@ -1,6 +1,6 @@
 import messaging from '../../relay/messaging_pb'
 import stealth from '../../relay/stealth_pb'
-import { decrypt } from '../../relay/crypto'
+import { decrypt, decryptWithEphemPrivKey, encryptEphemeralKey } from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
@@ -465,7 +465,8 @@ export default {
       }
 
       const desintationRaw = payload.getDestination()
-      const destinationAddr = cashlib.PublicKey.fromBuffer(desintationRaw).toAddress().toCashAddress()
+      const destPubKey = cashlib.PublicKey.fromBuffer(desintationRaw)
+      const destinationAddr = destPubKey.toAddress().toCashAddress()
       const outbound = (senderAddr !== myAddress)
       if (outbound && myAddress === destinationAddr) {
         // TODO: Process self sends
@@ -486,7 +487,10 @@ export default {
         if (outbound) {
           entriesRaw = decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
         } else {
-          entriesRaw = decrypt()
+          let ephemeralPrivKeyEncrypted = payload.getEphemeralPrivKey()
+          let entriesDigest = cashlib.hash.Hash.sha256(entriesCipherText)
+          let ephemeralPrivKey = decryptEphemeralKey(ephemeralPrivKeyEncrypted, privKey, entriesDigest)
+          entriesRaw = decryptWithEphemPrivKey(entriesCipherText, ephemeralPrivKey, privKey, destPubKey)
         }
       } else {
         // TODO: Raise error
