@@ -1,7 +1,7 @@
 import messaging from './messaging_pb'
 import stealth from './stealth_pb'
 import filters from './filters_pb'
-import { constructStampPubKey, constructStealthPubKey, encrypt } from './crypto'
+import { constructStampPubKey, constructStealthPubKey, encrypt, encryptEphemeralKey } from './crypto'
 import store from '../store/index'
 import VCard from 'vcf'
 import addressmetadata from '../keyserver/addressmetadata_pb'
@@ -107,11 +107,15 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
   if (scheme === 0) {
     payload.setEntries(rawEntries)
   } else if (scheme === 1) {
-    let { cipherText, ephemeralPubKey } = encrypt(rawEntries, privKey, destPubKey)
+    let { cipherText, ephemeralPrivKey } = encrypt(rawEntries, privKey, destPubKey)
+    let ephemeralPubKey = ephemeralPrivKey.toPublicKey()
     let ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
+    let entriesDigest = cashlib.hash.Hash.sha256(cipherText)
+    let encryptedEphemeralKey = encryptEphemPubKey(ephemeralPrivKey, privKey, entriesDigest)
 
     payload.setEntries(cipherText)
     payload.setEphemeralPubKey(ephemeralPubKeyRaw)
+    payload.setEphemeralPrivKey(encryptedEphemeralKey)
     payload.setScheme(messaging.Payload.EncryptionScheme.EPHEMERALDH)
   } else {
     // TODO: Raise error
@@ -136,11 +140,7 @@ export const constructTextMessage = async function (text, privKey, destPubKey, s
   let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
   let { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
 
-  // Construct outbox message
-  let outboxPayload = constructOutboxPayload(entries, privKey, scheme, timestamp)
-  let outboxMessage = constructOutboxMessage(outboxPayload, privKey)
-
-  return { message, outboxMessage, usedIDs, stampTx }
+  return { message, usedIDs, stampTx }
 }
 
 export const constructStealthPaymentMessage = async function (amount, memo, privKey, destPubKey, scheme, stampAmount, stealthTxId) {
