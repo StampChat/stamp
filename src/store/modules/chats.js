@@ -1,6 +1,6 @@
 import messaging from '../../relay/messaging_pb'
 import stealth from '../../relay/stealth_pb'
-import { decrypt, decryptWithEphemPrivKey, encryptEphemeralKey } from '../../relay/crypto'
+import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey } from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
@@ -488,7 +488,7 @@ export default {
           entriesRaw = decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
         } else {
           let ephemeralPrivKeyEncrypted = payload.getEphemeralPrivKey()
-          let entriesDigest = cashlib.hash.Hash.sha256(entriesCipherText)
+          let entriesDigest = cashlib.crypto.Hash.sha256(entriesCipherText)
           let ephemeralPrivKey = decryptEphemeralKey(ephemeralPrivKeyEncrypted, privKey, entriesDigest)
           entriesRaw = decryptWithEphemPrivKey(entriesCipherText, ephemeralPrivKey, privKey, destPubKey)
         }
