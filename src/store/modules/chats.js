@@ -480,8 +480,8 @@ export default {
       } else if (scheme === 1) {
         let entriesCipherText = payload.getEntries()
 
-        let secretSeed = payload.getSecretSeed()
-        let ephemeralPubKey = PublicKey.fromBuffer(secretSeed)
+        let ephemeralPubKeyRaw = payload.getEphemeralPubKey()
+        let ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
         let privKey = rootGetters['wallet/getIdentityPrivKey']
         if (outbound) {
           entriesRaw = decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
