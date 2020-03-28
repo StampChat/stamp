@@ -60,7 +60,7 @@ export const encrypt = function (plainText, privKey, destPubKey) {
 
   // Extract encryption params from digest
   let digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw)
-  let iv = new forge.util.ByteBuffer(digest.slice(0, 16)) // TODO: Double check whether IV is appropriate
+  let iv = new forge.util.ByteBuffer(digest.slice(0, 16))
   let key = new forge.util.ByteBuffer(digest.slice(16))
 
   // Encrypt entries
@@ -85,7 +85,7 @@ export const decrypt = function (cipherText, destPrivKey, sourcePubkey, ephemera
 
   // Extract encryption params from digest
   let digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw)
-  let iv = new forge.util.ByteBuffer(digest.slice(0, 16)) // TODO: Double check whether IV is appropriate
+  let iv = new forge.util.ByteBuffer(digest.slice(0, 16))
   let key = new forge.util.ByteBuffer(digest.slice(16))
 
   // Encrypt entries
@@ -96,4 +96,42 @@ export const decrypt = function (cipherText, destPrivKey, sourcePubkey, ephemera
   cipher.finish()
   let plainText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
   return plainText
+}
+
+export const encryptEphemeralKey = function (ephemeralPrivKey, privKey, entriesDigest) {
+  // Construct AES key
+  let mergedKey = Buffer.concat([privKey.toBuffer(), entriesDigest]) // p || H(entries)
+
+  let mergedDigest = cashlib.crypto.Hash.sha256(mergedKey.toBuffer()) // H(H(entries) . p))
+  let iv = new forge.util.ByteBuffer(mergedDigest.slice(0, 16))
+  let key = new forge.util.ByteBuffer(mergedDigest.slice(16))
+
+  // Encrypt ephemeral key
+  let ephemeralKeyRaw = ephemeralPrivKey.toBuffer()
+  let cipher = forge.aes.createEncryptionCipher(key, 'CBC')
+  cipher.start(iv)
+  let rawBuffer = new forge.util.ByteBuffer(ephemeralKeyRaw)
+  cipher.update(rawBuffer)
+  cipher.finish()
+  let cipherText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
+  return cipherText
+}
+
+export const decryptEphemeralKey = function (cipherText, privKey, entriesDigest) {
+  // Construct AES key
+  let mergedKey = Buffer.concat([privKey.toBuffer(), entriesDigest]) // p || H(entries)
+
+  let mergedDigest = cashlib.crypto.Hash.sha256(mergedKey.toBuffer()) // H(H(entries) . p))
+  let iv = new forge.util.ByteBuffer(mergedDigest.slice(0, 16))
+  let key = new forge.util.ByteBuffer(mergedDigest.slice(16))
+
+  // Encrypt ephemeral key
+  let cipher = forge.aes.createDecryptionCipher(key, 'CBC')
+  cipher.start(iv)
+  let rawBuffer = new forge.util.ByteBuffer(cipherText)
+  cipher.update(rawBuffer)
+  cipher.finish()
+  let plainText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
+
+  return PrivateKey.fromBuffer(plainText)
 }
