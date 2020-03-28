@@ -49,9 +49,8 @@ export const constructStampAddress = function (outpointDigest, privKey) {
   return stampAddress
 }
 
-export const encrypt = function (plainText, privKey, destPubKey) {
+export const constructDHKeyFromEphemPrivKey = function (ephemeralPrivKey, privKey, destPubKey) {
   // Generate new (random) emphemeral key
-  let ephemeralPrivKey = PrivateKey()
   let emphemeralPrivKeyBn = ephemeralPrivKey.toBigNumber()
 
   // Construct DH key
@@ -62,6 +61,30 @@ export const encrypt = function (plainText, privKey, destPubKey) {
   let digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw)
   let iv = new forge.util.ByteBuffer(digest.slice(0, 16))
   let key = new forge.util.ByteBuffer(digest.slice(16))
+
+  return { key, iv }
+}
+
+export const constructDHKeyFromEphemPubKey = function (ephemeralPubKey, sourcePubkey, destPrivKey) {
+  // Construct DH key
+  let destPrivKeyBn = destPrivKey.toBigNumber()
+  let dhKeyPoint = ephemeralPubKey.point.mul(destPrivKeyBn).add(sourcePubkey.point)
+  let dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
+
+  // Extract encryption params from digest
+  let digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw)
+  let iv = new forge.util.ByteBuffer(digest.slice(0, 16))
+  let key = new forge.util.ByteBuffer(digest.slice(16))
+
+  return { key, iv }
+}
+
+export const encrypt = function (plainText, privKey, destPubKey) {
+  // Generate new (random) emphemeral key
+  let ephemeralPrivKey = PrivateKey()
+
+  // Construct DH key
+  let { key, iv } = constructDHKeyFromEphemPrivKey(ephemeralPrivKey, privKey, destPubKey)
 
   // Encrypt entries
   let cipher = forge.aes.createEncryptionCipher(key, 'CBC')
@@ -79,14 +102,7 @@ export const encrypt = function (plainText, privKey, destPubKey) {
 
 export const decrypt = function (cipherText, destPrivKey, sourcePubkey, ephemeralPubKey) {
   // Construct DH key
-  let destPrivKeyBn = destPrivKey.toBigNumber()
-  let dhKeyPoint = ephemeralPubKey.point.mul(destPrivKeyBn).add(sourcePubkey.point)
-  let dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
-
-  // Extract encryption params from digest
-  let digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw)
-  let iv = new forge.util.ByteBuffer(digest.slice(0, 16))
-  let key = new forge.util.ByteBuffer(digest.slice(16))
+  let { key, iv } = constructDHKeyFromEphemPubKey(ephemeralPubKey, sourcePubkey, destPrivKey)
 
   // Encrypt entries
   let cipher = forge.aes.createDecryptionCipher(key, 'CBC')
