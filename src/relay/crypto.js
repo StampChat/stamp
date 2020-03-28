@@ -102,7 +102,7 @@ export const encryptEphemeralKey = function (ephemeralPrivKey, privKey, entriesD
   // Construct AES key
   let mergedKey = Buffer.concat([privKey.toBuffer(), entriesDigest]) // p || H(entries)
 
-  let mergedDigest = cashlib.crypto.Hash.sha256(mergedKey.toBuffer()) // H(H(entries) . p))
+  let mergedDigest = cashlib.crypto.Hash.sha256(mergedKey) // H(H(entries) . p))
   let iv = new forge.util.ByteBuffer(mergedDigest.slice(0, 16))
   let key = new forge.util.ByteBuffer(mergedDigest.slice(16))
 
@@ -121,7 +121,7 @@ export const decryptEphemeralKey = function (cipherText, privKey, entriesDigest)
   // Construct AES key
   let mergedKey = Buffer.concat([privKey.toBuffer(), entriesDigest]) // p || H(entries)
 
-  let mergedDigest = cashlib.crypto.Hash.sha256(mergedKey.toBuffer()) // H(H(entries) . p))
+  let mergedDigest = cashlib.crypto.Hash.sha256(mergedKey) // H(H(entries) . p))
   let iv = new forge.util.ByteBuffer(mergedDigest.slice(0, 16))
   let key = new forge.util.ByteBuffer(mergedDigest.slice(16))
 
@@ -131,7 +131,7 @@ export const decryptEphemeralKey = function (cipherText, privKey, entriesDigest)
   let rawBuffer = new forge.util.ByteBuffer(cipherText)
   cipher.update(rawBuffer)
   cipher.finish()
-  let plainText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
+  let plainText = Buffer.from(cipher.output.toHex(), 'hex') // TODO: Faster
 
   return PrivateKey.fromBuffer(plainText)
 }
