@@ -284,7 +284,7 @@ export default {
       let destPubKey = rootGetters['contacts/getPubKey'](addr)
       let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, outboxMessage, usedIDs, stampTx } = await constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs, stampTx } = await constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
@@ -294,18 +294,10 @@ export default {
       let messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
 
-      // Construct self messages
-      let myAddr = rootGetters['wallet/getMyAddressStr']
-      let selfMessageSet = new messaging.MessageSet()
-      selfMessageSet.addMessages(outboxMessage)
-
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
 
       try {
-        // Send to outbox
-        await client.pushMessages(myAddr, selfMessageSet)
-
         // Send to destination address
         await client.pushMessages(destAddr, messageSet)
         let outpoint = {
@@ -474,7 +466,8 @@ export default {
 
       const desintationRaw = payload.getDestination()
       const destinationAddr = cashlib.PublicKey.fromBuffer(desintationRaw).toAddress().toCashAddress()
-      if (senderAddr === myAddress && myAddress === destinationAddr) {
+      const outbound = (senderAddr !== myAddress)
+      if (outbound && myAddress === destinationAddr) {
         // TODO: Process self sends
         console.log('self send')
         return
@@ -490,7 +483,11 @@ export default {
         let secretSeed = payload.getSecretSeed()
         let ephemeralPubKey = PublicKey.fromBuffer(secretSeed)
         let privKey = rootGetters['wallet/getIdentityPrivKey']
-        entriesRaw = decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
+        if (outbound) {
+          entriesRaw = decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
+        } else {
+          entriesRaw = decrypt()
+        }
       } else {
         // TODO: Raise error
       }
@@ -529,7 +526,6 @@ export default {
       // Decode entries
       let entries = messaging.Entries.deserializeBinary(entriesRaw)
       let entriesList = entries.getEntriesList()
-      let outbound = (senderAddr === myAddress)
       let newMsg = {
         outbound,
         status: 'confirmed',
@@ -558,7 +554,9 @@ export default {
           }
         } else if (kind === 'stealth-payment') {
           let entryData = entry.getEntryData()
+          console.log('horse')
           let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
+          console.log('horse')
 
           let electrumHandler = rootGetters['electrumHandler/getClient']
 

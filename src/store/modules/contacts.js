@@ -17,7 +17,8 @@ export default {
       //   inbox: {
       //     acceptancePrice: ...,
       //   },
-      //   notify: true
+      //   notify: true,
+      //   relayURL: ...
       // },
     }
   },
