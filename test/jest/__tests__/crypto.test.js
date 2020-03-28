@@ -1,7 +1,7 @@
 import {
   encrypt, decrypt, constructStampPubKey,
   constructStampPrivKey, constructStealthPubKey,
-  constructStealthPrivKey
+  constructStealthPrivKey, encryptEphemeralKey, decryptEphemeralKey
 } from '../../../src/relay/crypto'
 import { PrivateKey } from 'bitcore-lib-cash'
 
@@ -57,4 +57,24 @@ test('StealthKey', () => {
   let stealthPubKeyExpected = stealthPrivKey.toPublicKey()
 
   expect(stealthPubKey.toBuffer()).toStrictEqual(stealthPubKeyExpected.toBuffer())
+})
+
+test('EncryptEphemeral', () => {
+  let privKey = PrivateKey()
+  let ephemeralPrivKey = PrivateKey()
+  let entriesDigest = Buffer.from(new ArrayBuffer(32))
+
+  encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
+})
+
+test('DecryptEphemeral', () => {
+  let privKey = PrivateKey()
+  let ephemeralPrivKey = PrivateKey()
+  let entriesDigest = Buffer.from(new ArrayBuffer(32))
+
+  let cipherText = encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
+
+  let newEphemeralPrivKey = decryptEphemeralKey(cipherText, privKey, entriesDigest)
+
+  expect(ephemeralPrivKey.toBuffer()).toStrictEqual(newEphemeralPrivKey.toBuffer())
 })
