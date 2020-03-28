@@ -32,7 +32,7 @@
     />
 
     <div
-      v-if="this.message.status==='error'"
+      v-if="message.status==='error'"
       class='row justify-end q-pt-xs'
       style="full-width"
     >
