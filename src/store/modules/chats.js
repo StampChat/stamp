@@ -429,15 +429,7 @@ export default {
       const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
       const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
       const myAddress = rootGetters['wallet/getMyAddressStr']
-
-      // Check whether contact exists
-      if (!rootGetters['contacts/isContact'](senderAddr)) {
-        // Add dummy contact
-        dispatch('contacts/addLoadingContact', { addr: senderAddr, pubKey: senderPubKey }, { root: true })
-
-        // Load contact
-        dispatch('contacts/refresh', senderAddr, { root: true })
-      }
+      const outbound = (senderAddr === myAddress)
 
       const rawPayload = message.getSerializedPayload()
       let payload
@@ -449,8 +441,9 @@ export default {
           // TODO: Handle
           return
         }
-        const senderRelayUrl = rootGetters['contacts/getRelayURL'](senderAddr)
-        const relayClient = new RelayClient(senderRelayUrl)
+
+        // Get relay client
+        let relayClient = rootGetters['relayClient/getClient']
         try {
           let token = rootGetters['relay/getToken']
           payload = await relayClient.getPayload(senderAddr, token, payloadDigest)
@@ -467,11 +460,20 @@ export default {
       const desintationRaw = payload.getDestination()
       const destPubKey = cashlib.PublicKey.fromBuffer(desintationRaw)
       const destinationAddr = destPubKey.toAddress().toCashAddress()
-      const outbound = (senderAddr !== myAddress)
+
       if (outbound && myAddress === destinationAddr) {
         // TODO: Process self sends
         console.log('self send')
         return
+      }
+
+      // Check whether contact exists (if not outbox message)
+      if (!rootGetters['contacts/isContact'](senderAddr) && !outbound) {
+        // Add dummy contact
+        dispatch('contacts/addLoadingContact', { addr: senderAddr, pubKey: senderPubKey }, { root: true })
+
+        // Load contact
+        dispatch('contacts/refresh', senderAddr, { root: true })
       }
 
       let scheme = payload.getScheme()
@@ -484,7 +486,7 @@ export default {
         let ephemeralPubKeyRaw = payload.getEphemeralPubKey()
         let ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
         let privKey = rootGetters['wallet/getIdentityPrivKey']
-        if (outbound) {
+        if (!outbound) {
           entriesRaw = decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
         } else {
           let ephemeralPrivKeyEncrypted = payload.getEphemeralPrivKey()
@@ -548,7 +550,9 @@ export default {
             type: 'text',
             text
           })
-          if (!document.hasFocus()) {
+
+          // If not focused (and not outbox message) then notify
+          if (!document.hasFocus() && !outbound) {
             let contact = rootGetters['contacts/getContact'](senderAddr)
             if (contact.notify) {
               desktopNotify(contact.keyserver.name, text, contact.keyserver.avatar, () => {
@@ -602,7 +606,12 @@ export default {
         }
       }
       let index = Date.now()
-      commit('receiveMessage', { addr: senderAddr, index, newMsg })
+
+      if (outbound) {
+        commit('receiveMessage', { addr: destinationAddr, index, newMsg })
+      } else {
+        commit('receiveMessage', { addr: senderAddr, index, newMsg })
+      }
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       let myAddressStr = rootGetters['wallet/getMyAddressStr']
