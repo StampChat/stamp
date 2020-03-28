@@ -111,32 +111,7 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
     let ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
 
     payload.setEntries(cipherText)
-    payload.setSecretSeed(ephemeralPubKeyRaw)
-    payload.setScheme(messaging.Payload.EncryptionScheme.EPHEMERALDH)
-  } else {
-    // TODO: Raise error
-    return
-  }
-  return payload
-}
-
-export const constructOutboxPayload = function (entries, privKey, scheme, timestamp) {
-  let payload = new messaging.Payload()
-  payload.setTimestamp(timestamp)
-  let destPubKey = privKey.toPublicKey()
-  let rawDestPubKey = destPubKey.toBuffer()
-  payload.setDestination(rawDestPubKey)
-
-  // Serialize and encrypt
-  let rawEntries = entries.serializeBinary()
-  if (scheme === 0) {
-    payload.setEntries(rawEntries)
-  } else if (scheme === 1) {
-    let { cipherText, ephemeralPubKey } = encrypt(rawEntries, privKey, destPubKey)
-    let ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
-
-    payload.setEntries(cipherText)
-    payload.setSecretSeed(ephemeralPubKeyRaw)
+    payload.setEphemeralPubKey(ephemeralPubKeyRaw)
     payload.setScheme(messaging.Payload.EncryptionScheme.EPHEMERALDH)
   } else {
     // TODO: Raise error
