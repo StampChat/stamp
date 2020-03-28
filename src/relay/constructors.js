@@ -110,8 +110,8 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
     let { cipherText, ephemeralPrivKey } = encrypt(rawEntries, privKey, destPubKey)
     let ephemeralPubKey = ephemeralPrivKey.toPublicKey()
     let ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
-    let entriesDigest = cashlib.hash.Hash.sha256(cipherText)
-    let encryptedEphemeralKey = encryptEphemPubKey(ephemeralPrivKey, privKey, entriesDigest)
+    let entriesDigest = cashlib.crypto.Hash.sha256(cipherText)
+    let encryptedEphemeralKey = encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
 
     payload.setEntries(cipherText)
     payload.setEphemeralPubKey(ephemeralPubKeyRaw)
@@ -203,11 +203,7 @@ export const constructStealthPaymentMessage = async function (amount, memo, priv
     })
   }
 
-  // Construct outbox message
-  let outboxPayload = constructOutboxPayload(entries, privKey, scheme, timestamp)
-  let outboxMessage = constructOutboxMessage(outboxPayload, privKey)
-
-  return { message, outboxMessage, usedIDs, stampTx }
+  return { message, usedIDs, stampTx }
 }
 
 export const constructImageMessage = async function (image, caption, privKey, destPubKey, scheme, stampAmount) {
@@ -248,11 +244,7 @@ export const constructImageMessage = async function (image, caption, privKey, de
   let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
   let { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
 
-  // Construct outbox message
-  let outboxPayload = constructOutboxPayload(entries, privKey, scheme, timestamp)
-  let outboxMessage = constructOutboxMessage(outboxPayload, privKey)
-
-  return { message, outboxMessage, usedIDs, stampTx }
+  return { message, usedIDs, stampTx }
 }
 
 export const constructPriceFilter = function (isPublic, acceptancePrice, notificationPrice, privKey) {
