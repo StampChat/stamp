@@ -446,7 +446,6 @@ export default {
         try {
           let token = rootGetters['relay/getToken']
           payload = await relayClient.getPayload(senderAddr, token, payloadDigest)
-          console.log(payload)
         } catch (err) {
           console.error(err)
           // TODO: Handle
@@ -476,7 +475,7 @@ export default {
           dispatch('contacts/refresh', destinationAddr, { root: true })
         }
       } else {
-        if (!rootGetters['contacts/isContact'](senderAddr) && !outbound) {
+        if (!rootGetters['contacts/isContact'](senderAddr)) {
           // Add dummy contact
           dispatch('contacts/addLoadingContact', { addr: senderAddr, pubKey: senderPubKey }, { root: true })
   
@@ -571,9 +570,7 @@ export default {
           }
         } else if (kind === 'stealth-payment') {
           let entryData = entry.getEntryData()
-          console.log('horse')
           let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
-          console.log('horse')
 
           let electrumHandler = rootGetters['electrumHandler/getClient']
 
