@@ -466,13 +466,23 @@ export default {
         return
       }
 
-      // Check whether contact exists (if not outbox message)
-      if (!rootGetters['contacts/isContact'](senderAddr) && !outbound) {
-        // Add dummy contact
-        dispatch('contacts/addLoadingContact', { addr: senderAddr, pubKey: senderPubKey }, { root: true })
+      // Check whether contact exists
+      if (outbound) {
+        if (!rootGetters['contacts/isContact'](destinationAddr)) {
+          // Add dummy contact
+          dispatch('contacts/addLoadingContact', { addr: destinationAddr, pubKey: destPubKey }, { root: true })
 
-        // Load contact
-        dispatch('contacts/refresh', senderAddr, { root: true })
+          // Load contact
+          dispatch('contacts/refresh', destinationAddr, { root: true })
+        }
+      } else {
+        if (!rootGetters['contacts/isContact'](senderAddr) && !outbound) {
+          // Add dummy contact
+          dispatch('contacts/addLoadingContact', { addr: senderAddr, pubKey: senderPubKey }, { root: true })
+  
+          // Load contact
+          dispatch('contacts/refresh', senderAddr, { root: true })
+        }
       }
 
       let scheme = payload.getScheme()
