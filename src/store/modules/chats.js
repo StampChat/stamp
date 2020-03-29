@@ -8,7 +8,6 @@ import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../utils/wallet'
 import { constructStealthPaymentMessage, constructImageMessage, constructTextMessage } from '../../relay/constructors'
-import RelayClient from '../../relay/client'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -459,7 +458,7 @@ export default {
 
       const desintationRaw = payload.getDestination()
       const destPubKey = cashlib.PublicKey.fromBuffer(desintationRaw)
-      const destinationAddr = destPubKey.toAddress().toCashAddress()
+      const destinationAddr = destPubKey.toAddress('testnet').toCashAddress()
 
       if (outbound && myAddress === destinationAddr) {
         // TODO: Process self sends
