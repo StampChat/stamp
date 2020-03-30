@@ -124,7 +124,7 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
   return payload
 }
 
-export const constructTextMessage = async function (text, privKey, destPubKey, scheme, stampAmount) {
+export const constructTextPayload = function (text, privKey, destPubKey, scheme) {
   // Construct text entry
   let textEntry = new messaging.Entry()
   textEntry.setKind('text-utf8')
@@ -138,12 +138,14 @@ export const constructTextMessage = async function (text, privKey, destPubKey, s
   // Construct message
   let timestamp = Math.floor(Date.now() / 1000)
   let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
-  let { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
 
-  return { message, usedIDs, stampTx }
+  // Calc digest
+  let payloadRaw = payload.serializeBinary()
+  let payloadDigest = cashlib.crypto.Hash.sha256(payloadRaw)
+  return { payload, payloadDigest }
 }
 
-export const constructStealthPaymentMessage = async function (amount, memo, privKey, destPubKey, scheme, stampAmount, stealthTxId) {
+export const constructStealthPaymentPayload = async function (amount, memo, privKey, destPubKey, scheme, stealthTxId) {
   let entries = new messaging.Entries()
 
   // Construct payment entry
@@ -194,19 +196,15 @@ export const constructStealthPaymentMessage = async function (amount, memo, priv
   // Construct message
   let timestamp = Math.floor(Date.now() / 1000)
   let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
-  try {
-    var { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
-  } catch (err) {
-    throw Error({
-      stealthTxId,
-      innerErr: err
-    })
-  }
 
-  return { message, usedIDs, stampTx }
+  // Calc digest
+  let payloadRaw = payload.serializeBinary()
+  let payloadDigest = cashlib.crypto.Hash.sha256(payloadRaw)
+  
+  return { payload, payloadDigest }
 }
 
-export const constructImageMessage = async function (image, caption, privKey, destPubKey, scheme, stampAmount) {
+export const constructImagePayload = function (image, caption, privKey, destPubKey, scheme) {
   let entries = new messaging.Entries()
 
   // Construct text entry
@@ -242,9 +240,12 @@ export const constructImageMessage = async function (image, caption, privKey, de
   // Construct message
   let timestamp = Math.floor(Date.now() / 1000)
   let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
-  let { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
 
-  return { message, usedIDs, stampTx }
+  // Calc digest
+  let payloadRaw = payload.serializeBinary()
+  let payloadDigest = cashlib.crypto.Hash.sha256(payloadRaw)
+  
+  return { payload, payloadDigest }
 }
 
 export const constructPriceFilter = function (isPublic, acceptancePrice, notificationPrice, privKey) {
