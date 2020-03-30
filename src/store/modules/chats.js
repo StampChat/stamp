@@ -269,25 +269,30 @@ export default {
     },
     async sendMessage ({ commit, rootGetters, getters, dispatch }, { addr, text }) {
       // Send locally
-      let items = [
+      const items = [
         {
           type: 'text',
           text
         }
       ]
-      let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items, outpoints: null })
+
+      const privKey = rootGetters['wallet/getIdentityPrivKey']
+      const destPubKey = rootGetters['contacts/getPubKey'](addr)
+      const stampAmount = getters['getStampAmount'](addr)
+
+      // Construct payload
+      const { payload, payloadDigest } = constructTextPayload(text, privKey, destPubKey, 1)
+
+      // Add localy
+      commit('sendMessageLocal', { addr, index: payloadDigest, items, outpoints: null })
 
       // Construct message
-      let privKey = rootGetters['wallet/getIdentityPrivKey']
-      let destPubKey = rootGetters['contacts/getPubKey'](addr)
-      let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, usedIDs, stampTx } = await constructTextMessage(text, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'text', text } })
+        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'text', text } })
         return
       }
       let messageSet = new messaging.MessageSet()
@@ -303,8 +308,8 @@ export default {
           stampTx,
           vouts: [0]
         }
-        commit('setOutpoints', { addr, index, outpoints: [outpoint] })
-        commit('setStatus', { addr, index, status: 'confirmed' })
+        commit('setOutpoints', { addr, index: payloadDigest, outpoints: [outpoint] })
+        commit('setStatus', { addr, index: payloadDigest, status: 'confirmed' })
       } catch (err) {
         console.error(err.response)
         // Unfreeze UTXOs
@@ -317,7 +322,7 @@ export default {
     },
     async sendStealthPayment ({ commit, rootGetters, getters, dispatch }, { addr, amount, memo, stamptxId }) {
       // Send locally
-      let items = [
+      const items = [
         {
           type: 'stealth',
           amount
@@ -330,19 +335,23 @@ export default {
             text: memo
           })
       }
-      let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items, outpoints: null })
 
-      // Construct message
-      let privKey = rootGetters['wallet/getIdentityPrivKey']
-      let destPubKey = rootGetters['contacts/getPubKey'](addr)
-      let stampAmount = getters['getStampAmount'](addr)
+      const privKey = rootGetters['wallet/getIdentityPrivKey']
+      const destPubKey = rootGetters['contacts/getPubKey'](addr)
+      const stampAmount = getters['getStampAmount'](addr)
+
+      // Construct payload
+      const { payload, payloadDigest } = await constructStealthPaymentPayload(amount, memo, privKey, destPubKey, 1, stamptxId)
+
+      // Add localy
+      commit('sendMessageLocal', { addr, index: payloadDigest, items, outpoints: null })
+
       try {
-        var { message, outboxMessage, usedIDs, stampTx } = await constructStealthPaymentMessage(amount, memo, privKey, destPubKey, 1, stampAmount, stamptxId)
+        var { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo, stampTxID: err.stampTxId } })
+        commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo, stampTxID } })
         return
       }
       let messageSet = new messaging.MessageSet()
@@ -353,20 +362,20 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
-        commit('setStampTx', { addr, index, stampTx })
-        commit('setStatus', { addr, index, status: 'confirmed' })
+        commit('setStampTx', { addr, index: payloadDigest, stampTx })
+        commit('setStatus', { addr, index: payloadDigest, status: 'confirmed' })
       } catch (err) {
         // Unfreeze UTXOs
         // TODO: More subtle
         usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
 
         chainTooLongNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo } })
+        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'stealth', amount, memo } })
       }
     },
     async sendImage ({ commit, rootGetters, getters, dispatch }, { addr, image, caption }) {
       // Send locally
-      let items = [
+      const items = [
         {
           type: 'image',
           image
@@ -379,20 +388,25 @@ export default {
             text: caption
           })
       }
-      let index = Date.now() // TODO: Better indexing
-      commit('sendMessageLocal', { addr, index, items, outpoints: null })
+
+      const privKey = rootGetters['wallet/getIdentityPrivKey']
+      const destPubKey = rootGetters['contacts/getPubKey'](addr)
+      const stampAmount = getters['getStampAmount'](addr)
+
+      // Construct payload
+      const { payload, payloadDigest } = constructImagePayload(image, caption, privKey, destPubKey, 1)
+
+      // Add localy
+      commit('sendMessageLocal', { addr, index: payloadDigest, items, outpoints: null })
 
       // Construct message
-      let privKey = rootGetters['wallet/getIdentityPrivKey']
-      let destPubKey = rootGetters['contacts/getPubKey'](addr)
-      let stampAmount = getters['getStampAmount'](addr)
       try {
-        var { message, outboxMessage, usedIDs, stampTx } = await constructImageMessage(image, caption, privKey, destPubKey, 1, stampAmount)
+        var { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
       } catch (err) {
         console.error(err)
 
         insuffientFundsNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
+        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'image', image, caption } })
         return
       }
       let messageSet = new messaging.MessageSet()
@@ -403,15 +417,15 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
-        commit('setStampTx', { addr, index, stampTx })
-        commit('setStatus', { addr, index, status: 'confirmed' })
+        commit('setStampTx', { addr, index: payloadDigest, stampTx })
+        commit('setStatus', { addr, index: payloadDigest, status: 'confirmed' })
       } catch (err) {
         // Unfreeze UTXOs
         // TODO: More subtle
         usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
 
         chainTooLongNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'image', image, caption } })
+        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'image', image, caption } })
       }
     },
     switchOrder ({ commit }, addr) {
