@@ -200,7 +200,7 @@ export const constructStealthPaymentPayload = async function (amount, memo, priv
   // Calc digest
   let payloadRaw = payload.serializeBinary()
   let payloadDigest = cashlib.crypto.Hash.sha256(payloadRaw)
-  
+
   return { payload, payloadDigest }
 }
 
@@ -244,7 +244,7 @@ export const constructImagePayload = function (image, caption, privKey, destPubK
   // Calc digest
   let payloadRaw = payload.serializeBinary()
   let payloadDigest = cashlib.crypto.Hash.sha256(payloadRaw)
-  
+
   return { payload, payloadDigest }
 }
 

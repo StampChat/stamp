@@ -17,8 +17,8 @@ export const defaultFeePerByte = 2
 export const pingTimeout = 20_000
 export const relayReconnectInterval = 10_000
 export const defaultAcceptancePrice = 100
-export const defaultRelayUrl = 'localhost'
-export const relayUrlOptions = ['localhost', '34.67.137.105', 'bitcoin.com', 'cashweb.io']
+export const defaultRelayUrl = 'localhost:1234'
+export const relayUrlOptions = ['localhost:1234', '34.67.137.105', 'bitcoin.com', 'cashweb.io']
 export const defaultRelayData = {
   profile: {
     name: '',
