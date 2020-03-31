@@ -7,7 +7,7 @@ import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../utils/wallet'
-import { constructStealthPaymentMessage, constructImageMessage, constructTextMessage } from '../../relay/constructors'
+import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage } from '../../relay/constructors'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -39,6 +39,9 @@ export default {
     lastReceived: null
   },
   getters: {
+    containsMessage: (state) => (addr, index) => {
+      return (index in state.data[addr].messages)
+    },
     getNumUnread: (state) => (addr) => {
       if (state.data[addr].lastRead === null) {
         return Object.keys(state.data[addr].messages).length
@@ -317,7 +320,7 @@ export default {
         usedIDs.forEach(id => dispatch('wallet/fixFrozenUTXO', id, { root: true }))
 
         chainTooLongNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'text', text } })
+        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'text', text } })
       }
     },
     async sendStealthPayment ({ commit, rootGetters, getters, dispatch }, { addr, amount, memo, stamptxId }) {
@@ -351,12 +354,11 @@ export default {
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
-        commit('setStatusError', { addr, index, retryData: { msgType: 'stealth', amount, memo, stampTxID } })
+        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'stealth', amount, memo, stamptxId } })
         return
       }
       let messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
-      messageSet.addMessages(outboxMessage)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
@@ -411,7 +413,6 @@ export default {
       }
       let messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
-      messageSet.addMessages(outboxMessage)
 
       let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       let client = rootGetters['relayClient/getClient']
@@ -437,7 +438,7 @@ export default {
     deleteChat ({ commit }, addr) {
       commit('deleteChat', addr)
     },
-    async receiveMessage ({ commit, rootGetters, dispatch }, { message, timestamp }) {
+    async receiveMessage ({ commit, getters, rootGetters, dispatch }, { message, timestamp }) {
       const rawSenderPubKey = message.getSenderPubKey()
       const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
       const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
@@ -473,6 +474,18 @@ export default {
       const destPubKey = cashlib.PublicKey.fromBuffer(desintationRaw)
       const destinationAddr = destPubKey.toAddress('testnet').toCashAddress()
 
+      // Check whether pre-existing
+      const payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
+      if (outbound) {
+        if (getters['containsMessage'](destinationAddr, payloadDigest)) {
+          return
+        }
+      } else {
+        if (getters['containsMessage'](senderAddr, payloadDigest)) {
+          return
+        }
+      }
+
       if (outbound && myAddress === destinationAddr) {
         // TODO: Process self sends
         console.log('self send')
@@ -492,7 +505,7 @@ export default {
         if (!rootGetters['contacts/isContact'](senderAddr)) {
           // Add dummy contact
           dispatch('contacts/addLoadingContact', { addr: senderAddr, pubKey: senderPubKey }, { root: true })
-  
+
           // Load contact
           dispatch('contacts/refresh', senderAddr, { root: true })
         }
@@ -521,7 +534,6 @@ export default {
       }
 
       // Add UTXO
-      let payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
       let stampOutpoints = message.getStampOutpointsList()
       let outpoints = []
       for (let i in stampOutpoints) {
@@ -625,12 +637,11 @@ export default {
           })
         }
       }
-      let index = Date.now()
 
       if (outbound) {
-        commit('receiveMessage', { addr: destinationAddr, index, newMsg })
+        commit('receiveMessage', { addr: destinationAddr, index: payloadDigest, newMsg })
       } else {
-        commit('receiveMessage', { addr: senderAddr, index, newMsg })
+        commit('receiveMessage', { addr: senderAddr, index: payloadDigest, newMsg })
       }
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
