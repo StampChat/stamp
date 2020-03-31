@@ -69,7 +69,6 @@ export default {
     ...mapGetters({ getUnixTime: 'clock/getUnixTime' }),
     ...mapActions({
       updateClock: 'clock/updateClock'
-
     })
   },
   computed: {

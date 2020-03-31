@@ -47,7 +47,6 @@ export default {
       updateInterval: 'contacts/setUpdateInterval'
     }),
     save () {
-      console.log(this.settings.networking.updateInterval)
       this.updateInterval(this.settings.networking.updateInterval * 1_000)
     }
   }
