@@ -29,7 +29,7 @@
           :address="activeChat"
           :message="chatMessage"
           :contact="getContact(chatMessage.outbound)"
-          :timestamp="index"
+          :index="index"
         />
         <q-scroll-observer
           debounce="500"

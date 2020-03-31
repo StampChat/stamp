@@ -39,6 +39,13 @@ export default {
     lastReceived: null
   },
   getters: {
+    getCurrentReply: (state) => (addr) => {
+      let replyIndex = state.data[addr].replyIndex
+      if (replyIndex) {
+        return state.data[addr].messages[replyIndex]
+      }
+      return undefined
+    },
     containsMessage: (state) => (addr, index) => {
       return (index in state.data[addr].messages)
     },
@@ -143,6 +150,9 @@ export default {
     }
   },
   mutations: {
+    setCurrentReply (state, { addr, index }) {
+      state.data[addr].currentReply = index
+    },
     deleteMessage (state, { addr, id }) {
       Vue.delete(state.data[addr].messages, id)
     },
@@ -243,6 +253,9 @@ export default {
     }
   },
   actions: {
+    setCurrentReply ({ commit }, { addr, index }) {
+      commit('setCurrentReply', { addr, index })
+    },
     deleteMessage ({ commit }, { addr, id }) {
       commit('deleteMessage', { addr, id })
     },
@@ -577,7 +590,13 @@ export default {
         let entry = entriesList[index]
         // If addr data doesn't exist then add it
         let kind = entry.getKind()
-        if (kind === 'text-utf8') {
+        if (kind === 'reply') {
+          let payloadDigest = entry.entryData()
+          newMsg.items.push({
+            type: 'reply',
+            payloadDigest
+          })
+        } else if (kind === 'text-utf8') {
           let entryData = entry.getEntryData()
           let text = new TextDecoder().decode(entryData)
           newMsg.items.push({

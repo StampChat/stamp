@@ -1,8 +1,14 @@
 <template>
   <div>
     <div
+      class='q-py-sm'
+      v-if="item.type=='reply'"
+    >
+      Reply
+    </div>
+    <div
       :class="single?'q-py-none':'q-py-sm'"
-      v-if="item.type=='text'"
+      v-else-if="item.type=='text'"
     >
       {{item.text}}
     </div>

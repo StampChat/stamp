@@ -9,9 +9,10 @@
     <!-- Context Menu -->
     <chat-message-menu
       :address="address"
-      :id="timestamp"
+      :id="index"
       :message="message"
-      @dialogClick="transactionDialog = true"
+      @txClick="transactionDialog = true"
+      @replyClick="setCurrentReply({ addr: address, index })"
     />
 
     <!-- Transaction Dialog -->
@@ -68,7 +69,8 @@ export default {
   methods: {
     ...mapGetters({ getUnixTime: 'clock/getUnixTime' }),
     ...mapActions({
-      updateClock: 'clock/updateClock'
+      updateClock: 'clock/updateClock',
+      setCurrentReply: 'chats/setCurrentReply'
     })
   },
   computed: {
@@ -76,7 +78,7 @@ export default {
       switch (this.message.status) {
         case 'confirmed':
           let unixTime = this.getUnixTime()
-          let stamp = formatting.unixToStamp(this.timestamp, unixTime)
+          let stamp = formatting.unixToStamp(this.message.timestamp, unixTime)
           return stamp
         case 'pending':
           return 'sending...'
@@ -115,6 +117,6 @@ export default {
   created () {
     this.updateClock()
   },
-  props: ['address', 'timestamp', 'message', 'contact']
+  props: ['address', 'message', 'contact', 'index']
 }
 </script>
