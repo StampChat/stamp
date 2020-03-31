@@ -46,6 +46,7 @@
       <profile-dialog :currentProfile="getMyProfile" />
     </q-dialog>
 
+    <!-- Settings dialog -->
     <q-dialog v-model="settingsOpen">
       <settings-dialog />
     </q-dialog>
