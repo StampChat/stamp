@@ -1,5 +1,6 @@
 import { PublicKey } from 'bitcore-lib-cash'
 import RelayClient from '../../relay/client'
+import { defaultUpdateInterval } from '../../utils/constants'
 import Vue from 'vue'
 
 export default {
@@ -20,9 +21,13 @@ export default {
       //   notify: true,
       //   relayURL: ...
       // },
-    }
+    },
+    updateInterval: defaultUpdateInterval
   },
   getters: {
+    getUpdateInterval (state) {
+      return state.updateInterval
+    },
     getNotify: (state) => (addr) => {
       return state.contacts[addr].notify
     },
@@ -65,6 +70,9 @@ export default {
     addContact (state, { addr, contact }) {
       Vue.set(state.contacts, addr, contact)
     },
+    setUpdateInterval (state, interval) {
+      state.updateInterval = interval
+    },
     updateContactProfile (state, { addr, profile }) {
       if (addr in state.contacts) {
         state.contacts[addr].profile = profile
@@ -86,6 +94,9 @@ export default {
     }
   },
   actions: {
+    setUpdateInterval ({ commit }, interval) {
+      commit('setUpdateInterval', interval)
+    },
     setNotify ({ commit }, { addr, value }) {
       commit('setNotify', { addr, value })
     },
@@ -147,12 +158,15 @@ export default {
       }
     },
     startContactUpdater ({ dispatch, getters }) {
-      setInterval(() => {
-        let contacts = getters['getAll']
-        for (let addr in contacts) {
-          dispatch('refresh', addr)
-        }
-      }, 10000)
+      let contacts = getters['getAll']
+      for (let addr in contacts) {
+        dispatch('refresh', addr)
+      }
+
+      let interval = getters['getUpdateInterval']
+      setTimeout(() => {
+        dispatch('startContactUpdater')
+      }, interval)
     }
   }
 }

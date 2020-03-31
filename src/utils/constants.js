@@ -36,3 +36,6 @@ export const donationMessage = 'Thank you for participating in our vision of the
 
 // Notification constants
 export const notificationTimeout = 4000
+
+// Contact defaults
+export const defaultUpdateInterval = 60 * 10 * 1000
