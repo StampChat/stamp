@@ -11,7 +11,23 @@
         v-if="message.outpoints != null"
         clickable
         v-close-popup
-        @click="$emit('dialogClick')"
+        @click="$emit('replyClick')"
+      >
+        <q-item-section> Reply </q-item-section>
+      </q-item>
+      <q-item
+        v-if="message.outpoints != null"
+        clickable
+        v-close-popup
+      >
+        <q-item-section> Forward </q-item-section>
+      </q-item>
+      <q-separator />
+      <q-item
+        v-if="message.outpoints != null"
+        clickable
+        v-close-popup
+        @click="$emit('txClick')"
       >
         <q-item-section> Stamp Transaction </q-item-section>
       </q-item>
