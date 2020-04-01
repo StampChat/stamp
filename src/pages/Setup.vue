@@ -60,7 +60,7 @@
           icon="build"
           style="min-height: 300px;"
         >
-          <settings-step />
+          <settings-step v-model="settings" />
         </q-step>
         <template v-slot:navigation>
           <q-stepper-navigation>
@@ -228,6 +228,9 @@ export default {
       relayData: defaultRelayData,
       relayUrl: defaultRelayUrl,
       settings: {
+        networking: {
+          updateInterval: this.getUpdateInterval() / 1_000
+        }
         // TODO
         // appearance: null,
         // security: null
@@ -249,14 +252,16 @@ export default {
       setRelayClient: 'relayClient/setClient',
       resetWallet: 'wallet/reset',
       setSeedPhrase: 'wallet/setSeedPhrase',
-      resetChats: 'chats/reset'
+      resetChats: 'chats/reset',
+      updateInterval: 'contacts/setUpdateInterval'
     }),
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
       getMyAddress: 'wallet/getMyAddress',
       getClient: 'electrumHandler/getClient',
       getAllAddresses: 'wallet/getAllAddresses',
-      getIdentityPrivKey: 'wallet/getIdentityPrivKey'
+      getIdentityPrivKey: 'wallet/getIdentityPrivKey',
+      getUpdateInterval: 'contacts/getUpdateInterval'
     }),
     next () {
       this.$refs.stepper.next()
@@ -521,6 +526,7 @@ export default {
       this.setSeedPhrase(this.seed)
     },
     nextSettings () {
+      this.updateInterval(this.settings.networking.updateInterval * 1_000)
       this.$router.push('/')
     }
   },
