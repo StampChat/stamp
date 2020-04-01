@@ -2,11 +2,12 @@
   <div class="row q-pa-md">
     <q-select
       outlined
-      v-model="relayURL"
+      v-model="relayUrl"
       use-input
       hide-selected
       fill-input
       new-value-mode="add"
+      @new-value="createValue"
       input-debounce="0"
       label="Relay URL *"
       :options="options"
@@ -36,23 +37,28 @@ export default {
   },
   data () {
     return {
-      relayURL: this.value,
+      relayUrls: relayUrlOptions,
+      relayUrl: this.value,
       acceptancePrice: defaultAcceptancePrice,
       options: []
     }
   },
   methods: {
+    createValue (val, done) {
+      this.relayUrls.push(val)
+      done(val)
+    },
     filterRelayFn (val, update) {
       if (val === '') {
         update(() => {
-          this.options = relayUrlOptions
+          this.options = this.relayUrls
         })
         return
       }
 
       update(() => {
         const needle = val.toLowerCase()
-        this.options = relayUrlOptions.filter(v => v.toLowerCase().indexOf(needle) > -1)
+        this.options = this.relayUrls.filter(v => v.toLowerCase().indexOf(needle) > -1)
       })
     }
   },
