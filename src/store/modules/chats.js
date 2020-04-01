@@ -47,7 +47,10 @@ export default {
       return undefined
     },
     containsMessage: (state) => (addr, index) => {
-      return (index in state.data[addr].messages)
+      if (addr in state.data) {
+        return (index in state.data[addr].messages)
+      }
+      return false
     },
     getNumUnread: (state) => (addr) => {
       if (state.data[addr].lastRead === null) {
