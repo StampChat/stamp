@@ -119,7 +119,8 @@ export default {
     }),
     sendMessage () {
       if (this.message !== '') {
-        this.sendMessageVuex({ addr: this.activeChat, text: this.message })
+        let replyDigest = this.getCurrentReplyDigest(this.activeChat)
+        this.sendMessageVuex({ addr: this.activeChat, text: this.message, replyDigest })
         this.message = ''
         this.$nextTick(() => this.$refs.inputBox.focus())
       }
@@ -153,7 +154,8 @@ export default {
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
       getInputMessage: 'chats/getInputMessage',
-      getMyProfile: 'myProfile/getMyProfile'
+      getMyProfile: 'myProfile/getMyProfile',
+      getCurrentReplyDigest: 'chats/getCurrentReplyDigest'
     }),
     message: {
       set (text) {
