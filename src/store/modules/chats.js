@@ -39,10 +39,13 @@ export default {
     lastReceived: null
   },
   getters: {
+    getCurrentReplyDigest: (state) => (addr) => {
+      return state.data[addr].currentReply
+    },
     getCurrentReply: (state) => (addr) => {
-      let replyIndex = state.data[addr].replyIndex
-      if (replyIndex) {
-        return state.data[addr].messages[replyIndex]
+      let currentReply = state.data[addr].currentReply
+      if (currentReply) {
+        return state.data[addr].messages[currentReply]
       }
       return undefined
     },
