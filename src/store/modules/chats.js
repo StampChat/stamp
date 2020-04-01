@@ -283,21 +283,28 @@ export default {
     startChatUpdater ({ dispatch }) {
       setInterval(() => { dispatch('refresh') }, 1_000)
     },
-    async sendMessage ({ commit, rootGetters, getters, dispatch }, { addr, text }) {
+    async sendMessage ({ commit, rootGetters, getters, dispatch }, { addr, text, replyDigest }) {
       // Send locally
-      const items = [
+      let items = [
         {
           type: 'text',
           text
         }
       ]
 
+      if (replyDigest) {
+        items.unshift({
+          type: 'reply',
+          payloadDigest: replyDigest
+        })
+      }
+
       const privKey = rootGetters['wallet/getIdentityPrivKey']
       const destPubKey = rootGetters['contacts/getPubKey'](addr)
       const stampAmount = getters['getStampAmount'](addr)
 
       // Construct payload
-      const { payload, payloadDigest } = constructTextPayload(text, privKey, destPubKey, 1)
+      const { payload, payloadDigest } = constructTextPayload(text, privKey, destPubKey, 1, replyDigest)
 
       // Add localy
       commit('sendMessageLocal', { addr, index: payloadDigest, items, outpoints: null })
@@ -336,9 +343,9 @@ export default {
         commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'text', text } })
       }
     },
-    async sendStealthPayment ({ commit, rootGetters, getters, dispatch }, { addr, amount, memo, stamptxId }) {
+    async sendStealthPayment ({ commit, rootGetters, getters, dispatch }, { addr, amount, memo, stamptxId, replyDigest }) {
       // Send locally
-      const items = [
+      let items = [
         {
           type: 'stealth',
           amount
@@ -352,12 +359,19 @@ export default {
           })
       }
 
+      if (replyDigest) {
+        items.unshift({
+          type: 'reply',
+          payloadDigest: replyDigest
+        })
+      }
+
       const privKey = rootGetters['wallet/getIdentityPrivKey']
       const destPubKey = rootGetters['contacts/getPubKey'](addr)
       const stampAmount = getters['getStampAmount'](addr)
 
       // Construct payload
-      const { payload, payloadDigest } = await constructStealthPaymentPayload(amount, memo, privKey, destPubKey, 1, stamptxId)
+      const { payload, payloadDigest } = await constructStealthPaymentPayload(amount, memo, privKey, destPubKey, 1, stamptxId, replyDigest)
 
       // Add localy
       commit('sendMessageLocal', { addr, index: payloadDigest, items, outpoints: null })
@@ -388,7 +402,7 @@ export default {
         commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'stealth', amount, memo } })
       }
     },
-    async sendImage ({ commit, rootGetters, getters, dispatch }, { addr, image, caption }) {
+    async sendImage ({ commit, rootGetters, getters, dispatch }, { addr, image, caption, replyDigest }) {
       // Send locally
       const items = [
         {
@@ -404,12 +418,19 @@ export default {
           })
       }
 
+      if (replyDigest) {
+        items.unshift({
+          type: 'reply',
+          payloadDigest: replyDigest
+        })
+      }
+
       const privKey = rootGetters['wallet/getIdentityPrivKey']
       const destPubKey = rootGetters['contacts/getPubKey'](addr)
       const stampAmount = getters['getStampAmount'](addr)
 
       // Construct payload
-      const { payload, payloadDigest } = constructImagePayload(image, caption, privKey, destPubKey, 1)
+      const { payload, payloadDigest } = constructImagePayload(image, caption, privKey, destPubKey, 1, replyDigest)
 
       // Add localy
       commit('sendMessageLocal', { addr, index: payloadDigest, items, outpoints: null })

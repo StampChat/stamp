@@ -124,15 +124,27 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
   return payload
 }
 
-export const constructTextPayload = function (text, privKey, destPubKey, scheme) {
-  // Construct text entry
+const constructReplyEntry = function (payloadDigest) {
+  let entry = new messaging.Entry()
+  entry.setKind('reply')
+  entry.setEntryData(payloadDigest)
+  return entry
+}
+
+export const constructTextPayload = function (text, privKey, destPubKey, scheme, replyDigest) {
+  let entries = new messaging.Entries()
+
+  // Add reply entry
+  if (replyDigest) {
+    let entry = constructReplyEntry(replyDigest)
+    entries.addEntries(entry)
+  }
+
+  // Add text entry
   let textEntry = new messaging.Entry()
   textEntry.setKind('text-utf8')
   let rawText = new TextEncoder('utf-8').encode(text)
   textEntry.setEntryData(rawText)
-
-  // Aggregate entries
-  let entries = new messaging.Entries()
   entries.addEntries(textEntry)
 
   // Construct message
@@ -145,8 +157,14 @@ export const constructTextPayload = function (text, privKey, destPubKey, scheme)
   return { payload, payloadDigest }
 }
 
-export const constructStealthPaymentPayload = async function (amount, memo, privKey, destPubKey, scheme, stealthTxId) {
+export const constructStealthPaymentPayload = async function (amount, memo, privKey, destPubKey, scheme, stealthTxId, replyDigest) {
   let entries = new messaging.Entries()
+
+  // Add reply entry
+  if (replyDigest) {
+    let entry = constructReplyEntry(replyDigest)
+    entries.addEntries(entry)
+  }
 
   // Construct payment entry
   let paymentEntry = new messaging.Entry()
@@ -204,8 +222,14 @@ export const constructStealthPaymentPayload = async function (amount, memo, priv
   return { payload, payloadDigest }
 }
 
-export const constructImagePayload = function (image, caption, privKey, destPubKey, scheme) {
+export const constructImagePayload = function (image, caption, privKey, destPubKey, scheme, replyDigest) {
   let entries = new messaging.Entries()
+
+  // Add reply entry
+  if (replyDigest) {
+    let entry = constructReplyEntry(replyDigest)
+    entries.addEntries(entry)
+  }
 
   // Construct text entry
   let imgEntry = new messaging.Entry()
