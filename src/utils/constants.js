@@ -17,8 +17,8 @@ export const defaultFeePerByte = 2
 export const pingTimeout = 20_000
 export const relayReconnectInterval = 10_000
 export const defaultAcceptancePrice = 100
-export const defaultRelayUrl = '34.67.137.105:8999'
-export const relayUrlOptions = ['34.67.137.105:8999', 'bitcoin.com', 'cashweb.io']
+export const defaultRelayUrl = '34.68.170.199:8532'
+export const relayUrlOptions = ['34.68.170.199:8532', 'bitcoin.com', 'cashweb.io']
 export const defaultRelayData = {
   profile: {
     name: '',
@@ -38,4 +38,4 @@ export const donationMessage = 'Thank you for participating in our vision of the
 export const notificationTimeout = 4000
 
 // Contact defaults
-export const defaultUpdateInterval = 60 * 10 * 1000
+export const defaultUpdateInterval = 60 * 10 * 1_000
