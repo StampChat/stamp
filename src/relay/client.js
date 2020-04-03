@@ -93,14 +93,16 @@ class RelayClient {
     socket.onmessage = function (event) {
       let buffer = event.data
       let timedMessageSet = messaging.TimedMessageSet.deserializeBinary(buffer)
-      let timestamp = timedMessageSet.getServerTime()
       let messageList = timedMessageSet.getMessagesList()
+
+      let serverTime = timedMessageSet.getServerTime()
+      let receivedTime = Date.now()
       for (let index in messageList) {
         let message = messageList[index]
-        store.dispatch('chats/receiveMessage', { timestamp, message })
+        store.dispatch('chats/receiveMessage', { serverTime, receivedTime, message })
       }
       let lastReceived = store.getters['chats/getLastReceived'] || 0
-      lastReceived = Math.max(lastReceived, timestamp)
+      lastReceived = Math.max(lastReceived, receivedTime)
       if (lastReceived) {
         store.commit('chats/setLastReceived', lastReceived + 1)
       }

@@ -12,22 +12,18 @@ import { constructStealthPaymentPayload, constructImagePayload, constructTextPay
 const cashlib = require('bitcore-lib-cash')
 
 function calculateUnreadAggregates (state, addr) {
-  const unreadAggregates = Object.entries(state.data[addr].messages)
-    .filter(([timestamp]) => state.data[addr].lastRead < timestamp)
-    .map(([timestamp, message]) => {
+  const unreadMessages = Object.values(state.data[addr].messages)
+    .filter((message) => state.data[addr].lastRead < message.receivedTime)
+    .map((message) => {
       return stampPrice(message.outpoints) || 0
     })
-    .reduce(
-      ({ totalUnreadValue, totalUnreadMessages }, curStampSats) => ({
-        totalUnreadValue: totalUnreadValue + curStampSats,
-        totalUnreadMessages: totalUnreadMessages + 1
-      }),
-      {
-        totalUnreadValue: 0,
-        totalUnreadMessages: 0
-      }
-    )
-  return unreadAggregates
+  const totalUnreadValue = unreadMessages.reduce(
+    (totalValue, curStampSats) => totalValue + curStampSats, 0
+  )
+  return {
+    totalUnreadValue,
+    totalUnreadMessages: unreadMessages.length
+  }
 }
 
 export default {
@@ -60,9 +56,9 @@ export default {
         return Object.keys(state.data[addr].messages).length
       }
 
-      let ids = Object.keys(state.data[addr].messages)
-      let lastUnreadIndex = ids.findIndex(id => state.data[addr].lastRead === id)
-      let numUnread = ids.length - lastUnreadIndex - 1
+      let values = Object.values(state.data[addr].messages)
+      let lastUnreadIndex = values.findIndex(message => state.data[addr].lastRead === message.receivedTime)
+      let numUnread = values.length - lastUnreadIndex - 1
       return numUnread
     },
     getLastRead: (state) => (addr) => {
@@ -169,12 +165,12 @@ export default {
       state.lastReceived = null
     },
     readAll (state, addr) {
-      let ids = Object.keys(state.data[addr].messages)
+      let values = Object.values(state.data[addr].messages)
 
-      if (ids.length === 0) {
+      if (values.length === 0) {
         state.data[addr].lastRead = null
       } else {
-        state.data[addr].lastRead = ids[ids.length - 1]
+        state.data[addr].lastRead = values[values.length - 1].receivedTime
       }
     },
     setInputMessage (state, { addr, text }) {
@@ -478,7 +474,7 @@ export default {
     deleteChat ({ commit }, addr) {
       commit('deleteChat', addr)
     },
-    async receiveMessage ({ commit, getters, rootGetters, dispatch }, { message, timestamp }) {
+    async receiveMessage ({ commit, getters, rootGetters, dispatch }, { serverTime, receivedTime, message }) {
       const rawSenderPubKey = message.getSenderPubKey()
       const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
       const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
@@ -610,7 +606,8 @@ export default {
         outbound,
         status: 'confirmed',
         items: [],
-        timestamp,
+        serverTime,
+        receivedTime,
         outpoints
       }
       for (let index in entriesList) {
@@ -707,10 +704,11 @@ export default {
         // TODO: Check correct destination
         // let destPubKey = timedMessage.getDestination()
 
-        let timestamp = timedMessage.getServerTime()
+        let serverTime = timedMessage.getServerTime()
+        let receivedTime = Date.now()
         let message = timedMessage.getMessage()
-        await dispatch('receiveMessage', { timestamp, message })
-        lastReceived = Math.max(lastReceived, timestamp)
+        await dispatch('receiveMessage', { serverTime, receivedTime, message })
+        lastReceived = Math.max(lastReceived, receivedTime)
       }
       if (lastReceived) {
         commit('setLastReceived', lastReceived + 1)
