@@ -2,6 +2,7 @@ import Vue from 'vue'
 import { constructStampPrivKey, constructStealthPrivKey } from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import { numAddresses, numChangeAddresses, nUtxoGoal, feeUpdateTimerMilliseconds, defaultFeePerByte } from '../../utils/constants'
+import { constructOutpointDigest } from '../../relay/constructors'
 import formatting from '../../utils/formatting'
 import { calcId } from '../../utils/wallet'
 
@@ -324,15 +325,14 @@ export default {
 
         let addr = utxo.address
         utxo['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
-
         // Grab private key
         let signingKey
         if (utxo.type === 'p2pkh') {
           signingKey = addresses[addr].privKey
         } else if (utxo.type === 'stamp') {
           let privKey = getters['getIdentityPrivKey']
-          let payloadDigest = Buffer.from(utxo.payloadDigest)
-          signingKey = constructStampPrivKey(payloadDigest, privKey)
+          let outpointDigest = constructOutpointDigest(utxo.stampIndex, utxo.outputIndex, utxo.payloadDigest)
+          signingKey = constructStampPrivKey(outpointDigest, privKey)
         } else if (utxo.type === 'stealth') {
           let privKey = getters['getIdentityPrivKey']
           let ephemeralPubKey = PublicKey(utxo.ephemeralPubKey)
@@ -366,8 +366,9 @@ export default {
       transaction = transaction.change(changeAddresses[0])
 
       // Sign transaction
+      console.log(JSON.stringify(transaction))
       transaction = transaction.sign(signingKeys)
-      console.log(transaction)
+      console.log(JSON.stringify(transaction))
       console.log('feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
       return { transaction, usedIDs }
     },
