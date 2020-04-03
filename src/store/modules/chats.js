@@ -572,30 +572,34 @@ export default {
       // Add UTXO
       let stampOutpoints = message.getStampOutpointsList()
       let outpoints = []
-      for (let i in stampOutpoints) {
-        let stampOutpoint = stampOutpoints[i]
-        let stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
-        let stampTx = cashlib.Transaction(stampTxRaw)
-        let txId = stampTx.hash
-        let vouts = stampOutpoint.getVoutsList()
-        outpoints.push({
-          stampTx,
-          vouts
-        })
-        for (let j in vouts) {
-          let outputIndex = vouts[j]
-          let output = stampTx.outputs[outputIndex]
-          let satoshis = output.satoshis
-          let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
-          let stampOutput = {
-            address,
-            outputIndex,
-            satoshis,
-            txId,
-            type: 'stamp',
-            payloadDigest
+
+      if (!outbound) {
+        for (let i in stampOutpoints) {
+          let stampOutpoint = stampOutpoints[i]
+          let stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
+          let stampTx = cashlib.Transaction(stampTxRaw)
+          let txId = stampTx.hash
+          let vouts = stampOutpoint.getVoutsList()
+          outpoints.push({
+            stampTx,
+            vouts
+          })
+          for (let j in vouts) {
+            let outputIndex = vouts[j]
+            let output = stampTx.outputs[outputIndex]
+            let satoshis = output.satoshis
+            let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
+            let stampOutput = {
+              address,
+              outputIndex,
+              stampIndex: i,
+              satoshis,
+              txId,
+              type: 'stamp',
+              payloadDigest
+            }
+            dispatch('wallet/addUTXO', stampOutput, { root: true })
           }
-          dispatch('wallet/addUTXO', stampOutput, { root: true })
         }
       }
 
