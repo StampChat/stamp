@@ -223,6 +223,7 @@ export default {
         importedSeed: '',
         valid: false
       },
+      seed: null,
       generatedWarning: true,
       xPrivKey: null,
       relayData: defaultRelayData,
@@ -344,13 +345,12 @@ export default {
       }
 
       // Send seed
-      let seed
       if (this.seedData.type === 'new') {
-        seed = this.seedData.generatedSeed
+        this.seed = this.seedData.generatedSeed
       } else {
-        seed = this.seedData.importedSeed
+        this.seed = this.seedData.importedSeed
       }
-      worker.postMessage(seed)
+      worker.postMessage(this.seed)
     },
     async nextKeyserver () {
       try {
