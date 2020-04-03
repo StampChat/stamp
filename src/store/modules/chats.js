@@ -635,7 +635,7 @@ export default {
           if (!document.hasFocus() && !outbound) {
             let contact = rootGetters['contacts/getContact'](senderAddr)
             if (contact.notify) {
-              desktopNotify(contact.keyserver.name, text, contact.keyserver.avatar, () => {
+              desktopNotify(contact.profile.name, text, contact.profile.avatar, () => {
                 dispatch('openChat', senderAddr)
               })
             }

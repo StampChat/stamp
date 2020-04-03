@@ -137,7 +137,7 @@ export default {
       if (outbound) {
         return this.getMyProfile
       } else {
-        return this.getContactVuex(this.activeChat).keyserver
+        return this.getContactVuex(this.activeChat).profile
       }
     },
     scrollHandler (details) {
