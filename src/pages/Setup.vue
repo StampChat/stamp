@@ -187,7 +187,7 @@ import DepositStep from '../components/setup/DepositStep.vue'
 import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
 import ProfileStep from '../components/setup/ProfileStep.vue'
 import SettingsStep from '../components/Settings.vue'
-import { defaultRelayData, defaultRelayUrl, electrumURL } from '../utils/constants'
+import { defaultRelayData, defaultRelayUrl, electrumURL, electrumPort, electrumProtocol } from '../utils/constants'
 import {
   keyserverDisconnectedNotify,
   insuffientFundsNotify,
@@ -538,7 +538,7 @@ export default {
     this.resetChats()
 
     // Set electrum client
-    this.newElectrumClient({ host: electrumURL, port: 50001, protocol: 'tcp' })
+    this.newElectrumClient({ host: electrumURL, port: electrumPort, protocol: electrumProtocol })
     await this.electrumConnect()
     this.electrumKeepAlive()
   }
