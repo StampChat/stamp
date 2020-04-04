@@ -27,18 +27,20 @@ export const constructStampTransaction = async function (outpointDigest, destPub
 
 export const constructStealthTransaction = async function (ephemeralPrivKey, destPubKey, amount) {
   // Add ephemeral output
-  let stealthAddress = constructStealthPubKey(ephemeralPrivKey, destPubKey).toAddress('testnet')
-  let stampOutput = new cashlib.Transaction.Output({
+  // NOTE: We're only doing 1 stealth txn, and 1 output for now.
+  // But the spec should allow doing confidential amounts.
+  const stealthAddress = constructStealthPubKey(ephemeralPrivKey, destPubKey).toAddress('testnet')
+  const stealthOutput = new cashlib.Transaction.Output({
     script: cashlib.Script(new cashlib.Address(stealthAddress)),
     satoshis: amount
   })
 
   // Get Fee
-  let feePerByte = await store.dispatch('wallet/getFee')
+  const feePerByte = await store.dispatch('wallet/getFee')
 
   // Construct transaction
-  let { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs: [stampOutput], feePerByte })
-  return { transaction, usedIDs }
+  const { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs: [stealthOutput], feePerByte })
+  return [{ transaction, vouts: [0], usedIDs }]
 }
 
 export const constructOutpointDigest = function (stampNum, vout, payloadDigest) {
@@ -173,30 +175,29 @@ export const constructStealthPaymentPayload = async function (amount, memo, priv
   let stealthPaymentEntry = new stealth.StealthPaymentEntry()
   let ephemeralPrivKey = cashlib.PrivateKey()
 
-  // Construct stealth transaction if ID not given
-  if (stealthTxId === undefined) {
-    var { transaction: stealthTx, usedIDs: stampUsedIDs } = await constructStealthTransaction(ephemeralPrivKey, destPubKey, amount)
-    stealthTxId = Buffer.from(stealthTx.id, 'hex')
+  var [{ transaction: stealthTx, usedIDs: stampUsedIDs, vouts }] = await constructStealthTransaction(ephemeralPrivKey, destPubKey, amount)
+  stealthTxId = Buffer.from(stealthTx.id, 'hex')
 
-    // Broadcast transaction
-    let stealthTxHex = stealthTx.toString()
-    try {
-      let electrumHandler = store.getters['electrumHandler/getClient']
-      await electrumHandler.methods.blockchain_transaction_broadcast(stealthTxHex)
-    } catch (err) {
-      console.error(err)
-      // Unfreeze UTXOs if stealth tx broadcast fails
-      stampUsedIDs.forEach(id => {
-        store.dispatch('unfreezeUTXO', id)
-      })
-      throw err
-    }
+  // Broadcast transaction
+  let stealthTxHex = stealthTx.toString()
+  try {
+    let electrumHandler = store.getters['electrumHandler/getClient']
+    await electrumHandler.methods.blockchain_transaction_broadcast(stealthTxHex)
+  } catch (err) {
+    console.error(err)
+    // Unfreeze UTXOs if stealth tx broadcast fails
+    stampUsedIDs.forEach(id => {
+      store.dispatch('unfreezeUTXO', id)
+    })
+    throw err
   }
 
-  await new Promise(resolve => setTimeout(resolve, 5000)) // TODO: This is hacky as fuck
-
-  stealthPaymentEntry.setEphemeralPubKey(ephemeralPrivKey.toPublicKey().toBuffer())
-  stealthPaymentEntry.setTxId(stealthTxId)
+  stealthPaymentEntry.setEphemeralPubKey(ephemeralPrivKey.publicKey.toBuffer())
+  let rawStealthTx = stealthTx.toBuffer()
+  let stealthOutpoints = new stealth.StealthOutpoints()
+  stealthOutpoints.setStealthTx(rawStealthTx)
+  vouts.forEach((vout) => stealthOutpoints.addVouts(vout))
+  stealthPaymentEntry.addOutpoints(stealthOutpoints)
 
   let paymentEntryRaw = stealthPaymentEntry.serializeBinary()
   paymentEntry.setEntryData(paymentEntryRaw)

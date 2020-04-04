@@ -1,7 +1,6 @@
 import Vue from 'vue'
 
 import { numAddresses, numChangeAddresses } from '../../utils/constants'
-
 import formatting from '../../utils/formatting'
 import { calcId } from '../../utils/wallet'
 
