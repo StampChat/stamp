@@ -152,6 +152,7 @@ class RelayClient {
 
   async getPayload (addr, token, digest) {
     let url = `${this.httpScheme}://${this.url}/payloads/${addr}`
+    let hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
     let response = await axios({
       method: 'get',
       url,
@@ -159,7 +160,7 @@ class RelayClient {
         'Authorization': token
       },
       params: {
-        digest
+        digest: hexDigest
       },
       responseType: 'arraybuffer'
     })
