@@ -503,7 +503,8 @@ export default {
         // Get relay client
         let relayClient = rootGetters['relayClient/getClient']
         try {
-          let token = rootGetters['relay/getToken']
+          console.log('missing this shit')
+          let token = rootGetters['relayClient/getToken']
           payload = await relayClient.getPayload(senderAddr, token, payloadDigest)
         } catch (err) {
           console.error(err)
