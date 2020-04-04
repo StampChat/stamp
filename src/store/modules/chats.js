@@ -1,13 +1,13 @@
 import messaging from '../../relay/messaging_pb'
 import stealth from '../../relay/stealth_pb'
-import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey } from '../../relay/crypto'
+import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../utils/wallet'
-import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage } from '../../relay/constructors'
+import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage, constructOutpointDigest } from '../../relay/constructors'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -480,6 +480,7 @@ export default {
       const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
       const myAddress = rootGetters['wallet/getMyAddressStr']
       const outbound = (senderAddr === myAddress)
+      const privKey = rootGetters['wallet/getIdentityPrivKey']
 
       const rawPayload = message.getSerializedPayload()
       let payload
@@ -556,7 +557,6 @@ export default {
 
         let ephemeralPubKeyRaw = payload.getEphemeralPubKey()
         let ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
-        let privKey = rootGetters['wallet/getIdentityPrivKey']
         if (!outbound) {
           entriesRaw = decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
         } else {
@@ -588,12 +588,14 @@ export default {
             let outputIndex = vouts[j]
             let output = stampTx.outputs[outputIndex]
             let satoshis = output.satoshis
+            let outpointDigest = constructOutpointDigest(i, outputIndex, payloadDigest)
+            let stampPrivKey = constructStampPrivKey(outpointDigest, privKey)
             let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
             let stampOutput = {
               address,
               outputIndex,
-              stampIndex: i,
               satoshis,
+              privKey: stampPrivKey,
               txId,
               type: 'stamp',
               payloadDigest
@@ -644,36 +646,38 @@ export default {
         } else if (kind === 'stealth-payment') {
           let entryData = entry.getEntryData()
           let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
+          const ephemeralPubKey = PublicKey(stealthMessage.getEphemeralPubKey())
+          const stealthPrivKey = constructStealthPrivKey(ephemeralPubKey, privKey)
 
-          let electrumHandler = rootGetters['electrumHandler/getClient']
+          const outpointsList = stealthMessage.getOutpointsList()
+          for (const [outpointIndex, outpoint] of Object.entries(outpointsList)) {
+            let txRaw = Buffer.from(outpoint.getStealthTx())
+            let tx = cashlib.Transaction(txRaw)
+            let txId = tx.hash
+            let vouts = outpoint.getVoutsList()
+            for (const vout of vouts) {
+              const output = tx.outputs[vout]
+              const satoshis = output.satoshis
+              const outputPrivKey = stealthPrivKey
+                .deriveChild(44, true)
+                .deriveChild(145, true)
+                .deriveChild(0, true)
+                .deriveChild(outpointIndex)
+                .deriveChild(vout)
+                .privateKey
 
-          let txId = Buffer.from(stealthMessage.getTxId()).toString('hex')
-          try {
-            var txRaw = await electrumHandler.methods.blockchain_transaction_get(txId)
-          } catch (err) {
-            console.error(err)
-            // TODO: Awaiting confirmation check
-            // TODO: Logic relating to this
+              let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
+              const stampOutput = {
+                address,
+                satoshis,
+                privKey: outputPrivKey,
+                txId,
+                type: 'stealth',
+                payloadDigest
+              }
+              dispatch('wallet/addUTXO', stampOutput, { root: true })
+            }
           }
-          let tx = cashlib.Transaction(txRaw)
-
-          // Add stealth output
-          let output = tx.outputs[0]
-          let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
-          let ephemeralPubKey = stealthMessage.getEphemeralPubKey()
-          let stealthOutput = {
-            address,
-            outputIndex: 0, // TODO: 0 is always stealth output, change this assumption?
-            satoshis: output.satoshis,
-            txId,
-            type: 'stealth',
-            ephemeralPubKey
-          }
-          dispatch('wallet/addUTXO', stealthOutput, { root: true })
-          newMsg.items.push({
-            type: 'stealth',
-            amount: output.satoshis
-          })
         } else if (kind === 'image') {
           let image = imageUtil.entryToImage(entry)
 

@@ -1,4 +1,4 @@
-import { PrivateKey, PublicKey } from 'bitcore-lib-cash'
+import { PrivateKey, PublicKey, HDPrivateKey } from 'bitcore-lib-cash'
 
 const forge = require('node-forge')
 const cashlib = require('bitcore-lib-cash')
@@ -22,7 +22,7 @@ export const constructStealthPrivKey = function (emphemeralPubKey, privKey) {
   let digestBn = cashlib.crypto.BN.fromBuffer(digest)
 
   let stealthPrivBn = digestBn.add(privKey.bn).mod(cashlib.crypto.Point.getN()) // H(ebG) + b
-  return PrivateKey(stealthPrivBn)
+  return HDPrivateKey(stealthPrivBn)
 }
 
 export const constructStampPubKey = function (outpointDigest, destPubKey) {
