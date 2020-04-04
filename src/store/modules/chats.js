@@ -7,7 +7,7 @@ import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../utils/wallet'
-import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage, constructOutpointDigest } from '../../relay/constructors'
+import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage } from '../../relay/constructors'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -588,8 +588,7 @@ export default {
             let outputIndex = vouts[j]
             let output = stampTx.outputs[outputIndex]
             let satoshis = output.satoshis
-            let outpointDigest = constructOutpointDigest(i, outputIndex, payloadDigest)
-            let stampPrivKey = constructStampPrivKey(outpointDigest, privKey)
+            let stampPrivKey = constructStampPrivKey({ payloadDigest, outpointIndex: i, vout: vouts[k] }, privKey)
             let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
             let stampOutput = {
               address,

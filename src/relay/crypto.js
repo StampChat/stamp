@@ -25,9 +25,14 @@ export const constructStealthPrivKey = function (emphemeralPubKey, privKey) {
   return HDPrivateKey(stealthPrivBn)
 }
 
-export const constructStampPubKey = function (outpointDigest, destPubKey) {
-  let digestPrivateKey = PrivateKey.fromBuffer(outpointDigest)
-  let digestPublicKey = digestPrivateKey.toPublicKey()
+export const constructStampPubKey = function ({ payloadDigest, outpointIndex, vout }, destPubKey) {
+  let digestPublicKey = HDPrivateKey.fromBuffer(payloadDigest)
+    .deriveChild(44, true)
+    .deriveChild(145, true)
+    .deriveChild(0, true)
+    .deriveChild(outpointIndex)
+    .deriveChild(vout)
+    .publicKey
 
   let stampPoint = digestPublicKey.point.add(destPubKey.point)
   let stampPublicKey = PublicKey.fromPoint(stampPoint)
@@ -35,11 +40,17 @@ export const constructStampPubKey = function (outpointDigest, destPubKey) {
   return stampPublicKey
 }
 
-export const constructStampPrivKey = function (outpointDigest, privKey) {
-  let digestBn = cashlib.crypto.BN.fromBuffer(outpointDigest)
-  let stampPrivBn = privKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN())
-  let stampPrivKey = PrivateKey(stampPrivBn)
-  return stampPrivKey
+export const constructStampPrivKey = function ({ payloadDigest, outpointIndex, vout }, privKey) {
+  let stampPrivKeyBn = HDPrivateKey(payloadDigest)
+    .deriveChild(44, true)
+    .deriveChild(145, true)
+    .deriveChild(0, true)
+    .deriveChild(outpointIndex)
+    .deriveChild(vout)
+    .privateKey.bn.add(privKey.bn)
+    .mod(cashlib.crypto.Point.getN())
+
+  return PrivateKey(stampPrivKeyBn)
 }
 
 export const constructStampAddress = function (outpointDigest, privKey) {
