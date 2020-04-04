@@ -490,20 +490,19 @@ export default {
       const outbound = (senderAddr === myAddress)
 
       const rawPayload = message.getSerializedPayload()
+      const payloadDigest = message.getPayloadDigest()
       let payload
+
+      if (payloadDigest.length === 0) {
+        // TODO: Handle
+        return
+      }
 
       // Get payload if serialized payload is missing
       if (rawPayload.length === 0) {
-        const payloadDigest = message.getPayloadDigest()
-        if (payloadDigest.length === 0) {
-          // TODO: Handle
-          return
-        }
-
         // Get relay client
         let relayClient = rootGetters['relayClient/getClient']
         try {
-          console.log('missing this shit')
           let token = rootGetters['relayClient/getToken']
           payload = await relayClient.getPayload(senderAddr, token, payloadDigest)
         } catch (err) {
@@ -515,12 +514,11 @@ export default {
         payload = messaging.Payload.deserializeBinary(rawPayload)
       }
 
-      const desintationRaw = payload.getDestination()
-      const destPubKey = cashlib.PublicKey.fromBuffer(desintationRaw)
+      const destinationRaw = payload.getDestination()
+      const destPubKey = cashlib.PublicKey.fromBuffer(destinationRaw)
       const destinationAddr = destPubKey.toAddress('testnet').toCashAddress()
 
       // Check whether pre-existing
-      const payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
       if (outbound) {
         if (getters['containsMessage'](destinationAddr, payloadDigest)) {
           return
