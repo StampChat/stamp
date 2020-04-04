@@ -63,8 +63,8 @@ export default {
     }
   },
   watch: {
-    relayURL (newUrl, oldUrl) {
-      this.$emit('input', this.relayURL)
+    relayUrl (newUrl, oldUrl) {
+      this.$emit('input', newUrl)
     }
   }
 }
