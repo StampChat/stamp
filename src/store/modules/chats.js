@@ -393,7 +393,11 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
-        commit('setStampTx', { addr, index: payloadDigest, stampTx })
+        let outpoint = {
+          stampTx,
+          vouts: [0]
+        }
+        commit('setOutpoints', { addr, index: payloadDigest, outpoints: [outpoint] })
         commit('setStatus', { addr, index: payloadDigest, status: 'confirmed' })
       } catch (err) {
         // Unfreeze UTXOs
@@ -454,7 +458,11 @@ export default {
       let client = rootGetters['relayClient/getClient']
       try {
         await client.pushMessages(destAddr, messageSet)
-        commit('setStampTx', { addr, index: payloadDigest, stampTx })
+        let outpoint = {
+          stampTx,
+          vouts: [0]
+        }
+        commit('setOutpoints', { addr, index: payloadDigest, outpoints: [outpoint] })
         commit('setStatus', { addr, index: payloadDigest, status: 'confirmed' })
       } catch (err) {
         // Unfreeze UTXOs
