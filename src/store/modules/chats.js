@@ -490,11 +490,12 @@ export default {
       const outbound = (senderAddr === myAddress)
 
       const rawPayload = message.getSerializedPayload()
-      const payloadDigest = message.getPayloadDigest()
+      const payloadDigestFromServer = message.getPayloadDigest()
       let payload
 
-      if (payloadDigest.length === 0) {
+      if (payloadDigestFromServer.length === 0 && rawPayload.length === 0) {
         // TODO: Handle
+        console.error('Missing required fields')
         return
       }
 
@@ -504,7 +505,7 @@ export default {
         let relayClient = rootGetters['relayClient/getClient']
         try {
           let token = rootGetters['relayClient/getToken']
-          payload = await relayClient.getPayload(senderAddr, token, payloadDigest)
+          payload = await relayClient.getPayload(senderAddr, token, payloadDigestFromServer)
         } catch (err) {
           console.error(err)
           // TODO: Handle
@@ -512,6 +513,12 @@ export default {
         }
       } else {
         payload = messaging.Payload.deserializeBinary(rawPayload)
+      }
+
+      const payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
+      if (!payloadDigest.equals(payloadDigestFromServer)) {
+        console.error("Payload received doesn't match digest. Refusing to process message")
+        return
       }
 
       const destinationRaw = payload.getDestination()
