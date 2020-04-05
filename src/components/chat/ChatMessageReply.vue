@@ -2,6 +2,7 @@
   <div>
     <div
       class="q-py-none"
+      style="word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;"
       v-if="item.type=='text'"
     >
       {{ item.text }}

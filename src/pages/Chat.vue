@@ -12,7 +12,7 @@
       <q-scroll-area
         ref="chatScroll"
         class="q-px-md row"
-        :style="`background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - ${height}px - ${tabHeight}px);`"
+        :style="`background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - ${chatHeight}px - ${replyHeight}px - ${tabHeight}px);`"
       >
         <q-chat-message
           class='q-py-sm'
@@ -37,8 +37,20 @@
         />
       </q-scroll-area>
 
+      <!-- Reply box -->
+      <div>
+        <q-resize-observer @resize="onResizeReply" />
+        <div class='q-pa-sm' v-if='getCurrentReply(activeChat)'>
+          <div class='q-pa-sm bg-secondary row' style='border-radius: 5px;'>
+            <chat-message-reply class='col' :item="firstItem(getCurrentReply(activeChat))" />
+            <q-btn dense flat color="accent" icon="close" @click='setCurrentReply({ addr: activeChat, index: undefined })' />
+          </div>
+      </div>
+      </div>
+
+      <!-- Message box -->
       <div class="row">
-        <q-resize-observer @resize="onResize" />
+        <q-resize-observer @resize="onResizeChat" />
         <q-toolbar class="bg-white q-pl-none">
           <q-btn
             dense
@@ -93,6 +105,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
+import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
 import { donationMessage } from '../utils/constants'
 
 const scrollDuration = 500
@@ -101,11 +114,13 @@ export default {
   props: ['activeChat', 'messages', 'tabHeight'],
   components: {
     ChatMessage,
-    SendFileDialog
+    SendFileDialog,
+    ChatMessageReply
   },
   data () {
     return {
-      height: 100,
+      chatHeight: 100,
+      replyHeight: 0,
       sendFileOpen: false,
       bottom: true,
       donationMessage
@@ -115,13 +130,15 @@ export default {
     ...mapActions({
       readAll: 'chats/readAll',
       sendMessageVuex: 'chats/sendMessage',
-      setInputMessage: 'chats/setInputMessage'
+      setInputMessage: 'chats/setInputMessage',
+      setCurrentReply: 'chats/setCurrentReply'
     }),
     sendMessage () {
       if (this.message !== '') {
         let replyDigest = this.getCurrentReplyDigest(this.activeChat)
         this.sendMessageVuex({ addr: this.activeChat, text: this.message, replyDigest })
         this.message = ''
+        this.setCurrentReply({ addr: this.activeChat, index: undefined })
         this.$nextTick(() => this.$refs.inputBox.focus())
       }
     },
@@ -130,8 +147,11 @@ export default {
       const scrollTarget = scrollArea.getScrollTarget()
       this.$nextTick(() => scrollArea.setScrollPosition(scrollTarget.scrollHeight, scrollDuration))
     },
-    onResize (size) {
-      this.height = size.height
+    onResizeChat (size) {
+      this.chatHeight = size.height
+    },
+    onResizeReply (size) {
+      this.replyHeight = size.height
     },
     getContact (outbound) {
       if (outbound) {
@@ -148,6 +168,12 @@ export default {
       } else {
         this.bottom = false
       }
+    },
+    firstItem (msg) {
+      if (msg) {
+        const firstNonReply = msg.items.find(item => item.type !== 'reply')
+        return firstNonReply
+      }
     }
   },
   computed: {
@@ -155,7 +181,8 @@ export default {
       getContactVuex: 'contacts/getContact',
       getInputMessage: 'chats/getInputMessage',
       getMyProfile: 'myProfile/getMyProfile',
-      getCurrentReplyDigest: 'chats/getCurrentReplyDigest'
+      getCurrentReplyDigest: 'chats/getCurrentReplyDigest',
+      getCurrentReply: 'chats/getCurrentReply'
     }),
     message: {
       set (text) {
