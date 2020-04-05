@@ -600,18 +600,19 @@ export default {
             vouts
           })
           for (let j in vouts) {
-            let outputIndex = vouts[j] // NOTE: This should be j, not vouts[j] otherwise we can't randomize the output order in the wallet.
-            // Also note, we should use an HD key here.s
+            let outputIndex = vouts[j]
             let output = stampTx.outputs[outputIndex]
             let satoshis = output.satoshis
             let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
-            const outpointDigest = constructOutpointDigest(i, outputIndex, payloadDigest)
+            const outpointDigest = constructOutpointDigest(i, outputIndex, payloadDigest) // NOTE: This should be j, not vouts[j] otherwise we can't randomize the output order in the wallet.
+            // Also note, we should use an HD key here.
             const privKey = constructStampPrivKey(outpointDigest, identityPrivKey)
             let stampOutput = {
               address,
               privKey,
               satoshis,
               txId,
+              outputIndex,
               type: 'stamp',
               payloadDigest
             }
