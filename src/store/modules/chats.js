@@ -490,11 +490,12 @@ export default {
       const outbound = (senderAddr === myAddress)
 
       const rawPayload = message.getSerializedPayload()
-      const payloadDigest = message.getPayloadDigest()
+      const payloadDigestFromServer = message.getPayloadDigest()
       let payload
 
-      if (payloadDigest.length === 0) {
+      if (payloadDigestFromServer.length === 0 && rawPayload.length === 0) {
         // TODO: Handle
+        console.error('Missing required fields')
         return
       }
 
@@ -504,7 +505,7 @@ export default {
         let relayClient = rootGetters['relayClient/getClient']
         try {
           let token = rootGetters['relayClient/getToken']
-          payload = await relayClient.getPayload(senderAddr, token, payloadDigest)
+          payload = await relayClient.getPayload(senderAddr, token, payloadDigestFromServer)
         } catch (err) {
           console.error(err)
           // TODO: Handle
@@ -512,6 +513,12 @@ export default {
         }
       } else {
         payload = messaging.Payload.deserializeBinary(rawPayload)
+      }
+
+      const payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
+      if (!payloadDigest.equals(payloadDigestFromServer)) {
+        console.error("Payload received doesn't match digest. Refusing to process message")
+        return
       }
 
       const destinationRaw = payload.getDestination()
@@ -593,18 +600,19 @@ export default {
             vouts
           })
           for (let j in vouts) {
-            let outputIndex = vouts[j] // NOTE: This should be j, not vouts[j] otherwise we can't randomize the output order in the wallet.
-            // Also note, we should use an HD key here.s
+            let outputIndex = vouts[j]
             let output = stampTx.outputs[outputIndex]
             let satoshis = output.satoshis
             let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
-            const outpointDigest = constructOutpointDigest(i, outputIndex, payloadDigest)
+            const outpointDigest = constructOutpointDigest(i, outputIndex, payloadDigest) // NOTE: This should be j, not vouts[j] otherwise we can't randomize the output order in the wallet.
+            // Also note, we should use an HD key here.
             const privKey = constructStampPrivKey(outpointDigest, identityPrivKey)
             let stampOutput = {
               address,
               privKey,
               satoshis,
               txId,
+              outputIndex,
               type: 'stamp',
               payloadDigest
             }
@@ -720,12 +728,15 @@ export default {
 
         // TODO: Check correct destination
         // let destPubKey = timedMessage.getDestination()
-
-        let serverTime = timedMessage.getServerTime()
-        let receivedTime = Date.now()
-        let message = timedMessage.getMessage()
-        await dispatch('receiveMessage', { serverTime, receivedTime, message })
-        lastReceived = Math.max(lastReceived, receivedTime)
+        try {
+          let serverTime = timedMessage.getServerTime()
+          let receivedTime = Date.now()
+          let message = timedMessage.getMessage()
+          await dispatch('receiveMessage', { serverTime, receivedTime, message })
+          lastReceived = Math.max(lastReceived, receivedTime)
+        } catch (err) {
+          console.error('Unable to deserialize message for some reason', err)
+        }
       }
       if (lastReceived) {
         commit('setLastReceived', lastReceived + 1)
