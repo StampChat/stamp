@@ -28,8 +28,8 @@ test('Decrypt', () => {
   let sourcePubKey = sourcePrivKey.toPublicKey()
   let destPrivKey = PrivateKey()
   let destPubKey = destPrivKey.toPublicKey()
-  let { cipherText, ephemeralPubKey } = encrypt(raw, sourcePrivKey, destPubKey)
-  let plainText = decrypt(cipherText, destPrivKey, sourcePubKey, ephemeralPubKey)
+  let { cipherText, ephemeralPrivKey } = encrypt(raw, sourcePrivKey, destPubKey)
+  let plainText = decrypt(cipherText, destPrivKey, sourcePubKey, ephemeralPrivKey.toPublicKey())
   expect(plainText).toStrictEqual(raw)
 })
 
