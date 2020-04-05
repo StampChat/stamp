@@ -728,12 +728,15 @@ export default {
 
         // TODO: Check correct destination
         // let destPubKey = timedMessage.getDestination()
-
-        let serverTime = timedMessage.getServerTime()
-        let receivedTime = Date.now()
-        let message = timedMessage.getMessage()
-        await dispatch('receiveMessage', { serverTime, receivedTime, message })
-        lastReceived = Math.max(lastReceived, receivedTime)
+        try {
+          let serverTime = timedMessage.getServerTime()
+          let receivedTime = Date.now()
+          let message = timedMessage.getMessage()
+          await dispatch('receiveMessage', { serverTime, receivedTime, message })
+          lastReceived = Math.max(lastReceived, receivedTime)
+        } catch (err) {
+          console.error('Unable to deserialize message for some reason', err)
+        }
       }
       if (lastReceived) {
         commit('setLastReceived', lastReceived + 1)
