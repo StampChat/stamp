@@ -9,7 +9,8 @@
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue src",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "quasar test --unit jest",
+    "dev": "quasar dev -m electron"
   },
   "dependencies": {
     "@chenfengyuan/vue-qrcode": "^1.0.2",
