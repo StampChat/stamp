@@ -1,5 +1,5 @@
 <h1 align="center">
-  IRCash
+  Stamp
 </h1>
 
 <p align="center">
@@ -16,11 +16,11 @@
   </a>
 </p>
 
-**WARNING: IRCash is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the Bitcoin Cash testnet as to protect against lost funds.**
+**WARNING: Stamp is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the Bitcoin Cash testnet as to protect against lost funds.**
 
 ## Install from Binary
 
-1. Download the appropriate binary for your machine from the [latest releases](https://github.com/cashweb/ircash/releases).
+1. Download the appropriate binary for your machine from the [latest releases](https://github.com/cashweb/stamp/releases).
 2. Unzip your package.
 3. Run it.
 
