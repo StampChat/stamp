@@ -40,7 +40,7 @@
       <!-- Reply box -->
       <div>
         <q-resize-observer @resize="onResizeReply" />
-        <div class='q-pa-sm' v-if='getCurrentActiveReply'>
+        <div class='q-pa-sm' v-if='activeChat && getCurrentActiveReply'>
           <div class='q-pa-sm bg-secondary row' style='border-radius: 5px;'>
             <chat-message-reply class='col' :item="replyItem" />
             <q-btn dense flat color="accent" icon="close" @click='setCurrentReply({ addr: activeChat, index: null })' />
@@ -144,8 +144,10 @@ export default {
     },
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
-      const scrollTarget = scrollArea.getScrollTarget()
-      this.$nextTick(() => scrollArea.setScrollPosition(scrollTarget.scrollHeight, scrollDuration))
+      if (scrollArea) {
+        const scrollTarget = scrollArea.getScrollTarget()
+        this.$nextTick(() => scrollArea.setScrollPosition(scrollTarget.scrollHeight, scrollDuration))
+      }
     },
     onResizeInput (size) {
       this.inputHeight = size.height
