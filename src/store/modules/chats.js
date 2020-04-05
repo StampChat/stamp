@@ -637,7 +637,7 @@ export default {
         // If addr data doesn't exist then add it
         let kind = entry.getKind()
         if (kind === 'reply') {
-          let payloadDigest = Buffer.from(entry.entryData())
+          let payloadDigest = Buffer.from(entry.getEntryData())
           newMsg.items.push({
             type: 'reply',
             payloadDigest
