@@ -43,7 +43,7 @@
         <div class='q-pa-sm' v-if='getCurrentActiveReply'>
           <div class='q-pa-sm bg-secondary row' style='border-radius: 5px;'>
             <chat-message-reply class='col' :item="replyItem" />
-            <q-btn dense flat color="accent" icon="close" @click='setCurrentReply({ addr: activeChat, index: undefined })' />
+            <q-btn dense flat color="accent" icon="close" @click='setCurrentReply({ addr: activeChat, index: null })' />
           </div>
       </div>
       </div>
