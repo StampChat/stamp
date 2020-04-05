@@ -150,7 +150,7 @@ class RelayClient {
     return acceptancePrice
   }
 
-  async getPayload (addr, token, digest) {
+  async getRawPayload (addr, token, digest) {
     let url = `${this.httpScheme}://${this.url}/payloads/${addr}`
     let hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
     let response = await axios({
@@ -164,7 +164,12 @@ class RelayClient {
       },
       responseType: 'arraybuffer'
     })
-    let payload = messaging.Payload.deserializeBinary(response.data)
+    return response.data
+  }
+
+  async getPayload (addr, token, digest) {
+    let rawPayload = this.getRawPayload(addr, token, digest)
+    let payload = messaging.Payload.deserializeBinary(rawPayload)
     return payload
   }
 

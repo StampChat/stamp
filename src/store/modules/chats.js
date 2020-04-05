@@ -499,30 +499,30 @@ export default {
       const myAddress = rootGetters['wallet/getMyAddressStr']
       const outbound = (senderAddr === myAddress)
 
-      const rawPayload = message.getSerializedPayload()
+      const rawPayloadFromServer = message.getSerializedPayload()
       const payloadDigestFromServer = message.getPayloadDigest()
-      let payload
 
-      if (payloadDigestFromServer.length === 0 && rawPayload.length === 0) {
+      if (payloadDigestFromServer.length === 0 && rawPayloadFromServer.length === 0) {
         // TODO: Handle
         console.error('Missing required fields')
         return
       }
 
       // Get payload if serialized payload is missing
-      if (rawPayload.length === 0) {
+      let rawPayload
+      if (rawPayloadFromServer.length === 0) {
         // Get relay client
         let relayClient = rootGetters['relayClient/getClient']
         try {
           let token = rootGetters['relayClient/getToken']
-          payload = await relayClient.getPayload(senderAddr, token, payloadDigestFromServer)
+          rawPayload = new Uint8Array(await relayClient.getRawPayload(senderAddr, token, payloadDigestFromServer))
         } catch (err) {
           console.error(err)
           // TODO: Handle
           return
         }
       } else {
-        payload = messaging.Payload.deserializeBinary(rawPayload)
+        rawPayload = rawPayloadFromServer
       }
 
       const payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
@@ -531,6 +531,7 @@ export default {
         return
       }
 
+      const payload = messaging.Payload.deserializeBinary(rawPayload)
       const destinationRaw = payload.getDestination()
       const destPubKey = cashlib.PublicKey.fromBuffer(destinationRaw)
       const destinationAddr = destPubKey.toAddress('testnet').toCashAddress()
