@@ -1,13 +1,13 @@
 import messaging from '../../relay/messaging_pb'
 import stealth from '../../relay/stealth_pb'
-import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey } from '../../relay/crypto'
+import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
 import Vue from 'vue'
 import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../utils/wallet'
-import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage } from '../../relay/constructors'
+import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage, constructOutpointDigest } from '../../relay/constructors'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -554,6 +554,8 @@ export default {
         }
       }
 
+      let identityPrivKey = rootGetters['wallet/getIdentityPrivKey']
+
       let scheme = payload.getScheme()
       let entriesRaw
       if (scheme === 0) {
@@ -563,14 +565,13 @@ export default {
 
         let ephemeralPubKeyRaw = payload.getEphemeralPubKey()
         let ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
-        let privKey = rootGetters['wallet/getIdentityPrivKey']
         if (!outbound) {
-          entriesRaw = decrypt(entriesCipherText, privKey, senderPubKey, ephemeralPubKey)
+          entriesRaw = decrypt(entriesCipherText, identityPrivKey, senderPubKey, ephemeralPubKey)
         } else {
           let ephemeralPrivKeyEncrypted = payload.getEphemeralPrivKey()
           let entriesDigest = cashlib.crypto.Hash.sha256(entriesCipherText)
-          let ephemeralPrivKey = decryptEphemeralKey(ephemeralPrivKeyEncrypted, privKey, entriesDigest)
-          entriesRaw = decryptWithEphemPrivKey(entriesCipherText, ephemeralPrivKey, privKey, destPubKey)
+          let ephemeralPrivKey = decryptEphemeralKey(ephemeralPrivKeyEncrypted, identityPrivKey, entriesDigest)
+          entriesRaw = decryptWithEphemPrivKey(entriesCipherText, ephemeralPrivKey, identityPrivKey, destPubKey)
         }
       } else {
         // TODO: Raise error
@@ -592,14 +593,16 @@ export default {
             vouts
           })
           for (let j in vouts) {
-            let outputIndex = vouts[j]
+            let outputIndex = vouts[j] // NOTE: This should be j, not vouts[j] otherwise we can't randomize the output order in the wallet.
+            // Also note, we should use an HD key here.s
             let output = stampTx.outputs[outputIndex]
             let satoshis = output.satoshis
             let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
+            const outpointDigest = constructOutpointDigest(i, outputIndex, payloadDigest)
+            const privKey = constructStampPrivKey(outpointDigest, identityPrivKey)
             let stampOutput = {
               address,
-              outputIndex,
-              stampIndex: i,
+              privKey,
               satoshis,
               txId,
               type: 'stamp',
@@ -667,14 +670,17 @@ export default {
           // Add stealth output
           let output = tx.outputs[0]
           let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
-          let ephemeralPubKey = stealthMessage.getEphemeralPubKey()
+          let ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
+          const ephemeralPubKey = PublicKey(ephemeralPubKeyRaw)
+          const privKey = constructStealthPrivKey(ephemeralPubKey, identityPrivKey)
+
           let stealthOutput = {
             address,
             outputIndex: 0, // TODO: 0 is always stealth output, change this assumption?
             satoshis: output.satoshis,
             txId,
             type: 'stealth',
-            ephemeralPubKey
+            privKey
           }
           dispatch('wallet/addUTXO', stealthOutput, { root: true })
           newMsg.items.push({
