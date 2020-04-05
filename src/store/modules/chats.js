@@ -45,6 +45,9 @@ export default {
       }
       return undefined
     },
+    getMessage: (state) => (addr, index) => {
+      return state.data[addr].messages[index]
+    },
     containsMessage: (state) => (addr, index) => {
       if (addr in state.data) {
         return (index in state.data[addr].messages)
