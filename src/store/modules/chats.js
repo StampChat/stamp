@@ -595,25 +595,23 @@ export default {
       }
 
       // Add UTXO
-      let stampOutpoints = message.getStampOutpointsList()
-      let outpoints = []
+      const stampOutpoints = message.getStampOutpointsList()
+      const outpoints = []
 
       if (!outbound) {
-        for (let i in stampOutpoints) {
-          let stampOutpoint = stampOutpoints[i]
-          let stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
-          let stampTx = cashlib.Transaction(stampTxRaw)
-          let txId = stampTx.hash
-          let vouts = stampOutpoint.getVoutsList()
+        for (const [i, stampOutpoint] of stampOutpoints.entries()) {
+          const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
+          const stampTx = cashlib.Transaction(stampTxRaw)
+          const txId = stampTx.hash
+          const vouts = stampOutpoint.getVoutsList()
           outpoints.push({
             stampTx,
             vouts
           })
-          for (let j in vouts) {
-            let outputIndex = vouts[j]
-            let output = stampTx.outputs[outputIndex]
-            let satoshis = output.satoshis
-            let address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
+          for (const [, outputIndex] of vouts.entries()) {
+            const output = stampTx.outputs[outputIndex]
+            const satoshis = output.satoshis
+            const address = output.script.toAddress('testnet') // TODO: Make generic
             const outpointDigest = constructOutpointDigest(i, outputIndex, payloadDigest) // NOTE: This should be j, not vouts[j] otherwise we can't randomize the output order in the wallet.
             // Also note, we should use an HD key here.
             const privKey = constructStampPrivKey(outpointDigest, identityPrivKey)
@@ -679,12 +677,12 @@ export default {
           const ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
           const stealthHDPrivKey = constructStealthPrivKey(ephemeralPubKey, identityPrivKey)
           let totalSatoshis = 0
-          for (const [i, outpoint] of Object.entries(outpointsList)) {
+          for (const [i, outpoint] of outpointsList.entries()) {
             const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
             const stealthTx = cashlib.Transaction(stealthTxRaw)
             const txId = stealthTx.hash
             const vouts = outpoint.getVoutsList()
-            for (const [j, outputIndex] of Object.entries(vouts)) {
+            for (const [j, outputIndex] of vouts.entries()) {
               const output = stealthTx.outputs[outputIndex]
               const satoshis = output.satoshis
 
@@ -708,8 +706,8 @@ export default {
               // HASH160(SHA256(point)) ourself
               // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
               const computedAddress = new PublicKey(cashlib.crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress('testnet')
-              if (!address.toBuffer().equals(computedAddress.toBuffer)) {
-                console.err('invalid stealth address, ignoring')
+              if (!address.toBuffer().equals(computedAddress.toBuffer())) {
+                console.error('invalid stealth address, ignoring')
                 continue
               }
               // total up the satoshis only if we know the txn was valid
