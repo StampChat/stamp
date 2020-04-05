@@ -677,27 +677,49 @@ export default {
           const outpointsList = stealthMessage.getOutpointsList()
           const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
           const ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
+          const stealthHDPrivKey = constructStealthPrivKey(ephemeralPubKey, identityPrivKey)
           let totalSatoshis = 0
-          for (const [, outpoint] of Object.entries(outpointsList)) {
+          for (const [i, outpoint] of Object.entries(outpointsList)) {
             const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
             const stealthTx = cashlib.Transaction(stealthTxRaw)
             const txId = stealthTx.hash
             const vouts = outpoint.getVoutsList()
-            for (const outputIndex of vouts) {
+            for (const [j, outputIndex] of Object.entries(vouts)) {
               const output = stealthTx.outputs[outputIndex]
               const satoshis = output.satoshis
-              totalSatoshis += satoshis
+
               if (!outbound) {
-                continue
                 // We don't want to add these to the wallet, but we do want the total
+                // We also can't compute the private key.... So the below address check would
+                // error
+
+                // Assume our output was correct and add to the total
+                totalSatoshis += satoshis
+                continue
               }
-              const outputPrivKey = constructStealthPrivKey(ephemeralPubKey, identityPrivKey)
-              const address = output.script.toAddress('testnet').toLegacyAddress() // TODO: Make generic
+              const outpointPrivKey = stealthHDPrivKey
+                .deriveChild(44)
+                .deriveChild(145)
+                .deriveChild(i)
+                .deriveChild(j)
+                .privateKey
+              const address = output.script.toAddress('testnet') // TODO: Make generic
+              // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
+              // HASH160(SHA256(point)) ourself
+              // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
+              const computedAddress = new PublicKey(cashlib.crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress('testnet')
+              if (!address.toBuffer().equals(computedAddress.toBuffer)) {
+                console.err('invalid stealth address, ignoring')
+                continue
+              }
+              // total up the satoshis only if we know the txn was valid
+              totalSatoshis += satoshis
+
               const stampOutput = {
                 address,
                 satoshis,
                 outputIndex,
-                privKey: outputPrivKey,
+                privKey: outpointPrivKey,
                 txId,
                 type: 'stealth',
                 payloadDigest
