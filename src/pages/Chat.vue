@@ -12,7 +12,7 @@
       <q-scroll-area
         ref="chatScroll"
         class="q-px-md row"
-        :style="`background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - ${chatHeight}px - ${replyHeight}px - ${tabHeight}px);`"
+        :style="`background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - ${inputHeight}px - ${replyHeight}px - ${tabHeight}px);`"
       >
         <q-chat-message
           class='q-py-sm'
@@ -50,7 +50,7 @@
 
       <!-- Message box -->
       <div class="row">
-        <q-resize-observer @resize="onResizeChat" />
+        <q-resize-observer @resize="onResizeInput" />
         <q-toolbar class="bg-white q-pl-none">
           <q-btn
             dense
@@ -119,7 +119,7 @@ export default {
   },
   data () {
     return {
-      chatHeight: 100,
+      inputHeight: 100,
       replyHeight: 0,
       sendFileOpen: false,
       bottom: true,
@@ -147,8 +147,8 @@ export default {
       const scrollTarget = scrollArea.getScrollTarget()
       this.$nextTick(() => scrollArea.setScrollPosition(scrollTarget.scrollHeight, scrollDuration))
     },
-    onResizeChat (size) {
-      this.chatHeight = size.height
+    onResizeInput (size) {
+      this.inputHeight = size.height
     },
     onResizeReply (size) {
       this.replyHeight = size.height
