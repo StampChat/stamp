@@ -29,7 +29,18 @@ export const constructStealthTransaction = async function (ephemeralPrivKey, des
   // Add ephemeral output
   // NOTE: We're only doing 1 stealth txn, and 1 output for now.
   // But the spec should allow doing confidential amounts.
-  const stealthAddress = constructStealthPubKey(ephemeralPrivKey, destPubKey).toAddress('testnet')
+  const transactionNumber = 0// This should be the index of the transaction in the outpoint list
+  const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
+  const stealthHDPubKey = constructStealthPubKey(ephemeralPrivKey, destPubKey)
+  const stealthPubKey = stealthHDPubKey
+    .deriveChild(44)
+    .deriveChild(145)
+    .deriveChild(transactionNumber)
+    .deriveChild(outputNumber)
+    .publicKey
+
+  const stealthAddress = cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(stealthPubKey.point))
+
   const stealthOutput = new cashlib.Transaction.Output({
     script: cashlib.Script(new cashlib.Address(stealthAddress)),
     satoshis: amount
