@@ -7,7 +7,7 @@ import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../utils/wallet'
-import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage, constructOutpointDigest } from '../../relay/constructors'
+import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage } from '../../relay/constructors'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -587,6 +587,10 @@ export default {
       const outpoints = []
 
       if (!outbound) {
+        const stampRootHDPrivKey = constructStampPrivKey(payloadDigest, identityPrivKey)
+          .deriveChild(44)
+          .deriveChild(145)
+
         for (const [i, stampOutpoint] of stampOutpoints.entries()) {
           const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
           const stampTx = cashlib.Transaction(stampTxRaw)
@@ -596,23 +600,39 @@ export default {
             stampTx,
             vouts
           })
-          for (const [, outputIndex] of vouts.entries()) {
+          const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
+
+          for (const [j, outputIndex] of vouts.entries()) {
             const output = stampTx.outputs[outputIndex]
             const satoshis = output.satoshis
             const address = output.script.toAddress('testnet') // TODO: Make generic
-            const outpointDigest = constructOutpointDigest(i, outputIndex, payloadDigest) // NOTE: This should be j, not vouts[j] otherwise we can't randomize the output order in the wallet.
             // Also note, we should use an HD key here.
-            const privKey = constructStampPrivKey(outpointDigest, identityPrivKey)
-            let stampOutput = {
-              address,
-              privKey,
-              satoshis,
-              txId,
-              outputIndex,
-              type: 'stamp',
-              payloadDigest
+            try {
+              const outputPrivKey = stampTxHDPrivKey
+                .deriveChild(j)
+                .privateKey
+
+              // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
+              // HASH160(SHA256(point)) ourself
+              // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
+              const computedAddress = new PublicKey(cashlib.crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress('testnet')
+              if (!address.toBuffer().equals(computedAddress.toBuffer())) {
+                console.error('invalid stamp address, ignoring')
+                continue
+              }
+              const stampOutput = {
+                address,
+                privKey: outputPrivKey,
+                satoshis,
+                txId,
+                outputIndex,
+                type: 'stamp',
+                payloadDigest
+              }
+              dispatch('wallet/addUTXO', stampOutput, { root: true })
+            } catch (err) {
+              console.error(err)
             }
-            dispatch('wallet/addUTXO', stampOutput, { root: true })
           }
         }
       }
