@@ -127,7 +127,7 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
 const constructReplyEntry = function (payloadDigest) {
   let entry = new messaging.Entry()
   entry.setKind('reply')
-  entry.setEntryData(payloadDigest)
+  entry.setEntryData(Buffer.from(payloadDigest))
   return entry
 }
 
