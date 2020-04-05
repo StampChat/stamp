@@ -30,6 +30,7 @@
       :item="item"
       :end='message.items.length === index + 1'
       :single='message.items.length === 1'
+      :address="address"
     />
 
     <div

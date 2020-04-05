@@ -4,13 +4,15 @@
       class='q-py-sm'
       v-if="item.type=='reply'"
     >
-      Reply
+      <div class='q-pa-sm bg-secondary' style='border-radius: 5px;'>
+        <chat-message-reply :item="firstItem(getMessage(address, item.payloadDigest))" />
+      </div>
     </div>
     <div
       :class="single?'q-py-none':'q-py-sm'"
       v-else-if="item.type=='text'"
     >
-      {{item.text}}
+      {{ item.text }}
     </div>
     <div
       class='q-py-sm'
@@ -54,16 +56,30 @@
 
 <script>
 import ImageDialog from '../../components/dialogs/ImageDialog'
+import ChatMessageReply from './ChatMessageReply'
+import { mapGetters } from 'vuex'
 
 export default {
-  props: ['item', 'end', 'single'],
+  props: ['item', 'end', 'single', 'address'],
   components: {
-    ImageDialog
+    ImageDialog,
+    ChatMessageReply
   },
   data () {
     return {
       imageDialog: false
     }
+  },
+  methods: {
+    firstItem (msg) {
+      const firstNonReply = msg.items.find(item => item.type !== 'reply')
+      return firstNonReply
+    }
+  },
+  computed: {
+    ...mapGetters({
+      getMessage: 'chats/getMessage'
+    })
   }
 }
 </script>
