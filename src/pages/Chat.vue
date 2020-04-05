@@ -40,9 +40,9 @@
       <!-- Reply box -->
       <div>
         <q-resize-observer @resize="onResizeReply" />
-        <div class='q-pa-sm' v-if='getCurrentReply(activeChat)'>
+        <div class='q-pa-sm' v-if='getCurrentActiveReply'>
           <div class='q-pa-sm bg-secondary row' style='border-radius: 5px;'>
-            <chat-message-reply class='col' :item="firstItem(getCurrentReply(activeChat))" />
+            <chat-message-reply class='col' :item="replyItem" />
             <q-btn dense flat color="accent" icon="close" @click='setCurrentReply({ addr: activeChat, index: undefined })' />
           </div>
       </div>
@@ -138,7 +138,7 @@ export default {
         let replyDigest = this.getCurrentReplyDigest(this.activeChat)
         this.sendMessageVuex({ addr: this.activeChat, text: this.message, replyDigest })
         this.message = ''
-        this.setCurrentReply({ addr: this.activeChat, index: undefined })
+        this.setCurrentReply({ addr: this.activeChat, index: null })
         this.$nextTick(() => this.$refs.inputBox.focus())
       }
     },
@@ -168,12 +168,6 @@ export default {
       } else {
         this.bottom = false
       }
-    },
-    firstItem (msg) {
-      if (msg) {
-        const firstNonReply = msg.items.find(item => item.type !== 'reply')
-        return firstNonReply
-      }
     }
   },
   computed: {
@@ -182,7 +176,7 @@ export default {
       getInputMessage: 'chats/getInputMessage',
       getMyProfile: 'myProfile/getMyProfile',
       getCurrentReplyDigest: 'chats/getCurrentReplyDigest',
-      getCurrentReply: 'chats/getCurrentReply'
+      getCurrentActiveReply: 'chats/getCurrentActiveReply'
     }),
     message: {
       set (text) {
@@ -191,6 +185,14 @@ export default {
       get () {
         return this.getInputMessage(this.activeChat)
       }
+    },
+    replyItem () {
+      let msg = this.getCurrentActiveReply
+      if (msg) {
+        const firstNonReply = msg.items.find(item => item.type !== 'reply')
+        return firstNonReply
+      }
+      return null
     }
   },
   watch: {

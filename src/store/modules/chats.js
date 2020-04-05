@@ -43,7 +43,14 @@ export default {
       if (currentReply) {
         return state.data[addr].messages[currentReply]
       }
-      return undefined
+      return null
+    },
+    getCurrentActiveReply (state) {
+      const currentReply = state.data[state.activeChatAddr].currentReply
+      if (currentReply) {
+        return state.data[state.activeChatAddr].messages[currentReply]
+      }
+      return null
     },
     getMessage: (state) => (addr, index) => {
       return state.data[addr].messages[index]
