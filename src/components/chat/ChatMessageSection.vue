@@ -72,8 +72,10 @@ export default {
   },
   methods: {
     firstItem (msg) {
-      const firstNonReply = msg.items.find(item => item.type !== 'reply')
-      return firstNonReply
+      if (msg) {
+        const firstNonReply = msg.items.find(item => item.type !== 'reply')
+        return firstNonReply
+      }
     }
   },
   computed: {
