@@ -11,7 +11,14 @@ export const constructStealthPubKey = function (emphemeralPrivKey, destPubKey) {
   let digestPublicKey = PrivateKey.fromBuffer(digest).toPublicKey() // H(ebG)G
 
   let stealthPublicKey = PublicKey(digestPublicKey.point.add(destPubKey.point)) // H(ebG)G + bG
-  return stealthPublicKey
+  return new cashlib.HDPublicKey({
+    publicKey: stealthPublicKey.toBuffer(),
+    depth: 0,
+    network: 'testnet',
+    childIndex: 0,
+    chainCode: digest.slice(0, 32),
+    parentFingerPrint: 0
+  })
 }
 
 export const constructStealthPrivKey = function (emphemeralPubKey, privKey) {
@@ -22,7 +29,15 @@ export const constructStealthPrivKey = function (emphemeralPubKey, privKey) {
   let digestBn = cashlib.crypto.BN.fromBuffer(digest)
 
   let stealthPrivBn = digestBn.add(privKey.bn).mod(cashlib.crypto.Point.getN()) // H(ebG) + b
-  return PrivateKey(stealthPrivBn)
+  const stealthPrivateKey = PrivateKey(stealthPrivBn)
+  return new cashlib.HDPrivateKey({
+    privateKey: stealthPrivateKey.toBuffer(),
+    depth: 0,
+    network: 'testnet',
+    childIndex: 0,
+    chainCode: digest.slice(0, 32),
+    parentFingerPrint: 0
+  })
 }
 
 export const constructStampPubKey = function (outpointDigest, destPubKey) {
