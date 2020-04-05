@@ -1,8 +1,9 @@
 import Vue from 'vue'
 import { constructStampPrivKey, constructStealthPrivKey } from '../../relay/crypto'
 import { PublicKey } from 'bitcore-lib-cash'
-import { numAddresses, numChangeAddresses, nUtxoGoal, feeUpdateTimerMilliseconds, defaultFeePerByte } from '../../utils/constants'
+import { numAddresses, numChangeAddresses } from '../../utils/constants'
 import { constructOutpointDigest } from '../../relay/constructors'
+
 import formatting from '../../utils/formatting'
 import { calcId } from '../../utils/wallet'
 
@@ -343,6 +344,7 @@ export default {
         transaction = transaction.from(utxo)
         signingKeys.push(signingKey)
 
+        // Ensure there are enough fees to cover at least one change output
         let totalFees = (transaction._estimateSize() + 34) * feePerByte
         if (transaction.outputAmount + totalFees < transaction.inputAmount) {
           break
@@ -351,45 +353,32 @@ export default {
 
       // Add change outputs
       let delta = transaction.inputAmount - transaction.outputAmount
-      let utxos = getters['getUTXOs'] // TODO: Make length getter
-      let nChangeAddresses = Math.max(Math.min(delta / (1024 + 34 * feePerByte) - 1, nUtxoGoal - Object.keys(utxos).length - 1), 0)
-      let changeAddresses = Object.keys(getters['getChangeAddresses'])
 
-      for (let i = 0; i < nChangeAddresses; i++) {
+      const changeOutputAmount = 5840 // Can pay fees a few times for a normal transaction
+      const standardUtxoSize = 34
+      let utxos = getters['getUTXOs'] // TODO: Make length getter
+      // Create 5 sized output UTXOs up until our wallet's desired utxo limit, or how many we can afford to make, whichever is smaller.
+      let changeAddresses = Object.keys(getters['getChangeAddresses'])
+      let nChangeAddresses = Math.max(Math.min(delta / (changeOutputAmount + standardUtxoSize * feePerByte), 100 - Object.keys(utxos).length, changeAddresses.length), 1)
+
+      // nChangeAddresses - 1, because we add a final change output to sweep any excess
+      for (let i = 0; i < Math.min(nChangeAddresses - 1, changeAddresses.length); i++) {
         // TODO: Randomize
         let output = new cashlib.Transaction.Output({
           script: cashlib.Script.buildPublicKeyHashOut(changeAddresses[i]).toHex(),
-          satoshis: 1024
+          satoshis: changeOutputAmount
         })
         transaction = transaction.addOutput(output)
       }
       transaction = transaction.change(changeAddresses[0])
 
       // Sign transaction
-      console.log(JSON.stringify(transaction))
       transaction = transaction.sign(signingKeys)
-      console.log(JSON.stringify(transaction))
       console.log('feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
       return { transaction, usedIDs }
     },
     async getFee ({ commit, getters, rootGetters }) {
-      let timeNow = Date.now()
-      let feeInfo = getters['getFeeInfo']
-      if (timeNow - feeInfo.lastUpdate > feeUpdateTimerMilliseconds) {
-        // Update fee
-        let electrumClient = rootGetters['electrumHandler/getClient']
-        let feePerByte
-        try {
-          feePerByte = await electrumClient.methods.blockchain_estimatefee(1) * 100_000_000 / 1000 * 1.8 // TODO: Don't do +80%
-        } catch (err) {
-          console.error(err)
-          feePerByte = defaultFeePerByte
-        }
-        commit('setFeeInfo', { feePerByte, lastUpdate: timeNow })
-        return feePerByte
-      } else {
-        return feeInfo.feePerByte
-      }
+      return 2
     }
   },
   getters: {
