@@ -515,7 +515,7 @@ export default {
         let relayClient = rootGetters['relayClient/getClient']
         try {
           let token = rootGetters['relayClient/getToken']
-          rawPayload = new Uint8Array(await relayClient.getRawPayload(senderAddr, token, payloadDigestFromServer))
+          rawPayload = new Uint8Array(await relayClient.getRawPayload(myAddress, token, payloadDigestFromServer))
         } catch (err) {
           console.error(err)
           // TODO: Handle
