@@ -686,7 +686,7 @@ export default {
               const output = stealthTx.outputs[outputIndex]
               const satoshis = output.satoshis
 
-              if (!outbound) {
+              if (outbound) {
                 // We don't want to add these to the wallet, but we do want the total
                 // We also can't compute the private key.... So the below address check would
                 // error
