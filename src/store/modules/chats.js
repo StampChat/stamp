@@ -537,15 +537,13 @@ export default {
       const destinationAddr = destPubKey.toAddress('testnet').toCashAddress()
       const identityPrivKey = rootGetters['wallet/getIdentityPrivKey']
 
+      const recipientAddress = outbound ? destinationAddr : senderAddr
+      const recipientPubKey = outbound ? destPubKey : senderPubKey
+
       // Check whether pre-existing
-      if (outbound) {
-        if (getters['containsMessage'](destinationAddr, payloadDigest)) {
-          return
-        }
-      } else {
-        if (getters['containsMessage'](senderAddr, payloadDigest)) {
-          return
-        }
+
+      if (getters['containsMessage'](recipientAddress, payloadDigest)) {
+        return
       }
 
       if (outbound && myAddress === destinationAddr) {
@@ -555,22 +553,12 @@ export default {
       }
 
       // Check whether contact exists
-      if (outbound) {
-        if (!rootGetters['contacts/isContact'](destinationAddr)) {
-          // Add dummy contact
-          dispatch('contacts/addLoadingContact', { addr: destinationAddr, pubKey: destPubKey }, { root: true })
+      if (!rootGetters['contacts/isContact'](recipientAddress)) {
+        // Add dummy contact
+        dispatch('contacts/addLoadingContact', { addr: recipientAddress, pubKey: recipientPubKey }, { root: true })
 
-          // Load contact
-          dispatch('contacts/refresh', destinationAddr, { root: true })
-        }
-      } else {
-        if (!rootGetters['contacts/isContact'](senderAddr)) {
-          // Add dummy contact
-          dispatch('contacts/addLoadingContact', { addr: senderAddr, pubKey: senderPubKey }, { root: true })
-
-          // Load contact
-          dispatch('contacts/refresh', senderAddr, { root: true })
-        }
+        // Load contact
+        dispatch('contacts/refresh', recipientAddress, { root: true })
       }
 
       let scheme = payload.getScheme()
@@ -740,11 +728,7 @@ export default {
         }
       }
 
-      if (outbound) {
-        commit('receiveMessage', { addr: destinationAddr, index: payloadDigest, newMsg })
-      } else {
-        commit('receiveMessage', { addr: senderAddr, index: payloadDigest, newMsg })
-      }
+      commit('receiveMessage', { addr: recipientAddress, index: payloadDigest, newMsg })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       let myAddressStr = rootGetters['wallet/getMyAddressStr']
