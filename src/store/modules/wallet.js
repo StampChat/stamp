@@ -65,6 +65,22 @@ export default {
         for (let addr in state.changeAddresses) {
           Vue.set(state.changeAddresses[addr], 'privKey', cashlib.PrivateKey.fromObject(state.changeAddresses[addr].privKey))
         }
+        for (const utxo of Object.values(state.utxos)) {
+          if (utxo.type === 'p2pkh') {
+            // Does not keep it's privKey with it because we like edge cases.
+            continue
+          }
+          Vue.set(utxo, 'address', cashlib.Address.fromObject(utxo.address.valueOf()))
+          Vue.set(utxo, 'privKey', cashlib.PrivateKey.fromObject(utxo.privKey.valueOf()))
+        }
+        for (const utxo of Object.values(state.frozenUTXOs)) {
+          if (utxo.type === 'p2pkh') {
+            // Does not keep it's privKey with it because we like edge cases.
+            continue
+          }
+          Vue.set(utxo, 'address', cashlib.Address.fromObject(utxo.address.valueOf()))
+          Vue.set(utxo, 'privKey', cashlib.PrivateKey.fromObject(utxo.privKey.valueOf()))
+        }
       }
     },
     refreshUTXOsByAddr (state, { addr, outputs }) {
@@ -191,19 +207,23 @@ export default {
     },
     async updateUTXOFromScriptHash ({ commit, rootGetters, getters }, scriptHash) {
       let client = rootGetters['electrumHandler/getClient']
-      var elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
-      let { address } = getters['getAddressByElectrumScriptHash'](scriptHash)
-      let outputs = elOutputs.map(elOutput => {
-        let output = {
-          txId: elOutput.tx_hash,
-          outputIndex: elOutput.tx_pos,
-          satoshis: elOutput.value,
-          type: 'p2pkh',
-          address
-        }
-        return output
-      })
-      commit('refreshUTXOsByAddr', { addr: address, outputs })
+      try {
+        var elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
+        let { address } = getters['getAddressByElectrumScriptHash'](scriptHash)
+        let outputs = elOutputs.map(elOutput => {
+          let output = {
+            txId: elOutput.tx_hash,
+            outputIndex: elOutput.tx_pos,
+            satoshis: elOutput.value,
+            type: 'p2pkh',
+            address
+          }
+          return output
+        })
+        commit('refreshUTXOsByAddr', { addr: address, outputs })
+      } catch (err) {
+        console.error('error deserializing utxo address', err, scriptHash)
+      }
     },
     async updateHDUTXOs ({ getters, dispatch }) {
       // Check HD Wallet
@@ -215,17 +235,20 @@ export default {
       // Unfreeze UTXO if confirmed to be unspent else delete
       // WARNING: This is not thread-safe, do not call when others hold the UTXO
       let client = rootGetters['electrumHandler/getClient']
-
       let utxo = getters['getFrozenUTXO'](id)
-      let scriptHash = formatting.toElectrumScriptHash(utxo.address)
-      let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
-      if (elOutputs.some(output => {
-        return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
-      })) {
+      try {
+        let scriptHash = formatting.toElectrumScriptHash(utxo.address)
+        let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
+        if (elOutputs.some(output => {
+          return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
+        })) {
         // Found utxo
-        dispatch('unfreezeUTXO', id)
-      } else {
-        dispatch('removeFrozenUTXO', id)
+          dispatch('unfreezeUTXO', id)
+        } else {
+          dispatch('removeFrozenUTXO', id)
+        }
+      } catch (err) {
+        console.error('error deserializing utxo address', err, utxo)
       }
     },
     async fixFrozenUTXOs ({ dispatch, getters, rootGetters }) {
@@ -235,15 +258,19 @@ export default {
       let frozenUTXOs = getters['getFrozenUTXOs']
       await Promise.all(Object.keys(frozenUTXOs).map(async id => {
         let utxo = frozenUTXOs[id]
-        let scriptHash = formatting.toElectrumScriptHash(utxo.address)
-        let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
-        if (elOutputs.some(output => {
-          return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
-        })) {
+        try {
+          let scriptHash = formatting.toElectrumScriptHash(utxo.address.valueOf())
+          let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
+          if (elOutputs.some(output => {
+            return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
+          })) {
           // Found utxo
-          dispatch('unfreezeUTXO', id)
-        } else {
-          dispatch('removeFrozenUTXO', id)
+            dispatch('unfreezeUTXO', id)
+          } else {
+            dispatch('removeFrozenUTXO', id)
+          }
+        } catch (err) {
+          console.error('error deserializing utxo address', err, utxo)
         }
       }))
     },
@@ -255,13 +282,17 @@ export default {
       await Promise.all(Object.keys(utxos).map(async id => {
         let utxo = utxos[id]
         if (utxo.type !== 'p2pkh') {
-          let scriptHash = formatting.toElectrumScriptHash(utxo.address)
-          let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
-          if (!elOutputs.some(output => {
-            return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
-          })) {
+          try {
+            let scriptHash = formatting.toElectrumScriptHash(utxo.address)
+            let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
+            if (!elOutputs.some(output => {
+              return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
+            })) {
             // No such utxo
-            dispatch('removeUTXO', id)
+              dispatch('removeUTXO', id)
+            }
+          } catch (err) {
+            console.error('error deserializing utxo address', err, utxo)
           }
         }
       }))
