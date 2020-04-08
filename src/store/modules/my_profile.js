@@ -1,30 +1,38 @@
 export default {
   namespaced: true,
-  state: { name: null, bio: null, avatar: null, acceptancePrice: null },
+  state: { profile: { name: null, bio: null, avatar: null }, inbox: { acceptancePrice: null } },
   getters: {
-    getMyProfile (state) {
+    getRelayData (state) {
       return state
     },
-    getAcceptancePrice (state) {
-      return state.acceptancePrice
+    getProfile (state) {
+      return state.profile
+    },
+    getInbox (state) {
+      return state.inbox
     }
   },
   mutations: {
-    setMyProfile (state, { name, avatar, bio }) {
-      state.name = name
-      state.avatar = avatar
-      state.bio = bio
+    setProfile (state, profile) {
+      state.profile = profile
     },
-    setAcceptancePrice (state, fee) {
-      state.acceptancePrice = fee
+    setInbox (state, inbox) {
+      state.inbox = inbox
+    },
+    setRelayData (state, relayData) {
+      state.profile = relayData.profile
+      state.inbox = relayData.inbox
     }
   },
   actions: {
-    setMyProfile ({ commit }, profile) {
-      commit('setMyProfile', profile)
+    setProfile ({ commit }, profile) {
+      commit('setProfile', profile)
     },
-    setAcceptancePrice ({ commit }, fee) {
-      commit('setAcceptancePrice', fee)
+    setInbox ({ commit }, inbox) {
+      commit('setInbox', inbox)
+    },
+    setRelayData ({ commit }, relayData) {
+      commit('setRelayData', relayData)
     }
   }
 
