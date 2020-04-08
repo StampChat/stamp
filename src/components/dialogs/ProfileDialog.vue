@@ -30,7 +30,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex'
-import RelayClient from '../../relay/client'
+import Profile from '../Profile'
 import { constructProfileMetadata, constructPriceFilter } from '../../relay/constructors'
 import {
   relayDisconnectedNotify
@@ -42,19 +42,22 @@ export default {
       relayData: this.getRelayData()
     }
   },
+  components: {
+    Profile
+  },
   methods: {
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
       getMyAddress: 'wallet/getMyAddress',
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',
+      getClient: 'relayClient/getClient',
       getRelayData: 'myProfile/getRelayData',
-      setRelayData: 'myProfile/getRelayData',
       getToken: 'relayClient/getToken'
     }),
-    ...mapActions({ setProfile: 'myProfile/setProfile' }),
+    ...mapActions({ setRelayData: 'myProfile/setRelayData' }),
     async updateRelayData () {
       // Set profile
-      let client = new RelayClient(this.relayUrl)
+      let client = this.getClient()
 
       // Create metadata
       let idPrivKey = this.getIdentityPrivKey()
