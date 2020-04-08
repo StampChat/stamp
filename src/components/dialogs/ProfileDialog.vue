@@ -33,7 +33,8 @@ import { mapActions, mapGetters } from 'vuex'
 import Profile from '../Profile'
 import { constructProfileMetadata, constructPriceFilter } from '../../relay/constructors'
 import {
-  relayDisconnectedNotify
+  relayDisconnectedNotify,
+  profileTooLargeNotify
 } from '../../utils/notifications'
 export default {
   props: ['currentProfile'],
@@ -78,6 +79,10 @@ export default {
         await client.putProfile(idAddress.toLegacyAddress(), metadata, token)
       } catch (err) {
         console.error(err)
+        if (err.response.status === 413) {
+          profileTooLargeNotify()
+          throw err
+        }
         relayDisconnectedNotify()
         throw err
       }
