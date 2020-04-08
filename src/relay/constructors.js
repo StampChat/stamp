@@ -9,11 +9,20 @@ import wrapper from '../pop/wrapper_pb'
 
 const cashlib = require('bitcore-lib-cash')
 
-export const constructStampTransaction = async function (outpointDigest, destPubKey, amount) {
+export const constructStampTransaction = async function (payloadDigest, destPubKey, amount) {
   // Stamp output
-  let stampAddress = constructStampPubKey(outpointDigest, destPubKey).toAddress('testnet')
+  let stampHDPubKey = constructStampPubKey(payloadDigest, destPubKey)
+  // Assuming one txn and one output for now.
+  const transactionNumber = 0// This should be the index of the transaction in the outpoint list
+  const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
+
+  const outpointPubKey = stampHDPubKey.deriveChild(44)
+    .deriveChild(145)
+    .deriveChild(transactionNumber)
+    .deriveChild(outputNumber)
+    .publicKey
   let stampOutput = new cashlib.Transaction.Output({
-    script: cashlib.Script(new cashlib.Address(stampAddress)),
+    script: cashlib.Script(new cashlib.Address(outpointPubKey)),
     satoshis: amount
   })
 
@@ -54,20 +63,6 @@ export const constructStealthTransaction = async function (ephemeralPrivKey, des
   return [{ transaction, vouts: [0], usedIDs }]
 }
 
-export const constructOutpointDigest = function (stampNum, vout, payloadDigest) {
-  // TODO: Bounds checks?
-  let stampNumRaw = new Uint8Array(new Uint32Array([stampNum]).buffer)
-  let voutRaw = new Uint8Array(new Uint32Array([vout]).buffer)
-
-  let preimage = new Uint8Array(8 + payloadDigest.length)
-  preimage.set(stampNumRaw)
-  preimage.set(voutRaw, 4)
-  preimage.set(payloadDigest, 8)
-
-  let digest = cashlib.crypto.Hash.sha256(preimage)
-  return digest
-}
-
 export const constructMessage = async function (payload, privKey, destPubKey, stampAmount) {
   let serializedPayload = payload.serializeBinary()
   let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
@@ -81,8 +76,7 @@ export const constructMessage = async function (payload, privKey, destPubKey, st
   message.setSignature(sig)
   message.setSerializedPayload(serializedPayload)
 
-  let outpointDigest = constructOutpointDigest(0, 0, payloadDigest)
-  let { transaction, usedIDs } = await constructStampTransaction(outpointDigest, destPubKey, stampAmount)
+  let { transaction, usedIDs } = await constructStampTransaction(payloadDigest, destPubKey, stampAmount)
   let rawStampTx = transaction.toBuffer()
   let stampOutpoints = new messaging.StampOutpoints()
   stampOutpoints.setStampTx(rawStampTx)
