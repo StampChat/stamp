@@ -2,68 +2,56 @@ import { Notify } from 'quasar'
 import { notificationTimeout } from './constants'
 const remote = require('electron').remote
 
-export const chainTooLongNotify = function () {
+// Error notifications
+
+const negativeNotify = function (text) {
   Notify.create({
-    message: '<div class="text-center"> Transaction chain too long or relay fee too low. </div>',
+    message: '<div class="text-center"> ' + text + ' </div>',
     html: true,
     color: 'negative'
   })
+}
+
+export const chainTooLongNotify = function () {
+  negativeNotify('Transaction chain too long or relay fee too low.')
 }
 
 export const insuffientFundsNotify = function () {
-  Notify.create({
-    message: '<div class="text-center"> Insufficent funds. </div>',
-    html: true,
-    color: 'negative'
-  })
+  negativeNotify('Insufficent funds.')
 }
 
 export const walletDisconnectedNotify = function () {
-  Notify.create({
-    message: '<div class="text-center"> Unable to contact wallet server. </div>',
-    html: true,
-    color: 'negative'
-  })
+  negativeNotify('Unable to contact wallet server.')
 }
 
 export const keyserverDisconnectedNotify = function () {
-  Notify.create({
-    message: '<div class="text-center"> Unable to contact keyserver. </div>',
-    html: true,
-    color: 'negative'
-  })
+  negativeNotify('Unable to contact keyserver.')
 }
 
 export const relayDisconnectedNotify = function () {
-  Notify.create({
-    message: '<div class="text-center"> Unable to contact relay server. </div>',
-    html: true,
-    color: 'negative'
-  })
+  negativeNotify('Unable to contact relay server.')
 }
 
 export const paymentFailureNotify = function () {
+  negativeNotify('Payment was rejected.')
+}
+
+// Info notifications
+
+const infoNotify = function (text) {
   Notify.create({
-    message: '<div class="text-center"> Payment was rejected. </div>',
+    message: '<div class="text-center"> ' + text + ' </div>',
     html: true,
-    color: 'negative'
+    color: 'accent'
   })
 }
 
 export const addressCopiedNotify = function () {
-  Notify.create({
-    message: '<div class="text-center"> Address copied to clipboard </div>',
-    html: true,
-    color: 'accent'
-  })
+  infoNotify('Address copied to clipboard.')
 }
 
 export const seedCopiedNotify = function () {
-  Notify.create({
-    message: '<div class="text-center"> Seed phrase copied to clipboard </div>',
-    html: true,
-    color: 'accent'
-  })
+  infoNotify('Seed phrase copied to clipboard.')
 }
 
 export const sentTransactionNotify = function (tx) {
