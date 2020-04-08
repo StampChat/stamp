@@ -41,20 +41,33 @@ export const constructStealthPrivKey = function (emphemeralPubKey, privKey) {
 }
 
 export const constructStampPubKey = function (outpointDigest, destPubKey) {
-  let digestPrivateKey = PrivateKey.fromBuffer(outpointDigest)
-  let digestPublicKey = digestPrivateKey.toPublicKey()
-
-  let stampPoint = digestPublicKey.point.add(destPubKey.point)
-  let stampPublicKey = PublicKey.fromPoint(stampPoint)
-
-  return stampPublicKey
+  const digestPrivateKey = PrivateKey.fromBuffer(outpointDigest)
+  const digestPublicKey = digestPrivateKey.toPublicKey()
+  const stampPoint = digestPublicKey.point.add(destPubKey.point)
+  const stampPublicKey = PublicKey.fromPoint(stampPoint)
+  return new cashlib.HDPublicKey({
+    publicKey: stampPublicKey.toBuffer(),
+    depth: 0,
+    network: 'testnet',
+    childIndex: 0,
+    chainCode: outpointDigest.slice(0, 32),
+    parentFingerPrint: 0
+  })
 }
 
 export const constructStampPrivKey = function (outpointDigest, privKey) {
-  let digestBn = cashlib.crypto.BN.fromBuffer(outpointDigest)
-  let stampPrivBn = privKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN())
-  let stampPrivKey = PrivateKey(stampPrivBn)
-  return stampPrivKey
+  const digestBn = cashlib.crypto.BN.fromBuffer(outpointDigest)
+  const stampPrivBn = privKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN())
+  const stampPrivKey = PrivateKey(stampPrivBn)
+  const key = new cashlib.HDPrivateKey({
+    privateKey: stampPrivKey.toBuffer(),
+    depth: 0,
+    network: 'testnet',
+    childIndex: 0,
+    chainCode: outpointDigest.slice(0, 32),
+    parentFingerPrint: 0
+  })
+  return key
 }
 
 export const constructStampAddress = function (outpointDigest, privKey) {
