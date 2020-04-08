@@ -36,6 +36,10 @@ export const paymentFailureNotify = function () {
   negativeNotify('Payment was rejected.')
 }
 
+export const profileTooLargeNotify = function () {
+  negativeNotify('Profile is too large.')
+}
+
 // Info notifications
 
 const infoNotify = function (text) {

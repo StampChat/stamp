@@ -193,7 +193,8 @@ import {
   insuffientFundsNotify,
   paymentFailureNotify,
   relayDisconnectedNotify,
-  walletDisconnectedNotify
+  walletDisconnectedNotify,
+  profileTooLargeNotify
 } from '../utils/notifications'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
@@ -511,6 +512,10 @@ export default {
         await client.putProfile(idAddress.toLegacyAddress(), metadata, token)
       } catch (err) {
         console.error(err)
+        if (err.response.status === 413) {
+          profileTooLargeNotify()
+          throw err
+        }
         relayDisconnectedNotify()
         throw err
       }
@@ -523,7 +528,6 @@ export default {
     nextSettings () {
       this.updateInterval(this.settings.networking.updateInterval * 1_000)
       this.$router.push('/')
-      console.log('pushed')
     }
   },
   computed: {
