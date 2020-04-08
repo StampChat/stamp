@@ -185,7 +185,7 @@ import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
 import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
-import ProfileStep from '../components/setup/ProfileStep.vue'
+import ProfileStep from '../components/Profile.vue'
 import SettingsStep from '../components/Settings.vue'
 import { defaultRelayData, defaultRelayUrl, electrumURL, electrumPort, electrumProtocol } from '../utils/constants'
 import {
@@ -240,13 +240,12 @@ export default {
   },
   methods: {
     ...mapActions({
-      setMyProfile: 'myProfile/setMyProfile',
+      setRelayData: 'myProfile/setRelayData',
       setXPrivKey: 'wallet/setXPrivKey',
       initAddresses: 'wallet/initAddresses',
       startListeners: 'wallet/startListeners',
       updateHDUTXOs: 'wallet/updateHDUTXOs',
       setRelayToken: 'relayClient/setToken',
-      setAcceptancePrice: 'myProfile/setAcceptancePrice',
       newElectrumClient: 'electrumHandler/new',
       electrumConnect: 'electrumHandler/connect',
       electrumKeepAlive: 'electrumHandler/keepAlive',
@@ -517,17 +516,14 @@ export default {
       }
 
       // Apply locally
-      this.setAcceptancePrice(acceptancePrice)
-      let profile = this.relayData.profile
-      profile.acceptancePrice = acceptancePrice
-
       this.setRelayClient(client)
-      this.setMyProfile(profile)
+      this.setRelayData(this.relayData)
       this.setSeedPhrase(this.seed)
     },
     nextSettings () {
       this.updateInterval(this.settings.networking.updateInterval * 1_000)
       this.$router.push('/')
+      console.log('pushed')
     }
   },
   computed: {

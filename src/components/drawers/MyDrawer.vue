@@ -10,20 +10,15 @@
   >
     <drawer-contact-card
       :address="getMyAddressStr"
-      :name="getMyProfile.name"
-      :bio="getMyProfile.bio"
-      :avatar="getMyProfile.avatar"
-      :acceptancePrice="getMyProfile.acceptancePrice"
+      :name="getProfile.name"
+      :bio="getProfile.bio"
+      :avatar="getProfile.avatar"
+      :acceptancePrice="getInbox.acceptancePrice"
     />
 
     <!-- New contact dialog -->
     <q-dialog v-model="newContactOpen">
       <new-contact-dialog />
-    </q-dialog>
-
-    <!-- Set filter dialog -->
-    <q-dialog v-model="setFilterOpen">
-      <set-filter-dialog :oldPrice="getMyProfile.acceptancePrice" />
     </q-dialog>
 
     <!-- Contact book dialog -->
@@ -43,7 +38,7 @@
 
     <!-- Profile dialog -->
     <q-dialog v-model="profileOpen">
-      <profile-dialog :currentProfile="getMyProfile" />
+      <profile-dialog :currentProfile="getProfile" />
     </q-dialog>
 
     <!-- Settings dialog -->
@@ -116,20 +111,6 @@
         <q-item
           clickable
           v-ripple
-          @click="setFilterOpen = true"
-        >
-          <q-item-section avatar>
-            <q-icon name="filter_list" />
-          </q-item-section>
-
-          <q-item-section>
-            Set Filter
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          clickable
-          v-ripple
           @click="profileOpen = true"
         >
           <q-item-section avatar>
@@ -164,7 +145,6 @@
 import { mapGetters, mapActions } from 'vuex'
 import DrawerContactCard from './DrawerContactCard.vue'
 import NewContactDialog from '../dialogs/NewContactDialog.vue'
-import SetFilterDialog from '../dialogs/SetFilterDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import WalletDialog from '../dialogs/WalletDialog.vue'
 import ProfileDialog from '../dialogs/ProfileDialog.vue'
@@ -175,7 +155,6 @@ export default {
   components: {
     DrawerContactCard,
     NewContactDialog,
-    SetFilterDialog,
     ContactBookDialog,
     WalletDialog,
     ProfileDialog,
@@ -185,7 +164,6 @@ export default {
   data () {
     return {
       newContactOpen: false,
-      setFilterOpen: false,
       sendAddressOpen: false,
       contactBookOpen: false,
       walletOpen: false,
@@ -207,7 +185,8 @@ export default {
   computed: {
     ...mapGetters({
       getDrawerOpen: 'myDrawer/getDrawerOpen',
-      getMyProfile: 'myProfile/getMyProfile',
+      getProfile: 'myProfile/getProfile',
+      getInbox: 'myProfile/getInbox',
       getMyAddressStr: 'wallet/getMyAddressStr'
     }),
     drawerOpen: {

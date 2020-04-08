@@ -157,7 +157,7 @@ export default {
     },
     getContact (outbound) {
       if (outbound) {
-        return this.getMyProfile
+        return this.getProfile
       } else {
         return this.getContactVuex(this.activeChat).profile
       }
@@ -176,7 +176,7 @@ export default {
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
       getInputMessage: 'chats/getInputMessage',
-      getMyProfile: 'myProfile/getMyProfile',
+      getProfile: 'myProfile/getProfile',
       getCurrentReplyDigest: 'chats/getCurrentReplyDigest',
       getCurrentActiveReply: 'chats/getCurrentActiveReply'
     }),
