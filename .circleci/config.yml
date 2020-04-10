@@ -13,11 +13,6 @@ jobs:
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
-          name: Pull Submodules
-          command: |
-            git submodule init
-            git submodule update --remote
-      - run:
           name: Install NPM packages
           command: yarn install
       - save_cache:
@@ -60,38 +55,28 @@ jobs:
             sudo apt install -y wine32
             sudo apt install -y wine
       - run:
-          name: Install Protoc
-          command: |
-            PROTOC_VERSION=3.11.2
-            wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.2/protoc-${PROTOC_VERSION}-linux-x86_64.zip
-            unzip protoc*.zip
-            sudo mv bin/protoc /usr/local/bin/
-      - run:
-          name: Generate Protobuffers
-          command: bash generate_protobufs.sh
-      - run:
           name: Install Quasar
           command: sudo yarn global add @quasar/cli
       - run:
           name: Build Linux
           command: |
-            quasar build -m electron -b builder -T linux
+            quasar build -m electron -b builder -T linux --publish never
             mkdir packages_uncompressed
             VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
             mv ./dist/electron/Packaged/stamp_${VERSION}_amd64.snap ./packages_uncompressed/stamp-${VERSION}-amd64.snap
-            mv ./dist/electron/Packaged/stamp-${VERSION}.AppImage ./packages_uncompressed
+            mv ./dist/electron/Packaged/Stamp-${VERSION}.AppImage ./packages_uncompressed
       - run:
           name: Build Windows 32-bit
           command: |
-            quasar build -m electron -b builder -T win32
+            quasar build -m electron -b builder -T win32 --publish never
             VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-            mv "./dist/electron/Packaged/stamp Setup ${VERSION}.exe" ./packages_uncompressed/stamp-${VERSION}-amd64-32bit.exe
+            mv "./dist/electron/Packaged/Stamp Setup ${VERSION}.exe" ./packages_uncompressed/stamp-${VERSION}-amd64-32bit.exe
       - run:
           name: Build Windows 64-bit
           command: |
-            quasar build -m electron -b builder -T win
+            quasar build -m electron -b builder -T win --publish never
             VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-            mv "./dist/electron/Packaged/stamp Setup ${VERSION}.exe" ./packages_uncompressed/stamp-${VERSION}-amd64-32bit.exe
+            mv "./dist/electron/Packaged/Stamp Setup ${VERSION}.exe" ./packages_uncompressed/stamp-${VERSION}-amd64-64bit.exe
       - persist_to_workspace:
           root: .
           paths:
@@ -119,7 +104,7 @@ jobs:
             name: Publish Release on GitHub
             command: |
               VERSION=$(grep -o '"version": "[^"]*' package.json | grep -o '[^"]*$')
-              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -draft -delete ${VERSION} ./packages
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -draft -replace ${CIRCLE_TAG} ./packages
 
 workflows:
   version: 2

@@ -175,7 +175,8 @@ module.exports = function (ctx) {
         appId: 'stamp',
         extraFiles: [
           { from: 'src-electron/icons', to: 'resources/icons' }
-        ]
+        ],
+        publish: []
       },
 
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
