@@ -36,11 +36,6 @@ yarn-error.log*
 # Test coverage
 /test/jest/coverage
 
-# Auto-generated protobuf files
-src/keyserver/*_pb.js
-src/relay/*_pb.js
-src/pop/*_pb.js
-
 # Auto-generated icons
 src-electron/icons
 src/statics/icons/
