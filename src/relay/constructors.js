@@ -8,8 +8,11 @@ import addressmetadata from '../keyserver/addressmetadata_pb'
 import wrapper from '../pop/wrapper_pb'
 
 const cashlib = require('bitcore-lib-cash')
+const assert = require('assert')
 
 export const constructStampTransaction = async function (payloadDigest, destPubKey, amount) {
+  assert(payloadDigest instanceof Buffer)
+
   // Stamp output
   let stampHDPubKey = constructStampPubKey(payloadDigest, destPubKey)
   // Assuming one txn and one output for now.
@@ -132,6 +135,8 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
 }
 
 const constructReplyEntry = function (payloadDigest) {
+  assert(payloadDigest instanceof Buffer)
+
   let entry = new messaging.Entry()
   entry.setKind('reply')
   entry.setEntryData(Buffer.from(payloadDigest))
@@ -139,6 +144,8 @@ const constructReplyEntry = function (payloadDigest) {
 }
 
 export const constructTextPayload = function (text, privKey, destPubKey, scheme, replyDigest) {
+  assert(replyDigest instanceof Buffer || !replyDigest)
+
   let entries = new messaging.Entries()
 
   // Add reply entry
@@ -165,6 +172,8 @@ export const constructTextPayload = function (text, privKey, destPubKey, scheme,
 }
 
 export const constructStealthPaymentPayload = async function (amount, memo, privKey, destPubKey, scheme, stealthTxId, replyDigest) {
+  assert(replyDigest instanceof Buffer || !replyDigest)
+
   let entries = new messaging.Entries()
 
   // Add reply entry
@@ -229,6 +238,8 @@ export const constructStealthPaymentPayload = async function (amount, memo, priv
 }
 
 export const constructImagePayload = function (image, caption, privKey, destPubKey, scheme, replyDigest) {
+  assert(replyDigest instanceof Buffer || !replyDigest)
+
   let entries = new messaging.Entries()
 
   // Add reply entry
@@ -278,7 +289,7 @@ export const constructImagePayload = function (image, caption, privKey, destPubK
   return { payload, payloadDigest }
 }
 
-export const constructPriceFilter = function (isPublic, acceptancePrice, notificationPrice, privKey) {
+export const constructPriceFilter = function (isPublic, acceptancePrice, notificationPrice) {
   // Construct PriceFilter
   let priceFilter = new filters.PriceFilter()
   priceFilter.setPublic(isPublic)
