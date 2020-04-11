@@ -56,7 +56,7 @@ export default {
 
     // Construct tx
     let feePerByte = await store.dispatch('wallet/getFee')
-    let { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs, feePerByte })
+    let { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs, feePerByte, exactOutputs: true })
     let rawTransaction = transaction.toBuffer()
 
     // Send payment and receive token

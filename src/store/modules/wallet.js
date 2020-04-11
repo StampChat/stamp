@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import assert from 'assert'
+import * as R from 'ramda'
 
 import { numAddresses, numChangeAddresses } from '../../utils/constants'
 
@@ -133,23 +133,6 @@ export default {
       let utxo = state.frozenUTXOs[id]
       Vue.delete(state.frozenUTXOs, id)
       Vue.set(state.utxos, id, utxo)
-    },
-    popFreezeUTXO (state, result) {
-      // Freeze output and simulatenously return it
-      let ids = Object.keys(state.utxos)
-      if (ids.length === 0) {
-        return
-      }
-      let lastId = ids[ids.length - 1]
-
-      // Freeze UTXO
-      let frozenUTXO = state.utxos[lastId]
-      Vue.delete(state.utxos, lastId)
-      Vue.set(state.frozenUTXOs, lastId, frozenUTXO)
-
-      // Return result
-      result.id = lastId
-      result.utxo = frozenUTXO
     },
     setFeeInfo (state, feeInfo) {
       state.feeInfo = feeInfo
@@ -320,7 +303,10 @@ export default {
         ecl.methods.blockchain_scripthash_subscribe(digestHexReversed)
       }))
     },
-    constructTransaction ({ commit, getters }, { outputs, feePerByte }) {
+    constructTransaction ({ state, commit, getters }, { outputs, feePerByte, exactOutputs = false }) {
+      const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
+      const standardInputSize = 175 // A few extra bytes
+
       let transaction = new cashlib.Transaction()
 
       // Add outputs
@@ -333,25 +319,43 @@ export default {
       let addresses = getters['getAllAddresses']
 
       let signingKeys = []
-      let usedIDs = []
-      while (true) {
-        // Atomically pop item and freeze it
-        let result = {}
-        commit('popFreezeUTXO', result)
+      let usedUtxos = []
 
-        // Throw error if no UTXO found
-        if (Object.entries(result).length === 0) {
-          // Unfreeze all UTXOs
-          usedIDs.forEach(id => {
-            commit('unfreezeUTXO', id)
-          })
-          throw Error('insufficient funds')
+      const amountRequired = transaction.outputAmount
+      const utxos = Object.values(state.utxos)
+      // Sort available UTXOs by total amount per transaction
+      const sortedUtxos = R.pipe(
+        R.groupBy(utxo => utxo.txId),
+        R.map(
+          R.pipe(
+            R.sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis),
+            (utxoGroup) => R.reduce(
+              (group, utxo) => {
+                group.satoshis += utxo.satoshis
+                group.utxos.push(utxo)
+                return group
+              }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
+            // We want a different one for each group
+          )
+        ),
+        txMap => Object.values(txMap),
+        R.sort((txA, txB) => txB.satoshis - txA.satoshis),
+        R.map(group => group.utxos),
+        R.flatten()
+      )(utxos)
+      const biggerUtxos = sortedUtxos.filter((a) => a.satoshis >= amountRequired + (transaction._estimateSize() + standardUtxoSize + standardInputSize) * feePerByte)
+      const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
+
+      let satoshis = 0
+      for (const utxo of utxoSetToUse) {
+        const txnSize = transaction._estimateSize()
+        if (satoshis > amountRequired + txnSize * feePerByte) {
+          break
         }
-        let { id, utxo } = result
-        usedIDs.push(id)
+        usedUtxos.push(utxo)
         console.log(utxo)
 
-        let addr = utxo.address
+        const addr = utxo.address
         utxo['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
         // Grab private key
         if (utxo.type === 'p2pkh') {
@@ -360,22 +364,24 @@ export default {
           signingKeys.push(utxo.privKey)
         }
         transaction = transaction.from(utxo)
-
-        // Ensure there are enough fees to cover at least one change output
-        let totalFees = (transaction._estimateSize() + 34) * feePerByte
-        if (transaction.outputAmount + totalFees < transaction.inputAmount) {
-          break
-        }
+        satoshis += utxo.satoshis
       }
+
+      if (satoshis < amountRequired) {
+        throw Error('insufficient funds')
+      }
+
+      usedUtxos.map(
+        utxo => commit('freezeUTXO', calcId(utxo))
+      )
 
       // Add change outputs using our HD wallet.  We want multiple outputs following a
       // power distribution, so we don't have to combine lots of outputs at later times
       // in order to create specific amounts.
 
-      const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
       // A good round number greater than the current dustLimit.
       // We may want to make it some computed value in the future.
-      const minimumOutputAmount = 1024
+      const minimumOutputAmount = 5120
       let changeAddresses = Object.keys(getters['getChangeAddresses'])
 
       for (const changeAddress of changeAddresses) {
@@ -408,10 +414,12 @@ export default {
 
       // Shift any remainder to other outputs randomly
       let outputIndex = -1
+      const mutableOutputs = exactOutputs ? transaction.outputs.length - outputs.length : transaction.outputs.length
       // NOTE: we don't change the number of outputs here, but we also don't want to execute anythign if there are no outputs
-      while (transaction.outputs.length > 0) {
-        outputIndex = (outputIndex + 1) % transaction.outputs.length
-        const output = transaction.outputs[outputIndex]
+      // eslint-disable-next-line no-unmodified-loop-condition
+      while (mutableOutputs > 0) {
+        outputIndex = (outputIndex + 1) % mutableOutputs
+        const output = transaction.outputs[outputIndex + (exactOutputs ? outputs.length : 0)]
         const delta = transaction.inputAmount - transaction.outputAmount
         const finalSize = transaction._estimateSize() + transaction.outputs.length // Numbers are variable length in bitcoin, changing the output amount could add a byte to any given txn.
         const properFee = Math.ceil(finalSize * feePerByte)
@@ -435,7 +443,7 @@ export default {
       console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
 
       console.log(transaction)
-      return { transaction, usedIDs }
+      return { transaction, usedIDs: usedUtxos.map(utxo => calcId(utxo)) }
     },
     async getFee ({ commit, getters, rootGetters }) {
       return 2

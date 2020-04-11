@@ -357,6 +357,8 @@ export default {
         await this.setUpKeyserver()
       } catch (err) {
         console.error(err)
+        console.error(err.response)
+
         this.$q.loading.hide()
         return
       }
@@ -490,6 +492,7 @@ export default {
         var { token } = await client.sendPayment(paymentUrl, payment)
       } catch (err) {
         console.error(err)
+        console.error(err.response)
         paymentFailureNotify()
         throw err
       }
