@@ -309,6 +309,7 @@ export default {
           type: 'reply',
           payloadDigest: replyDigest
         })
+        var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
       }
 
       const privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -316,10 +317,11 @@ export default {
       const stampAmount = getters['getStampAmount'](addr)
 
       // Construct payload
-      const { payload, payloadDigest } = constructTextPayload(text, privKey, destPubKey, 1, replyDigest)
+      const { payload, payloadDigest } = constructTextPayload(text, privKey, destPubKey, 1, replyDigestBuffer)
 
       // Add localy
-      commit('sendMessageLocal', { addr, index: payloadDigest, items, outpoints: null })
+      const payloadDigestHex = payloadDigest.toString('hex')
+      commit('sendMessageLocal', { addr, index: payloadDigestHex, items, outpoints: null })
 
       // Construct message
       try {
@@ -327,7 +329,7 @@ export default {
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
-        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'text', text } })
+        commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'text', text } })
         return
       }
       let messageSet = new messaging.MessageSet()
@@ -343,8 +345,8 @@ export default {
           stampTx,
           vouts: [0]
         }
-        commit('setOutpoints', { addr, index: payloadDigest, outpoints: [outpoint] })
-        commit('setStatus', { addr, index: payloadDigest, status: 'confirmed' })
+        commit('setOutpoints', { addr, index: payloadDigestHex, outpoints: [outpoint] })
+        commit('setStatus', { addr, index: payloadDigestHex, status: 'confirmed' })
       } catch (err) {
         console.error(err.response)
         // Unfreeze UTXOs
@@ -352,7 +354,7 @@ export default {
         usedIDs.forEach(id => dispatch('wallet/fixFrozenUTXO', id, { root: true }))
 
         chainTooLongNotify()
-        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'text', text } })
+        commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'text', text } })
       }
     },
     async sendStealthPayment ({ commit, rootGetters, getters, dispatch }, { addr, amount, memo, stamptxId, replyDigest }) {
@@ -376,6 +378,7 @@ export default {
           type: 'reply',
           payloadDigest: replyDigest
         })
+        var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
       }
 
       const privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -383,17 +386,18 @@ export default {
       const stampAmount = getters['getStampAmount'](addr)
 
       // Construct payload
-      const { payload, payloadDigest } = await constructStealthPaymentPayload(amount, memo, privKey, destPubKey, 1, stamptxId, replyDigest)
+      const { payload, payloadDigest } = await constructStealthPaymentPayload(amount, memo, privKey, destPubKey, 1, stamptxId, replyDigestBuffer)
 
       // Add localy
-      commit('sendMessageLocal', { addr, index: payloadDigest, items, outpoints: null })
+      const payloadDigestHex = payloadDigest.toString('hex')
+      commit('sendMessageLocal', { addr, index: payloadDigestHex, items, outpoints: null })
 
       try {
         var { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
-        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'stealth', amount, memo, stamptxId } })
+        commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'stealth', amount, memo, stamptxId } })
         return
       }
       let messageSet = new messaging.MessageSet()
@@ -407,15 +411,15 @@ export default {
           stampTx,
           vouts: [0]
         }
-        commit('setOutpoints', { addr, index: payloadDigest, outpoints: [outpoint] })
-        commit('setStatus', { addr, index: payloadDigest, status: 'confirmed' })
+        commit('setOutpoints', { addr, index: payloadDigestHex, outpoints: [outpoint] })
+        commit('setStatus', { addr, index: payloadDigestHex, status: 'confirmed' })
       } catch (err) {
         // Unfreeze UTXOs
         // TODO: More subtle
         usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
 
         chainTooLongNotify()
-        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'stealth', amount, memo } })
+        commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'stealth', amount, memo } })
       }
     },
     async sendImage ({ commit, rootGetters, getters, dispatch }, { addr, image, caption, replyDigest }) {
@@ -439,6 +443,7 @@ export default {
           type: 'reply',
           payloadDigest: replyDigest
         })
+        var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
       }
 
       const privKey = rootGetters['wallet/getIdentityPrivKey']
@@ -446,10 +451,11 @@ export default {
       const stampAmount = getters['getStampAmount'](addr)
 
       // Construct payload
-      const { payload, payloadDigest } = constructImagePayload(image, caption, privKey, destPubKey, 1, replyDigest)
+      const { payload, payloadDigest } = constructImagePayload(image, caption, privKey, destPubKey, 1, replyDigestBuffer)
 
       // Add localy
-      commit('sendMessageLocal', { addr, index: payloadDigest, items, outpoints: null })
+      const payloadDigestHex = payloadDigest.toString('hex')
+      commit('sendMessageLocal', { addr, index: payloadDigestHex, items, outpoints: null })
 
       // Construct message
       try {
@@ -458,7 +464,7 @@ export default {
         console.error(err)
 
         insuffientFundsNotify()
-        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'image', image, caption } })
+        commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'image', image, caption } })
         return
       }
       let messageSet = new messaging.MessageSet()
@@ -472,15 +478,15 @@ export default {
           stampTx,
           vouts: [0]
         }
-        commit('setOutpoints', { addr, index: payloadDigest, outpoints: [outpoint] })
-        commit('setStatus', { addr, index: payloadDigest, status: 'confirmed' })
+        commit('setOutpoints', { addr, index: payloadDigestHex, outpoints: [outpoint] })
+        commit('setStatus', { addr, index: payloadDigestHex, status: 'confirmed' })
       } catch (err) {
         // Unfreeze UTXOs
         // TODO: More subtle
         usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
 
         chainTooLongNotify()
-        commit('setStatusError', { addr, index: payloadDigest, retryData: { msgType: 'image', image, caption } })
+        commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'image', image, caption } })
       }
     },
     switchOrder ({ commit }, addr) {
@@ -653,7 +659,8 @@ export default {
         // If addr data doesn't exist then add it
         let kind = entry.getKind()
         if (kind === 'reply') {
-          let payloadDigest = Buffer.from(entry.getEntryData())
+          const entryData = entry.getEntryData()
+          let payloadDigest = Buffer.from(entryData).toString('hex')
           newMsg.items.push({
             type: 'reply',
             payloadDigest
@@ -747,8 +754,8 @@ export default {
           })
         }
       }
-
-      commit('receiveMessage', { addr: recipientAddress, index: payloadDigest, newMsg })
+      const payloadDigestHex = payloadDigest.toString('hex')
+      commit('receiveMessage', { addr: recipientAddress, index: payloadDigestHex, newMsg })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       let myAddressStr = rootGetters['wallet/getMyAddressStr']
