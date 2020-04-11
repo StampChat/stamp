@@ -12,24 +12,9 @@
           class="text-primary"
         >
           <q-tab
-            name="appearance"
-            icon="wallpaper"
-            label="Appearance"
-          />
-          <q-tab
             name="networking"
             icon="cloud"
             label="Networking"
-          />
-          <q-tab
-            name="security"
-            icon="fingerprint"
-            label="Security"
-          />
-          <q-tab
-            name="backup"
-            icon="settings_backup_restore"
-            label="Backup"
           />
         </q-tabs>
       </template>
@@ -69,7 +54,7 @@ export default {
   },
   data () {
     return {
-      tab: 'appearance',
+      tab: 'networking',
       updateInterval: this.value.networking.updateInterval
     }
   },

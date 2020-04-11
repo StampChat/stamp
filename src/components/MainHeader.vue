@@ -16,29 +16,6 @@
             icon="menu"
             aria-label="Menu"
           />
-          <q-space />
-          <q-input
-            dark
-            dense
-            standout
-            v-model="searchText"
-            input-class="text-right"
-            class="q-mx-lg"
-            style="width: 100%"
-          >
-            <template v-slot:append>
-              <q-icon
-                v-if="searchText === ''"
-                name="search"
-              />
-              <q-icon
-                v-else
-                name="clear"
-                class="cursor-pointer"
-                @click="searchText = ''"
-              />
-            </template>
-          </q-input>
         </q-toolbar>
       </template>
 
@@ -47,15 +24,7 @@
           <q-toolbar-title class="h6">
             {{activeProfileName}}
           </q-toolbar-title>
-
           <q-space />
-          <q-btn
-            class="q-px-sm"
-            flat
-            dense
-            color="white"
-            icon="search"
-          />
           <q-btn
             class="q-px-sm"
             flat
