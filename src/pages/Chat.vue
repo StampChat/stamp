@@ -49,39 +49,7 @@
       </div>
 
       <!-- Message box -->
-      <div class="row">
-        <q-resize-observer @resize="onResizeInput" />
-        <q-toolbar class="bg-white q-pl-none">
-          <q-btn
-            dense
-            flat
-            color="primary"
-            icon="attach_file"
-            @click="sendFileOpen = true"
-          />
-          <q-input
-            ref="inputBox"
-            style="width: 100%;"
-            dense
-            borderless
-            autogrow
-            @keydown.enter.prevent="sendMessage"
-            v-model="message"
-            placeholder="Write a message..."
-          />
-          <q-space />
-          <transition name="slide">
-            <q-btn
-              v-if="message != ''"
-              dense
-              flat
-              color="primary"
-              icon="send"
-              @click="sendMessage"
-            />
-          </transition>
-        </q-toolbar>
-      </div>
+      <chat-input v-model="message" @resize="onResizeInput" @sendMessage="sendMessage" @sendFileClicked="sendFileClicked" />
     </div>
     <q-page-sticky
       position="top-right"
@@ -103,6 +71,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
@@ -115,7 +84,8 @@ export default {
   components: {
     ChatMessage,
     SendFileDialog,
-    ChatMessageReply
+    ChatMessageReply,
+    ChatInput
   },
   data () {
     return {
@@ -133,10 +103,10 @@ export default {
       setInputMessage: 'chats/setInputMessage',
       setCurrentReply: 'chats/setCurrentReply'
     }),
-    sendMessage () {
-      if (this.message !== '') {
+    sendMessage (message) {
+      if (message !== '') {
         let replyDigest = this.getCurrentReplyDigest(this.activeChat)
-        this.sendMessageVuex({ addr: this.activeChat, text: this.message, replyDigest })
+        this.sendMessageVuex({ addr: this.activeChat, text: message, replyDigest })
         this.message = ''
         this.setCurrentReply({ addr: this.activeChat, index: null })
         this.$nextTick(() => this.$refs.inputBox.focus())
@@ -154,6 +124,9 @@ export default {
     },
     onResizeReply (size) {
       this.replyHeight = size.height
+    },
+    sendFileClicked () {
+      this.sendFileOpen = true
     },
     getContact (outbound) {
       if (outbound) {
@@ -185,7 +158,7 @@ export default {
         this.setInputMessage({ addr: this.activeChat, text })
       },
       get () {
-        return this.getInputMessage(this.activeChat)
+        return this.getInputMessage(this.activeChat) || ''
       }
     },
     replyItem () {
