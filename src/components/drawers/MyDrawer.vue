@@ -43,7 +43,7 @@
 
     <!-- Settings dialog -->
     <q-dialog v-model="settingsOpen">
-      <settings-dialog />
+      <settings-dialog style="min-width: 60vw;" />
     </q-dialog>
 
     <!-- Drawer -->

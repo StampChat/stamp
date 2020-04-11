@@ -4,7 +4,7 @@
       <div class="text-h6">Settings</div>
     </q-card-section>
 
-    <settings v-model="settings" />
+    <settings v-model="settings"/>
 
     <q-card-actions align="right">
       <q-btn
@@ -26,7 +26,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import Settings from '../Settings.vue'
+import Settings from '../settings/Settings.vue'
 
 export default {
   components: {

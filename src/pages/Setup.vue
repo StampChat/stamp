@@ -186,7 +186,7 @@ import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
 import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
 import ProfileStep from '../components/Profile.vue'
-import SettingsStep from '../components/Settings.vue'
+import SettingsStep from '../components/settings/Settings.vue'
 import { defaultRelayData, defaultRelayUrl, electrumURL, electrumPort, electrumProtocol } from '../utils/constants'
 import {
   keyserverDisconnectedNotify,
