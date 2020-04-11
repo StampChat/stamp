@@ -547,8 +547,8 @@ export default {
       const recipientPubKey = outbound ? destPubKey : senderPubKey
 
       // Check whether pre-existing
-
-      if (getters['containsMessage'](recipientAddress, payloadDigest)) {
+      const payloadDigestHex = payloadDigest.toString('hex')
+      if (getters['containsMessage'](recipientAddress, payloadDigestHex)) {
         return
       }
 
@@ -754,7 +754,6 @@ export default {
           })
         }
       }
-      const payloadDigestHex = payloadDigest.toString('hex')
       commit('receiveMessage', { addr: recipientAddress, index: payloadDigestHex, newMsg })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
