@@ -18,7 +18,7 @@
         </q-item-section>
         <q-item-section>
           <span class='text-bold'> Inputs </span>
-          <q-list>
+          <q-list separator>
             <q-item v-for="(input, index) in outpoints[n-1].stampTx.inputs" :key="index">
               <q-item-section>
                 <span class='text-bold'> Previous Transaction ID </span>
@@ -31,9 +31,10 @@
         </q-item-section>
         <q-item-section>
           <span class='text-bold'> Outputs </span>
-          <q-list>
+          <q-list separator>
             <q-item v-for="(output, index) in outpoints[n-1].stampTx.outputs" :key="index">
               <q-item-section>
+                <span class='text-bold' v-if='index in outpoints[n-1].vouts'> Stamp Output </span>
                 <span class='text-bold'> Address </span>
                 {{ extractAddress(output) }}
                 <span class='text-bold'> Amount </span>
