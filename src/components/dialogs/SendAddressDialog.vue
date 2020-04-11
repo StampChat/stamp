@@ -87,7 +87,7 @@ export default {
         })
 
         let feePerByte = await this.getFee()
-        var { transaction, usedIDs } = await this.constructTransaction({ outputs: [output], feePerByte })
+        var { transaction, usedIDs } = await this.constructTransaction({ outputs: [output], feePerByte, exactOutputs: true })
         let txHex = transaction.toString()
 
         let electrumHandler = this.getClient()
