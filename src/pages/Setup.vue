@@ -357,8 +357,9 @@ export default {
         await this.setUpKeyserver()
       } catch (err) {
         console.error(err)
-        console.error(err.response)
-
+        if (err.response) {
+          console.error(err.response)
+        }
         this.$q.loading.hide()
         return
       }
@@ -484,7 +485,9 @@ export default {
         var { paymentUrl, payment } = await pop.constructPaymentTransaction(relayPaymentRequest.paymentDetails)
       } catch (err) {
         console.error(err)
-        console.error(err.response)
+        if (err.response) {
+          console.error(err.response)
+        }
         insuffientFundsNotify()
         throw err
       }
@@ -492,7 +495,9 @@ export default {
         var { token } = await client.sendPayment(paymentUrl, payment)
       } catch (err) {
         console.error(err)
-        console.error(err.response)
+        if (err.response) {
+          console.error(err.response)
+        }
         paymentFailureNotify()
         throw err
       }

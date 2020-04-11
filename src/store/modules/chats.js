@@ -348,7 +348,10 @@ export default {
         commit('setOutpoints', { addr, index: payloadDigestHex, outpoints: [outpoint] })
         commit('setStatus', { addr, index: payloadDigestHex, status: 'confirmed' })
       } catch (err) {
-        console.error(err.response)
+        console.error(err)
+        if (err.response) {
+          console.error(err.response)
+        }
         // Unfreeze UTXOs
         // TODO: More subtle
         usedIDs.forEach(id => dispatch('wallet/fixFrozenUTXO', id, { root: true }))
