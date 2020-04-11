@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import assert from 'assert'
 
 import { numAddresses, numChangeAddresses } from '../../utils/constants'
 
@@ -242,7 +243,7 @@ export default {
         if (elOutputs.some(output => {
           return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
         })) {
-        // Found utxo
+          // Found utxo
           dispatch('unfreezeUTXO', id)
         } else {
           dispatch('removeFrozenUTXO', id)
@@ -264,7 +265,7 @@ export default {
           if (elOutputs.some(output => {
             return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
           })) {
-          // Found utxo
+            // Found utxo
             dispatch('unfreezeUTXO', id)
           } else {
             dispatch('removeFrozenUTXO', id)
@@ -288,7 +289,7 @@ export default {
             if (!elOutputs.some(output => {
               return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
             })) {
-            // No such utxo
+              // No such utxo
               dispatch('removeUTXO', id)
             }
           } catch (err) {
@@ -321,9 +322,6 @@ export default {
     },
     constructTransaction ({ commit, getters }, { outputs, feePerByte }) {
       let transaction = new cashlib.Transaction()
-
-      // Add fee
-      transaction = transaction.feePerByte(feePerByte)
 
       // Add outputs
       for (let i in outputs) {
@@ -370,30 +368,73 @@ export default {
         }
       }
 
-      // Add change outputs
-      let delta = transaction.inputAmount - transaction.outputAmount
+      // Add change outputs using our HD wallet.  We want multiple outputs following a
+      // power distribution, so we don't have to combine lots of outputs at later times
+      // in order to create specific amounts.
 
-      const changeOutputAmount = 5840 // Can pay fees a few times for a normal transaction
-      const standardUtxoSize = 34
-      let utxos = getters['getUTXOs'] // TODO: Make length getter
-      // Create 5 sized output UTXOs up until our wallet's desired utxo limit, or how many we can afford to make, whichever is smaller.
+      const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
+      // A good round number greater than the current dustLimit.
+      // We may want to make it some computed value in the future.
+      const minimumOutputAmount = 1024
       let changeAddresses = Object.keys(getters['getChangeAddresses'])
-      let nChangeAddresses = Math.max(Math.min(delta / (changeOutputAmount + standardUtxoSize * feePerByte), 100 - Object.keys(utxos).length, changeAddresses.length), 1)
 
-      // nChangeAddresses - 1, because we add a final change output to sweep any excess
-      for (let i = 0; i < Math.min(nChangeAddresses - 1, changeAddresses.length); i++) {
-        // TODO: Randomize
-        let output = new cashlib.Transaction.Output({
-          script: cashlib.Script.buildPublicKeyHashOut(changeAddresses[i]).toHex(),
+      for (const changeAddress of changeAddresses) {
+        const delta = transaction.inputAmount - transaction.outputAmount
+        const size = transaction._estimateSize()
+        const overallChangeUtxoCost = minimumOutputAmount + standardUtxoSize * feePerByte + size * feePerByte
+        if (delta < overallChangeUtxoCost) {
+          console.log("Can't make another output given currently available funds", delta, overallChangeUtxoCost)
+          // We can't make more outputs without going over the fee.
+          break
+        }
+        // Generate an output with an amount between [minimumOutputAmount, delta - size * feePerByte].
+        const upperBound = delta - (overallChangeUtxoCost)
+        const splitPosition = Math.ceil(Math.random() * upperBound)
+        const largerAmount = (splitPosition >= upperBound - splitPosition ? splitPosition : upperBound - splitPosition)
+        // Use the amount which gives us a fee larger than the fee per byte, but minimally so
+        const changeOutputAmount = largerAmount + minimumOutputAmount
+        // NOTE: This may generate a relatively large amount for the fee. We *could*
+        // change the output amount to be equal to the (delta - estimatedSize * feePerByte)
+        // however, we will sweep it into the first output instead to generate some noise
+        console.log('Generating a change UTXO for amount:', changeOutputAmount)
+        // Create the output
+        const output = new cashlib.Transaction.Output({
+          script: cashlib.Script.buildPublicKeyHashOut(changeAddress).toHex(),
           satoshis: changeOutputAmount
         })
         transaction = transaction.addOutput(output)
       }
-      transaction = transaction.change(changeAddresses[0])
+      // NOTE: We are not using Bitcore to set change
+
+      // Shift any remainder to other outputs randomly
+      let outputIndex = -1
+      // NOTE: we don't change the number of outputs here, but we also don't want to execute anythign if there are no outputs
+      while (transaction.outputs.length > 0) {
+        outputIndex = (outputIndex + 1) % transaction.outputs.length
+        const output = transaction.outputs[outputIndex]
+        const delta = transaction.inputAmount - transaction.outputAmount
+        const finalSize = transaction._estimateSize() + transaction.outputs.length // Numbers are variable length in bitcoin, changing the output amount could add a byte to any given txn.
+        const properFee = Math.ceil(finalSize * feePerByte)
+        const upperBound = delta - properFee
+        const splitPosition = Math.floor(Math.random() * upperBound)
+        // Add a small amount to the current output
+        const amountToAdd = splitPosition > upperBound - splitPosition ? upperBound - splitPosition : splitPosition
+        console.log('Amount available', delta, 'Fee required', properFee, 'Will add', amountToAdd, 'To output #', outputIndex)
+        if (amountToAdd === 0) {
+          // We can't add anymore funds to any outputs
+          break
+        }
+        output.satoshis += amountToAdd
+        transaction._outputAmount += amountToAdd
+      }
 
       // Sign transaction
       transaction = transaction.sign(signingKeys)
-      console.log('feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
+      const finalTxnSize = transaction._estimateSize()
+      // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
+      console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
+
+      console.log(transaction)
       return { transaction, usedIDs }
     },
     async getFee ({ commit, getters, rootGetters }) {
