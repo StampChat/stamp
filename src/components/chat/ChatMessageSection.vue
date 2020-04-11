@@ -13,7 +13,7 @@
       :class="single?'q-py-none':'q-py-sm'"
       v-else-if="item.type=='text'"
     >
-      {{ item.text }}
+      <div v-html=linkify(item.text)></div>
     </div>
     <div
       class='q-py-sm'
@@ -76,6 +76,12 @@ export default {
       if (msg) {
         const firstNonReply = msg.items.find(item => item.type !== 'reply')
         return firstNonReply
+      }
+    },
+    linkify (msg) {
+      if (msg) {
+        const URLMatcher = /(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#/%=~_|$?!:,.]*\)|[A-Z0-9+&@#/%=~_|$])/igm
+        return msg.replace(URLMatcher, match => `<a href="${match}">${match}</a>`)
       }
     }
   },
