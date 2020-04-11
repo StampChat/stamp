@@ -5,7 +5,8 @@
       v-if="item.type=='reply'"
     >
       <div class='q-pa-sm bg-secondary' style='border-radius: 5px;'>
-        <chat-message-reply :item="firstItem(getMessage(address, item.payloadDigest))" />
+        <chat-message-reply v-if="firstItem(getMessage(address, item.payloadDigest))" :item="firstItem(getMessage(address, item.payloadDigest))" />
+        <div v-else> Reply source not found </div>
       </div>
     </div>
     <div
