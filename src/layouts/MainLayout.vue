@@ -5,9 +5,9 @@
     </q-dialog>
     <my-drawer />
     <contact-drawer
-      v-if="getActiveChat !== null"
-      :address="getActiveChat"
-      :contact="getContact(getActiveChat)"
+      v-if="activeChatAddr !== null"
+      :address="activeChatAddr"
+      :contact="getContact(activeChatAddr)"
     />
     <main-header>
       <q-resize-observer @resize="onResize" />
@@ -24,11 +24,14 @@
         </template>
 
         <template v-slot:after>
-          <chat
+          <template v-for="(item, index) in data">
+          <chat v-show="activeChatAddr === index"
+            :key="index"
             :tabHeight="tabHeight"
-            :activeChat="getActiveChat"
-            :messages="getAllMessages(getActiveChat)"
+            :activeChat="activeChatAddr"
+            :messages="item.messages"
           />
+          </template>
         </template>
 
       </q-splitter>
@@ -43,7 +46,7 @@ import MyDrawer from '../components/drawers/MyDrawer.vue'
 import ContactDrawer from '../components/drawers/ContactDrawer.vue'
 import MainHeader from '../components/MainHeader.vue'
 import WalletConnectDialog from '../components/dialogs/WalletConnectDialog.vue'
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapGetters, mapState } from 'vuex'
 import { dom } from 'quasar'
 const { height } = dom
 import { minSplitter, maxSplitter } from '../utils/constants'
@@ -88,13 +91,12 @@ export default {
     }
   },
   computed: {
+    ...mapState('chats', ['data', 'activeChatAddr']),
     ...mapGetters({
       getToken: 'relayClient/getToken',
       getRelayClient: 'relayClient/getClient',
       getAddressStr: 'wallet/getMyAddressStr',
-      getActiveChat: 'chats/getActiveChat',
       getContact: 'contacts/getContact',
-      getAllMessages: 'chats/getAllMessages',
       walletConnected: 'electrumHandler/connected'
     }),
     ...mapGetters({ getSplitterRatio: 'splitter/getSplitterRatio' }),
