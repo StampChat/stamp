@@ -20,7 +20,7 @@
       <!-- Switch to outpoints -->
       <transaction-dialog
         title="Stamp Transaction"
-        :transaction="message.stampTx"
+        :outpoints="message.outpoints"
       />
     </q-dialog>
 

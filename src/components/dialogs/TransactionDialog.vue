@@ -7,7 +7,7 @@
       <q-list>
         <q-item>
           <q-item-section>
-            <q-item-label>{{transaction.hash}}</q-item-label>
+            <q-item-label>{{outpoints[0].stampTx.hash}}</q-item-label>
             <q-item-label caption>Transaction ID</q-item-label>
           </q-item-section>
         </q-item>
@@ -27,6 +27,6 @@
 
 <script>
 export default {
-  props: ['title', 'transaction']
+  props: ['title', 'outpoints']
 }
 </script>
