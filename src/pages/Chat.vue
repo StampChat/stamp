@@ -54,17 +54,14 @@
       @sendMessage="sendMessage"
       @sendFileClicked="sendFileClicked"
     />
-    <q-page-sticky position="top-right" :offset="[18, 18]">
-      <transition name="fade">
-        <q-btn
-          v-if="!bottom"
-          round
-          size="md"
-          icon="keyboard_arrow_down"
-          color="accent"
-          @click="scrollBottom"
-        />
-      </transition>
+    <q-page-sticky position="bottom-right" :offset="[18, 64]" v-show="!bottom">
+      <q-btn
+        round
+        size="md"
+        icon="keyboard_arrow_down"
+        color="accent"
+        @click="scrollBottom"
+      />
     </q-page-sticky>
   </div>
 </template>
@@ -81,7 +78,7 @@ import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
 import { donationMessage } from '../utils/constants'
 
-const scrollDuration = 500
+const scrollDuration = 0
 
 export default {
   props: ['activeChat', 'messages'],
