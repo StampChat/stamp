@@ -26,15 +26,14 @@
           <template
             v-slot:after
           >
-            <template v-for="(item, index) in data">
-              <chat
-                v-show="activeChatAddr === index"
-                :key="index"
-                :address="index"
-                :messages="item.messages"
-                :style="`height: inherit; min-height: inherit;`"
-              />
-            </template>
+            <chat
+              v-for="(item, index) in data"
+              v-show="activeChatAddr === index"
+              :key="index"
+              :address="index"
+              :messages="item.messages"
+              :style="`height: inherit; min-height: inherit;`"
+            />
           </template>
         </q-splitter>
       </q-page>
