@@ -1,8 +1,8 @@
 <template>
   <q-header elevated>
     <q-splitter
-      emit-immediately
-      v-model="splitterRatio"
+      v-bind:value="splitRatio"
+      v-on:input="onSplitting"
       separator-style="width: 0px"
       :limits="[minSplitter, maxSplitter]"
     >
@@ -45,17 +45,32 @@ import { mapActions, mapGetters } from 'vuex'
 import { minSplitter, maxSplitter } from '../utils/constants'
 
 export default {
+  data: function () {
+    return {
+      searchText: '',
+      minSplitter,
+      maxSplitter
+    }
+  },
+  props: {
+    splitRatio: {
+      type: Number,
+      default: 20
+    }
+  },
   methods: {
     ...mapActions({
-      setSplitterRatio: 'splitter/setSplitterRatio',
       toggleMyDrawerOpen: 'myDrawer/toggleDrawerOpen',
       toggleContactDrawerOpen: 'contactDrawer/toggleDrawerOpen'
-    })
+    }),
+    onSplitting (value) {
+      console.log(value)
+      this.$emit('splitting', value)
+    }
   },
   computed: {
     ...mapGetters({
       getContactProfile: 'contacts/getContactProfile',
-      getSplitterRatio: 'splitter/getSplitterRatio',
       getActiveChat: 'chats/getActiveChat'
     }),
     activeProfileName () {
@@ -64,21 +79,6 @@ export default {
       } else {
         return ''
       }
-    },
-    splitterRatio: {
-      get () {
-        return this.getSplitterRatio
-      },
-      set (value) {
-        this.setSplitterRatio(value)
-      }
-    }
-  },
-  data: function () {
-    return {
-      searchText: '',
-      minSplitter,
-      maxSplitter
     }
   }
 }
