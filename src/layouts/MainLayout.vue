@@ -30,7 +30,7 @@
               <chat
                 v-show="activeChatAddr === index"
                 :key="index"
-                :activeChat="activeChatAddr"
+                :address="index"
                 :messages="item.messages"
                 :style="`height: inherit; min-height: inherit;`"
               />
