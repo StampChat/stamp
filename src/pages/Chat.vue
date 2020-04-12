@@ -30,6 +30,7 @@
           :message="chatMessage"
           :contact="getContact(chatMessage.outbound)"
           :index="index"
+          :now="now"
         />
         <q-scroll-observer
           debounce="500"
@@ -70,6 +71,7 @@
 </template>
 
 <script>
+import moment from 'moment'
 import { mapGetters, mapActions } from 'vuex'
 import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessage from '../components/chat/ChatMessage.vue'
@@ -89,12 +91,20 @@ export default {
   },
   data () {
     return {
+      timer: null,
+      now: moment(),
       inputHeight: 100,
       replyHeight: 0,
       sendFileOpen: false,
       bottom: true,
       donationMessage
     }
+  },
+  created () {
+    this.timer = setInterval(() => { this.now = moment() }, 60000)
+  },
+  destroyed () {
+    clearTimeout(this.timer)
   },
   methods: {
     ...mapActions({
