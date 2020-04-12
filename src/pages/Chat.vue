@@ -2,7 +2,7 @@
   <div>
     <!-- Send file dialog -->
     <q-dialog v-model="sendFileOpen" persistent>
-      <send-file-dialog :address="activeChat" />
+      <send-file-dialog :address="address" />
     </q-dialog>
 
     <q-scroll-area
@@ -22,7 +22,7 @@
       <chat-message
         v-for="(chatMessage, index) in messages"
         :key="index"
-        :address="activeChat"
+        :address="address"
         :message="chatMessage"
         :contact="getContact(chatMessage.outbound)"
         :index="index"
@@ -33,7 +33,7 @@
 
     <!-- Reply box -->
     <div ref="replyBox">
-      <div class="q-pa-sm" v-if="activeChat && getCurrentActiveReply">
+      <div class="q-pa-sm" v-if="getCurrentActiveReply">
         <div class="q-pa-sm bg-secondary row" style="border-radius: 5px;">
           <chat-message-reply class="col" :item="replyItem" />
           <q-btn
@@ -41,7 +41,7 @@
             flat
             color="accent"
             icon="close"
-            @click="setCurrentReply({ addr: activeChat, index: null })"
+            @click="setCurrentReply({ addr: address, index: null })"
           />
         </div>
       </div>
@@ -81,7 +81,7 @@ import { donationMessage } from '../utils/constants'
 const scrollDuration = 0
 
 export default {
-  props: ['activeChat', 'messages'],
+  props: ['address', 'messages'],
   components: {
     ChatMessage,
     SendFileDialog,
@@ -112,10 +112,10 @@ export default {
     }),
     sendMessage (message) {
       if (message !== '') {
-        let replyDigest = this.getCurrentReplyDigest(this.activeChat)
-        this.sendMessageVuex({ addr: this.activeChat, text: message, replyDigest })
+        let replyDigest = this.getCurrentReplyDigest(this.address)
+        this.sendMessageVuex({ addr: this.address, text: message, replyDigest })
         this.message = ''
-        this.setCurrentReply({ addr: this.activeChat, index: null })
+        this.setCurrentReply({ addr: this.address, index: null })
         this.$nextTick(() => this.$refs.chatInput.$el.focus())
       }
     },
@@ -133,7 +133,7 @@ export default {
       if (outbound) {
         return this.getProfile
       } else {
-        return this.getContactVuex(this.activeChat).profile
+        return this.getContactVuex(this.address).profile
       }
     },
     scrollHandler (details) {
@@ -162,10 +162,10 @@ export default {
     }),
     message: {
       set (text) {
-        this.setInputMessage({ addr: this.activeChat, text })
+        this.setInputMessage({ addr: this.address, text })
       },
       get () {
-        return this.getInputMessage(this.activeChat) || ''
+        return this.getInputMessage(this.address) || ''
       }
     },
     replyItem () {
@@ -181,7 +181,7 @@ export default {
     messages: function (newMsgs, oldMsgs) {
       this.scrollBottom()
       if (Object.entries(newMsgs).length !== 0) {
-        this.readAll(this.activeChat)
+        this.readAll(this.address)
       }
     }
   }
