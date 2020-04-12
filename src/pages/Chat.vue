@@ -27,13 +27,14 @@
         :contact="getContact(chatMessage.outbound)"
         :index="index"
         :now="now"
+        @replyClicked="setReply"
       />
       <q-scroll-observer debounce="500" @scroll="scrollHandler" />
     </q-scroll-area>
 
     <!-- Reply box -->
     <div ref="replyBox">
-      <div class="q-pa-sm" v-if="getCurrentActiveReply">
+      <div class="q-pa-sm" v-if="replyDigest">
         <div class="q-pa-sm bg-secondary row" style="border-radius: 5px;">
           <chat-message-reply class="col" :item="replyItem" />
           <q-btn
@@ -41,7 +42,7 @@
             flat
             color="accent"
             icon="close"
-            @click="setCurrentReply({ addr: address, index: null })"
+            @click="setReply({ addr: address, index: null })"
           />
         </div>
       </div>
@@ -67,6 +68,7 @@
 </template>
 
 <script>
+import assert from 'assert'
 import moment from 'moment'
 import { mapGetters, mapActions } from 'vuex'
 import { dom } from 'quasar'
@@ -95,6 +97,7 @@ export default {
       sendFileOpen: false,
       bottom: true,
       message: '',
+      replyDigest: null,
       donationMessage
     }
   },
@@ -107,15 +110,13 @@ export default {
   methods: {
     ...mapActions({
       readAll: 'chats/readAll',
-      sendMessageVuex: 'chats/sendMessage',
-      setCurrentReply: 'chats/setCurrentReply'
+      sendMessageVuex: 'chats/sendMessage'
     }),
     sendMessage (message) {
       if (message !== '') {
-        let replyDigest = this.getCurrentReplyDigest(this.address)
-        this.sendMessageVuex({ addr: this.address, text: message, replyDigest })
+        this.sendMessageVuex({ addr: this.address, text: message, replyDigest: this.replyDigest })
         this.message = ''
-        this.setCurrentReply({ addr: this.address, index: null })
+        this.replyDigest = null
         this.$nextTick(() => this.$refs.chatInput.$el.focus())
       }
     },
@@ -150,22 +151,30 @@ export default {
       const inputBoxHeight = this.$refs.chatInput ? height(this.$refs.chatInput.$el) : 50
       const replyHeight = this.$refs.replyBox ? height(this.$refs.replyBox) : 0
       return inputBoxHeight + replyHeight
+    },
+    setReply ({ address, index }) {
+      // Address is not useful here as all the stuff in this component is for the same address
+      assert(address === this.address, 'Logic error somewhere!')
+      this.replyDigest = index
     }
   },
   computed: {
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
-      getProfile: 'myProfile/getProfile',
-      getCurrentReplyDigest: 'chats/getCurrentReplyDigest',
-      getCurrentActiveReply: 'chats/getCurrentActiveReply'
+      getMessage: 'chats/getMessage',
+      getProfile: 'myProfile/getProfile'
     }),
     replyItem () {
-      let msg = this.getCurrentActiveReply
-      if (msg) {
-        const firstNonReply = msg.items.find(item => item.type !== 'reply')
-        return firstNonReply
+      if (!this.replyDigest) {
+        return null
       }
-      return null
+      const msg = this.getMessage(this.address, this.replyDigest)
+      if (!msg) {
+        return null
+      }
+      console.log(msg)
+      const firstNonReply = msg.items.find(item => item.type !== 'reply')
+      return firstNonReply
     }
   },
   watch: {

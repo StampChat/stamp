@@ -35,23 +35,6 @@ export default {
     lastReceived: null
   },
   getters: {
-    getCurrentReplyDigest: (state) => (addr) => {
-      return state.data[addr].currentReply
-    },
-    getCurrentReply: (state) => (addr) => {
-      let currentReply = state.data[addr].currentReply
-      if (currentReply) {
-        return state.data[addr].messages[currentReply]
-      }
-      return null
-    },
-    getCurrentActiveReply (state) {
-      const currentReply = state.data[state.activeChatAddr].currentReply
-      if (currentReply) {
-        return state.data[state.activeChatAddr].messages[currentReply]
-      }
-      return null
-    },
     getMessage: (state) => (addr, index) => {
       return state.data[addr].messages[index]
     },
@@ -141,9 +124,6 @@ export default {
     }
   },
   mutations: {
-    setCurrentReply (state, { addr, index }) {
-      state.data[addr].currentReply = index
-    },
     deleteMessage (state, { addr, id }) {
       Vue.delete(state.data[addr].messages, id)
     },
@@ -212,7 +192,7 @@ export default {
         // TODO: Better indexing
         messages[index] = newMsg
 
-        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount, currentReply: null })
+        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
         state.order.unshift(addr)
       } else {
         // TODO: Better indexing
@@ -224,7 +204,7 @@ export default {
     },
     openChat (state, addr) {
       if (!(addr in state.data)) {
-        Vue.set(state.data, addr, { messages: {}, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount, currentReply: null })
+        Vue.set(state.data, addr, { messages: {}, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
         state.order.unshift(addr)
       }
       state.activeChatAddr = addr
@@ -234,9 +214,6 @@ export default {
     }
   },
   actions: {
-    setCurrentReply ({ commit }, { addr, index }) {
-      commit('setCurrentReply', { addr, index })
-    },
     deleteMessage ({ commit }, { addr, id }) {
       commit('deleteMessage', { addr, id })
     },
