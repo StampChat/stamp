@@ -22,6 +22,9 @@ export default {
     setRelayData (state, relayData) {
       state.profile = relayData.profile
       state.inbox = relayData.inbox
+    },
+    setAcceptancePrice (state, acceptancePrice) {
+      state.inbox.acceptancePrice = acceptancePrice
     }
   },
   actions: {
@@ -33,6 +36,9 @@ export default {
     },
     setRelayData ({ commit }, relayData) {
       commit('setRelayData', relayData)
+    },
+    setAcceptancePrice ({ commit }, acceptancePrice) {
+      commit('setAcceptancePrice', acceptancePrice)
     }
   }
 
