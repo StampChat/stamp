@@ -109,7 +109,6 @@ export default {
   },
   methods: {
     ...mapActions({
-      readAll: 'chats/readAll',
       sendMessageVuex: 'chats/sendMessage'
     }),
     sendMessage (message) {
@@ -175,14 +174,6 @@ export default {
       console.log(msg)
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
       return firstNonReply
-    }
-  },
-  watch: {
-    messages: function (newMsgs, oldMsgs) {
-      this.scrollBottom()
-      if (Object.entries(newMsgs).length !== 0) {
-        this.readAll(this.address)
-      }
     }
   }
 }

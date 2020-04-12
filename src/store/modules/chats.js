@@ -223,14 +223,15 @@ export default {
     readAll ({ commit }, addr) {
       commit('readAll', addr)
     },
-    shareContact ({ commit, rootGetters }, { currentAddr, shareAddr }) {
+    shareContact ({ commit, rootGetters, dispatch }, { currentAddr, shareAddr }) {
       let contact = rootGetters['contacts/getContactProfile'](currentAddr)
       let text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
       commit('setInputMessage', { addr: shareAddr, text })
-      commit('switchChatActive', shareAddr)
+      dispatch('switchChatActive', shareAddr)
     },
     switchChatActive ({ commit }, addr) {
       commit('switchChatActive', addr)
+      commit('readAll', addr)
     },
     startChatUpdater ({ dispatch }) {
       setInterval(() => { dispatch('refresh') }, 1_000)
