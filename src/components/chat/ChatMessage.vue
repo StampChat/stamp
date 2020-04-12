@@ -12,7 +12,7 @@
       :id="index"
       :message="message"
       @txClick="transactionDialog = true"
-      @replyClick="setCurrentReply({ addr: address, index })"
+      @replyClick="replyClicked({ address, index })"
     />
 
     <!-- Transaction Dialog -->
@@ -50,7 +50,6 @@
 
 <script>
 import moment from 'moment'
-import { mapActions } from 'vuex'
 import ChatMessageSection from './ChatMessageSection.vue'
 import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
 import TransactionDialog from '../dialogs/TransactionDialog.vue'
@@ -75,9 +74,9 @@ export default {
     now: Object
   },
   methods: {
-    ...mapActions({
-      setCurrentReply: 'chats/setCurrentReply'
-    })
+    replyClicked (args) {
+      this.$emit('replyClicked', args)
+    }
   },
   computed: {
     formatedTimestamp () {
