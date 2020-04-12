@@ -13,28 +13,33 @@
       <q-resize-observer @resize="onResize" />
     </main-header>
     <q-page-container>
-      <q-splitter
-        emit-immediately
-        v-model="splitterRatio"
-        separator-style="width: 0px"
-        :limits="[minSplitter, maxSplitter]"
-      >
-        <template v-slot:before>
-          <chat-list :tabHeight="tabHeight" />
-        </template>
-
-        <template v-slot:after>
-          <template v-for="(item, index) in data">
-          <chat v-show="activeChatAddr === index"
-            :key="index"
-            :tabHeight="tabHeight"
-            :activeChat="activeChatAddr"
-            :messages="item.messages"
-          />
+      <q-page :style-fn="tweak">
+        <q-splitter
+          emit-immediately
+          v-model="splitterRatio"
+          separator-style="width: 0px"
+          :limits="[minSplitter, maxSplitter]"
+          :style="`height: inherit; min-height: inherit;`"
+        >
+          <template v-slot:before :style="`height: 100%; min-height: 100%;`">
+            <chat-list :style="`height: 100%; min-height: 100%;`" />
           </template>
-        </template>
 
-      </q-splitter>
+          <template
+            v-slot:after
+          >
+            <template v-for="(item, index) in data">
+              <chat
+                v-show="activeChatAddr === index"
+                :key="index"
+                :activeChat="activeChatAddr"
+                :messages="item.messages"
+                :style="`height: inherit; min-height: inherit;`"
+              />
+            </template>
+          </template>
+        </q-splitter>
+      </q-page>
     </q-page-container>
   </q-layout>
 </template>
@@ -88,6 +93,10 @@ export default {
     }),
     onResize (size) {
       this.tabHeight = height(this.$refs.tabs.$el)
+    },
+    tweak (offset, viewportHeight) {
+      const height = viewportHeight - offset + 'px'
+      return { height, minHeight: height }
     }
   },
   computed: {

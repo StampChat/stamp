@@ -53,7 +53,7 @@
     <q-separator />
     <q-scroll-area
       class="q-px-none row"
-      :style="`height: calc(100vh - ${balanceHeight}px - ${tabHeight}px);`"
+      :style="`min-height:calc(100% - 51px); height: calc(100% - 51px);`"
     >
       <chat-list-item
         v-for="(contact) in getSortedChatOrder"
@@ -80,7 +80,7 @@ import WalletConnectDialog from '../dialogs/WalletConnectDialog.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 
 export default {
-  props: ['tabHeight', 'chatAddr'],
+  props: ['chatAddr'],
   components: {
     ChatListItem,
     WalletDialog,
@@ -89,16 +89,12 @@ export default {
   },
   data () {
     return {
-      balanceHeight: 100,
       walletOpen: false,
       walletConnectOpen: false,
       relayConnectOpen: false
     }
   },
   methods: {
-    onResize (size) {
-      this.height = size.height
-    },
     formatBalance (balance) {
       if (!balance) {
         return balance
