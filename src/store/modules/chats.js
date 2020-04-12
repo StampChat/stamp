@@ -550,6 +550,8 @@ export default {
       const stampOutpoints = message.getStampOutpointsList()
       const outpoints = []
 
+      let stampValue = 0
+
       const stampRootHDPrivKey = constructStampPrivKey(payloadDigest, identityPrivKey)
         .deriveChild(44)
         .deriveChild(145)
@@ -566,13 +568,12 @@ export default {
         })
         const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
 
-        if (!outbound) {
-          for (const [j, outputIndex] of vouts.entries()) {
-            const output = stampTx.outputs[outputIndex]
-            const address = output.script.toAddress('testnet') // TODO: Make generic
-            const satoshis = output.satoshis
-            stampTotal += satoshis
-
+        for (const [j, outputIndex] of vouts.entries()) {
+          const output = stampTx.outputs[outputIndex]
+          const satoshis = output.satoshis
+          const address = output.script.toAddress('testnet') // TODO: Make generic
+          stampValue += satoshis
+          if (!outbound) {
             // Also note, we should use an HD key here.
             try {
               const outputPrivKey = stampTxHDPrivKey
@@ -609,6 +610,7 @@ export default {
       if (stampTotal < acceptancePrice) {
         return
       }
+      let stealthValue = 0
 
       // Decode entries
       let entries = messaging.Entries.deserializeBinary(entriesRaw)
@@ -658,7 +660,6 @@ export default {
           const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
           const ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
           const stealthHDPrivKey = constructStealthPrivKey(ephemeralPubKey, identityPrivKey)
-          let totalSatoshis = 0
           for (const [i, outpoint] of outpointsList.entries()) {
             const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
             const stealthTx = cashlib.Transaction(stealthTxRaw)
@@ -674,7 +675,7 @@ export default {
                 // error
 
                 // Assume our output was correct and add to the total
-                totalSatoshis += satoshis
+                stealthValue += satoshis
                 continue
               }
               const outpointPrivKey = stealthHDPrivKey
@@ -693,7 +694,7 @@ export default {
                 continue
               }
               // total up the satoshis only if we know the txn was valid
-              totalSatoshis += satoshis
+              stealthValue += satoshis
 
               const stampOutput = {
                 address,
@@ -709,7 +710,7 @@ export default {
           }
           newMsg.items.push({
             type: 'stealth',
-            amount: totalSatoshis
+            amount: stealthValue
           })
         } else if (kind === 'image') {
           let image = imageUtil.entryToImage(entry)
@@ -721,7 +722,7 @@ export default {
           })
         }
       }
-      commit('receiveMessage', { addr: recipientAddress, index: payloadDigestHex, newMsg })
+      commit('receiveMessage', { addr: recipientAddress, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       let myAddressStr = rootGetters['wallet/getMyAddressStr']
