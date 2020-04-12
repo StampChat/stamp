@@ -588,22 +588,22 @@ export default {
       const stampOutpoints = message.getStampOutpointsList()
       const outpoints = []
 
-      if (!outbound) {
-        const stampRootHDPrivKey = constructStampPrivKey(payloadDigest, identityPrivKey)
-          .deriveChild(44)
-          .deriveChild(145)
+      const stampRootHDPrivKey = constructStampPrivKey(payloadDigest, identityPrivKey)
+        .deriveChild(44)
+        .deriveChild(145)
 
-        for (const [i, stampOutpoint] of stampOutpoints.entries()) {
-          const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
-          const stampTx = cashlib.Transaction(stampTxRaw)
-          const txId = stampTx.hash
-          const vouts = stampOutpoint.getVoutsList()
-          outpoints.push({
-            stampTx,
-            vouts
-          })
-          const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
+      for (const [i, stampOutpoint] of stampOutpoints.entries()) {
+        const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
+        const stampTx = cashlib.Transaction(stampTxRaw)
+        const txId = stampTx.hash
+        const vouts = stampOutpoint.getVoutsList()
+        outpoints.push({
+          stampTx,
+          vouts
+        })
+        const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
 
+        if (!outbound) {
           for (const [j, outputIndex] of vouts.entries()) {
             const output = stampTx.outputs[outputIndex]
             const satoshis = output.satoshis
