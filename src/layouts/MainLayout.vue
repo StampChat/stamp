@@ -70,7 +70,6 @@ export default {
   },
   methods: {
     ...mapActions({
-      walletRehydrate: 'wallet/rehydrate',
       electrumRehydrate: 'electrumHandler/rehydrate',
       electrumConnect: 'electrumHandler/connect',
       electrumKeepAlive: 'electrumHandler/keepAlive',
@@ -114,9 +113,6 @@ export default {
     this.electrumRehydrate()
     this.electrumConnect()
     this.electrumKeepAlive()
-
-    // Rehydrate wallet classes
-    this.walletRehydrate()
 
     // Rehydrate relay client
     this.relayClientRehydrate()
