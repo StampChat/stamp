@@ -9,13 +9,11 @@
       :address="activeChatAddr"
       :contact="getContact(activeChatAddr)"
     />
-    <main-header>
-      <q-resize-observer @resize="onResize" />
+    <main-header v-bind:splitRatio="splitterRatio" @splitting="setSplitRatio">
     </main-header>
     <q-page-container>
       <q-page :style-fn="tweak">
         <q-splitter
-          emit-immediately
           v-model="splitterRatio"
           separator-style="width: 0px"
           :limits="[minSplitter, maxSplitter]"
@@ -52,8 +50,6 @@ import ContactDrawer from '../components/drawers/ContactDrawer.vue'
 import MainHeader from '../components/MainHeader.vue'
 import WalletConnectDialog from '../components/dialogs/WalletConnectDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
-import { dom } from 'quasar'
-const { height } = dom
 import { minSplitter, maxSplitter } from '../utils/constants'
 
 export default {
@@ -70,12 +66,12 @@ export default {
       tabHeight: 50,
       minSplitter,
       maxSplitter,
-      walletConnectOpen: false
+      walletConnectOpen: false,
+      splitterRatio: 20
     }
   },
   methods: {
     ...mapActions({
-      setSplitterRatio: 'splitter/setSplitterRatio',
       walletRehydrate: 'wallet/rehydrate',
       electrumRehydrate: 'electrumHandler/rehydrate',
       electrumConnect: 'electrumHandler/connect',
@@ -91,12 +87,12 @@ export default {
     ...mapGetters({
       getAllAddresses: 'wallet/getAllAddresses'
     }),
-    onResize (size) {
-      this.tabHeight = height(this.$refs.tabs.$el)
-    },
     tweak (offset, viewportHeight) {
       const height = viewportHeight - offset + 'px'
       return { height, minHeight: height }
+    },
+    setSplitRatio (value) {
+      this.splitterRatio = value
     }
   },
   computed: {
@@ -107,16 +103,7 @@ export default {
       getAddressStr: 'wallet/getMyAddressStr',
       getContact: 'contacts/getContact',
       walletConnected: 'electrumHandler/connected'
-    }),
-    ...mapGetters({ getSplitterRatio: 'splitter/getSplitterRatio' }),
-    splitterRatio: {
-      get () {
-        return this.getSplitterRatio
-      },
-      set (value) {
-        this.setSplitterRatio(value)
-      }
-    }
+    })
   },
   watch: {
     walletConnected (newVal, oldVal) {
