@@ -92,20 +92,6 @@ export default {
     getChatOrder (state) {
       return state.order
     },
-    getInputMessage: (state) => (addr) => {
-      if (addr in state.data) {
-        return state.data[addr].inputMessage
-      } else {
-        return ''
-      }
-    },
-    getInputMessageActive (state) {
-      if (state.activeChatAddr == null) {
-        return ''
-      } else {
-        return state.data[state.activeChatAddr].inputMessage
-      }
-    },
     getStampAmount: (state) => (addr) => {
       return state.data[addr].stampAmount
     },
@@ -174,16 +160,6 @@ export default {
         state.data[addr].lastRead = null
       } else {
         state.data[addr].lastRead = values[values.length - 1].receivedTime
-      }
-    },
-    setInputMessage (state, { addr, text }) {
-      if (addr in state.data) {
-        state.data[addr].inputMessage = text
-      }
-    },
-    setInputMessageActive (state, text) {
-      if (state.activeChatAddr != null) {
-        state.data[state.activeChatAddr].inputMessage = text
       }
     },
     switchChatActive (state, addr) {
@@ -275,12 +251,6 @@ export default {
       let text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
       commit('setInputMessage', { addr: shareAddr, text })
       commit('switchChatActive', shareAddr)
-    },
-    setInputMessage ({ commit }, { addr, text }) {
-      commit('setInputMessage', { addr, text })
-    },
-    setInputMessageActive ({ commit }, text) {
-      commit('setInputMessageActive', text)
     },
     switchChatActive ({ commit }, addr) {
       commit('switchChatActive', addr)
