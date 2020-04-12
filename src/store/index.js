@@ -10,8 +10,6 @@ const vuexLocal = new VuexPersistence({
   filter: (mutation) => {
     let namespace = mutation.type.split('/')[0]
     switch (namespace) {
-      case 'clock':
-        return false
       case 'contactDrawer':
         return false
       case 'myDrawer':

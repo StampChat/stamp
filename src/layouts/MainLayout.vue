@@ -67,7 +67,6 @@ export default {
   },
   data () {
     return {
-      tabHeight: 50,
       minSplitter,
       maxSplitter,
       walletConnectOpen: false
