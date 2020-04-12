@@ -554,6 +554,7 @@ export default {
         .deriveChild(44)
         .deriveChild(145)
 
+      let stampTotal = 0
       for (const [i, stampOutpoint] of stampOutpoints.entries()) {
         const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
         const stampTx = cashlib.Transaction(stampTxRaw)
@@ -568,8 +569,10 @@ export default {
         if (!outbound) {
           for (const [j, outputIndex] of vouts.entries()) {
             const output = stampTx.outputs[outputIndex]
-            const satoshis = output.satoshis
             const address = output.script.toAddress('testnet') // TODO: Make generic
+            const satoshis = output.satoshis
+            stampTotal += satoshis
+
             // Also note, we should use an HD key here.
             try {
               const outputPrivKey = stampTxHDPrivKey
@@ -599,6 +602,12 @@ export default {
             }
           }
         }
+      }
+
+      // Ignore messages below acceptance price
+      const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
+      if (stampTotal < acceptancePrice) {
+        return
       }
 
       // Decode entries
