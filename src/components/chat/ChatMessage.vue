@@ -49,11 +49,11 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import moment from 'moment'
+import { mapActions } from 'vuex'
 import ChatMessageSection from './ChatMessageSection.vue'
 import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
 import TransactionDialog from '../dialogs/TransactionDialog.vue'
-import formatting from '../../utils/formatting'
 import { stampPrice } from '../../utils/wallet'
 
 export default {
@@ -67,10 +67,15 @@ export default {
       transactionDialog: false
     }
   },
+  props: {
+    address: String,
+    message: Object,
+    contact: Object,
+    index: String,
+    now: Object
+  },
   methods: {
-    ...mapGetters({ getUnixTime: 'clock/getUnixTime' }),
     ...mapActions({
-      updateClock: 'clock/updateClock',
       setCurrentReply: 'chats/setCurrentReply'
     })
   },
@@ -78,9 +83,9 @@ export default {
     formatedTimestamp () {
       switch (this.message.status) {
         case 'confirmed':
-          let unixTime = this.getUnixTime()
-          let stamp = formatting.unixToStamp(this.message.timestamp, unixTime)
-          return stamp
+          const timestamp = this.message.timestamp || this.message.receivedTime
+          const howLongAgo = moment(timestamp)
+          return moment(this.now).to(howLongAgo)
         case 'pending':
           return 'sending...'
         case 'error':
@@ -116,8 +121,6 @@ export default {
     }
   },
   created () {
-    this.updateClock()
-  },
-  props: ['address', 'message', 'contact', 'index']
+  }
 }
 </script>

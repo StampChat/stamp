@@ -68,7 +68,6 @@ export default {
   methods: {
     ...mapActions({
       setSplitterRatio: 'splitter/setSplitterRatio',
-      startClock: 'clock/startClock',
       walletRehydrate: 'wallet/rehydrate',
       electrumRehydrate: 'electrumHandler/rehydrate',
       electrumConnect: 'electrumHandler/connect',
@@ -175,9 +174,6 @@ export default {
 
     // Start contact watcher
     this.startContactUpdater()
-
-    // Start internal timer
-    this.startClock()
   }
 }
 </script>
