@@ -16,13 +16,6 @@ const vuexLocal = new VuexPersistence({
         return false
     }
 
-    switch (mutation.type) {
-      case 'chats/setInputMessage':
-        return false
-      case 'chats/setInputMessageActive':
-        return false
-    }
-
     return true
   }
 })

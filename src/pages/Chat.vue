@@ -94,6 +94,7 @@ export default {
       now: moment(),
       sendFileOpen: false,
       bottom: true,
+      message: '',
       donationMessage
     }
   },
@@ -107,7 +108,6 @@ export default {
     ...mapActions({
       readAll: 'chats/readAll',
       sendMessageVuex: 'chats/sendMessage',
-      setInputMessage: 'chats/setInputMessage',
       setCurrentReply: 'chats/setCurrentReply'
     }),
     sendMessage (message) {
@@ -155,19 +155,10 @@ export default {
   computed: {
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
-      getInputMessage: 'chats/getInputMessage',
       getProfile: 'myProfile/getProfile',
       getCurrentReplyDigest: 'chats/getCurrentReplyDigest',
       getCurrentActiveReply: 'chats/getCurrentActiveReply'
     }),
-    message: {
-      set (text) {
-        this.setInputMessage({ addr: this.address, text })
-      },
-      get () {
-        return this.getInputMessage(this.address) || ''
-      }
-    },
     replyItem () {
       let msg = this.getCurrentActiveReply
       if (msg) {
