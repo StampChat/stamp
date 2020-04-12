@@ -119,7 +119,7 @@ export default {
         this.sendMessageVuex({ addr: this.activeChat, text: message, replyDigest })
         this.message = ''
         this.setCurrentReply({ addr: this.activeChat, index: null })
-        this.$nextTick(() => this.$refs.inputBox.focus())
+        this.$nextTick(() => this.$refs.chatInput.$el.focus())
       }
     },
     scrollBottom () {
