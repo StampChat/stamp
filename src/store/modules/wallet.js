@@ -8,6 +8,36 @@ import { calcId } from '../../utils/wallet'
 
 const cashlib = require('bitcore-lib-cash')
 
+export function rehydrateWallet (wallet) {
+  if (!wallet || !wallet.xPrivKey) {
+    return
+  }
+  wallet.xPrivKey = cashlib.HDPrivateKey.fromObject(wallet.xPrivKey)
+  wallet.identityPrivKey = cashlib.PrivateKey.fromObject(wallet.identityPrivKey)
+  for (let addr in wallet.addresses) {
+    wallet.addresses[addr].privKey = cashlib.PrivateKey.fromObject(wallet.addresses[addr].privKey)
+  }
+  for (let addr in wallet.changeAddresses) {
+    wallet.changeAddresses[addr].privKey = cashlib.PrivateKey.fromObject(wallet.changeAddresses[addr].privKey)
+  }
+  for (const utxo of Object.values(wallet.utxos)) {
+    if (utxo.type === 'p2pkh') {
+      // Does not keep it's privKey with it because we like edge cases.
+      continue
+    }
+    utxo.address = cashlib.Address.fromObject(utxo.address.valueOf())
+    utxo.privKey = cashlib.PrivateKey.fromObject(utxo.privKey.valueOf())
+  }
+  for (const utxo of Object.values(wallet.frozenUTXOs)) {
+    if (utxo.type === 'p2pkh') {
+      // Does not keep it's privKey with it because we like edge cases.
+      continue
+    }
+    utxo.address = cashlib.Address.fromObject(utxo.address.valueOf())
+    utxo.privKey = cashlib.PrivateKey.fromObject(utxo.privKey.valueOf())
+  }
+}
+
 export default {
   namespaced: true,
   state: {
@@ -55,34 +85,6 @@ export default {
       state.identityPrivKey = xPrivKey.deriveChild(20102019)
         .deriveChild(0, true)
         .privateKey // TODO: Proper path for this
-    },
-    rehydrate (state) {
-      if (state.xPrivKey != null) {
-        state.xPrivKey = cashlib.HDPrivateKey.fromObject(state.xPrivKey)
-        state.identityPrivKey = cashlib.PrivateKey.fromObject(state.identityPrivKey)
-        for (let addr in state.addresses) {
-          Vue.set(state.addresses[addr], 'privKey', cashlib.PrivateKey.fromObject(state.addresses[addr].privKey))
-        }
-        for (let addr in state.changeAddresses) {
-          Vue.set(state.changeAddresses[addr], 'privKey', cashlib.PrivateKey.fromObject(state.changeAddresses[addr].privKey))
-        }
-        for (const utxo of Object.values(state.utxos)) {
-          if (utxo.type === 'p2pkh') {
-            // Does not keep it's privKey with it because we like edge cases.
-            continue
-          }
-          Vue.set(utxo, 'address', cashlib.Address.fromObject(utxo.address.valueOf()))
-          Vue.set(utxo, 'privKey', cashlib.PrivateKey.fromObject(utxo.privKey.valueOf()))
-        }
-        for (const utxo of Object.values(state.frozenUTXOs)) {
-          if (utxo.type === 'p2pkh') {
-            // Does not keep it's privKey with it because we like edge cases.
-            continue
-          }
-          Vue.set(utxo, 'address', cashlib.Address.fromObject(utxo.address.valueOf()))
-          Vue.set(utxo, 'privKey', cashlib.PrivateKey.fromObject(utxo.privKey.valueOf()))
-        }
-      }
     },
     refreshUTXOsByAddr (state, { addr, outputs }) {
       // Delete all utxos by address

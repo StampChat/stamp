@@ -3,6 +3,7 @@ import Vuex from 'vuex'
 import VuexPersistence from 'vuex-persist'
 import modules from './modules'
 import { rehydateChat } from './modules/chats'
+import { rehydrateWallet } from './modules/wallet'
 
 Vue.use(Vuex)
 
@@ -21,6 +22,7 @@ const vuexLocal = new VuexPersistence({
     const value = (storage).getItem(key)
     const newState = parseState(value)
     rehydateChat(newState.chats)
+    rehydrateWallet(newState.wallet)
     return newState
   },
   filter: (mutation) => {
