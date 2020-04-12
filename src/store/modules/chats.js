@@ -26,6 +26,20 @@ function calculateUnreadAggregates (state, addr) {
   }
 }
 
+export function rehydateChat (chats) {
+  if (!chats) {
+    return
+  }
+
+  if (!chats.data) {
+    for (const contactAddress in chats.data) {
+      const contact = chats.data[contactAddress]
+      contact.address = contactAddress
+      // Do nothing for now
+    }
+  }
+}
+
 export default {
   namespaced: true,
   state: {
