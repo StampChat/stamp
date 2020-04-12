@@ -1,61 +1,60 @@
 <template>
-  <q-page>
+  <div>
     <!-- Send file dialog -->
-    <q-dialog
-      v-model="sendFileOpen"
-      persistent
-    >
+    <q-dialog v-model="sendFileOpen" persistent>
       <send-file-dialog :address="activeChat" />
     </q-dialog>
 
-    <div class="col">
-      <q-scroll-area
-        ref="chatScroll"
-        class="q-px-md row"
-        :style="`background-image: url(statics/bg-default.jpg); background-size:cover; height: calc(100vh - ${inputHeight}px - ${replyHeight}px - ${tabHeight}px);`"
-      >
-        <q-chat-message
-          class='q-py-sm'
-          avatar="~/assets/cashweb-avatar.png"
-          :sent="false"
-          :text="[
+    <q-scroll-area
+      ref="chatScroll"
+      class="q-px-md row"
+      :style="`height: calc(100% - ${offsetHeight()}px); min-height: calc(100%-${offsetHeight()}px); background: lightblue`"
+    >
+      <q-chat-message
+        class="q-py-sm"
+        avatar="~/assets/cashweb-avatar.png"
+        :sent="false"
+        :text="[
             donationMessage
             ]"
-          size="6"
-        />
-        <chat-message
-          v-for="(chatMessage, index) in messages"
-          :key="index"
-          :address="activeChat"
-          :message="chatMessage"
-          :contact="getContact(chatMessage.outbound)"
-          :index="index"
-          :now="now"
-        />
-        <q-scroll-observer
-          debounce="500"
-          @scroll="scrollHandler"
-        />
-      </q-scroll-area>
+        size="6"
+      />
+      <chat-message
+        v-for="(chatMessage, index) in messages"
+        :key="index"
+        :address="activeChat"
+        :message="chatMessage"
+        :contact="getContact(chatMessage.outbound)"
+        :index="index"
+        :now="now"
+      />
+      <q-scroll-observer debounce="500" @scroll="scrollHandler" />
+    </q-scroll-area>
 
-      <!-- Reply box -->
-      <div>
-        <q-resize-observer @resize="onResizeReply" />
-        <div class='q-pa-sm' v-if='activeChat && getCurrentActiveReply'>
-          <div class='q-pa-sm bg-secondary row' style='border-radius: 5px;'>
-            <chat-message-reply class='col' :item="replyItem" />
-            <q-btn dense flat color="accent" icon="close" @click='setCurrentReply({ addr: activeChat, index: null })' />
-          </div>
+    <!-- Reply box -->
+    <div ref="replyBox">
+      <div class="q-pa-sm" v-if="activeChat && getCurrentActiveReply">
+        <div class="q-pa-sm bg-secondary row" style="border-radius: 5px;">
+          <chat-message-reply class="col" :item="replyItem" />
+          <q-btn
+            dense
+            flat
+            color="accent"
+            icon="close"
+            @click="setCurrentReply({ addr: activeChat, index: null })"
+          />
+        </div>
       </div>
-      </div>
-
-      <!-- Message box -->
-      <chat-input v-model="message" @resize="onResizeInput" @sendMessage="sendMessage" @sendFileClicked="sendFileClicked" />
     </div>
-    <q-page-sticky
-      position="top-right"
-      :offset="[18, 18]"
-    >
+
+    <!-- Message box -->
+    <chat-input
+      ref="chatInput"
+      v-model="message"
+      @sendMessage="sendMessage"
+      @sendFileClicked="sendFileClicked"
+    />
+    <q-page-sticky position="top-right" :offset="[18, 18]">
       <transition name="fade">
         <q-btn
           v-if="!bottom"
@@ -67,12 +66,15 @@
         />
       </transition>
     </q-page-sticky>
-  </q-page>
+  </div>
 </template>
 
 <script>
 import moment from 'moment'
 import { mapGetters, mapActions } from 'vuex'
+import { dom } from 'quasar'
+const { height } = dom
+
 import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
@@ -82,7 +84,7 @@ import { donationMessage } from '../utils/constants'
 const scrollDuration = 500
 
 export default {
-  props: ['activeChat', 'messages', 'tabHeight'],
+  props: ['activeChat', 'messages'],
   components: {
     ChatMessage,
     SendFileDialog,
@@ -93,8 +95,6 @@ export default {
     return {
       timer: null,
       now: moment(),
-      inputHeight: 100,
-      replyHeight: 0,
       sendFileOpen: false,
       bottom: true,
       donationMessage
@@ -129,12 +129,6 @@ export default {
         this.$nextTick(() => scrollArea.setScrollPosition(scrollTarget.scrollHeight, scrollDuration))
       }
     },
-    onResizeInput (size) {
-      this.inputHeight = size.height
-    },
-    onResizeReply (size) {
-      this.replyHeight = size.height
-    },
     sendFileClicked () {
       this.sendFileOpen = true
     },
@@ -153,6 +147,12 @@ export default {
       } else {
         this.bottom = false
       }
+    },
+    offsetHeight () {
+      // TODO: This isn't reactive enough. It's somewhat slow to recalculate
+      const inputBoxHeight = this.$refs.chatInput ? height(this.$refs.chatInput.$el) : 50
+      const replyHeight = this.$refs.replyBox ? height(this.$refs.replyBox) : 0
+      return inputBoxHeight + replyHeight
     }
   },
   computed: {
