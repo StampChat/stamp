@@ -11,18 +11,21 @@ import { constructStealthPaymentPayload, constructImagePayload, constructTextPay
 
 const cashlib = require('bitcore-lib-cash')
 
-function calculateUnreadAggregates (state, addr) {
-  const unreadMessages = Object.values(state.data[addr].messages)
-    .filter((message) => state.data[addr].lastRead < message.receivedTime)
+function calculateUnreadAggregates (messages, lastReadTime) {
+  const messageValues = Object.values(messages)
     .map((message) => {
-      return stampPrice(message.outpoints) || 0
+      return {
+        read: lastReadTime < message.receivedTime,
+        totalValue: (stampPrice(message.outpoints) || 0) + message.items.reduce((totalValue, { satoshis = 0 }) => totalValue + satoshis, 0)
+      }
     })
-  const totalUnreadValue = unreadMessages.reduce(
-    (totalValue, curStampSats) => totalValue + curStampSats, 0
-  )
+  const unreadMessageValues = messageValues.filter((message) => !message.read)
+  const totalUnreadValue = unreadMessageValues.reduce((totalValue, message) => totalValue + message.totalValue, 0)
+  const totalValue = messageValues.reduce((totalValue, message) => totalValue + message.totalValue, 0)
   return {
     totalUnreadValue,
-    totalUnreadMessages: unreadMessages.length
+    totalUnreadMessages: unreadMessageValues.length,
+    totalValue
   }
 }
 
@@ -31,11 +34,18 @@ export function rehydateChat (chats) {
     return
   }
 
-  if (!chats.data) {
+  if (chats.data) {
     for (const contactAddress in chats.data) {
       const contact = chats.data[contactAddress]
       contact.address = contactAddress
-      // Do nothing for now
+      if (contact.totalValue !== undefined) {
+        // This person has saved data, no need to migrate
+        continue
+      }
+      const { totalUnreadMessages, totalUnreadValue, totalValue } = calculateUnreadAggregates(contact.messages, contact.lastRead)
+      contact.totalUnreadMessages = totalUnreadMessages
+      contact.totalUnreadValue = totalUnreadValue
+      contact.totalValue = totalValue
     }
   }
 }
@@ -43,7 +53,6 @@ export function rehydateChat (chats) {
 export default {
   namespaced: true,
   state: {
-    order: [],
     activeChatAddr: null,
     data: {},
     lastReceived: null
@@ -59,31 +68,34 @@ export default {
       return false
     },
     getNumUnread: (state) => (addr) => {
-      if (state.data[addr].lastRead === null) {
-        return Object.keys(state.data[addr].messages).length
-      }
-
-      let values = Object.values(state.data[addr].messages)
-      let lastUnreadIndex = values.findIndex(message => state.data[addr].lastRead === message.receivedTime)
-      let numUnread = values.length - lastUnreadIndex - 1
-      return numUnread
+      return state.data[addr] ? state.data[addr].totalUnreadMessages : 0
     },
     getLastRead: (state) => (addr) => {
       return state.data[addr].lastRead
     },
     getSortedChatOrder (state) {
-      const sortedOrder = state.order.map(
-        addr => ({
-          address: addr,
-          ...calculateUnreadAggregates(state, addr),
-          lastRead: state.data[addr].lastRead
-        })
-      ).sort(({ totalUnreadValue: valueA, lastRead: lastReadA }, { totalUnreadValue: valueB, lastRead: lastReadB }) => {
-        if (valueA === valueB) {
-          return lastReadB - lastReadA
+      const sortedOrder = Object.values(state.data).sort(
+        (contactA, contactB) => {
+          if (contactB.totalUnreadValue - contactA.totalUnreadValue === 0) {
+            return contactB.totalUnreadValue - contactA.totalUnreadValue
+          }
+
+          if (contactB.totalValue - contactA.totalValue === 0) {
+            return contactB.totalValue - contactA.totalValue
+          }
+
+          if (contactB.lastRead - contactA.lastRead === 0) {
+            return contactB.lastRead - contactA.lastRead
+          }
+
+          if (contactB.totalUnreadMessages - contactA.totalUnreadMessages === 0) {
+            return contactB.totalUnreadMessages - contactA.totalUnreadMessages
+          }
+
+          // No other tiebreakers
+          return 0
         }
-        return valueB - valueA
-      })
+      )
       return sortedOrder
     },
     getChatOrder (state) {
@@ -155,6 +167,8 @@ export default {
       } else {
         state.data[addr].lastRead = values[values.length - 1].receivedTime
       }
+      state.data[addr].totalUnreadMessages = 0
+      state.data[addr].totalUnreadValue = 0
     },
     switchChatActive (state, addr) {
       state.activeChatAddr = addr
@@ -182,19 +196,12 @@ export default {
       state.data[addr].messages[index].status = 'error'
       Vue.set(state.data[addr].messages[index], 'retryData', retryData)
     },
-    switchOrder (state, addr) {
-      state.order.splice(state.order.indexOf(addr), 1)
-      state.order.unshift(addr)
-    },
     clearChat (state, addr) {
       if (addr in state.data) {
         state.data[addr].messages = {}
       }
     },
     deleteChat (state, addr) {
-      state.order = state.order.filter(function (value, index, arr) {
-        return value !== addr
-      })
       if (state.activeChatAddr === addr) {
         state.activeChatAddr = null
       }
@@ -206,12 +213,17 @@ export default {
         // TODO: Better indexing
         messages[index] = newMsg
 
-        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
-        state.order.unshift(addr)
+        Vue.set(state.data, addr, { messages, inputMessage: '', address: addr, lastRead: null, stampAmount: defaultStampAmount, totalUnreadMessages: 0, totalUnreadValue: 0, totalValue: 0 })
       } else {
         // TODO: Better indexing
-        Vue.set(state.data[addr].messages, index, newMsg)
+        Vue.set(state.data[addr], index, newMsg)
       }
+
+      state.data[addr].lastReceived = newMsg.receivedTime
+      state.data[addr].totalUnreadMessages += 1
+      const messageValue = stampPrice(newMsg.outputs) + newMsg.entries.reduce((totalValue, { satoshis = 0 }) => totalValue + satoshis, 0)
+      state.data[addr].totalUnreadValue += messageValue
+      state.data[addr].totalValue += messageValue
     },
     setLastReceived (state, lastReceived) {
       state.lastReceived = lastReceived
@@ -219,7 +231,6 @@ export default {
     openChat (state, addr) {
       if (!(addr in state.data)) {
         Vue.set(state.data, addr, { messages: {}, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
-        state.order.unshift(addr)
       }
       state.activeChatAddr = addr
     },
@@ -446,9 +457,6 @@ export default {
         chainTooLongNotify()
         commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'image', image, caption } })
       }
-    },
-    switchOrder ({ commit }, addr) {
-      commit('switchOrder', addr)
     },
     clearChat ({ commit }, addr) {
       commit('clearChat', addr)
