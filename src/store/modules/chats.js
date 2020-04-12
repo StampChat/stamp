@@ -556,7 +556,6 @@ export default {
         .deriveChild(44)
         .deriveChild(145)
 
-      let stampTotal = 0
       for (const [i, stampOutpoint] of stampOutpoints.entries()) {
         const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
         const stampTx = cashlib.Transaction(stampTxRaw)
@@ -607,9 +606,11 @@ export default {
 
       // Ignore messages below acceptance price
       const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
-      if (stampTotal < acceptancePrice) {
+      if (stampValue < acceptancePrice) {
+        console.log('ignoring', stampValue, acceptancePrice)
         return
       }
+      console.log('accepted')
       let stealthValue = 0
 
       // Decode entries
