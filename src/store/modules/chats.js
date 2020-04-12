@@ -147,13 +147,6 @@ export default {
         return info
       }
     },
-    getAllMessages: (state) => (addr) => {
-      if (addr in state.data) {
-        return state.data[addr].messages
-      } else {
-        return {}
-      }
-    },
     getLastReceived (state) {
       return state.lastReceived
     },
