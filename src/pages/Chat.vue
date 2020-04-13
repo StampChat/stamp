@@ -149,7 +149,9 @@ export default {
       // TODO: This isn't reactive enough. It's somewhat slow to recalculate
       const inputBoxHeight = this.$refs.chatInput ? height(this.$refs.chatInput.$el) : 50
       const replyHeight = this.$refs.replyBox ? height(this.$refs.replyBox) : 0
-      return inputBoxHeight + replyHeight
+      // Sometimes this returns zero when the component isnt' shown. However, it then dates some time to update properly when switching to it.
+      // Set a minimum of 50.
+      return Math.max(inputBoxHeight + replyHeight, 50)
     },
     setReply ({ address, index }) {
       // Address is not useful here as all the stuff in this component is for the same address
