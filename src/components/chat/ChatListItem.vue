@@ -4,7 +4,7 @@
     active-class="bg-blue-3 text-black"
     clickable
     v-ripple
-    @click="switchChatActive(chatAddr)"
+    @click="setActiveChat(chatAddr)"
   >
     <q-item-section avatar>
       <q-avatar rounded>
@@ -43,7 +43,7 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
   methods: {
-    ...mapActions({ switchChatActive: 'chats/switchChatActive' })
+    ...mapActions({ setActiveChat: 'chats/setActiveChat' })
   },
   computed: {
     ...mapGetters({
