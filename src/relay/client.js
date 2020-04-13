@@ -173,6 +173,21 @@ class RelayClient {
     return payload
   }
 
+  async deleteMessage (addr, token, digest) {
+    let url = `${this.httpScheme}://${this.url}/messages/${addr}`
+    let hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
+    await axios({
+      method: 'delete',
+      url,
+      headers: {
+        'Authorization': token
+      },
+      params: {
+        digest: hexDigest
+      }
+    })
+  }
+
   async putProfile (addr, profile, token) {
     let rawProfile = profile.serializeBinary()
     let url = `${this.httpScheme}://${this.url}/profile/${addr}`
