@@ -132,10 +132,11 @@ export default {
 
       // Get metadata
       let handler = rootGetters['keyserverHandler/getHandler']
+      let relayData = null
       try {
         let relayURL = await handler.getRelayUrl(addr)
         let relayClient = new RelayClient(relayURL)
-        var relayData = await relayClient.getRelayData(addr)
+        relayData = await relayClient.getRelayData(addr)
       } catch (err) {
         console.error(err)
         return

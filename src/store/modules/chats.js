@@ -251,7 +251,8 @@ export default {
       commit('setInputMessage', { addr: shareAddr, text })
       dispatch('setActiveChat', shareAddr)
     },
-    setActiveChat ({ commit }, addr) {
+    setActiveChat ({ commit, dispatch }, addr) {
+      dispatch('contacts/refresh', addr, { root: true })
       commit('setActiveChat', addr)
       commit('readAll', addr)
     },
