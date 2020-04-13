@@ -41,14 +41,17 @@ export function rehydateChat (chats) {
     for (const contactAddress in chats.data) {
       const contact = chats.data[contactAddress]
       contact.address = contactAddress
-      if (contact.totalValue !== undefined) {
-        // This person has saved data, no need to migrate
-        continue
+      if (contact.messsages) {
+        delete contact.messsages
+        contact.messages = {}
       }
-      const { totalUnreadMessages, totalUnreadValue, totalValue } = calculateUnreadAggregates(contact.messages, contact.lastRead)
-      contact.totalUnreadMessages = totalUnreadMessages
-      contact.totalUnreadValue = totalUnreadValue
-      contact.totalValue = totalValue
+      // This person has saved data, no need to migrate
+      if (contact.totalValue === undefined) {
+        const { totalUnreadMessages, totalUnreadValue, totalValue } = calculateUnreadAggregates(contact.messages, contact.lastRead)
+        contact.totalUnreadMessages = totalUnreadMessages
+        contact.totalUnreadValue = totalUnreadValue
+        contact.totalValue = totalValue
+      }
     }
   }
 }
@@ -172,7 +175,7 @@ export default {
     },
     setActiveChat (state, addr) {
       if (!(addr in state.data)) {
-        Vue.set(state.data, addr, { ...defaultContactObject, messsages: {}, address: addr })
+        Vue.set(state.data, addr, { ...defaultContactObject, messages: {}, address: addr })
       }
       state.activeChatAddr = addr
     },
@@ -186,8 +189,16 @@ export default {
         timestamp,
         outpoints
       }
+      if (addr in state.data) {
+        Vue.set(state.data[addr].messages, index, newMsg)
+        return
+      }
+      // Handle default case
+      let messages = {
+        index: newMsg
+      }
 
-      Vue.set(state.data[addr].messages, index, newMsg)
+      Vue.set(state.data, addr, { ...defaultContactObject, messages, address: addr })
     },
     setOutpoints (state, { addr, index, outpoints }) {
       state.data[addr].messages[index].outpoints = outpoints
