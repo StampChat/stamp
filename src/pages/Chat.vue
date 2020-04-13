@@ -83,7 +83,17 @@ import { donationMessage } from '../utils/constants'
 const scrollDuration = 0
 
 export default {
-  props: ['address', 'messages'],
+  props: {
+    address: String,
+    messages: {
+      type: Object,
+      default: () => {}
+    },
+    active: {
+      type: Boolean,
+      default: () => false
+    }
+  },
   components: {
     ChatMessage,
     SendFileDialog,
@@ -176,6 +186,16 @@ export default {
       console.log(msg)
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
       return firstNonReply
+    }
+  },
+  watch: {
+    active () {
+      const scrollArea = this.$refs.chatScroll
+      const scrollTarget = scrollArea.getScrollTarget()
+      if (scrollTarget.scrollTop === 0) {
+        this.scrollBottom()
+      }
+      // TODO: Scroll to last unread
     }
   }
 }
