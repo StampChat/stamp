@@ -3,16 +3,15 @@
     <q-dialog v-model="walletConnectOpen">
       <wallet-connect-dialog />
     </q-dialog>
-    <my-drawer />
+    <my-drawer v-if="loaded" />
     <contact-drawer
       v-if="activeChatAddr !== null"
       :address="activeChatAddr"
       :contact="getContact(activeChatAddr)"
     />
-    <main-header v-bind:splitRatio="splitterRatio" @splitting="setSplitRatio">
-    </main-header>
+    <main-header v-bind:splitRatio="splitterRatio" @splitting="setSplitRatio"></main-header>
     <q-page-container>
-      <q-page :style-fn="tweak">
+      <q-page :style-fn="tweak" v-if="loaded">
         <q-splitter
           v-model="splitterRatio"
           separator-style="width: 0px"
@@ -23,9 +22,7 @@
             <chat-list :style="`height: 100%; min-height: 100%;`" />
           </template>
 
-          <template
-            v-slot:after
-          >
+          <template v-slot:after>
             <chat
               v-for="(item, index) in data"
               v-show="activeChatAddr === index"
@@ -65,7 +62,8 @@ export default {
       minSplitter,
       maxSplitter,
       walletConnectOpen: false,
-      splitterRatio: 20
+      splitterRatio: 20,
+      loaded: false
     }
   },
   methods: {
@@ -79,10 +77,12 @@ export default {
       updateHDUTXOs: 'wallet/updateHDUTXOs',
       fixFrozenUTXOs: 'wallet/fixFrozenUTXOs',
       fixUTXOs: 'wallet/fixUTXOs',
-      startListeners: 'wallet/startListeners'
+      startListeners: 'wallet/startListeners',
+      setActiveChat: 'chats/setActiveChat'
     }),
     ...mapGetters({
-      getAllAddresses: 'wallet/getAllAddresses'
+      getAllAddresses: 'wallet/getAllAddresses',
+      getSortedChatOrder: 'chats/getSortedChatOrder'
     }),
     tweak (offset, viewportHeight) {
       const height = viewportHeight - offset + 'px'
@@ -109,63 +109,65 @@ export default {
     }
   },
   async created () {
-    // Rehydrate electrum
-    this.electrumRehydrate()
-    this.electrumConnect()
-    this.electrumKeepAlive()
-
-    // Rehydrate relay client
-    this.relayClientRehydrate()
-
     // Start relay listener
     this.$q.loading.show({
-      delay: 100,
-      message: 'Connecting to relay server...'
-    })
-    try {
-      let client = this.getRelayClient
-      client.setUpWebsocket(this.getAddressStr, this.getToken)
-    } catch (err) {
-      console.error(err)
-    }
-
-    // Get historic messages
-    this.$q.loading.show({
-      delay: 100,
-      message: 'Getting messages...'
-    })
-    try {
-      await this.refreshChat()
-    } catch (err) {
-      console.error(err)
-    }
-
-    this.$q.loading.show({
-      delay: 100,
-      message: 'Updating wallet...'
+      delay: 0,
+      message: 'Updating messages and checking wallet integrity...'
     })
 
-    try {
-      // Start electrum listeners
-      let addresses = Object.keys(this.getAllAddresses())
-      this.startListeners(addresses)
+    console.log('loading')
+    // Setup everything at once. This are independent processes
+    await Promise.all([
+      async () => {
+        try {
+          // Rehydrate relay client
+          this.relayClientRehydrate()
 
-      // Update UTXOs
-      await this.updateHDUTXOs()
+          const client = this.getRelayClient
+          client.setUpWebsocket(this.getAddressStr, this.getToken)
+          await this.refreshChat()
+        } catch (err) {
+          console.error(err)
+        }
+      },
+      async () => {
+        try {
+          // Rehydrate electrum
+          this.electrumRehydrate()
+          this.electrumConnect()
+          this.electrumKeepAlive()
+          // Start electrum listeners
+          let addresses = Object.keys(this.getAllAddresses())
+          this.startListeners(addresses)
 
-      // Fix frozen UTXOs
-      await this.fixFrozenUTXOs()
+          // Update UTXOs
+          await this.updateHDUTXOs()
 
-      // Fix UTXOs
-      await this.fixUTXOs()
-    } catch (err) {
-      console.error(err)
+          // Fix frozen UTXOs
+          await this.fixFrozenUTXOs()
+
+          // Fix UTXOs
+          await this.fixUTXOs()
+        } catch (err) {
+          console.error(err)
+        }
+      }
+    ].map(f => f()))
+
+    if (!this.activeChatAddr) {
+      const contacts = this.getSortedChatOrder()
+      if (contacts.length) {
+        this.setActiveChat(contacts[0].address)
+      }
     }
-
     this.$q.loading.hide()
+
+    console.log('loaded')
 
     // Start contact watcher
     this.startContactUpdater()
+
+    this.loaded = true
   }
 }
 </script>
