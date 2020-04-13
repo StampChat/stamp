@@ -1,8 +1,7 @@
 <template>
   <q-img
     class="absolute-top"
-    src="https://cdn.quasar.dev/img/material.png"
-    style="height: 130px"
+    style="height: 130px; background: royalblue"
   >
     <q-list class="absolute-bottom bg-transparent q-pa-none">
       <q-item class="bg-transparent q-pa-none">
