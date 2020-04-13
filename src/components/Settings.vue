@@ -16,12 +16,6 @@
             icon="cloud"
             label="Networking"
           />
-        </q-tabs>
-          <q-tabs
-          v-model="tab"
-          vertical
-          class="text-primary"
-        >
           <q-tab
             name="appearance"
             icon="color_lens"
