@@ -122,7 +122,7 @@ export default {
     },
     addContact ({ commit }, { addr, contact }) {
       commit('addContact', { addr, contact })
-      commit('chats/openChat', addr, { root: true })
+      commit('chats/setActiveChat', addr, { root: true })
     },
     deleteChat ({ commit }, addr) {
       commit('chats/deleteChat', addr, { root: true })
@@ -132,10 +132,11 @@ export default {
 
       // Get metadata
       let handler = rootGetters['keyserverHandler/getHandler']
+      let relayData = null
       try {
         let relayURL = await handler.getRelayUrl(addr)
         let relayClient = new RelayClient(relayURL)
-        var relayData = await relayClient.getRelayData(addr)
+        relayData = await relayClient.getRelayData(addr)
       } catch (err) {
         console.error(err)
         return

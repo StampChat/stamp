@@ -83,7 +83,17 @@ import { donationMessage } from '../utils/constants'
 const scrollDuration = 0
 
 export default {
-  props: ['address', 'messages'],
+  props: {
+    address: String,
+    messages: {
+      type: Object,
+      default: () => {}
+    },
+    active: {
+      type: Boolean,
+      default: () => false
+    }
+  },
   components: {
     ChatMessage,
     SendFileDialog,
@@ -149,7 +159,9 @@ export default {
       // TODO: This isn't reactive enough. It's somewhat slow to recalculate
       const inputBoxHeight = this.$refs.chatInput ? height(this.$refs.chatInput.$el) : 50
       const replyHeight = this.$refs.replyBox ? height(this.$refs.replyBox) : 0
-      return inputBoxHeight + replyHeight
+      // Sometimes this returns zero when the component isnt' shown. However, it then dates some time to update properly when switching to it.
+      // Set a minimum of 50.
+      return Math.max(inputBoxHeight + replyHeight, 50)
     },
     setReply ({ address, index }) {
       // Address is not useful here as all the stuff in this component is for the same address
@@ -174,6 +186,23 @@ export default {
       console.log(msg)
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
       return firstNonReply
+    }
+  },
+  watch: {
+    messages () {
+      // Scroll to bottom if user was already there.
+      if (this.bottom) {
+        this.scrollBottom()
+      }
+    },
+    active () {
+      const scrollArea = this.$refs.chatScroll
+      const scrollTarget = scrollArea.getScrollTarget()
+      // Scroll to bottom only if the view was effectively in it's initial state.
+      if (scrollTarget.scrollTop === 0) {
+        this.scrollBottom()
+      }
+      // TODO: Scroll to last unread
     }
   }
 }

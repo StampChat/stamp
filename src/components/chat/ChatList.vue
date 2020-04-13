@@ -62,7 +62,7 @@
         :valueUnread="formatBalance(contact.totalUnreadValue)"
         :numUnread="contact.totalUnreadMessages"
       />
-      <q-item v-if="getChatOrder.length === 0">
+      <q-item v-if="getSortedChatOrder.length === 0">
         <q-item-section>
           <q-item-label>Add contacts from the drawer above...</q-item-label>
         </q-item-section>
@@ -104,7 +104,6 @@ export default {
   },
   computed: {
     ...mapGetters({
-      getChatOrder: 'chats/getChatOrder',
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getNumUnread: 'chats/getNumUnread',
       getBalanceVuex: 'wallet/getBalance',

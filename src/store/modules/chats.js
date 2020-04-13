@@ -11,18 +11,24 @@ import { constructStealthPaymentPayload, constructImagePayload, constructTextPay
 
 const cashlib = require('bitcore-lib-cash')
 
-function calculateUnreadAggregates (state, addr) {
-  const unreadMessages = Object.values(state.data[addr].messages)
-    .filter((message) => state.data[addr].lastRead < message.receivedTime)
+const defaultContactObject = { inputMessage: '', lastRead: null, stampAmount: defaultStampAmount, totalUnreadMessages: 0, totalUnreadValue: 0, totalValue: 0 }
+
+function calculateUnreadAggregates (messages, lastReadTime) {
+  const messageValues = Object.values(messages)
+    .filter(message => !message.outbound)
     .map((message) => {
-      return stampPrice(message.outpoints) || 0
+      return {
+        read: lastReadTime < message.receivedTime,
+        totalValue: (stampPrice(message.outpoints) || 0) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
+      }
     })
-  const totalUnreadValue = unreadMessages.reduce(
-    (totalValue, curStampSats) => totalValue + curStampSats, 0
-  )
+  const unreadMessageValues = messageValues.filter((message) => !message.read)
+  const totalUnreadValue = unreadMessageValues.reduce((totalValue, message) => totalValue + message.totalValue, 0)
+  const totalValue = messageValues.reduce((totalValue, message) => totalValue + message.totalValue, 0)
   return {
     totalUnreadValue,
-    totalUnreadMessages: unreadMessages.length
+    totalUnreadMessages: unreadMessageValues.length,
+    totalValue
   }
 }
 
@@ -31,11 +37,18 @@ export function rehydateChat (chats) {
     return
   }
 
-  if (!chats.data) {
+  if (chats.data) {
     for (const contactAddress in chats.data) {
       const contact = chats.data[contactAddress]
       contact.address = contactAddress
-      // Do nothing for now
+      if (contact.totalValue !== undefined) {
+        // This person has saved data, no need to migrate
+        continue
+      }
+      const { totalUnreadMessages, totalUnreadValue, totalValue } = calculateUnreadAggregates(contact.messages, contact.lastRead)
+      contact.totalUnreadMessages = totalUnreadMessages
+      contact.totalUnreadValue = totalUnreadValue
+      contact.totalValue = totalValue
     }
   }
 }
@@ -43,7 +56,6 @@ export function rehydateChat (chats) {
 export default {
   namespaced: true,
   state: {
-    order: [],
     activeChatAddr: null,
     data: {},
     lastReceived: null
@@ -59,35 +71,35 @@ export default {
       return false
     },
     getNumUnread: (state) => (addr) => {
-      if (state.data[addr].lastRead === null) {
-        return Object.keys(state.data[addr].messages).length
-      }
-
-      let values = Object.values(state.data[addr].messages)
-      let lastUnreadIndex = values.findIndex(message => state.data[addr].lastRead === message.receivedTime)
-      let numUnread = values.length - lastUnreadIndex - 1
-      return numUnread
+      return state.data[addr] ? state.data[addr].totalUnreadMessages : 0
     },
     getLastRead: (state) => (addr) => {
       return state.data[addr].lastRead
     },
     getSortedChatOrder (state) {
-      const sortedOrder = state.order.map(
-        addr => ({
-          address: addr,
-          ...calculateUnreadAggregates(state, addr),
-          lastRead: state.data[addr].lastRead
-        })
-      ).sort(({ totalUnreadValue: valueA, lastRead: lastReadA }, { totalUnreadValue: valueB, lastRead: lastReadB }) => {
-        if (valueA === valueB) {
-          return lastReadB - lastReadA
+      const sortedOrder = Object.values(state.data).sort(
+        (contactA, contactB) => {
+          if (contactB.totalUnreadValue - contactA.totalUnreadValue !== 0) {
+            return contactB.totalUnreadValue - contactA.totalUnreadValue
+          }
+
+          if (contactB.totalValue - contactA.totalValue !== 0) {
+            return contactB.totalValue - contactA.totalValue
+          }
+
+          if (contactB.lastRead - contactA.lastRead !== 0) {
+            return contactB.lastRead - contactA.lastRead
+          }
+
+          if (contactB.totalUnreadMessages - contactA.totalUnreadMessages !== 0) {
+            return contactB.totalUnreadMessages - contactA.totalUnreadMessages
+          }
+
+          // No other tiebreakers
+          return 0
         }
-        return valueB - valueA
-      })
+      )
       return sortedOrder
-    },
-    getChatOrder (state) {
-      return state.order
     },
     getStampAmount: (state) => (addr) => {
       return state.data[addr].stampAmount
@@ -155,8 +167,13 @@ export default {
       } else {
         state.data[addr].lastRead = values[values.length - 1].receivedTime
       }
+      state.data[addr].totalUnreadMessages = 0
+      state.data[addr].totalUnreadValue = 0
     },
-    switchChatActive (state, addr) {
+    setActiveChat (state, addr) {
+      if (!(addr in state.data)) {
+        Vue.set(state.data, addr, { ...defaultContactObject, messsages: {}, address: addr })
+      }
       state.activeChatAddr = addr
     },
     sendMessageLocal (state, { addr, index, items, outpoints }) {
@@ -182,19 +199,12 @@ export default {
       state.data[addr].messages[index].status = 'error'
       Vue.set(state.data[addr].messages[index], 'retryData', retryData)
     },
-    switchOrder (state, addr) {
-      state.order.splice(state.order.indexOf(addr), 1)
-      state.order.unshift(addr)
-    },
     clearChat (state, addr) {
       if (addr in state.data) {
         state.data[addr].messages = {}
       }
     },
     deleteChat (state, addr) {
-      state.order = state.order.filter(function (value, index, arr) {
-        return value !== addr
-      })
       if (state.activeChatAddr === addr) {
         state.activeChatAddr = null
       }
@@ -206,22 +216,20 @@ export default {
         // TODO: Better indexing
         messages[index] = newMsg
 
-        Vue.set(state.data, addr, { messages, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
-        state.order.unshift(addr)
+        Vue.set(state.data, addr, { ...defaultContactObject, messages, address: addr })
       } else {
         // TODO: Better indexing
         Vue.set(state.data[addr].messages, index, newMsg)
       }
+
+      state.data[addr].lastReceived = newMsg.receivedTime
+      state.data[addr].totalUnreadMessages += 1
+      const messageValue = stampPrice(newMsg.outpoints) + newMsg.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
+      state.data[addr].totalUnreadValue += messageValue
+      state.data[addr].totalValue += messageValue
     },
     setLastReceived (state, lastReceived) {
       state.lastReceived = lastReceived
-    },
-    openChat (state, addr) {
-      if (!(addr in state.data)) {
-        Vue.set(state.data, addr, { messages: {}, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
-        state.order.unshift(addr)
-      }
-      state.activeChatAddr = addr
     },
     setStampAmount (state, { addr, stampAmount }) {
       state.data[addr].stampAmount = stampAmount
@@ -241,10 +249,11 @@ export default {
       let contact = rootGetters['contacts/getContactProfile'](currentAddr)
       let text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
       commit('setInputMessage', { addr: shareAddr, text })
-      dispatch('switchChatActive', shareAddr)
+      dispatch('setActiveChat', shareAddr)
     },
-    switchChatActive ({ commit }, addr) {
-      commit('switchChatActive', addr)
+    setActiveChat ({ commit, dispatch }, addr) {
+      dispatch('contacts/refresh', addr, { root: true })
+      commit('setActiveChat', addr)
       commit('readAll', addr)
     },
     startChatUpdater ({ dispatch }) {
@@ -447,9 +456,6 @@ export default {
         commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'image', image, caption } })
       }
     },
-    switchOrder ({ commit }, addr) {
-      commit('switchOrder', addr)
-    },
     clearChat ({ commit }, addr) {
       commit('clearChat', addr)
     },
@@ -550,6 +556,8 @@ export default {
       const stampOutpoints = message.getStampOutpointsList()
       const outpoints = []
 
+      let stampValue = 0
+
       const stampRootHDPrivKey = constructStampPrivKey(payloadDigest, identityPrivKey)
         .deriveChild(44)
         .deriveChild(145)
@@ -565,11 +573,12 @@ export default {
         })
         const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
 
-        if (!outbound) {
-          for (const [j, outputIndex] of vouts.entries()) {
-            const output = stampTx.outputs[outputIndex]
-            const satoshis = output.satoshis
-            const address = output.script.toAddress('testnet') // TODO: Make generic
+        for (const [j, outputIndex] of vouts.entries()) {
+          const output = stampTx.outputs[outputIndex]
+          const satoshis = output.satoshis
+          const address = output.script.toAddress('testnet') // TODO: Make generic
+          stampValue += satoshis
+          if (!outbound) {
             // Also note, we should use an HD key here.
             try {
               const outputPrivKey = stampTxHDPrivKey
@@ -600,6 +609,15 @@ export default {
           }
         }
       }
+
+      // Ignore messages below acceptance price
+      const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
+      if (stampValue < acceptancePrice) {
+        console.log('ignoring', stampValue, acceptancePrice)
+        return
+      }
+      console.log('accepted')
+      let stealthValue = 0
 
       // Decode entries
       let entries = messaging.Entries.deserializeBinary(entriesRaw)
@@ -636,7 +654,7 @@ export default {
             let contact = rootGetters['contacts/getContact'](senderAddr)
             if (contact.notify) {
               desktopNotify(contact.profile.name, text, contact.profile.avatar, () => {
-                dispatch('openChat', senderAddr)
+                dispatch('setActiveChat', senderAddr)
               })
             }
           }
@@ -649,7 +667,6 @@ export default {
           const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
           const ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
           const stealthHDPrivKey = constructStealthPrivKey(ephemeralPubKey, identityPrivKey)
-          let totalSatoshis = 0
           for (const [i, outpoint] of outpointsList.entries()) {
             const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
             const stealthTx = cashlib.Transaction(stealthTxRaw)
@@ -665,7 +682,7 @@ export default {
                 // error
 
                 // Assume our output was correct and add to the total
-                totalSatoshis += satoshis
+                stealthValue += satoshis
                 continue
               }
               const outpointPrivKey = stealthHDPrivKey
@@ -684,7 +701,7 @@ export default {
                 continue
               }
               // total up the satoshis only if we know the txn was valid
-              totalSatoshis += satoshis
+              stealthValue += satoshis
 
               const stampOutput = {
                 address,
@@ -700,7 +717,7 @@ export default {
           }
           newMsg.items.push({
             type: 'stealth',
-            amount: totalSatoshis
+            amount: stealthValue
           })
         } else if (kind === 'image') {
           let image = imageUtil.entryToImage(entry)
@@ -712,7 +729,7 @@ export default {
           })
         }
       }
-      commit('receiveMessage', { addr: recipientAddress, index: payloadDigestHex, newMsg })
+      commit('receiveMessage', { addr: recipientAddress, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
       let myAddressStr = rootGetters['wallet/getMyAddressStr']
@@ -743,9 +760,6 @@ export default {
       if (lastReceived) {
         commit('setLastReceived', lastReceived + 1)
       }
-    },
-    openChat ({ commit }, addr) {
-      commit('openChat', addr)
     },
     setStampAmount ({ commit }, { addr, stampAmount }) {
       commit('setStampAmount', { addr, stampAmount })
