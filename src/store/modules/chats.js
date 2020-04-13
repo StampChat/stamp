@@ -11,6 +11,8 @@ import { constructStealthPaymentPayload, constructImagePayload, constructTextPay
 
 const cashlib = require('bitcore-lib-cash')
 
+const defaultContactObject = { inputMessage: '', lastRead: null, stampAmount: defaultStampAmount, totalUnreadMessages: 0, totalUnreadValue: 0, totalValue: 0 }
+
 function calculateUnreadAggregates (messages, lastReadTime) {
   const messageValues = Object.values(messages)
     .filter(message => !message.outbound)
@@ -168,7 +170,10 @@ export default {
       state.data[addr].totalUnreadMessages = 0
       state.data[addr].totalUnreadValue = 0
     },
-    switchChatActive (state, addr) {
+    setActiveChat (state, addr) {
+      if (!(addr in state.data)) {
+        Vue.set(state.data, addr, { ...defaultContactObject, messsages: {}, address: addr })
+      }
       state.activeChatAddr = addr
     },
     sendMessageLocal (state, { addr, index, items, outpoints }) {
@@ -211,7 +216,7 @@ export default {
         // TODO: Better indexing
         messages[index] = newMsg
 
-        Vue.set(state.data, addr, { messages, inputMessage: '', address: addr, lastRead: null, stampAmount: defaultStampAmount, totalUnreadMessages: 0, totalUnreadValue: 0, totalValue: 0 })
+        Vue.set(state.data, addr, { ...defaultContactObject, messages, address: addr })
       } else {
         // TODO: Better indexing
         Vue.set(state.data[addr].messages, index, newMsg)
@@ -225,12 +230,6 @@ export default {
     },
     setLastReceived (state, lastReceived) {
       state.lastReceived = lastReceived
-    },
-    openChat (state, addr) {
-      if (!(addr in state.data)) {
-        Vue.set(state.data, addr, { messages: {}, inputMessage: '', lastRead: null, stampAmount: defaultStampAmount })
-      }
-      state.activeChatAddr = addr
     },
     setStampAmount (state, { addr, stampAmount }) {
       state.data[addr].stampAmount = stampAmount
@@ -250,10 +249,10 @@ export default {
       let contact = rootGetters['contacts/getContactProfile'](currentAddr)
       let text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
       commit('setInputMessage', { addr: shareAddr, text })
-      dispatch('switchChatActive', shareAddr)
+      dispatch('setActiveChat', shareAddr)
     },
-    switchChatActive ({ commit }, addr) {
-      commit('switchChatActive', addr)
+    setActiveChat ({ commit }, addr) {
+      commit('setActiveChat', addr)
       commit('readAll', addr)
     },
     startChatUpdater ({ dispatch }) {
@@ -654,7 +653,7 @@ export default {
             let contact = rootGetters['contacts/getContact'](senderAddr)
             if (contact.notify) {
               desktopNotify(contact.profile.name, text, contact.profile.avatar, () => {
-                dispatch('openChat', senderAddr)
+                dispatch('setActiveChat', senderAddr)
               })
             }
           }
@@ -760,9 +759,6 @@ export default {
       if (lastReceived) {
         commit('setLastReceived', lastReceived + 1)
       }
-    },
-    openChat ({ commit }, addr) {
-      commit('openChat', addr)
     },
     setStampAmount ({ commit }, { addr, stampAmount }) {
       commit('setStampAmount', { addr, stampAmount })

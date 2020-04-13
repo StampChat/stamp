@@ -122,7 +122,7 @@ export default {
     },
     addContact ({ commit }, { addr, contact }) {
       commit('addContact', { addr, contact })
-      commit('chats/openChat', addr, { root: true })
+      commit('chats/setActiveChat', addr, { root: true })
     },
     deleteChat ({ commit }, addr) {
       commit('chats/deleteChat', addr, { root: true })
