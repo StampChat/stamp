@@ -29,6 +29,7 @@
               :key="index"
               :address="index"
               :messages="item.messages"
+              :active="activeChatAddr === index"
               :style="`height: inherit; min-height: inherit;`"
             />
           </template>
