@@ -79,6 +79,7 @@ import ChatMessage from '../components/chat/ChatMessage.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
 import { donationMessage } from '../utils/constants'
+import { insufficientStampNotify } from '../utils/notifications'
 
 const scrollDuration = 0
 
@@ -121,7 +122,17 @@ export default {
     ...mapActions({
       sendMessageVuex: 'chats/sendMessage'
     }),
+    ...mapGetters({
+      getStampAmount: 'chats/getStampAmount',
+      getAcceptancePrice: 'contacts/getAcceptancePrice'
+    }),
     sendMessage (message) {
+      const stampAmount = this.getStampAmount()(this.address)
+      const acceptancePrice = this.getAcceptancePrice()(this.address)
+      if (stampAmount < acceptancePrice) {
+        insufficientStampNotify()
+        return
+      }
       if (message !== '') {
         this.sendMessageVuex({ addr: this.address, text: message, replyDigest: this.replyDigest })
         this.message = ''

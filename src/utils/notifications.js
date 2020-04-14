@@ -40,6 +40,10 @@ export const profileTooLargeNotify = function () {
   negativeNotify('Profile is too large.')
 }
 
+export const insufficientStampNotify = function () {
+  negativeNotify('Stamp is too small.')
+}
+
 // Info notifications
 
 const infoNotify = function (text) {

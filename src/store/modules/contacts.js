@@ -46,6 +46,9 @@ export default {
     getContactInbox: (state) => (addr) => {
       return state.contacts[addr].inbox
     },
+    getAcceptancePrice: (state) => (addr) => {
+      return state.contacts[addr].inbox.acceptancePrice
+    },
     getPubKey: (state) => (addr) => {
       let arr = Uint8Array.from(Object.values(state.contacts[addr].profile.pubKey))
       return PublicKey.fromBuffer(arr)
