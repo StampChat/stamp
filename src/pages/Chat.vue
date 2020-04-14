@@ -8,7 +8,7 @@
     <q-scroll-area
       ref="chatScroll"
       class="q-px-md row"
-      :style="`height: calc(100% - ${offsetHeight()}px); min-height: calc(100%-${offsetHeight()}px); background: ${bodyBackground}`"
+      :style="scrollAreaStyle"
     >
       <q-chat-message
         class="q-py-sm"
@@ -108,7 +108,6 @@ export default {
       bottom: true,
       message: '',
       replyDigest: null,
-      bodyBackground: this.$q.dark.isActive ? '#121212' : 'lightblue',
       donationMessage
     }
   },
@@ -176,6 +175,12 @@ export default {
       getMessage: 'chats/getMessage',
       getProfile: 'myProfile/getProfile'
     }),
+    scrollAreaStyle () {
+      return {
+        height: `calc(100% - ${this.offsetHeight()}px)`,
+        minHeight: `calc(100%-${this.offsetHeight()}px)`
+      }
+    },
     replyItem () {
       if (!this.replyDigest) {
         return null
