@@ -95,7 +95,7 @@
                   <q-input
                     outlined
                     v-model="acceptancePrice"
-                    label="Inbox Fee *"
+                    label="Minimum Stamp *"
                     hint="The minimum fee required for strangers to message you"
                     style="width:100%"
                     type="number"

@@ -68,7 +68,7 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>{{contact.profile.name}}</q-item-label>
-            <q-item-label caption>Inbox Fee: {{contact.inbox.acceptancePrice}}</q-item-label>
+            <q-item-label caption>Minimum Stamp: {{contact.inbox.acceptancePrice}}</q-item-label>
           </q-item-section>
         </q-item>
       </q-card-section>
