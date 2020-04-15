@@ -232,6 +232,9 @@ export default {
       settings: {
         networking: {
           updateInterval: this.getUpdateInterval() / 1_000
+        },
+        appearance: {
+          darkMode: this.getDarkMode()
         }
         // TODO
         // appearance: null,
@@ -254,7 +257,8 @@ export default {
       resetWallet: 'wallet/reset',
       setSeedPhrase: 'wallet/setSeedPhrase',
       resetChats: 'chats/reset',
-      updateInterval: 'contacts/setUpdateInterval'
+      updateInterval: 'contacts/setUpdateInterval',
+      darkMode: 'appearance/setDarkMode'
     }),
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
@@ -262,7 +266,8 @@ export default {
       getClient: 'electrumHandler/getClient',
       getAllAddresses: 'wallet/getAllAddresses',
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',
-      getUpdateInterval: 'contacts/getUpdateInterval'
+      getUpdateInterval: 'contacts/getUpdateInterval',
+      getDarkMode: 'appearance/getDarkMode'
     }),
     next () {
       this.$refs.stepper.next()
@@ -534,6 +539,8 @@ export default {
       this.setSeedPhrase(this.seed)
     },
     nextSettings () {
+      this.darkMode(this.settings.appearance.darkMode)
+      this.$q.dark.set(this.settings.appearance.darkMode)
       this.updateInterval(this.settings.networking.updateInterval * 1_000)
       this.$router.push('/')
     }

@@ -8,7 +8,7 @@
     <q-scroll-area
       ref="chatScroll"
       class="q-px-md row"
-      :style="`height: calc(100% - ${offsetHeight()}px); min-height: calc(100%-${offsetHeight()}px); background: lightblue`"
+      :style="scrollAreaStyle"
     >
       <q-chat-message
         class="q-py-sm"
@@ -186,6 +186,12 @@ export default {
       getMessage: 'chats/getMessage',
       getProfile: 'myProfile/getProfile'
     }),
+    scrollAreaStyle () {
+      return {
+        height: `calc(100% - ${this.offsetHeight()}px)`,
+        minHeight: `calc(100%-${this.offsetHeight()}px)`
+      }
+    },
     replyItem () {
       if (!this.replyDigest) {
         return null
@@ -214,6 +220,9 @@ export default {
         this.scrollBottom()
       }
       // TODO: Scroll to last unread
+    },
+    '$q.dark.isActive' (val) {
+      this.bodyBackground = val ? '#121212' : 'lightblue'
     }
   }
 }

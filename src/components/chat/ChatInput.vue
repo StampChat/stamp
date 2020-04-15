@@ -1,7 +1,7 @@
 <template>
   <div class="row">
     <q-resize-observer @resize="onResizeInput" />
-    <q-toolbar class="bg-white q-pl-none">
+    <q-toolbar class="q-pl-none">
       <q-btn dense flat color="primary" icon="attach_file" @click="sendFileClicked" />
       <q-input
         ref="inputBox"

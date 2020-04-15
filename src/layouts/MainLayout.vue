@@ -83,7 +83,8 @@ export default {
     }),
     ...mapGetters({
       getAllAddresses: 'wallet/getAllAddresses',
-      getSortedChatOrder: 'chats/getSortedChatOrder'
+      getSortedChatOrder: 'chats/getSortedChatOrder',
+      getDarkMode: 'appearance/getDarkMode'
     }),
     tweak (offset, viewportHeight) {
       const height = viewportHeight - offset + 'px'
@@ -110,6 +111,7 @@ export default {
     }
   },
   async created () {
+    this.$q.dark.set(this.getDarkMode())
     // Start relay listener
     this.$q.loading.show({
       delay: 0,

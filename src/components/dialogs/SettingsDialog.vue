@@ -37,16 +37,22 @@ export default {
       settings: {
         networking: {
           updateInterval: this.getUpdateInterval() / 1_000
+        },
+        appearance: {
+          darkMode: this.getDarkMode()
         }
       }
     }
   },
   methods: {
-    ...mapGetters({ getUpdateInterval: 'contacts/getUpdateInterval' }),
+    ...mapGetters({ getUpdateInterval: 'contacts/getUpdateInterval', getDarkMode: 'appearance/getDarkMode' }),
     ...mapActions({
-      updateInterval: 'contacts/setUpdateInterval'
+      updateInterval: 'contacts/setUpdateInterval',
+      darkMode: 'appearance/setDarkMode'
     }),
     save () {
+      this.darkMode(this.settings.appearance.darkMode)
+      this.$q.dark.set(this.settings.appearance.darkMode)
       this.updateInterval(this.settings.networking.updateInterval * 1_000)
     }
   }

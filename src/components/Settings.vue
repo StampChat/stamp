@@ -16,6 +16,11 @@
             icon="cloud"
             label="Networking"
           />
+          <q-tab
+            name="appearance"
+            icon="color_lens"
+            label="Appearance"
+          />
         </q-tabs>
       </template>
       <template v-slot:after>
@@ -39,6 +44,14 @@
               />
           </div>
           </q-tab-panel>
+          <q-tab-panel name="appearance">
+            <div class="row">
+              <q-toggle
+                :label="`Dark Mode`"
+                v-model="darkMode"
+              />
+          </div>
+          </q-tab-panel>
         </q-tab-panels>
       </template>
     </q-splitter>
@@ -55,6 +68,7 @@ export default {
   data () {
     return {
       tab: 'networking',
+      darkMode: this.value.appearance.darkMode,
       updateInterval: this.value.networking.updateInterval
     }
   },
@@ -63,12 +77,18 @@ export default {
       return {
         networking: {
           updateInterval: this.updateInterval
+        },
+        appearance: {
+          darkMode: this.darkMode
         }
       }
     }
   },
   watch: {
     updateInterval (newInterval, oldInterval) {
+      this.$emit('input', this.constructSettings)
+    },
+    darkMode (newDarkMode, oldDarkMode) {
       this.$emit('input', this.constructSettings)
     }
   }
