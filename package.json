@@ -11,7 +11,9 @@
     "lint": "eslint --ext .js,.vue src",
     "build": "quasar build -m electron -b builder",
     "test": "quasar test --unit jest",
-    "dev": "quasar dev -m electron"
+    "dev": "quasar dev -m electron",
+    "generate:protobuffers": "/bin/sh ./generate_protobufs.sh",
+    "clean:protobuffers": "git clean -di && git pull"
   },
   "dependencies": {
     "@chenfengyuan/vue-qrcode": "^1.0.2",
@@ -23,6 +25,7 @@
     "google-protobuf": "^3.11.2",
     "moment": "^2.24.0",
     "node-forge": "^0.9.1",
+    "protoc": "^1.0.4",
     "quasar": "^1.9.12",
     "ramda": "^0.27.0",
     "vcf": "^2.0.6",
