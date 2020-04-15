@@ -176,7 +176,7 @@
 <script>
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapGetters, mapMutations } from 'vuex'
 import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop/index'
 import RelayClient from '../relay/client'
@@ -257,7 +257,6 @@ export default {
       resetWallet: 'wallet/reset',
       setSeedPhrase: 'wallet/setSeedPhrase',
       resetChats: 'chats/reset',
-      updateInterval: 'contacts/setUpdateInterval',
       darkMode: 'appearance/setDarkMode'
     }),
     ...mapGetters({
@@ -268,6 +267,9 @@ export default {
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',
       getUpdateInterval: 'contacts/getUpdateInterval',
       getDarkMode: 'appearance/getDarkMode'
+    }),
+    ...mapMutations({
+      updateInterval: 'contacts/setUpdateInterval'
     }),
     next () {
       this.$refs.stepper.next()

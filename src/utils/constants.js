@@ -23,13 +23,15 @@ export const defaultRelayUrl = '34.68.170.199:8531'
 export const relayUrlOptions = ['34.68.170.199:8531']
 export const defaultRelayData = {
   profile: {
-    name: '',
-    bio: '',
-    avatar: null
+    name: 'Loading...',
+    bio: null,
+    avatar: null,
+    pubKey: null
   },
   inbox: {
-    acceptancePrice: defaultAcceptancePrice
-  }
+    acceptancePrice: NaN
+  },
+  notify: true
 }
 
 // Chat constants

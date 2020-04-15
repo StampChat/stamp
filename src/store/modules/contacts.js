@@ -1,7 +1,8 @@
 import { PublicKey } from 'bitcore-lib-cash'
 import RelayClient from '../../relay/client'
-import { defaultUpdateInterval } from '../../utils/constants'
+import { defaultUpdateInterval, defaultRelayData } from '../../utils/constants'
 import Vue from 'vue'
+import moment from 'moment'
 
 export default {
   namespaced: true,
@@ -9,6 +10,7 @@ export default {
     contacts: {
       // Example:
       // 'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
+      //   lastUpdate: ...
       //   profile: {
       //     name: 'Anon',
       //     bio: '',
@@ -76,15 +78,13 @@ export default {
     setUpdateInterval (state, interval) {
       state.updateInterval = interval
     },
-    updateContactProfile (state, { addr, profile }) {
-      if (addr in state.contacts) {
-        state.contacts[addr].profile = profile
+    updateContact (state, { addr, profile, inbox }) {
+      if (!(addr in state.contacts)) {
+        return
       }
-    },
-    updateContactRelay (state, { addr, inbox }) {
-      if (addr in state.contacts) {
-        state.contacts[addr].inbox = inbox
-      }
+      state.contacts[addr].lastUpdateTime = moment().valueOf()
+      state.contacts[addr].profile = profile || state.contacts[addr].profile
+      state.contacts[addr].inbox = inbox || state.contacts[addr].inbox
     },
     setNotify (state, { addr, value }) {
       state.contacts[addr].notify = value
@@ -97,25 +97,11 @@ export default {
     }
   },
   actions: {
-    setUpdateInterval ({ commit }, interval) {
-      commit('setUpdateInterval', interval)
-    },
     setNotify ({ commit }, { addr, value }) {
       commit('setNotify', { addr, value })
     },
     addLoadingContact ({ commit }, { addr, pubKey }) {
-      let contact = {
-        profile: {
-          name: 'Loading...',
-          bio: null,
-          avatar: null,
-          pubKey
-        },
-        inbox: {
-          acceptancePrice: 'Unknown'
-        },
-        notify: true
-      }
+      let contact = { ...defaultRelayData, profile: { ...defaultRelayData.profile, pubKey } }
       commit('addContact', { addr, contact })
     },
     deleteContact ({ commit }, addr) {
@@ -132,45 +118,27 @@ export default {
     },
     async refresh ({ commit, rootGetters, getters }, addr) {
       // Make this generic over networks
-
-      // Get metadata
-      let handler = rootGetters['keyserverHandler/getHandler']
-      let relayData = null
-      try {
-        let relayURL = await handler.getRelayUrl(addr)
-        let relayClient = new RelayClient(relayURL)
-        relayData = await relayClient.getRelayData(addr)
-      } catch (err) {
-        console.error(err)
+      const oldContactInfo = getters['getContact'](addr)
+      const updateInterval = getters['getUpdateInterval']
+      const now = moment()
+      const lastUpdateTime = oldContactInfo.lastUpdateTime
+      if (lastUpdateTime && moment(lastUpdateTime).add(updateInterval, 'milliseconds').isAfter(now)) {
+        // Short circuit if we already updated this contact recently.
+        console.log('skipping contact update, checked recently')
         return
       }
+      console.log('Updating contact', addr)
 
-      let oldRelayData = getters['getContact'](addr)
-
-      // If profile values changed, then update
-      if (
-        relayData.profile.name !== oldRelayData.profile.name ||
-        relayData.profile.bio !== oldRelayData.profile.bio ||
-        relayData.profile.avatar !== oldRelayData.profile.avatar
-      ) {
-        commit('updateContactProfile', { addr, profile: relayData.profile })
+      // Get metadata
+      try {
+        const handler = rootGetters['keyserverHandler/getHandler']
+        const relayURL = await handler.getRelayUrl(addr)
+        const relayClient = new RelayClient(relayURL)
+        const relayData = await relayClient.getRelayData(addr)
+        commit('updateContact', { addr, profile: relayData.profile, inbox: relayData.inbox })
+      } catch (err) {
+        console.error(err)
       }
-
-      // If relay values changed, then update
-      if (relayData.inbox !== oldRelayData.inbox) {
-        commit('updateContactRelay', { addr, inbox: relayData.inbox })
-      }
-    },
-    startContactUpdater ({ dispatch, getters }) {
-      let contacts = getters['getAll']
-      for (let addr in contacts) {
-        dispatch('refresh', addr)
-      }
-
-      let interval = getters['getUpdateInterval']
-      setTimeout(() => {
-        dispatch('startContactUpdater')
-      }, interval)
     }
   }
 }
