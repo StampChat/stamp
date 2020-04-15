@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters, mapActions, mapMutations } from 'vuex'
 import Settings from '../Settings.vue'
 
 export default {
@@ -47,8 +47,10 @@ export default {
   methods: {
     ...mapGetters({ getUpdateInterval: 'contacts/getUpdateInterval', getDarkMode: 'appearance/getDarkMode' }),
     ...mapActions({
-      updateInterval: 'contacts/setUpdateInterval',
       darkMode: 'appearance/setDarkMode'
+    }),
+    ...mapMutations({
+      updateInterval: 'contacts/setUpdateInterval'
     }),
     save () {
       this.darkMode(this.settings.appearance.darkMode)

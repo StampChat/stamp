@@ -73,7 +73,6 @@ export default {
       electrumConnect: 'electrumHandler/connect',
       electrumKeepAlive: 'electrumHandler/keepAlive',
       relayClientRehydrate: 'relayClient/rehydrate',
-      startContactUpdater: 'contacts/startContactUpdater',
       refreshChat: 'chats/refresh',
       updateHDUTXOs: 'wallet/updateHDUTXOs',
       fixFrozenUTXOs: 'wallet/fixFrozenUTXOs',
@@ -166,9 +165,6 @@ export default {
     this.$q.loading.hide()
 
     console.log('loaded')
-
-    // Start contact watcher
-    this.startContactUpdater()
 
     this.loaded = true
   }
