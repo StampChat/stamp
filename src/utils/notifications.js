@@ -40,10 +40,6 @@ export const profileTooLargeNotify = function () {
   negativeNotify('Profile is too large.')
 }
 
-export const insufficientStampNotify = function () {
-  negativeNotify('Stamp is too small.')
-}
-
 // Info notifications
 
 const infoNotify = function (text) {
@@ -56,6 +52,10 @@ const infoNotify = function (text) {
 
 export const addressCopiedNotify = function () {
   infoNotify('Address copied to clipboard.')
+}
+
+export const insufficientStampNotify = function () {
+  infoNotify('Stamp is too small, receiver will not be notified.')
 }
 
 export const seedCopiedNotify = function () {

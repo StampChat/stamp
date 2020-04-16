@@ -131,7 +131,6 @@ export default {
       const acceptancePrice = this.getAcceptancePrice()(this.address)
       if (stampAmount < acceptancePrice) {
         insufficientStampNotify()
-        return
       }
       if (message !== '') {
         this.sendMessageVuex({ addr: this.address, text: message, replyDigest: this.replyDigest })
