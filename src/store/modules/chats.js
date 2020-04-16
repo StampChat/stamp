@@ -234,9 +234,11 @@ export default {
       }
 
       state.data[addr].lastReceived = newMsg.receivedTime
-      state.data[addr].totalUnreadMessages += 1
       const messageValue = stampPrice(newMsg.outpoints) + newMsg.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-      state.data[addr].totalUnreadValue += messageValue
+      if (addr !== state.activeChatAddr) {
+        state.data[addr].totalUnreadValue += messageValue
+        state.data[addr].totalUnreadMessages += 1
+      }
       state.data[addr].totalValue += messageValue
     },
     setLastReceived (state, lastReceived) {
