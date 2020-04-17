@@ -28,7 +28,6 @@
 
 ### Requirements
 
-* [Protobuf compiler](https://github.com/protocolbuffers/protobuf)
 * [Quasar](https://quasar.dev/start/pick-quasar-flavour)
 
 ### Cloning the Source
@@ -38,20 +37,21 @@ Clone this repository using
 ```bash
 git clone https://github.com/cashweb/stamp.git
 cd stamp
-git submodule update --init --recursive
 ```
 
-### Generating the Protobuf files
+### Development Mode
+
+Running the following command should run electron in development mode and watch the source files with hot reloading enabled:
 
 ```bash
-bash ./generate_protobufs.sh
+yarn dev
 ```
 
-### Linux, MacOS and Windows
+### Linux, MacOS and Windows Builds
 
 ```bash
 yarn install
-quasar build -m electron -b builder
+yarn build
 ```
 
 Your binary will be located in `/dist/electron/Packaged/` folder.
@@ -88,6 +88,18 @@ quasar build -m capacitor -T android
 
 ```bash
 quasar build -m capacitor -T ios
+```
+
+### Updating the generated protobuf files:
+
+If the protobuf files need to change due to the addition of a new entry type, or some addition, the following commands will allow for the regeneration of these files. 
+Please check them into the repo after they have been generated.
+
+* [Protobuf compiler](https://github.com/protocolbuffers/protobuf)
+
+```bash
+git submodule update --init --recursive
+yarn generate:protobuffers
 ```
 
 ## Usage
