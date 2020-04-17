@@ -625,11 +625,7 @@ export default {
 
       // Ignore messages below acceptance price
       const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
-      if (stampValue < acceptancePrice) {
-        console.log('ignoring', stampValue, acceptancePrice)
-        return
-      }
-      console.log('accepted')
+      const acceptable = (stampValue >= acceptancePrice)
       let stealthValue = 0
 
       // Decode entries
@@ -663,7 +659,7 @@ export default {
           })
 
           // If not focused (and not outbox message) then notify
-          if (!document.hasFocus() && !outbound) {
+          if (!document.hasFocus() && !outbound && acceptable) {
             let contact = rootGetters['contacts/getContact'](senderAddr)
             if (contact.notify) {
               desktopNotify(contact.profile.name, text, contact.profile.avatar, () => {
