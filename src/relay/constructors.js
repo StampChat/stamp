@@ -29,11 +29,8 @@ export const constructStampTransaction = async function (payloadDigest, destPubK
     satoshis: amount
   })
 
-  // Get Fee
-  let feePerByte = await store.dispatch('wallet/getFee')
-
   // Construct transaction
-  let { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs: [stampOutput], feePerByte })
+  let { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs: [stampOutput] })
   return { transaction, usedIDs }
 }
 
@@ -58,11 +55,8 @@ export const constructStealthTransaction = async function (ephemeralPrivKey, des
     satoshis: amount
   })
 
-  // Get Fee
-  const feePerByte = await store.dispatch('wallet/getFee')
-
   // Construct transaction
-  const { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs: [stealthOutput], feePerByte })
+  const { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs: [stealthOutput] })
   return [{ transaction, vouts: [0], usedIDs }]
 }
 
