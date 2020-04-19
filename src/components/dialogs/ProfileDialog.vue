@@ -49,8 +49,6 @@ export default {
   methods: {
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
-      getMyAddress: 'wallet/getMyAddress',
-      getIdentityPrivKey: 'wallet/getIdentityPrivKey',
       getClient: 'relayClient/getClient',
       getRelayData: 'myProfile/getRelayData',
       getToken: 'relayClient/getToken'
@@ -61,7 +59,7 @@ export default {
       let client = this.getClient()
 
       // Create metadata
-      let idPrivKey = this.getIdentityPrivKey()
+      let idPrivKey = this.$wallet.identityPrivKey
 
       let acceptancePrice = this.relayData.inbox.acceptancePrice
       let priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
@@ -73,7 +71,7 @@ export default {
       })
 
       // Apply remotely
-      let idAddress = this.getMyAddress()
+      let idAddress = this.$wallet.myAddress
       let token = this.getToken()
       try {
         await client.putProfile(idAddress.toLegacyAddress(), metadata, token)

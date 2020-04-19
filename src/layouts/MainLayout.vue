@@ -70,15 +70,10 @@ export default {
   methods: {
     ...mapActions({
       refreshChat: 'chats/refresh',
-      updateHDUTXOs: 'wallet/updateHDUTXOs',
-      fixFrozenUTXOs: 'wallet/fixFrozenUTXOs',
-      fixUTXOs: 'wallet/fixUTXOs',
-      startListeners: 'wallet/startListeners',
       setActiveChat: 'chats/setActiveChat',
       relayClientRehydrate: 'relayClient/rehydrate'
     }),
     ...mapGetters({
-      getAllAddresses: 'wallet/getAllAddresses',
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getDarkMode: 'appearance/getDarkMode'
     }),
@@ -95,7 +90,6 @@ export default {
     ...mapGetters({
       getToken: 'relayClient/getToken',
       getRelayClient: 'relayClient/getClient',
-      getAddressStr: 'wallet/getMyAddressStr',
       getContact: 'contacts/getContact'
     }),
     walletConnected () {
@@ -123,20 +117,9 @@ export default {
       this.relayClientRehydrate()
 
       const client = this.getRelayClient
-      client.setUpWebsocket(this.getAddressStr, this.getToken)
+      client.setUpWebsocket(this.$wallet.myAddressStr, this.getToken)
       await this.refreshChat()
-      // Start electrum listeners
-      let addresses = Object.keys(this.getAllAddresses())
-      this.startListeners(addresses)
-
-      // Update UTXOs
-      await this.updateHDUTXOs()
-
-      // Fix frozen UTXOs
-      await this.fixFrozenUTXOs()
-
-      // Fix UTXOs
-      await this.fixUTXOs()
+      await this.$wallet.init()
     } catch (err) {
       console.error(err)
     }

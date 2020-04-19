@@ -33,13 +33,12 @@ export default {
   methods: {
     ...mapGetters({
       getClient: 'relayClient/getClient',
-      getToken: 'relayClient/getToken',
-      getAddr: 'wallet/getMyAddress'
+      getToken: 'relayClient/getToken'
     }),
     connect () {
       let client = this.getClient()
       let token = this.getToken()
-      client.setUpWebsocket(this.getAddr(), token)
+      client.setUpWebsocket(this.$wallet.myAddress, token)
     }
   }
 }

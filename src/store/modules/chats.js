@@ -150,6 +150,15 @@ export default {
     },
     isChat: (state) => (addr) => {
       return (addr in state.data)
+    },
+    getWallet: (state) => {
+      if (!state.wallet) {
+        throw new Error('Attempting to access wallet before it is initialized')
+      }
+      return state.wallet
+    },
+    getElectrumClient: (state) => {
+      return state.electrumClient
     }
   },
   mutations: {
@@ -246,6 +255,12 @@ export default {
     },
     setStampAmount (state, { addr, stampAmount }) {
       state.data[addr].stampAmount = stampAmount
+    },
+    setWallet (state, wallet) {
+      state.wallet = wallet
+    },
+    setElectrumClient (state, client) {
+      state.electrumClient = client
     }
   },
   actions: {
@@ -272,7 +287,7 @@ export default {
     startChatUpdater ({ dispatch }) {
       setInterval(() => { dispatch('refresh') }, 1_000)
     },
-    async sendMessage ({ commit, rootGetters, getters, dispatch }, { addr, text, replyDigest }) {
+    async sendMessage ({ commit, rootGetters, getters }, { addr, text, replyDigest }) {
       // Send locally
       let items = [
         {
@@ -289,7 +304,8 @@ export default {
         var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
       }
 
-      const privKey = rootGetters['wallet/getIdentityPrivKey']
+      const wallet = getters['getWallet']
+      const privKey = wallet.identityPrivKey
       const destPubKey = rootGetters['contacts/getPubKey'](addr)
       const stampAmount = getters['getStampAmount'](addr)
 
@@ -302,13 +318,14 @@ export default {
 
       // Construct message
       try {
-        var { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
+        var { message, usedIDs, stampTx } = await constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
         commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'text', text } })
         return
       }
+
       let messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
 
@@ -331,13 +348,13 @@ export default {
         }
         // Unfreeze UTXOs
         // TODO: More subtle
-        usedIDs.forEach(id => dispatch('wallet/fixFrozenUTXO', id, { root: true }))
+        usedIDs.forEach(id => wallet.fixFrozenUTXO(id))
 
         chainTooLongNotify()
         commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'text', text } })
       }
     },
-    async sendStealthPayment ({ commit, rootGetters, getters, dispatch }, { addr, amount, memo, stamptxId, replyDigest }) {
+    async sendStealthPayment ({ commit, rootGetters, getters }, { addr, amount, memo, stamptxId, replyDigest }) {
       // Send locally
       let items = [
         {
@@ -361,21 +378,22 @@ export default {
         var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
       }
 
-      const privKey = rootGetters['wallet/getIdentityPrivKey']
       const destPubKey = rootGetters['contacts/getPubKey'](addr)
       const stampAmount = getters['getStampAmount'](addr)
+      const wallet = getters['getWallet']
+      const privKey = wallet.identityPrivKey
 
       // Construct payload
-      const { payload, payloadDigest, stealthTx, stealthIdsUsed } = await constructStealthPaymentPayload(amount, memo, privKey, destPubKey, 1, stamptxId, replyDigestBuffer)
+      const { payload, payloadDigest, stealthTx, stealthIdsUsed } = await constructStealthPaymentPayload(wallet, amount, memo, privKey, destPubKey, 1, stamptxId, replyDigestBuffer)
       let stealthTxHex = stealthTx.toString()
       try {
-        const client = rootGetters['wallet/getElectrumClient']
+        const client = getters['getElectrumClient']
         await client.request('blockchain.transaction.broadcast', stealthTxHex)
       } catch (err) {
         console.error(err)
         // Unfreeze UTXOs if stealth tx broadcast fails
         stealthIdsUsed.forEach(id => {
-          dispatch('wallet/unfreezeUTXO', id, { root: true })
+          wallet.unfreezeUTXO(id)
         })
         throw err
       }
@@ -385,7 +403,7 @@ export default {
       commit('sendMessageLocal', { addr, index: payloadDigestHex, items, outpoints: null })
 
       try {
-        var { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
+        var { message, usedIDs, stampTx } = await constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
       } catch (err) {
         console.error(err)
         insuffientFundsNotify()
@@ -408,13 +426,13 @@ export default {
       } catch (err) {
         // Unfreeze UTXOs
         // TODO: More subtle
-        usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
+        usedIDs.forEach(id => wallet.unfreezeUTXO(id))
 
         chainTooLongNotify()
         commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'stealth', amount, memo } })
       }
     },
-    async sendImage ({ commit, rootGetters, getters, dispatch }, { addr, image, caption, replyDigest }) {
+    async sendImage ({ commit, rootGetters, getters }, { addr, image, caption, replyDigest }) {
       // Send locally
       const items = [
         {
@@ -438,7 +456,8 @@ export default {
         var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
       }
 
-      const privKey = rootGetters['wallet/getIdentityPrivKey']
+      const wallet = getters['getWallet']
+      const privKey = wallet.identityPrivKey
       const destPubKey = rootGetters['contacts/getPubKey'](addr)
       const stampAmount = getters['getStampAmount'](addr)
 
@@ -451,7 +470,7 @@ export default {
 
       // Construct message
       try {
-        var { message, usedIDs, stampTx } = await constructMessage(payload, privKey, destPubKey, stampAmount)
+        var { message, usedIDs, stampTx } = await constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
       } catch (err) {
         console.error(err)
 
@@ -475,7 +494,7 @@ export default {
       } catch (err) {
         // Unfreeze UTXOs
         // TODO: More subtle
-        usedIDs.forEach(id => dispatch('wallet/unfreezeUTXO', id, { root: true }))
+        usedIDs.forEach(id => wallet.unfreezeUTXO(id))
 
         chainTooLongNotify()
         commit('setStatusError', { addr, index: payloadDigestHex, retryData: { msgType: 'image', image, caption } })
@@ -491,7 +510,8 @@ export default {
       const rawSenderPubKey = message.getSenderPubKey()
       const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
       const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
-      const myAddress = rootGetters['wallet/getMyAddressStr']
+      const wallet = getters['getWallet']
+      const myAddress = wallet.myAddressStr
       const outbound = (senderAddr === myAddress)
 
       const rawPayloadFromServer = message.getSerializedPayload()
@@ -530,7 +550,7 @@ export default {
       const destinationRaw = payload.getDestination()
       const destPubKey = cashlib.PublicKey.fromBuffer(destinationRaw)
       const destinationAddr = destPubKey.toAddress('testnet').toCashAddress()
-      const identityPrivKey = rootGetters['wallet/getIdentityPrivKey']
+      const identityPrivKey = wallet.identityPrivKey
 
       const recipientAddress = outbound ? destinationAddr : senderAddr
       const recipientPubKey = outbound ? destPubKey : senderPubKey
@@ -627,7 +647,7 @@ export default {
                 type: 'stamp',
                 payloadDigest
               }
-              dispatch('wallet/addUTXO', stampOutput, { root: true })
+              wallet.addUTXO(stampOutput)
             } catch (err) {
               console.error(err)
             }
@@ -733,7 +753,7 @@ export default {
                 type: 'stealth',
                 payloadDigest
               }
-              dispatch('wallet/addUTXO', stampOutput, { root: true })
+              wallet.addUTXO(stampOutput)
             }
           }
           newMsg.items.push({
@@ -753,7 +773,8 @@ export default {
       commit('receiveMessage', { addr: recipientAddress, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
     },
     async refresh ({ commit, rootGetters, getters, dispatch }) {
-      let myAddressStr = rootGetters['wallet/getMyAddressStr']
+      const wallet = getters['getWallet']
+      let myAddressStr = wallet.myAddressStr
       let client = rootGetters['relayClient/getClient']
       let lastReceived = getters['getLastReceived'] || 0
 

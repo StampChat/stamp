@@ -245,26 +245,20 @@ export default {
   methods: {
     ...mapActions({
       setRelayData: 'myProfile/setRelayData',
-      setXPrivKey: 'wallet/setXPrivKey',
-      initAddresses: 'wallet/initAddresses',
-      startListeners: 'wallet/startListeners',
-      updateHDUTXOs: 'wallet/updateHDUTXOs',
       setRelayToken: 'relayClient/setToken',
       setRelayClient: 'relayClient/setClient',
-      resetWallet: 'wallet/reset',
-      setSeedPhrase: 'wallet/setSeedPhrase',
       resetChats: 'chats/reset',
       darkMode: 'appearance/setDarkMode'
     }),
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
-      getMyAddress: 'wallet/getMyAddress',
-      getAllAddresses: 'wallet/getAllAddresses',
-      getIdentityPrivKey: 'wallet/getIdentityPrivKey',
       getUpdateInterval: 'contacts/getUpdateInterval',
       getDarkMode: 'appearance/getDarkMode'
     }),
     ...mapMutations({
+      resetWallet: 'wallet/reset',
+      setXPrivKey: 'wallet/setXPrivKey',
+      setSeedPhrase: 'wallet/setSeedPhrase',
       updateInterval: 'contacts/setUpdateInterval'
     }),
     next () {
@@ -272,6 +266,8 @@ export default {
     },
     async nextWallet () {
       // Reset wallet
+      // TODO: This should not be done "behind the back" of the wallet object
+      // (e.g. we should not be fiddling with the store directly here)
       this.resetWallet()
 
       this.$q.loading.show({
@@ -290,14 +286,9 @@ export default {
         // Prepare wallet
         let xPrivKeyObj = event.data
         this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
+        // TODO: We should not have to update two places.
         this.setXPrivKey(this.xPrivKey)
-        this.initAddresses()
-        try {
-          this.updateHDUTXOs()
-        } catch (err) {
-          console.error(err)
-          walletDisconnectedNotify()
-        }
+        this.$wallet.setXPrivKey(this.xPrivKey)
 
         this.$q.loading.show({
           delay: 100,
@@ -306,8 +297,7 @@ export default {
 
         // Listen to addresses
         try {
-          let addresses = Object.keys(this.getAllAddresses())
-          await this.startListeners(addresses) // TODO: Better handling here
+          await this.$wallet.init()
         } catch (err) {
           console.error(err)
           walletDisconnectedNotify()
@@ -320,7 +310,7 @@ export default {
           message: 'Searching for existing keyserver metadata...'
         })
         let ksHandler = this.getKsHandler()
-        let idAddress = this.getMyAddress()
+        let idAddress = this.$wallet.myAddress
 
         // Try find relay URL on keyserver
         try {
@@ -383,7 +373,7 @@ export default {
 
       // Get profile from relay server
       // We do this first to prevent uploading broken URL to keyserver
-      let idAddress = this.getMyAddress()
+      let idAddress = this.$wallet.myAddress
       let relayClient = new RelayClient(this.relayUrl)
       try {
         let relayData = await relayClient.getRelayData(idAddress)
@@ -416,7 +406,7 @@ export default {
 
       // Construct payment
       try {
-        var { paymentUrl, payment } = await pop.constructPaymentTransaction(paymentDetails)
+        var { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, paymentDetails)
       } catch (err) {
         insuffientFundsNotify()
         throw err
@@ -436,7 +426,7 @@ export default {
       })
 
       // Construct metadata
-      let idPrivKey = this.getIdentityPrivKey()
+      let idPrivKey = this.$wallet.identityPrivKey
       let metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
 
       // Put to keyserver
@@ -468,7 +458,7 @@ export default {
         message: 'Requesting Payment...'
       })
 
-      let idAddress = this.getMyAddress()
+      let idAddress = this.$wallet.myAddress
       try {
         var relayPaymentRequest = await client.profilePaymentRequest(idAddress.toLegacyAddress())
       } catch (err) {
@@ -485,7 +475,7 @@ export default {
 
       // Get token from relay server
       try {
-        var { paymentUrl, payment } = await pop.constructPaymentTransaction(relayPaymentRequest.paymentDetails)
+        var { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
       } catch (err) {
         console.error(err)
         if (err.response) {
@@ -507,7 +497,7 @@ export default {
       this.setRelayToken(token)
 
       // Create metadata
-      let idPrivKey = this.getIdentityPrivKey()
+      let idPrivKey = this.$wallet.identityPrivKey
 
       let acceptancePrice = this.relayData.inbox.acceptancePrice
       let priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)

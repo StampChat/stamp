@@ -142,7 +142,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import DrawerContactCard from './DrawerContactCard.vue'
 import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
@@ -177,18 +177,19 @@ export default {
       addNewContact: 'contacts/addNewContact',
       setActiveChat: 'chats/setActiveChat'
     }),
-    ...mapGetters({
-      getIdentityPrivKey: 'wallet/getIdentityPrivKey',
-      getMyAddress: 'wallet/getMyAddress'
-    })
+    getIdentityPrivKey () {
+      return this.$wallet.identityPrivKey
+    }
   },
   computed: {
     ...mapGetters({
       getDrawerOpen: 'myDrawer/getDrawerOpen',
       getProfile: 'myProfile/getProfile',
-      getInbox: 'myProfile/getInbox',
-      getMyAddressStr: 'wallet/getMyAddressStr'
+      getInbox: 'myProfile/getInbox'
     }),
+    getMyAddressStr () {
+      return this.$wallet.myAddressStr
+    },
     drawerOpen: {
       get () {
         return this.getDrawerOpen

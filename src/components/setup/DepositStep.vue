@@ -80,7 +80,6 @@
 <script>
 import Vue from 'vue'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
-import { mapGetters } from 'vuex'
 import { copyToClipboard } from 'quasar'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
@@ -91,13 +90,12 @@ Vue.component(VueQrcode.name, VueQrcode)
 export default {
   data () {
     return {
-      currentAddress: this.generatePrivKey()(0).toAddress('testnet'), // TODO: Generic over network
+      currentAddress: this.$wallet.privKeys[0].toAddress('testnet'), // TODO: Generic over network
       paymentAddrCounter: 0,
       recomendedBalance
     }
   },
   methods: {
-    ...mapGetters({ generatePrivKey: 'wallet/generatePrivKey' }),
     copyAddress () {
       copyToClipboard(this.currentAddress).then(() => {
         addressCopiedNotify()
@@ -109,18 +107,20 @@ export default {
     nextAddress () {
       // Increment address
       this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
-      let privKey = this.generatePrivKey()(this.paymentAddrCounter)
+      let privKey = this.$wallet.privKeys[this.paymentAddrCounter]
       this.currentAddress = privKey.toAddress('testnet')
+    },
+    getBalance () {
+      return this.$wallet.balance
     }
   },
   computed: {
-    ...mapGetters({ getBalance: 'wallet/getBalance' }),
     percentageBalance () {
-      let percentage = 100 * Math.min(this.getBalance / this.recomendedBalance, 1)
+      let percentage = 100 * Math.min(this.getBalance() / this.recomendedBalance, 1)
       return percentage
     },
     formatBalance () {
-      return formatting.formatBalance(this.getBalance)
+      return formatting.formatBalance(this.getBalance())
     }
   }
 }

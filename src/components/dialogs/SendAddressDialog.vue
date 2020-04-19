@@ -45,7 +45,6 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
 import { sentTransactionNotify, sentTransactionFailureNotify } from '../../utils/notifications'
 
 const cashlib = require('bitcore-lib-cash')
@@ -73,11 +72,6 @@ export default {
     }
   },
   methods: {
-    ...mapActions({
-      getFee: 'wallet/getFee',
-      constructTransaction: 'wallet/constructTransaction',
-      unfreezeUTXO: 'wallet/unfreezeUTXO'
-    }),
     async send () {
       try {
         let output = new cashlib.Transaction.Output({
@@ -85,8 +79,7 @@ export default {
           satoshis: this.amount
         })
 
-        let feePerByte = await this.getFee()
-        var { transaction, usedIDs } = await this.constructTransaction({ outputs: [output], feePerByte, exactOutputs: true })
+        var { transaction, usedIDs } = await this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
         let txHex = transaction.toString()
 
         let electrumHandler = this.$electrumClient
@@ -97,7 +90,7 @@ export default {
         console.error(err)
         // Unfreeze UTXOs if stealth tx broadcast fails
         usedIDs.forEach(id => {
-          this.unfreezeUTXO(id)
+          this.$wallet.unfreezeUTXO(id)
         })
       }
     }
