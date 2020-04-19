@@ -49,7 +49,7 @@
     "eslint": "^5.10.0",
     "eslint-loader": "^2.1.1",
     "eslint-plugin-vue": "^5.0.0",
-    "protoc": "^1.0.4",
+    "protoc": "^1.0.4"
   },
   "engines": {
     "node": ">= 10.18.1",
