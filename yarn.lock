@@ -5030,12 +5030,12 @@ electron@^7.0.0:
     "@types/node" "^12.0.12"
     extract-zip "^1.0.3"
 
-electrumjs@^0.1.3:
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/electrumjs/-/electrumjs-0.1.3.tgz#d59cf3c7921a843db3cc5a55cb2eee551ad0a318"
-  integrity sha512-lIsdSJUwh5epO1/oENyOzi+RLwhB38Nq/gWNHTnQx16GyrLhpZveFMJl4y4sghhKcl6XRktyKciO1VhYCQVEPg==
+electrum-cash@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/electrum-cash/-/electrum-cash-1.0.1.tgz#873048c6716d8dc3ff50d3714726f055125256e7"
+  integrity sha512-snMgRt6JzsHdCdf+Un1rLj4RXjje1WuFVTx3Xx+6mitEibYalmD+x0ts146VF4Ki3+42DQKXtQXl0bzCAY7Jtw==
   dependencies:
-    jsonrpc-spec "0.0.3"
+    debug "^4.1.1"
 
 elementtree@0.1.7, elementtree@^0.1.7:
   version "0.1.7"
@@ -8162,11 +8162,6 @@ jsonify@~0.0.0:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/jsonify/-/jsonify-0.0.0.tgz#2c74b6ee41d93ca51b7b5aaee8f503631d252a73"
   integrity sha1-LHS27kHZPKUbe1qu6PUDYx0lKnM=
-
-jsonrpc-spec@0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/jsonrpc-spec/-/jsonrpc-spec-0.0.3.tgz#74729a0607c0bacc362517004607475bf74c6fbe"
-  integrity sha512-cFwbKlNlVznBgDAj3EMWDd9EmpgTVpPRnTpX/ek+LJo9LfirQcoSMsP7SOorkkcnDisOtYr95dueNcEMDi4TpQ==
 
 jsprim@^1.2.2:
   version "1.4.1"

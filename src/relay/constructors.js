@@ -183,22 +183,8 @@ export const constructStealthPaymentPayload = async function (amount, memo, priv
   let stealthPaymentEntry = new stealth.StealthPaymentEntry()
   let ephemeralPrivKey = cashlib.PrivateKey()
 
-  var [{ transaction: stealthTx, usedIDs: stampUsedIDs, vouts }] = await constructStealthTransaction(ephemeralPrivKey, destPubKey, amount)
+  var [{ transaction: stealthTx, usedIDs: stealthIdsUsed, vouts }] = await constructStealthTransaction(ephemeralPrivKey, destPubKey, amount)
   stealthTxId = Buffer.from(stealthTx.id, 'hex')
-
-  // Broadcast transaction
-  let stealthTxHex = stealthTx.toString()
-  try {
-    let electrumHandler = store.getters['electrumHandler/getClient']
-    await electrumHandler.methods.blockchain_transaction_broadcast(stealthTxHex)
-  } catch (err) {
-    console.error(err)
-    // Unfreeze UTXOs if stealth tx broadcast fails
-    stampUsedIDs.forEach(id => {
-      store.dispatch('unfreezeUTXO', id)
-    })
-    throw err
-  }
 
   stealthPaymentEntry.setEphemeralPubKey(ephemeralPrivKey.publicKey.toBuffer())
   let rawStealthTx = stealthTx.toBuffer()
@@ -227,8 +213,7 @@ export const constructStealthPaymentPayload = async function (amount, memo, priv
   // Calc digest
   let payloadRaw = payload.serializeBinary()
   let payloadDigest = cashlib.crypto.Hash.sha256(payloadRaw)
-
-  return { payload, payloadDigest }
+  return { payload, payloadDigest, stealthTx, stealthIdsUsed }
 }
 
 export const constructImagePayload = function (image, caption, privKey, destPubKey, scheme, replyDigest) {

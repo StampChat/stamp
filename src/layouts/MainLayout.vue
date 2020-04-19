@@ -69,16 +69,13 @@ export default {
   },
   methods: {
     ...mapActions({
-      electrumRehydrate: 'electrumHandler/rehydrate',
-      electrumConnect: 'electrumHandler/connect',
-      electrumKeepAlive: 'electrumHandler/keepAlive',
-      relayClientRehydrate: 'relayClient/rehydrate',
       refreshChat: 'chats/refresh',
       updateHDUTXOs: 'wallet/updateHDUTXOs',
       fixFrozenUTXOs: 'wallet/fixFrozenUTXOs',
       fixUTXOs: 'wallet/fixUTXOs',
       startListeners: 'wallet/startListeners',
-      setActiveChat: 'chats/setActiveChat'
+      setActiveChat: 'chats/setActiveChat',
+      relayClientRehydrate: 'relayClient/rehydrate'
     }),
     ...mapGetters({
       getAllAddresses: 'wallet/getAllAddresses',
@@ -99,9 +96,11 @@ export default {
       getToken: 'relayClient/getToken',
       getRelayClient: 'relayClient/getClient',
       getAddressStr: 'wallet/getMyAddressStr',
-      getContact: 'contacts/getContact',
-      walletConnected: 'electrumHandler/connected'
-    })
+      getContact: 'contacts/getContact'
+    }),
+    walletConnected () {
+      return this.$electrum.connected
+    }
   },
   watch: {
     walletConnected (newVal, oldVal) {
@@ -134,10 +133,6 @@ export default {
       },
       async () => {
         try {
-          // Rehydrate electrum
-          this.electrumRehydrate()
-          this.electrumConnect()
-          this.electrumKeepAlive()
           // Start electrum listeners
           let addresses = Object.keys(this.getAllAddresses())
           this.startListeners(addresses)

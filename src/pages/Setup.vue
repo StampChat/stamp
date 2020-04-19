@@ -187,7 +187,7 @@ import DepositStep from '../components/setup/DepositStep.vue'
 import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
 import ProfileStep from '../components/Profile.vue'
 import SettingsStep from '../components/Settings.vue'
-import { defaultRelayData, defaultRelayUrl, electrumURL, electrumPort, electrumProtocol } from '../utils/constants'
+import { defaultRelayData, defaultRelayUrl } from '../utils/constants'
 import {
   keyserverDisconnectedNotify,
   insuffientFundsNotify,
@@ -250,9 +250,6 @@ export default {
       startListeners: 'wallet/startListeners',
       updateHDUTXOs: 'wallet/updateHDUTXOs',
       setRelayToken: 'relayClient/setToken',
-      newElectrumClient: 'electrumHandler/new',
-      electrumConnect: 'electrumHandler/connect',
-      electrumKeepAlive: 'electrumHandler/keepAlive',
       setRelayClient: 'relayClient/setClient',
       resetWallet: 'wallet/reset',
       setSeedPhrase: 'wallet/setSeedPhrase',
@@ -262,7 +259,6 @@ export default {
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
       getMyAddress: 'wallet/getMyAddress',
-      getClient: 'electrumHandler/getClient',
       getAllAddresses: 'wallet/getAllAddresses',
       getIdentityPrivKey: 'wallet/getIdentityPrivKey',
       getUpdateInterval: 'contacts/getUpdateInterval',
@@ -548,16 +544,13 @@ export default {
     }
   },
   computed: {
-    ...mapGetters({ electrumConnected: 'electrumHandler/connected' })
+    electrumConnected () {
+      return this.$electrum.connected
+    }
   },
   async created () {
     // Reset all messaging
     this.resetChats()
-
-    // Set electrum client
-    this.newElectrumClient({ host: electrumURL, port: electrumPort, protocol: electrumProtocol })
-    await this.electrumConnect()
-    this.electrumKeepAlive()
   }
 }
 </script>

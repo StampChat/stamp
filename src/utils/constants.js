@@ -4,7 +4,6 @@ export const maxSplitter = 75
 // Electrum constants
 export const electrumURL = 'testnet.bitcoincash.network'
 export const electrumPort = 60002
-export const electrumProtocol = 'tls'
 export const electrumPingInterval = 10_000
 
 // Wallet constants
