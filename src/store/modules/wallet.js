@@ -12,6 +12,9 @@ export function rehydrateWallet (wallet) {
   if (!wallet || !wallet.xPrivKey) {
     return
   }
+  if (!wallet.feePerByte) {
+    wallet.feePerByte = 2
+  }
   wallet.xPrivKey = cashlib.HDPrivateKey.fromObject(wallet.xPrivKey)
   wallet.identityPrivKey = cashlib.PrivateKey.fromObject(wallet.identityPrivKey)
   for (let addr in wallet.addresses) {
@@ -48,10 +51,7 @@ export default {
     changeAddresses: {},
     utxos: {},
     frozenUTXOs: {},
-    feeInfo: {
-      feePerByte: 2,
-      lastUpdate: 0
-    },
+    feePerByte: 2,
     seedPhrase: null
   },
   mutations: {
@@ -69,10 +69,7 @@ export default {
       state.changeAddresses = {}
       state.utxos = {}
       state.frozenUTXOs = {}
-      state.feeInfo = {
-        feePerByte: 2,
-        lastUpdate: 0
-      }
+      state.feePerByte = 2
     },
     setAddress (state, { address, privKey }) {
       Vue.set(state.addresses, address, { privKey })
@@ -135,9 +132,6 @@ export default {
       let utxo = state.frozenUTXOs[id]
       Vue.delete(state.frozenUTXOs, id)
       Vue.set(state.utxos, id, utxo)
-    },
-    setFeeInfo (state, feeInfo) {
-      state.feeInfo = feeInfo
     }
   },
   actions: {
@@ -305,9 +299,11 @@ export default {
         ecl.methods.blockchain_scripthash_subscribe(digestHexReversed)
       }))
     },
-    constructTransaction ({ state, commit, getters }, { outputs, feePerByte, exactOutputs = false }) {
+    constructTransaction ({ state, commit, getters }, { outputs, exactOutputs = false }) {
       const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
       const standardInputSize = 175 // A few extra bytes
+
+      const feePerByte = state.feePerByte
 
       let transaction = new cashlib.Transaction()
 
@@ -447,16 +443,13 @@ export default {
       console.log(transaction)
       return { transaction, usedIDs: usedUtxos.map(utxo => calcId(utxo)) }
     },
-    async getFee ({ commit, getters, rootGetters }) {
+    async getFee () {
       return 2
     }
   },
   getters: {
     getSeedPhrase (state) {
       return state.seedPhrase
-    },
-    getFeeInfo (state) {
-      return state.feeInfo
     },
     getElectrumScriptHashes (state) {
       return state.electrumScriptHashes
