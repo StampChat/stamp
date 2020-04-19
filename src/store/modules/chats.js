@@ -366,7 +366,19 @@ export default {
       const stampAmount = getters['getStampAmount'](addr)
 
       // Construct payload
-      const { payload, payloadDigest } = await constructStealthPaymentPayload(amount, memo, privKey, destPubKey, 1, stamptxId, replyDigestBuffer)
+      const { payload, payloadDigest, stealthTx, stealthIdsUsed } = await constructStealthPaymentPayload(amount, memo, privKey, destPubKey, 1, stamptxId, replyDigestBuffer)
+      let stealthTxHex = stealthTx.toString()
+      try {
+        const client = rootGetters['wallet/getElectrumClient']
+        await client.request('blockchain.transaction.broadcast', stealthTxHex)
+      } catch (err) {
+        console.error(err)
+        // Unfreeze UTXOs if stealth tx broadcast fails
+        stealthIdsUsed.forEach(id => {
+          dispatch('wallet/unfreezeUTXO', id, { root: true })
+        })
+        throw err
+      }
 
       // Add localy
       const payloadDigestHex = payloadDigest.toString('hex')

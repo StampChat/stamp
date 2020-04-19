@@ -28,10 +28,11 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
 export default {
   methods: {
-    ...mapActions({ connect: 'electrumHandler/connect' })
+    connect () {
+      this.$electrumClient.connect()
+    }
   }
 }
 </script>

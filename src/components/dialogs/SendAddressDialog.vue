@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions } from 'vuex'
 import { sentTransactionNotify, sentTransactionFailureNotify } from '../../utils/notifications'
 
 const cashlib = require('bitcore-lib-cash')
@@ -73,7 +73,6 @@ export default {
     }
   },
   methods: {
-    ...mapGetters({ getClient: 'electrumHandler/getClient' }),
     ...mapActions({
       getFee: 'wallet/getFee',
       constructTransaction: 'wallet/constructTransaction',
@@ -90,8 +89,8 @@ export default {
         var { transaction, usedIDs } = await this.constructTransaction({ outputs: [output], feePerByte, exactOutputs: true })
         let txHex = transaction.toString()
 
-        let electrumHandler = this.getClient()
-        await electrumHandler.methods.blockchain_transaction_broadcast(txHex)
+        let electrumHandler = this.$electrumClient
+        await electrumHandler.request('blockchain.transaction.broadcast', txHex)
         sentTransactionNotify(transaction)
       } catch (err) {
         sentTransactionFailureNotify(transaction)

@@ -107,9 +107,11 @@ export default {
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getNumUnread: 'chats/getNumUnread',
       getBalanceVuex: 'wallet/getBalance',
-      walletConnected: 'electrumHandler/connected',
       relayConnected: 'relayClient/connected'
     }),
+    walletConnected () {
+      return this.$electrum.connected
+    },
     getBalance () {
       return formatting.formatBalance(this.getBalanceVuex)
     }

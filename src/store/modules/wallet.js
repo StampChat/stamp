@@ -44,6 +44,7 @@ export function rehydrateWallet (wallet) {
 export default {
   namespaced: true,
   state: {
+    electrumClient: null,
     xPrivKey: null,
     identityPrivKey: null,
     electrumScriptHashes: {},
@@ -132,6 +133,9 @@ export default {
       let utxo = state.frozenUTXOs[id]
       Vue.delete(state.frozenUTXOs, id)
       Vue.set(state.utxos, id, utxo)
+    },
+    setElectrumClient (state, client) {
+      state.electrumClient = client
     }
   },
   actions: {
@@ -185,10 +189,10 @@ export default {
         commit('addElectrumScriptHash', { scriptHash, address, change: true })
       }
     },
-    async updateUTXOFromScriptHash ({ commit, rootGetters, getters }, scriptHash) {
-      let client = rootGetters['electrumHandler/getClient']
+    async updateUTXOFromScriptHash ({ commit, getters }, scriptHash) {
+      let client = getters['getElectrumClient']
       try {
-        var elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
+        var elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
         let { address } = getters['getAddressByElectrumScriptHash'](scriptHash)
         let outputs = elOutputs.map(elOutput => {
           let output = {
@@ -211,14 +215,14 @@ export default {
       await Promise
         .all(scriptHashes.map(scriptHash => dispatch('updateUTXOFromScriptHash', scriptHash)))
     },
-    async fixFrozenUTXO ({ getters, rootGetters, dispatch }, id) {
+    async fixFrozenUTXO ({ getters, dispatch }, id) {
       // Unfreeze UTXO if confirmed to be unspent else delete
       // WARNING: This is not thread-safe, do not call when others hold the UTXO
-      let client = rootGetters['electrumHandler/getClient']
+      let client = getters['getElectrumClient']
       let utxo = getters['getFrozenUTXO'](id)
       try {
         let scriptHash = formatting.toElectrumScriptHash(utxo.address)
-        let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
+        let elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
         if (elOutputs.some(output => {
           return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
         })) {
@@ -231,16 +235,16 @@ export default {
         console.error('error deserializing utxo address', err, utxo)
       }
     },
-    async fixFrozenUTXOs ({ dispatch, getters, rootGetters }) {
+    async fixFrozenUTXOs ({ dispatch, getters }) {
       // Unfreeze UTXO if confirmed to be unspent else delete, for all frozen UTXOs
       // WARNING: This is not thread-safe, do not call when others hold the UTXO
-      let client = rootGetters['electrumHandler/getClient']
+      let client = getters['getElectrumClient']
       let frozenUTXOs = getters['getFrozenUTXOs']
       await Promise.all(Object.keys(frozenUTXOs).map(async id => {
         let utxo = frozenUTXOs[id]
         try {
           let scriptHash = formatting.toElectrumScriptHash(utxo.address.valueOf())
-          let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
+          let elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
           if (elOutputs.some(output => {
             return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
           })) {
@@ -254,17 +258,17 @@ export default {
         }
       }))
     },
-    async fixUTXOs ({ dispatch, getters, rootGetters }) {
+    async fixUTXOs ({ dispatch, getters }) {
       // Unfreeze UTXO if confirmed to be unspent else delete, for all (non-p2pkh) UTXOs
       // WARNING: This is not thread-safe, do not call when others hold the UTXO
-      let client = rootGetters['electrumHandler/getClient']
+      let client = getters['getElectrumClient']
       let utxos = getters['getUTXOs']
       await Promise.all(Object.keys(utxos).map(async id => {
         let utxo = utxos[id]
         if (utxo.type !== 'p2pkh') {
           try {
             let scriptHash = formatting.toElectrumScriptHash(utxo.address)
-            let elOutputs = await client.methods.blockchain_scripthash_listunspent(scriptHash)
+            let elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
             if (!elOutputs.some(output => {
               return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
             })) {
@@ -283,8 +287,8 @@ export default {
     removeUTXO ({ commit }, id) {
       commit('removeUTXO', id)
     },
-    async startListeners ({ dispatch, rootGetters }, addresses) {
-      let ecl = rootGetters['electrumHandler/getClient']
+    async startListeners ({ dispatch, getters }, addresses) {
+      let ecl = getters['getElectrumClient']
       await ecl.events.on(
         'blockchain.scripthash.subscribe',
         async (result) => {
@@ -296,7 +300,8 @@ export default {
         let scriptHashRaw = scriptHash.toBuffer()
         let digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
         let digestHexReversed = digest.reverse().toString('hex')
-        ecl.methods.blockchain_scripthash_subscribe(digestHexReversed)
+
+        ecl.request('blockchain.scripthash.subscribe', digestHexReversed)
       }))
     },
     constructTransaction ({ state, commit, getters }, { outputs, exactOutputs = false }) {
@@ -500,6 +505,12 @@ export default {
     },
     generatePrivKey: (state) => (count) => {
       return Object.values(state.addresses)[count].privKey
+    },
+    getElectrumClient (state) {
+      if (!state.electrumClient) {
+        throw new Error('Attempting to get electrum client without it being set')
+      }
+      return state.electrumClient
     }
   }
 }

@@ -14,10 +14,11 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 export default {
   computed: {
-    ...mapGetters({ connected: 'electrumHandler/connected' })
+    connected () {
+      return this.$electrum.connected
+    }
   }
 }
 </script>
