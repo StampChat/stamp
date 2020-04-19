@@ -58,8 +58,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
-import formatting from '../../utils/formatting'
+import { mapActions } from 'vuex'
 
 export default {
   props: ['address'],
@@ -87,14 +86,6 @@ export default {
     },
     async sendImage () {
       await this.sendImageVuex({ addr: this.address, image: this.image, caption: this.caption })
-    }
-  },
-  computed: {
-    ...mapGetters({
-      getBalanceVuex: 'wallet/getBalance'
-    }),
-    getBalance () {
-      return formatting.formatBalance(this.getBalanceVuex)
     }
   }
 }
