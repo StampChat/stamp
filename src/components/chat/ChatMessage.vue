@@ -53,7 +53,7 @@ import moment from 'moment'
 import ChatMessageSection from './ChatMessageSection.vue'
 import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
 import TransactionDialog from '../dialogs/TransactionDialog.vue'
-import { stampPrice } from '../../utils/wallet'
+import { stampPrice } from '../../wallet/helpers'
 
 export default {
   components: {
