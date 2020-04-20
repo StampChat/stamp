@@ -6,7 +6,7 @@ import Vue from 'vue'
 import imageUtil from '../../utils/image'
 import { insuffientFundsNotify, chainTooLongNotify, desktopNotify } from '../../utils/notifications'
 import { defaultStampAmount } from '../../utils/constants'
-import { stampPrice } from '../../utils/wallet'
+import { stampPrice } from '../../wallet/helpers'
 import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage } from '../../relay/constructors'
 
 const cashlib = require('bitcore-lib-cash')
