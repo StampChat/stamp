@@ -1,6 +1,5 @@
 import axios from 'axios'
 import paymentrequest from './paymentrequest_pb'
-import store from '../store/index'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -41,7 +40,7 @@ export default {
     return { paymentReceipt, token }
   },
 
-  async constructPaymentTransaction (paymentDetails) {
+  async constructPaymentTransaction (wallet, paymentDetails) {
     // Get Outputs
     let requestOutputs = paymentDetails.getOutputsList()
     let outputs = requestOutputs.map(reqOutput => {
@@ -55,7 +54,7 @@ export default {
     })
 
     // Construct tx
-    let { transaction, usedIDs } = await store.dispatch('wallet/constructTransaction', { outputs, exactOutputs: true })
+    let { transaction, usedIDs } = await wallet.constructTransaction({ outputs, exactOutputs: true })
     let rawTransaction = transaction.toBuffer()
 
     // Send payment and receive token

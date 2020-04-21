@@ -50,9 +50,12 @@ export class Wallet {
       .privateKey // TODO: Proper path for this
   }
   async init () {
+    console.log('initializing wallet')
     this.initAddresses()
     this.updateHDUTXOs()
     this.startListeners()
+    this.fixFrozenUTXOs()
+    this.fixUTXOs()
   }
   get xPrivKey () {
     return this._xPrivKey
@@ -110,8 +113,8 @@ export class Wallet {
         this.storage.removeUTXO(id)
       }
     })
-    const frozenUTXOs = this.storage.getFrozenUTXOs()
-    console.log(frozenUTXOs)
+    // Make a copy so this is not mutated
+    const frozenUTXOs = { ...this.storage.getFrozenUTXOs() }
     // Remove all frozen utxos by address
     Object.entries(frozenUTXOs).forEach(([id, utxo]) => {
       if (utxo.address === addr) {
@@ -153,11 +156,11 @@ export class Wallet {
     await Promise
       .all(scriptHashes.map(scriptHash => this.updateUTXOFromScriptHash(scriptHash)))
   }
-  async fixFrozenUTXO (id) {
+  async fixFrozenUTXO (utxoId) {
     // Unfreeze UTXO if confirmed to be unspent else delete
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
     const client = this.electrumClient
-    const utxo = this.storage.getFrozenUTXO(id)
+    const utxo = this.storage.getFrozenUTXOs()[utxoId]
     try {
       const scriptHash = formatting.toElectrumScriptHash(utxo.address)
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
@@ -165,9 +168,9 @@ export class Wallet {
         return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
       })) {
         // Found utxo
-        this.storage.unfreezeUTXO(id)
+        this.storage.unfreezeUTXO(utxoId)
       } else {
-        this.storage.removeFrozenUTXO(id)
+        this.storage.removeFrozenUTXO(utxoId)
       }
     } catch (err) {
       console.error('error deserializing utxo address', err, utxo)
@@ -176,24 +179,9 @@ export class Wallet {
   async fixFrozenUTXOs () {
     // Unfreeze UTXO if confirmed to be unspent else delete, for all frozen UTXOs
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
-    const client = this.electrumClient
     const frozenUTXOs = this.storage.getFrozenUTXOs()
-    await Promise.all(Object.keys(frozenUTXOs).map(async id => {
-      const utxo = frozenUTXOs[id]
-      try {
-        const scriptHash = formatting.toElectrumScriptHash(utxo.address.valueOf())
-        const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-        if (elOutputs.some(output => {
-          return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
-        })) {
-          // Found utxo
-          this.storage.unfreezeUTXO(id)
-        } else {
-          this.storage.removeFrozenUTXO(id)
-        }
-      } catch (err) {
-        console.error('error deserializing utxo address', err, utxo)
-      }
+    await Promise.all(Object.values(frozenUTXOs).map(async (id) => {
+      this.fixFrozenUTXO(id)
     }))
   }
   async fixUTXOs () {
@@ -376,7 +364,6 @@ export class Wallet {
     const finalTxnSize = transaction._estimateSize()
     // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
     console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
-
     console.log(transaction)
     return { transaction, usedIDs: usedUtxos.map(utxo => calcId(utxo)) }
   }
@@ -405,10 +392,14 @@ export class Wallet {
     return { ...this.addresses, ...this.changeAddresses }
   }
   get privKeys () {
-    return Object.freeze(Object.values(this.addresses).map(address => Object.freeze(address).freeze))
+    return Object.freeze(Object.values(this.addresses).map(address => Object.freeze(address)))
   }
   unfreezeUTXO (id) {
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.unfreezeUTXO(id)
+  }
+  addUTXO (utxo) {
+    // TODO: Nobody should be calling this outside of the wallet
+    return this.storage.addUTXO(utxo)
   }
 }

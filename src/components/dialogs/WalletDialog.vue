@@ -84,21 +84,19 @@ export default {
   },
   data () {
     return {
-      currentAddress: this.generatePrivKey()(0).toAddress('testnet'), // TODO: Generic over network
+      currentAddress: this.$wallet.privKeys[0].toAddress('testnet'), // TODO: Generic over network
       paymentAddrCounter: 0,
       seedPhraseOpen: false
     }
   },
   computed: {
     ...mapGetters({
-      getBalanceVuex: 'wallet/getBalance'
     }),
     getBalance () {
-      return formatting.formatBalance(this.getBalanceVuex)
+      return formatting.formatBalance(this.$wallet.balance)
     }
   },
   methods: {
-    ...mapGetters({ generatePrivKey: 'wallet/generatePrivKey' }),
     copyAddress () {
       copyToClipboard(this.currentAddress).then(() => {
         this.$q.notify({
@@ -113,8 +111,9 @@ export default {
     },
     nextAddress () {
       // Increment address
+      // TODO: This should have no idea what number of addresses there are
       this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
-      let privKey = this.generatePrivKey()(this.paymentAddrCounter)
+      let privKey = this.$wallet.privKeys[this.paymentAddrCounter]
       this.currentAddress = privKey.toAddress('testnet')
     }
   }
