@@ -118,38 +118,28 @@ export default {
 
     console.log('loading')
     // Setup everything at once. This are independent processes
-    await Promise.all([
-      async () => {
-        try {
-          // Rehydrate relay client
-          this.relayClientRehydrate()
+    try {
+      // Rehydrate relay client
+      this.relayClientRehydrate()
 
-          const client = this.getRelayClient
-          client.setUpWebsocket(this.getAddressStr, this.getToken)
-          await this.refreshChat()
-        } catch (err) {
-          console.error(err)
-        }
-      },
-      async () => {
-        try {
-          // Start electrum listeners
-          let addresses = Object.keys(this.getAllAddresses())
-          this.startListeners(addresses)
+      const client = this.getRelayClient
+      client.setUpWebsocket(this.getAddressStr, this.getToken)
+      await this.refreshChat()
+      // Start electrum listeners
+      let addresses = Object.keys(this.getAllAddresses())
+      this.startListeners(addresses)
 
-          // Update UTXOs
-          await this.updateHDUTXOs()
+      // Update UTXOs
+      await this.updateHDUTXOs()
 
-          // Fix frozen UTXOs
-          await this.fixFrozenUTXOs()
+      // Fix frozen UTXOs
+      await this.fixFrozenUTXOs()
 
-          // Fix UTXOs
-          await this.fixUTXOs()
-        } catch (err) {
-          console.error(err)
-        }
-      }
-    ].map(f => f()))
+      // Fix UTXOs
+      await this.fixUTXOs()
+    } catch (err) {
+      console.error(err)
+    }
 
     if (!this.activeChatAddr) {
       const contacts = this.getSortedChatOrder()
