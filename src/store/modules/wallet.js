@@ -34,7 +34,6 @@ export default {
   namespaced: true,
   state: {
     xPrivKey: null,
-    identityPrivKey: null,
     utxos: {},
     frozenUTXOs: {},
     feePerByte: 2,
@@ -46,7 +45,6 @@ export default {
     },
     reset (state) {
       state.xPrivKey = null
-      state.identityPrivKey = null
       state.utxos = {}
       state.frozenUTXOs = {}
     },
