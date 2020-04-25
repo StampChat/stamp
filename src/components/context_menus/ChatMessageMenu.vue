@@ -66,11 +66,17 @@ export default {
   props: ['address', 'id', 'message'],
   methods: {
     ...mapActions({
-      deleteMessage: 'chats/deleteMessage',
-      sendMessage: 'chats/sendMessage',
-      sendStealthPayment: 'chats/sendStealthPayment',
-      sendImage: 'chats/sendImage'
+      deleteMessage: 'chats/deleteMessage'
     }),
+    sendMessage (...args) {
+      this.$relayClient.sendMessage(args)
+    },
+    sendStealthPayment (...args) {
+      this.$relayClient.sendStealthPayment(args)
+    },
+    sendImage (...args) {
+      this.$relayClient.sendImage(args)
+    },
     resend () {
       this.deleteMessage({ addr: this.address, id: this.id })
       let retryData = this.message.retryData

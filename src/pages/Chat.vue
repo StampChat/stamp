@@ -70,7 +70,7 @@
 <script>
 import assert from 'assert'
 import moment from 'moment'
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
 import { dom } from 'quasar'
 const { height } = dom
 
@@ -118,22 +118,21 @@ export default {
   destroyed () {
     clearTimeout(this.timer)
   },
+
   methods: {
-    ...mapActions({
-      sendMessageVuex: 'chats/sendMessage'
-    }),
     ...mapGetters({
-      getStampAmount: 'chats/getStampAmount',
-      getAcceptancePrice: 'contacts/getAcceptancePrice'
+      getAcceptancePrice: 'contacts/getAcceptancePrice',
+      getStampAmount: 'chats/getStampAmount'
     }),
     sendMessage (message) {
+      console.log(this.getStampAmount)
       const stampAmount = this.getStampAmount()(this.address)
       const acceptancePrice = this.getAcceptancePrice()(this.address)
       if (stampAmount < acceptancePrice) {
         insufficientStampNotify()
       }
       if (message !== '') {
-        this.sendMessageVuex({ addr: this.address, text: message, replyDigest: this.replyDigest })
+        this.$relayClient.sendMessage({ addr: this.address, text: message, replyDigest: this.replyDigest, stampAmount })
         this.message = ''
         this.replyDigest = null
         this.$nextTick(() => this.$refs.chatInput.$el.focus())

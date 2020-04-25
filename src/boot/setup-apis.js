@@ -1,7 +1,8 @@
 
 import { Client as ElectrumClient } from 'electrum-cash'
-import { electrumPingInterval, electrumURL, electrumPort } from '../utils/constants'
+import { electrumPingInterval, electrumURL, electrumPort, defaultRelayUrl } from '../utils/constants'
 import { Wallet } from '../wallet'
+import { getRelayClient } from '../utils/relay-client-factory'
 
 async function getElectrumClient ({ port, host }) {
   const client = new ElectrumClient('Stamp Wallet', '1.4.1', host, port)
@@ -61,10 +62,7 @@ async function getElectrumClient ({ port, host }) {
   return { client, observables }
 }
 
-export default async ({ store, Vue }) => {
-  const { client, observables } = await getElectrumClient({ host: electrumURL, port: electrumPort })
-  // TODO: WE should probably rename this file to something more specific
-  // as its instantiating the wallet now also.
+function getWalletClient ({ store }) {
   const storageAdapter = {
     getFrozenUTXOs () {
       return store.getters['wallet/getFrozenUTXOs']
@@ -88,17 +86,28 @@ export default async ({ store, Vue }) => {
       store.commit('wallet/addUTXO', output)
     }
   }
-  const wallet = new Wallet(storageAdapter)
-  wallet.setElectrumClient(client)
+
+  return new Wallet(storageAdapter)
+}
+
+export default async ({ store, Vue }) => {
+  const { client: electrumClient, observables: electrumObservables } = await getElectrumClient({ host: electrumURL, port: electrumPort })
+  // TODO: WE should probably rename this file to something more specific
+  // as its instantiating the wallet now also.
+  const wallet = getWalletClient({ store })
+  wallet.setElectrumClient(electrumClient)
   const xPrivKey = store.getters['wallet/getXPrivKey']
   if (xPrivKey) {
     wallet.setXPrivKey(xPrivKey)
     await wallet.init()
   }
+  const { client: relayClient, observables: relayObservables } = getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumObservables, store })
+  const relayToken = store.getters['relayClient/getToken']
+  relayClient.setToken(relayToken)
 
   Vue.prototype.$wallet = wallet
-  Vue.prototype.$electrumClient = client
-  Vue.prototype.$electrum = Vue.observable(observables)
-  store.commit('chats/setElectrumClient', client, { root: true })
-  store.commit('chats/setWallet', wallet, { root: true })
+  Vue.prototype.$electrumClient = electrumClient
+  Vue.prototype.$electrum = Vue.observable(electrumObservables)
+  Vue.prototype.$relayClient = relayClient
+  Vue.prototype.$relay = Vue.observable(relayObservables)
 }

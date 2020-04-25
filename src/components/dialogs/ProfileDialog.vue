@@ -49,14 +49,12 @@ export default {
   methods: {
     ...mapGetters({
       getKsHandler: 'keyserverHandler/getHandler',
-      getClient: 'relayClient/getClient',
-      getRelayData: 'myProfile/getRelayData',
-      getToken: 'relayClient/getToken'
+      getRelayData: 'myProfile/getRelayData'
     }),
     ...mapActions({ setRelayData: 'myProfile/setRelayData' }),
     async updateRelayData () {
       // Set profile
-      let client = this.getClient()
+      let client = this.$relayClient
 
       // Create metadata
       let idPrivKey = this.$wallet.identityPrivKey
@@ -72,9 +70,8 @@ export default {
 
       // Apply remotely
       let idAddress = this.$wallet.myAddress
-      let token = this.getToken()
       try {
-        await client.putProfile(idAddress.toLegacyAddress(), metadata, token)
+        await client.putProfile(idAddress.toLegacyAddress(), metadata)
       } catch (err) {
         console.error(err)
         if (err.response.status === 413) {

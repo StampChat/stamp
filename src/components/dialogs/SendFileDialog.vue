@@ -58,7 +58,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
 
 export default {
   props: ['address'],
@@ -70,8 +70,8 @@ export default {
     }
   },
   methods: {
-    ...mapActions({
-      sendImageVuex: 'chats/sendImage'
+    ...mapGetters({
+      getStampAmount: 'chats/getStampAmount'
     }),
     parseImage () {
       // TODO: Check it's an image
@@ -85,7 +85,8 @@ export default {
       }
     },
     async sendImage () {
-      await this.sendImageVuex({ addr: this.address, image: this.image, caption: this.caption })
+      const stampAmount = this.getStampAmount()(this.address)
+      await this.$relayClient.sendImage({ addr: this.address, image: this.image, caption: this.caption, stampAmount })
     }
   }
 }

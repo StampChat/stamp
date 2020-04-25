@@ -69,9 +69,7 @@ export default {
   },
   methods: {
     ...mapActions({
-      refreshChat: 'chats/refresh',
-      setActiveChat: 'chats/setActiveChat',
-      relayClientRehydrate: 'relayClient/rehydrate'
+      setActiveChat: 'chats/setActiveChat'
     }),
     ...mapGetters({
       getSortedChatOrder: 'chats/getSortedChatOrder',
@@ -88,9 +86,8 @@ export default {
   computed: {
     ...mapState('chats', ['data', 'activeChatAddr']),
     ...mapGetters({
-      getToken: 'relayClient/getToken',
-      getRelayClient: 'relayClient/getClient',
-      getContact: 'contacts/getContact'
+      getContact: 'contacts/getContact',
+      lastReceived: 'chats/getLastReceived'
     }),
     walletConnected () {
       return this.$electrum.connected
@@ -113,12 +110,9 @@ export default {
     console.log('loading')
     // Setup everything at once. This are independent processes
     try {
-      // Rehydrate relay client
-      this.relayClientRehydrate()
-
-      const client = this.getRelayClient
-      client.setUpWebsocket(this.$wallet.myAddressStr, this.getToken)
-      await this.refreshChat()
+      this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
+      const lastReceived = this.lastReceived
+      await this.$relayClient.refresh({ lastReceived })
       await this.$wallet.init()
     } catch (err) {
       console.error(err)

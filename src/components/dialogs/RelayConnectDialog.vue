@@ -28,17 +28,10 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 export default {
   methods: {
-    ...mapGetters({
-      getClient: 'relayClient/getClient',
-      getToken: 'relayClient/getToken'
-    }),
     connect () {
-      let client = this.getClient()
-      let token = this.getToken()
-      client.setUpWebsocket(this.$wallet.myAddress, token)
+      this.$relayClient.setUpWebsocket(this.$wallet.myAddress)
     }
   }
 }

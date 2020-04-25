@@ -47,7 +47,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
 
 export default {
   data () {
@@ -57,12 +57,14 @@ export default {
     }
   },
   props: ['address', 'contact'],
+
   methods: {
-    ...mapActions({
-      sendStealthPaymentVuex: 'chats/sendStealthPayment'
+    ...mapGetters({
+      getStampAmount: 'chats/getStampAmount'
     }),
     async sendStealthPayment () {
-      await this.sendStealthPaymentVuex({ addr: this.address, amount: this.amount, memo: this.memo })
+      const stampAmount = this.getStampAmount()(this.address)
+      await this.$relayClient.sendStealthPayment({ addr: this.address, amount: this.amount, memo: this.memo, stampAmount })
     }
   }
 }

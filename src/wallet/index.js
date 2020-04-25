@@ -161,6 +161,10 @@ export class Wallet {
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
     const client = this.electrumClient
     const utxo = this.storage.getFrozenUTXOs()[utxoId]
+    if (!utxo) {
+      console.log(`Missing UTXO for ${utxoId}`)
+      return
+    }
     try {
       const scriptHash = formatting.toElectrumScriptHash(utxo.address)
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
