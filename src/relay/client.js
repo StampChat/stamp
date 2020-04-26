@@ -7,7 +7,7 @@ import pop from '../pop/index'
 import { pingTimeout, relayReconnectInterval } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
-import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage } from './constructors'
+import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructPayload, constructMessage } from './constructors'
 import imageUtil from '../utils/image'
 import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from './crypto'
 import { calcId } from '../wallet/helpers'
@@ -263,7 +263,87 @@ export class RelayClient {
     })
   }
 
-  async sendMessage ({ addr, text, replyDigest, stampAmount }) {
+  sendMessageImpl ({ addr, items, stampAmount }) {
+    const wallet = this.wallet
+    const privKey = wallet.identityPrivKey
+    const destPubKey = this.getPubKey(addr)
+
+    const usedIDs = []
+    const outpoints = []
+    const transactions = []
+    // Construct payload
+    const entries = items.map(
+      item => {
+        // TODO: internal type does not match protocol. Consistency is good.
+        if (item.type === 'stealth') {
+          const { paymentEntry, stealthTx, usedIDs: stealthIdsUsed } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
+          usedIDs.push(...stealthIdsUsed)
+          transactions.push(stealthTx)
+          return paymentEntry
+        }
+        // TODO: internal type does not match protocol. Consistency is good.
+        if (item.type === 'text') {
+          return constructTextEntry({ ...item })
+        }
+        if (item.type === 'reply') {
+          return constructReplyEntry({ ...item })
+        }
+        if (item.type === 'image') {
+          return constructImageEntry({ ...item })
+        }
+      }
+    )
+    const { serializedPayload, payloadDigest } = constructPayload(entries, privKey, destPubKey, 1)
+
+    // Add localy
+    const payloadDigestHex = payloadDigest.toString('hex')
+    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints })
+
+    // Construct message
+    try {
+      var { message, usedIDs: usedStampIds, stampTx } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
+      // TODO: These need to come back from the constructMessage API
+      // We could have more than one, and more than one transaction in the future (ideally)
+      let outpoint = {
+        stampTx,
+        vouts: [0]
+      }
+      transactions.push(stampTx)
+      usedIDs.push(...usedStampIds)
+      outpoints.push(outpoint)
+    } catch (err) {
+      console.error(err)
+      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, outpoints })
+      return
+    }
+
+    let messageSet = new messaging.MessageSet()
+    messageSet.addMessages(message)
+    let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+
+    const client = this.wallet.electrumClient
+    Promise.all(transactions.map(transaction => {
+      console.log('broadcasting txn')
+      return client.request('blockchain.transaction.broadcast', transaction.toString())
+    }))
+      .then(() => this.pushMessages(destAddr, messageSet))
+      .then(() => this.events.emit('messageSent', { addr, index: payloadDigestHex, items, outpoints }))
+      .catch((err) => {
+        console.error(err)
+        if (err.response) {
+          console.error(err.response)
+        }
+        // Unfreeze UTXOs
+        // TODO: More subtle
+        usedIDs.forEach(id => wallet.fixFrozenUTXO(id))
+
+        this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, err })
+      })
+  }
+
+  // Stub for original API
+  // TODO: Fix clients to not use these APIs at all
+  sendMessage ({ addr, text, replyDigest, stampAmount }) {
     // Send locally
     let items = [
       {
@@ -271,63 +351,16 @@ export class RelayClient {
         text
       }
     ]
-    const destPubKey = this.getPubKey(addr)
     if (replyDigest) {
       items.unshift({
         type: 'reply',
         payloadDigest: replyDigest
       })
-      var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
     }
-
-    const wallet = this.wallet
-    const privKey = wallet.identityPrivKey
-
-    // Construct payload
-    const { payload, payloadDigest } = constructTextPayload(text, privKey, destPubKey, 1, replyDigestBuffer)
-
-    // Add localy
-    const payloadDigestHex = payloadDigest.toString('hex')
-    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints: null })
-
-    // Construct message
-    try {
-      var { message, usedIDs, stampTx } = constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
-    } catch (err) {
-      console.error(err)
-      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, outpoints: null, retryData: { msgType: 'text', text } })
-      return
-    }
-
-    let messageSet = new messaging.MessageSet()
-    messageSet.addMessages(message)
-
-    let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
-
-    try {
-      // Send to destination address
-      await this.pushMessages(destAddr, messageSet)
-      let outpoint = {
-        stampTx,
-        vouts: [0]
-      }
-      this.events.emit('messageSent', { addr, index: payloadDigestHex, outpoints: [outpoint], items })
-    } catch (err) {
-      console.error(err)
-      if (err.response) {
-        console.error(err.response)
-      }
-      // Unfreeze UTXOs
-      // TODO: More subtle
-      usedIDs.forEach(id => wallet.fixFrozenUTXO(id))
-
-      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'text', text } })
-    }
+    this.sendMessageImpl({ addr, items, stampAmount })
   }
 
-  async sendStealthPayment ({ addr, stampAmount, amount, memo, stamptxId, replyDigest }) {
-    const destPubKey = this.getPubKey(addr)
-
+  sendStealthPayment ({ addr, stampAmount, amount, memo }) {
     // Send locally
     let items = [
       {
@@ -342,68 +375,10 @@ export class RelayClient {
           text: memo
         })
     }
-
-    if (replyDigest) {
-      items.unshift({
-        type: 'reply',
-        payloadDigest: replyDigest
-      })
-      var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
-    }
-
-    const wallet = this.wallet
-    const privKey = wallet.identityPrivKey
-
-    // Construct payload
-    const { payload, payloadDigest, stealthTx, stealthIdsUsed } = constructStealthPaymentPayload(wallet, amount, memo, privKey, destPubKey, 1, stamptxId, replyDigestBuffer)
-    let stealthTxHex = stealthTx.toString()
-    try {
-      // TODO: Broadcast should be via wallet API
-      const client = this.wallet.electrumClient
-      await client.request('blockchain.transaction.broadcast', stealthTxHex)
-    } catch (err) {
-      console.error(err)
-      // Unfreeze UTXOs if stealth tx broadcast fails
-      stealthIdsUsed.forEach(id => {
-        wallet.unfreezeUTXO(id)
-      })
-      throw err
-    }
-
-    // Add localy
-    const payloadDigestHex = payloadDigest.toString('hex')
-    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints: null, status: 'sending' })
-    try {
-      var { message, usedIDs, stampTx } = constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
-    } catch (err) {
-      console.error(err)
-      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'stealth', amount, memo, stamptxId } })
-      return
-    }
-    let messageSet = new messaging.MessageSet()
-    messageSet.addMessages(message)
-
-    let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
-    try {
-      await this.pushMessages(destAddr, messageSet)
-      let outpoint = {
-        stampTx,
-        vouts: [0]
-      }
-      this.events.emit('messageSent', { addr, index: payloadDigestHex, outpoints: [outpoint], items })
-    } catch (err) {
-      // Unfreeze UTXOs
-      // TODO: More subtle
-      usedIDs.forEach(id => wallet.unfreezeUTXO(id))
-
-      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'stealth', amount, memo } })
-    }
+    this.sendMessageImpl({ addr, items, stampAmount })
   }
 
-  async sendImage ({ addr, image, caption, replyDigest, stampAmount }) {
-    const destPubKey = this.getPubKey(addr)
-
-    // Send locally
+  sendImage ({ addr, image, caption, replyDigest, stampAmount }) {
     const items = [
       {
         type: 'image',
@@ -417,51 +392,14 @@ export class RelayClient {
           text: caption
         })
     }
-
     if (replyDigest) {
       items.unshift({
         type: 'reply',
         payloadDigest: replyDigest
       })
-      var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
     }
 
-    const wallet = this.wallet
-    const privKey = wallet.identityPrivKey
-
-    // Construct payload
-    const { payload, payloadDigest } = constructImagePayload(image, caption, privKey, destPubKey, 1, replyDigestBuffer)
-
-    // Add localy
-    const payloadDigestHex = payloadDigest.toString('hex')
-    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints: null })
-
-    // Construct message
-    try {
-      var { message, usedIDs, stampTx } = constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
-    } catch (err) {
-      console.error(err)
-
-      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'image', image, caption } })
-      return
-    }
-    let messageSet = new messaging.MessageSet()
-    messageSet.addMessages(message)
-
-    let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
-    try {
-      await this.pushMessages(destAddr, messageSet)
-      let outpoint = {
-        stampTx,
-        vouts: [0]
-      }
-      this.events.emit('messageSent', { addr, index: payloadDigestHex, outpoints: [outpoint], items })
-    } catch (err) {
-      // Unfreeze UTXOs
-      // TODO: More subtle
-      usedIDs.forEach(id => wallet.unfreezeUTXO(id))
-      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'image', image, caption } })
-    }
+    this.sendMessageImpl({ addr, items, stampAmount })
   }
 
   async receiveMessage ({ serverTime, receivedTime, message }) {

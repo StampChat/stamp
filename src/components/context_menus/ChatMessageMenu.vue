@@ -79,18 +79,7 @@ export default {
     },
     resend () {
       this.deleteMessage({ addr: this.address, id: this.id })
-      let retryData = this.message.retryData
-      switch (retryData.msgType) {
-        case 'text':
-          this.sendMessage({ addr: this.address, text: retryData.text })
-          break
-        case 'stealth':
-          this.sendStealthPayment({ addr: this.address, amount: retryData.amount, memo: retryData.memo, stealthTxId: retryData.stealthTxId })
-          break
-        case 'image':
-          this.sendImage({ addr: this.address, image: retryData.image, caption: retryData.caption })
-          break
-      }
+      this.$relayClient.sendMessageImpl(this.message)
     },
     copyMessage () {
       let text = this.message.items.find(el => el.type === 'text').text

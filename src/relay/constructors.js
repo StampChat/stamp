@@ -59,8 +59,7 @@ export const constructStealthTransaction = function (wallet, ephemeralPrivKey, d
   return [{ transaction, vouts: [0], usedIDs }]
 }
 
-export const constructMessage = function (wallet, payload, privKey, destPubKey, stampAmount) {
-  let serializedPayload = payload.serializeBinary()
+export const constructMessage = function (wallet, serializedPayload, privKey, destPubKey, stampAmount) {
   let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
   let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
   ecdsa.sign()
@@ -83,32 +82,25 @@ export const constructMessage = function (wallet, payload, privKey, destPubKey, 
   return { message, usedIDs, stampTx: transaction }
 }
 
-export const constructOutboxMessage = function (payload, privKey) {
-  let serializedPayload = payload.serializeBinary()
-  let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
-  let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
-  ecdsa.sign()
-
-  let message = new messaging.Message()
-  let sig = ecdsa.sig.toCompact(1).slice(1)
-  let rawPubkey = privKey.toPublicKey().toBuffer()
-  message.setSenderPubKey(rawPubkey)
-  message.setSignature(sig)
-  message.setSerializedPayload(serializedPayload)
-
-  return message
-}
-
-export const constructPayload = function (entries, privKey, destPubKey, scheme, timestamp) {
+export const constructPayload = function (entries, privKey, destPubKey, scheme, timestamp = Date.now()) {
+  const entriesPb = new messaging.Entries()
   let payload = new messaging.Payload()
   payload.setTimestamp(timestamp)
   let rawDestPubKey = destPubKey.toBuffer()
   payload.setDestination(rawDestPubKey)
 
+  // Convert to PB
+  for (const entry of entries) {
+    entriesPb.addEntries(entry)
+  }
+
   // Serialize and encrypt
-  let rawEntries = entries.serializeBinary()
+  let rawEntries = entriesPb.serializeBinary()
   if (scheme === 0) {
     payload.setEntries(rawEntries)
+    const serializedPayload = payload.serializeBinary()
+    const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
+    return { serializedPayload, payloadDigest }
   } else if (scheme === 1) {
     let { cipherText, ephemeralPrivKey } = encrypt(rawEntries, privKey, destPubKey)
     let ephemeralPubKey = ephemeralPrivKey.toPublicKey()
@@ -120,14 +112,17 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
     payload.setEphemeralPubKey(ephemeralPubKeyRaw)
     payload.setEphemeralPrivKey(encryptedEphemeralKey)
     payload.setScheme(messaging.Payload.EncryptionScheme.EPHEMERALDH)
-  } else {
-    // TODO: Raise error
-    return
+
+    let serializedPayload = payload.serializeBinary()
+    let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
+    return { serializedPayload, payloadDigest }
   }
-  return payload
+
+  assert(false, 'Trying to create a payload with an unknown encryption scheme')
+  return {}
 }
 
-const constructReplyEntry = function (payloadDigest) {
+export const constructReplyEntry = function (payloadDigest) {
   assert(payloadDigest instanceof Buffer)
 
   let entry = new messaging.Entry()
@@ -136,45 +131,16 @@ const constructReplyEntry = function (payloadDigest) {
   return entry
 }
 
-export const constructTextPayload = function (text, privKey, destPubKey, scheme, replyDigest) {
-  assert(replyDigest instanceof Buffer || !replyDigest)
-
-  let entries = new messaging.Entries()
-
-  // Add reply entry
-  if (replyDigest) {
-    let entry = constructReplyEntry(replyDigest)
-    entries.addEntries(entry)
-  }
-
+export const constructTextEntry = function ({ text }) {
   // Add text entry
   let textEntry = new messaging.Entry()
   textEntry.setKind('text-utf8')
   let rawText = new TextEncoder('utf-8').encode(text)
   textEntry.setEntryData(rawText)
-  entries.addEntries(textEntry)
-
-  // Construct message
-  let timestamp = Math.floor(Date.now() / 1000)
-  let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
-
-  // Calc digest
-  let payloadRaw = payload.serializeBinary()
-  let payloadDigest = cashlib.crypto.Hash.sha256(payloadRaw)
-  return { payload, payloadDigest }
+  return textEntry
 }
 
-export const constructStealthPaymentPayload = function (wallet, amount, memo, privKey, destPubKey, scheme, stealthTxId, replyDigest) {
-  assert(replyDigest instanceof Buffer || !replyDigest)
-
-  let entries = new messaging.Entries()
-
-  // Add reply entry
-  if (replyDigest) {
-    let entry = constructReplyEntry(replyDigest)
-    entries.addEntries(entry)
-  }
-
+export const constructStealthEntry = function ({ wallet, amount, destPubKey }) {
   // Construct payment entry
   let paymentEntry = new messaging.Entry()
   paymentEntry.setKind('stealth-payment')
@@ -183,7 +149,6 @@ export const constructStealthPaymentPayload = function (wallet, amount, memo, pr
   let ephemeralPrivKey = cashlib.PrivateKey()
 
   var [{ transaction: stealthTx, usedIDs: stealthIdsUsed, vouts }] = constructStealthTransaction(wallet, ephemeralPrivKey, destPubKey, amount)
-  stealthTxId = Buffer.from(stealthTx.id, 'hex')
 
   stealthPaymentEntry.setEphemeralPubKey(ephemeralPrivKey.publicKey.toBuffer())
   let rawStealthTx = stealthTx.toBuffer()
@@ -194,38 +159,11 @@ export const constructStealthPaymentPayload = function (wallet, amount, memo, pr
 
   let paymentEntryRaw = stealthPaymentEntry.serializeBinary()
   paymentEntry.setEntryData(paymentEntryRaw)
-  entries.addEntries(paymentEntry)
 
-  // Construct memo entry
-  if (memo !== '') {
-    let memoEntry = new messaging.Entry()
-    memoEntry.setKind('text-utf8')
-    let rawText = new TextEncoder('utf-8').encode(memo)
-    memoEntry.setEntryData(rawText)
-    entries.addEntries(memoEntry)
-  }
-
-  // Construct message
-  let timestamp = Math.floor(Date.now() / 1000)
-  let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
-
-  // Calc digest
-  let payloadRaw = payload.serializeBinary()
-  let payloadDigest = cashlib.crypto.Hash.sha256(payloadRaw)
-  return { payload, payloadDigest, stealthTx, stealthIdsUsed }
+  return { paymentEntry, stealthTx, usedIDs: stealthIdsUsed, vouts }
 }
 
-export const constructImagePayload = function (image, caption, privKey, destPubKey, scheme, replyDigest) {
-  assert(replyDigest instanceof Buffer || !replyDigest)
-
-  let entries = new messaging.Entries()
-
-  // Add reply entry
-  if (replyDigest) {
-    let entry = constructReplyEntry(replyDigest)
-    entries.addEntries(entry)
-  }
-
+export const constructImageEntry = function ({ image }) {
   // Construct text entry
   let imgEntry = new messaging.Entry()
   imgEntry.setKind('image')
@@ -245,26 +183,7 @@ export const constructImagePayload = function (image, caption, privKey, destPubK
   imgEntry.setEntryData(rawAvatar)
   imgEntry.addHeaders(imgHeader)
 
-  entries.addEntries(imgEntry)
-
-  // Construct caption entry
-  if (caption !== '') {
-    let captionEntry = new messaging.Entry()
-    captionEntry.setKind('text-utf8')
-    let rawText = new TextEncoder('utf-8').encode(caption)
-    captionEntry.setEntryData(rawText)
-    entries.addEntries(captionEntry)
-  }
-
-  // Construct message
-  let timestamp = Math.floor(Date.now() / 1000)
-  let payload = constructPayload(entries, privKey, destPubKey, scheme, timestamp)
-
-  // Calc digest
-  let payloadRaw = payload.serializeBinary()
-  let payloadDigest = cashlib.crypto.Hash.sha256(payloadRaw)
-
-  return { payload, payloadDigest }
+  return imgEntry
 }
 
 export const constructPriceFilter = function (isPublic, acceptancePrice, notificationPrice) {
