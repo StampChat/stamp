@@ -3,13 +3,17 @@
     <q-dialog v-model="walletConnectOpen">
       <wallet-connect-dialog />
     </q-dialog>
-    <my-drawer v-if="loaded" />
+    <my-drawer
+      v-if="loaded"
+      v-model="myDrawerOpen"
+    />
     <contact-drawer
       v-if="activeChatAddr !== null"
+      v-model="contactDrawerOpen"
       :address="activeChatAddr"
       :contact="getContact(activeChatAddr)"
     />
-    <main-header v-bind:splitRatio="splitterRatio" @splitting="setSplitRatio"></main-header>
+    <main-header v-bind:splitRatio="splitterRatio" @splitting="setSplitRatio" @toggleMyDrawerOpen="toggleMyDrawerOpen" @toggleContactDrawerOpen="toggleContactDrawerOpen"></main-header>
     <q-page-container>
       <q-page :style-fn="tweak" v-if="loaded">
         <q-splitter
@@ -64,7 +68,9 @@ export default {
       maxSplitter,
       walletConnectOpen: false,
       splitterRatio: 20,
-      loaded: false
+      loaded: false,
+      myDrawerOpen: false,
+      contactDrawerOpen: true
     }
   },
   methods: {
@@ -81,6 +87,12 @@ export default {
     },
     setSplitRatio (value) {
       this.splitterRatio = value
+    },
+    toggleContactDrawerOpen () {
+      this.contactDrawerOpen = !this.contactDrawerOpen
+    },
+    toggleMyDrawerOpen () {
+      this.myDrawerOpen = !this.myDrawerOpen
     }
   },
   computed: {
