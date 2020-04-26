@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { mapGetters } from 'vuex'
 import { minSplitter, maxSplitter } from '../utils/constants'
 
 export default {
@@ -59,12 +59,14 @@ export default {
     }
   },
   methods: {
-    ...mapActions({
-      toggleMyDrawerOpen: 'myDrawer/toggleDrawerOpen',
-      toggleContactDrawerOpen: 'contactDrawer/toggleDrawerOpen'
-    }),
     onSplitting (value) {
       this.$emit('splitting', value)
+    },
+    toggleMyDrawerOpen () {
+      this.$emit('toggleMyDrawerOpen')
+    },
+    toggleContactDrawerOpen () {
+      this.$emit('toggleContactDrawerOpen')
     }
   },
   computed: {

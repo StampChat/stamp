@@ -1,6 +1,6 @@
 <template>
   <q-drawer
-    v-model="drawerOpen"
+    v-model="drawerOpenModel"
     show-if-above
     overlay
     elevated
@@ -171,6 +171,11 @@ export default {
       settingsOpen: false
     }
   },
+  props: ['drawerOpen'],
+  model: {
+    prop: 'drawerOpen',
+    event: 'update:drawerOpen'
+  },
   methods: {
     ...mapActions({
       setDrawerOpen: 'myDrawer/setDrawerOpen',
@@ -183,19 +188,18 @@ export default {
   },
   computed: {
     ...mapGetters({
-      getDrawerOpen: 'myDrawer/getDrawerOpen',
       getProfile: 'myProfile/getProfile',
       getInbox: 'myProfile/getInbox'
     }),
     getMyAddressStr () {
       return this.$wallet.myAddressStr
     },
-    drawerOpen: {
+    drawerOpenModel: {
       get () {
-        return this.getDrawerOpen
+        return this.drawerOpen
       },
       set (value) {
-        this.setDrawerOpen(value)
+        this.$emit('update:drawerOpen', value)
       }
     }
   }

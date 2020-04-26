@@ -1,6 +1,6 @@
 <template>
   <q-drawer
-    v-model="drawerOpen"
+    v-model="drawerOpenModel"
     show-if-above
     side="right"
     elevated
@@ -191,10 +191,13 @@ export default {
     ContactBookDialog,
     SendBitcoinDialog
   },
-  props: ['address', 'contact'],
+  props: ['address', 'contact', 'drawerOpen'],
+  model: {
+    prop: 'drawerOpen',
+    event: 'update:drawerOpen'
+  },
   methods: {
     ...mapActions({
-      setDrawerOpen: 'contactDrawer/setDrawerOpen',
       setNotify: 'contacts/setNotify',
       shareContact: 'chats/shareContact',
       setStampAmount: 'chats/setStampAmount'
@@ -202,16 +205,15 @@ export default {
   },
   computed: {
     ...mapGetters({
-      getDrawerOpen: 'contactDrawer/getDrawerOpen',
       getNotify: 'contacts/getNotify',
       getStampAmount: 'chats/getStampAmount'
     }),
-    drawerOpen: {
+    drawerOpenModel: {
       get () {
-        return this.getDrawerOpen
+        return this.drawerOpen
       },
       set (value) {
-        this.setDrawerOpen(value)
+        this.$emit('update:drawerOpen', value)
       }
     },
     notifications: {
