@@ -70,7 +70,7 @@
 <script>
 import assert from 'assert'
 import moment from 'moment'
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
 import { dom } from 'quasar'
 const { height } = dom
 
@@ -118,13 +118,11 @@ export default {
   destroyed () {
     clearTimeout(this.timer)
   },
+
   methods: {
-    ...mapActions({
-      sendMessageVuex: 'chats/sendMessage'
-    }),
     ...mapGetters({
-      getStampAmount: 'chats/getStampAmount',
-      getAcceptancePrice: 'contacts/getAcceptancePrice'
+      getAcceptancePrice: 'contacts/getAcceptancePrice',
+      getStampAmount: 'chats/getStampAmount'
     }),
     sendMessage (message) {
       const stampAmount = this.getStampAmount()(this.address)
@@ -133,7 +131,7 @@ export default {
         insufficientStampNotify()
       }
       if (message !== '') {
-        this.sendMessageVuex({ addr: this.address, text: message, replyDigest: this.replyDigest })
+        this.$relayClient.sendMessage({ addr: this.address, text: message, replyDigest: this.replyDigest, stampAmount })
         this.message = ''
         this.replyDigest = null
         this.$nextTick(() => this.$refs.chatInput.$el.focus())
@@ -199,7 +197,6 @@ export default {
       if (!msg) {
         return null
       }
-      console.log(msg)
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
       return firstNonReply
     }

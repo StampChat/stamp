@@ -179,7 +179,7 @@ import VueRouter from 'vue-router'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop/index'
-import RelayClient from '../relay/client'
+import { getRelayClient } from '../utils/relay-client-factory'
 import { constructProfileMetadata, constructPriceFilter } from '../relay/constructors'
 import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
@@ -246,7 +246,6 @@ export default {
     ...mapActions({
       setRelayData: 'myProfile/setRelayData',
       setRelayToken: 'relayClient/setToken',
-      setRelayClient: 'relayClient/setClient',
       resetChats: 'chats/reset',
       darkMode: 'appearance/setDarkMode'
     }),
@@ -374,10 +373,10 @@ export default {
       // Get profile from relay server
       // We do this first to prevent uploading broken URL to keyserver
       let idAddress = this.$wallet.myAddress
-      let relayClient = new RelayClient(this.relayUrl)
+      let { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
+
       try {
-        let relayData = await relayClient.getRelayData(idAddress)
-        this.relayData = relayData
+        this.relayData = await relayClient.getRelayData(idAddress)
       } catch (err) {
         this.relayData = defaultRelayData
         if (!err.response) {
@@ -450,7 +449,7 @@ export default {
       this.$refs.stepper.next()
     },
     async setupRelay () {
-      let client = new RelayClient(this.relayUrl)
+      let { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
 
       // Set filter
       this.$q.loading.show({
@@ -460,7 +459,7 @@ export default {
 
       let idAddress = this.$wallet.myAddress
       try {
-        var relayPaymentRequest = await client.profilePaymentRequest(idAddress.toLegacyAddress())
+        var relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress())
       } catch (err) {
         console.error(err)
         relayDisconnectedNotify()
@@ -485,7 +484,10 @@ export default {
         throw err
       }
       try {
-        var { token } = await client.sendPayment(paymentUrl, payment)
+        const { token } = await relayClient.sendPayment(paymentUrl, payment)
+        relayClient.setToken(token)
+        this.setRelayToken(token)
+        this.$relayClient.setToken(token)
       } catch (err) {
         console.error(err)
         if (err.response) {
@@ -494,7 +496,6 @@ export default {
         paymentFailureNotify()
         throw err
       }
-      this.setRelayToken(token)
 
       // Create metadata
       let idPrivKey = this.$wallet.identityPrivKey
@@ -510,7 +511,7 @@ export default {
 
       // Apply remotely
       try {
-        await client.putProfile(idAddress.toLegacyAddress(), metadata, token)
+        await relayClient.putProfile(idAddress.toLegacyAddress(), metadata)
       } catch (err) {
         console.error(err)
         if (err.response.status === 413) {
@@ -522,7 +523,6 @@ export default {
       }
 
       // Apply locally
-      this.setRelayClient(client)
       this.setRelayData(this.relayData)
       this.setSeedPhrase(this.seed)
     },

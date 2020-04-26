@@ -105,9 +105,11 @@ export default {
   computed: {
     ...mapGetters({
       getSortedChatOrder: 'chats/getSortedChatOrder',
-      getNumUnread: 'chats/getNumUnread',
-      relayConnected: 'relayClient/connected'
+      getNumUnread: 'chats/getNumUnread'
     }),
+    relayConnected () {
+      return this.$relay.connected
+    },
     walletConnected () {
       return this.$electrum.connected
     },
