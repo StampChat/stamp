@@ -46,18 +46,12 @@ export default {
     getContactProfile: (state) => (addr) => {
       return state.contacts[addr].profile
     },
-    getContactInbox: (state) => (addr) => {
-      return state.contacts[addr].inbox
-    },
     getAcceptancePrice: (state) => (addr) => {
       return state.contacts[addr].inbox.acceptancePrice
     },
     getPubKey: (state) => (addr) => {
       let arr = Uint8Array.from(Object.values(state.contacts[addr].profile.pubKey))
       return PublicKey.fromBuffer(arr)
-    },
-    getAll (state) {
-      return state.contacts
     },
     searchContacts: (state) => (search) => {
       let result = {}
@@ -98,9 +92,6 @@ export default {
     }
   },
   actions: {
-    setNotify ({ commit }, { addr, value }) {
-      commit('setNotify', { addr, value })
-    },
     addLoadingContact ({ commit }, { addr, pubKey }) {
       let contact = { ...defaultRelayData, profile: { ...defaultRelayData.profile, pubKey } }
       commit('addContact', { addr, contact })

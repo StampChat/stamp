@@ -68,17 +68,8 @@ export default {
       }
       return state.messages[index]
     },
-    containsMessage: (state) => (addr, index) => {
-      if (addr in state.data) {
-        return (index in state.data[addr].messages)
-      }
-      return false
-    },
     getNumUnread: (state) => (addr) => {
       return state.data[addr] ? state.data[addr].totalUnreadMessages : 0
-    },
-    getLastRead: (state) => (addr) => {
-      return state.data[addr].lastRead
     },
     getSortedChatOrder (state) {
       const sortedOrder = Object.values(state.data).sort(
@@ -148,9 +139,6 @@ export default {
     },
     getLastReceived (state) {
       return state.lastReceived
-    },
-    isChat: (state) => (addr) => {
-      return (addr in state.data)
     }
   },
   mutations: {
@@ -201,10 +189,6 @@ export default {
       }
       Vue.set(state.data, addr, { ...defaultContactObject, messages, address: addr })
     },
-    setOutpoints (state, { addr, index, outpoints }) {
-      state.data[addr].messages[index].outpoints = outpoints
-    },
-
     clearChat (state, addr) {
       if (addr in state.data) {
         state.data[addr].messages = {}

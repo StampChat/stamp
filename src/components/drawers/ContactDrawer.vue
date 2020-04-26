@@ -168,7 +168,7 @@
 
 <script>
 import Vue from 'vue'
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters, mapActions, mapMutations } from 'vuex'
 import DrawerContactCard from './DrawerContactCard.vue'
 import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
 import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
@@ -198,9 +198,11 @@ export default {
   },
   methods: {
     ...mapActions({
-      setNotify: 'contacts/setNotify',
       shareContact: 'chats/shareContact',
       setStampAmount: 'chats/setStampAmount'
+    }),
+    ...mapMutations({
+      setNotify: 'contacts/setNotify'
     })
   },
   computed: {
