@@ -1,6 +1,7 @@
 import { PublicKey } from 'bitcore-lib-cash'
 import { getRelayClient } from '../../utils/relay-client-factory'
 import { defaultUpdateInterval, defaultRelayData } from '../../utils/constants'
+import KeyserverHandler from '../../keyserver/handler'
 import Vue from 'vue'
 import moment from 'moment'
 
@@ -116,7 +117,7 @@ export default {
     deleteChat ({ commit }, addr) {
       commit('chats/deleteChat', addr, { root: true })
     },
-    async refresh ({ commit, rootGetters, getters }, addr) {
+    async refresh ({ commit, getters }, addr) {
       // Make this generic over networks
       const oldContactInfo = getters['getContact'](addr)
       const updateInterval = getters['getUpdateInterval']
@@ -131,7 +132,7 @@ export default {
 
       // Get metadata
       try {
-        const handler = rootGetters['keyserverHandler/getHandler']
+        const handler = new KeyserverHandler()
         const relayURL = await handler.getRelayUrl(addr)
 
         const { client: relayClient } = getRelayClient({ relayURL })
