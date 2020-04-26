@@ -75,7 +75,7 @@
               @click="nextWallet()"
               color="primary"
               :label="seedData.type==='new'?'New Wallet':'Import Wallet'"
-              :disable="!(electrumConnected && ((seedData.type === 'new') || (seedData.type === 'import' && seedData.valid)))"
+              :disable="!electrumConnected || !isWalletValid"
             />
             <q-btn
               v-else-if="step === 3"
@@ -95,7 +95,7 @@
               v-else-if="step === 5"
               @click="nextRelay()"
               color="primary"
-              :disable="!electrumConnected"
+              :disable="!electrumConnected || !isRelayValid"
               label="Continue"
             />
             <q-btn
@@ -536,6 +536,12 @@ export default {
   computed: {
     electrumConnected () {
       return this.$electrum.connected
+    },
+    isWalletValid () {
+      return ((this.seedData.type === 'new') || (this.seedData.type === 'import' && this.seedData.valid))
+    },
+    isRelayValid () {
+      return [this.relayData.profile.name && this.relayData.profile.avatar && this.relayData.inbox.acceptancePrice].every(Boolean)
     }
   },
   async created () {
