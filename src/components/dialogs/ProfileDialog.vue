@@ -36,6 +36,7 @@ import {
   relayDisconnectedNotify,
   profileTooLargeNotify
 } from '../../utils/notifications'
+
 export default {
   props: ['currentProfile'],
   data () {
@@ -48,7 +49,6 @@ export default {
   },
   methods: {
     ...mapGetters({
-      getKsHandler: 'keyserverHandler/getHandler',
       getRelayData: 'myProfile/getRelayData'
     }),
     ...mapActions({ setRelayData: 'myProfile/setRelayData' }),

@@ -250,7 +250,6 @@ export default {
       darkMode: 'appearance/setDarkMode'
     }),
     ...mapGetters({
-      getKsHandler: 'keyserverHandler/getHandler',
       getUpdateInterval: 'contacts/getUpdateInterval',
       getDarkMode: 'appearance/getDarkMode'
     }),
@@ -308,7 +307,8 @@ export default {
           delay: 100,
           message: 'Searching for existing keyserver metadata...'
         })
-        let ksHandler = this.getKsHandler()
+
+        let ksHandler = new KeyserverHandler()
         let idAddress = this.$wallet.myAddress
 
         // Try find relay URL on keyserver

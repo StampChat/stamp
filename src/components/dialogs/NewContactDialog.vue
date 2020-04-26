@@ -93,7 +93,8 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions } from 'vuex'
+import KeyserverHandler from '../../keyserver/handler'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -112,7 +113,7 @@ export default {
       }
       this.contact = 'loading'
       try {
-        let ksHandler = this.getKsHandler()
+        let ksHandler = new KeyserverHandler()
         let relayURL = await ksHandler.getRelayUrl(newAddress)
         let relayData = await this.$relayClient.getRelayData(newAddress)
         relayData.notify = true
@@ -127,9 +128,7 @@ export default {
     ...mapActions({
       addContactVuex: 'contacts/addContact'
     }),
-    ...mapGetters({
-      getKsHandler: 'keyserverHandler/getHandler'
-    }),
+
     addContact () {
       let cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
       this.addContactVuex({ addr: cashAddress, contact: this.contact })
