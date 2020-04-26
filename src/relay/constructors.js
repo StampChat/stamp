@@ -9,7 +9,7 @@ import wrapper from '../pop/wrapper_pb'
 const cashlib = require('bitcore-lib-cash')
 const assert = require('assert')
 
-export const constructStampTransaction = async function (wallet, payloadDigest, destPubKey, amount) {
+export const constructStampTransaction = function (wallet, payloadDigest, destPubKey, amount) {
   assert(payloadDigest instanceof Buffer)
 
   // Stamp output
@@ -29,11 +29,11 @@ export const constructStampTransaction = async function (wallet, payloadDigest, 
   })
 
   // Construct transaction
-  let { transaction, usedIDs } = await wallet.constructTransaction({ outputs: [stampOutput] })
+  let { transaction, usedIDs } = wallet.constructTransaction({ outputs: [stampOutput] })
   return { transaction, usedIDs }
 }
 
-export const constructStealthTransaction = async function (wallet, ephemeralPrivKey, destPubKey, amount) {
+export const constructStealthTransaction = function (wallet, ephemeralPrivKey, destPubKey, amount) {
   // Add ephemeral output
   // NOTE: We're only doing 1 stealth txn, and 1 output for now.
   // But the spec should allow doing confidential amounts.
@@ -59,7 +59,7 @@ export const constructStealthTransaction = async function (wallet, ephemeralPriv
   return [{ transaction, vouts: [0], usedIDs }]
 }
 
-export const constructMessage = async function (wallet, payload, privKey, destPubKey, stampAmount) {
+export const constructMessage = function (wallet, payload, privKey, destPubKey, stampAmount) {
   let serializedPayload = payload.serializeBinary()
   let payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
   let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
@@ -72,7 +72,7 @@ export const constructMessage = async function (wallet, payload, privKey, destPu
   message.setSignature(sig)
   message.setSerializedPayload(serializedPayload)
 
-  let { transaction, usedIDs } = await constructStampTransaction(wallet, payloadDigest, destPubKey, stampAmount)
+  let { transaction, usedIDs } = constructStampTransaction(wallet, payloadDigest, destPubKey, stampAmount)
   let rawStampTx = transaction.toBuffer()
   let stampOutpoints = new messaging.StampOutpoints()
   stampOutpoints.setStampTx(rawStampTx)
@@ -164,7 +164,7 @@ export const constructTextPayload = function (text, privKey, destPubKey, scheme,
   return { payload, payloadDigest }
 }
 
-export const constructStealthPaymentPayload = async function (wallet, amount, memo, privKey, destPubKey, scheme, stealthTxId, replyDigest) {
+export const constructStealthPaymentPayload = function (wallet, amount, memo, privKey, destPubKey, scheme, stealthTxId, replyDigest) {
   assert(replyDigest instanceof Buffer || !replyDigest)
 
   let entries = new messaging.Entries()
@@ -182,7 +182,7 @@ export const constructStealthPaymentPayload = async function (wallet, amount, me
   let stealthPaymentEntry = new stealth.StealthPaymentEntry()
   let ephemeralPrivKey = cashlib.PrivateKey()
 
-  var [{ transaction: stealthTx, usedIDs: stealthIdsUsed, vouts }] = await constructStealthTransaction(wallet, ephemeralPrivKey, destPubKey, amount)
+  var [{ transaction: stealthTx, usedIDs: stealthIdsUsed, vouts }] = constructStealthTransaction(wallet, ephemeralPrivKey, destPubKey, amount)
   stealthTxId = Buffer.from(stealthTx.id, 'hex')
 
   stealthPaymentEntry.setEphemeralPubKey(ephemeralPrivKey.publicKey.toBuffer())

@@ -292,7 +292,7 @@ export class RelayClient {
 
     // Construct message
     try {
-      var { message, usedIDs, stampTx } = await constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
+      var { message, usedIDs, stampTx } = constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
     } catch (err) {
       console.error(err)
       this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, outpoints: null, retryData: { msgType: 'text', text } })
@@ -355,7 +355,7 @@ export class RelayClient {
     const privKey = wallet.identityPrivKey
 
     // Construct payload
-    const { payload, payloadDigest, stealthTx, stealthIdsUsed } = await constructStealthPaymentPayload(wallet, amount, memo, privKey, destPubKey, 1, stamptxId, replyDigestBuffer)
+    const { payload, payloadDigest, stealthTx, stealthIdsUsed } = constructStealthPaymentPayload(wallet, amount, memo, privKey, destPubKey, 1, stamptxId, replyDigestBuffer)
     let stealthTxHex = stealthTx.toString()
     try {
       // TODO: Broadcast should be via wallet API
@@ -374,7 +374,7 @@ export class RelayClient {
     const payloadDigestHex = payloadDigest.toString('hex')
     this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints: null, status: 'sending' })
     try {
-      var { message, usedIDs, stampTx } = await constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
+      var { message, usedIDs, stampTx } = constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
     } catch (err) {
       console.error(err)
       this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'stealth', amount, memo, stamptxId } })
@@ -438,7 +438,7 @@ export class RelayClient {
 
     // Construct message
     try {
-      var { message, usedIDs, stampTx } = await constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
+      var { message, usedIDs, stampTx } = constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
     } catch (err) {
       console.error(err)
 
