@@ -81,7 +81,7 @@ export class Wallet {
 
       // Index by script hash
       let scriptHash = formatting.toElectrumScriptHash(address)
-      this.addElectrumScriptHash({ scriptHash, address, change: false })
+      this.addElectrumScriptHash({ scriptHash, address, change: false, privKey })
     }
     for (var j = 0; j < numChangeAddresses; j++) {
       let privKey = xPrivKey.deriveChild(44, true)
@@ -95,7 +95,7 @@ export class Wallet {
 
       // Index by script hash
       let scriptHash = formatting.toElectrumScriptHash(address)
-      this.addElectrumScriptHash({ scriptHash, address, change: true })
+      this.addElectrumScriptHash({ scriptHash, address, change: true, privKey })
     }
   }
   addElectrumScriptHash ({ scriptHash, address, change }) {
@@ -135,14 +135,15 @@ export class Wallet {
     let client = this.electrumClient
     try {
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-      const { address } = this.getAddressByElectrumScriptHash(scriptHash)
+      const { address, privKey } = this.getAddressByElectrumScriptHash(scriptHash)
       const outputs = elOutputs.map(elOutput => {
         const output = {
           txId: elOutput.tx_hash,
           outputIndex: elOutput.tx_pos,
           satoshis: elOutput.value,
           type: 'p2pkh',
-          address
+          address,
+          privKey
         }
         return output
       })
@@ -291,11 +292,7 @@ export class Wallet {
       const addr = utxo.address
       utxo['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
       // Grab private key
-      if (utxo.type === 'p2pkh') {
-        signingKeys.push(addresses[addr].privKey)
-      } else {
-        signingKeys.push(utxo.privKey)
-      }
+      signingKeys.push(utxo.privKey)
       transaction = transaction.from(utxo)
       satoshis += utxo.satoshis
     }
