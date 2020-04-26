@@ -21,6 +21,7 @@
     "axios": "^0.18.1",
     "bip39": "^3.0.2",
     "bitcore-lib-cash": "^8.14.4",
+    "bluebird": "^3.7.2",
     "electrum-cash": "^1.0.1",
     "google-protobuf": "^3.11.2",
     "moment": "^2.24.0",
