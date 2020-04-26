@@ -1,5 +1,5 @@
 import { PublicKey } from 'bitcore-lib-cash'
-import RelayClient from '../../relay/client'
+import { getRelayClient } from '../../utils/relay-client-factory'
 import { defaultUpdateInterval, defaultRelayData } from '../../utils/constants'
 import Vue from 'vue'
 import moment from 'moment'
@@ -133,7 +133,8 @@ export default {
       try {
         const handler = rootGetters['keyserverHandler/getHandler']
         const relayURL = await handler.getRelayUrl(addr)
-        const relayClient = new RelayClient(relayURL)
+
+        const { client: relayClient } = getRelayClient({ relayURL })
         const relayData = await relayClient.getRelayData(addr)
         commit('updateContact', { addr, profile: relayData.profile, inbox: relayData.inbox })
       } catch (err) {

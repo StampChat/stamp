@@ -64,7 +64,6 @@ export default {
       toggleContactDrawerOpen: 'contactDrawer/toggleDrawerOpen'
     }),
     onSplitting (value) {
-      console.log(value)
       this.$emit('splitting', value)
     }
   },
