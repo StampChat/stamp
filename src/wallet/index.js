@@ -102,7 +102,7 @@ export class Wallet {
     this.electrumScriptHashes[scriptHash] = { address, change }
   }
   setAddress ({ address, privKey }) {
-    this.addresses[address] = privKey
+    this.addresses[address] = { privKey }
   }
   setChangeAddress ({ address, privKey }) {
     this.changeAddresses[address] = { privKey }
@@ -402,7 +402,7 @@ export class Wallet {
     return { ...this.addresses, ...this.changeAddresses }
   }
   get privKeys () {
-    return Object.freeze(Object.values(this.addresses).map(address => Object.freeze(address)))
+    return Object.freeze(Object.values(this.addresses).map(address => Object.freeze(address.privKey)))
   }
   unfreezeUTXO (id) {
     // TODO: Nobody should be calling this outside of the wallet
