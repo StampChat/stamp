@@ -1,19 +1,41 @@
 import axios from 'axios'
 import messaging from './messaging_pb'
+import stealth from './stealth_pb'
 import addressmetadata from '../keyserver/addressmetadata_pb'
 import wrapper from '../pop/wrapper_pb'
 import pop from '../pop/index'
-import store from '../store/index'
 import { pingTimeout, relayReconnectInterval } from '../utils/constants'
 import VCard from 'vcf'
+import EventEmitter from 'events'
+import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage } from './constructors'
+import imageUtil from '../utils/image'
+import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from './crypto'
 
 const WebSocket = window.require('ws')
+const cashlib = require('bitcore-lib-cash')
 
-class RelayClient {
-  constructor (url) {
+export class RelayClient {
+  constructor (url, wallet, electrumClient, { getPubKey, getStoredMessage }) {
     this.url = url
     this.httpScheme = 'http'
     this.wsScheme = 'ws'
+    this.events = new EventEmitter()
+    this.wallet = wallet
+    this.electrumClient = electrumClient
+    this.getPubKey = getPubKey
+    this.getStoredMessage = getStoredMessage
+  }
+
+  setToken (token) {
+    this.token = token
+  }
+
+  setWallet (wallet) {
+    this.wallet = wallet
+  }
+
+  setElectrumClient (electrumClient) {
+    this.electrumClient = electrumClient
   }
 
   async profilePaymentRequest (addr) {
@@ -85,12 +107,12 @@ class RelayClient {
     return relayData
   }
 
-  setUpWebsocket (addr, token) {
+  setUpWebsocket (addr) {
     let url = `${this.wsScheme}://${this.url}/ws/${addr}`
-    let opts = { headers: { Authorization: token } }
+    let opts = { headers: { Authorization: this.token } }
     let socket = new WebSocket(url, opts)
 
-    socket.onmessage = function (event) {
+    socket.onmessage = event => {
       let buffer = event.data
       let timedMessageSet = messaging.TimedMessageSet.deserializeBinary(buffer)
       let messageList = timedMessageSet.getMessagesList()
@@ -99,36 +121,32 @@ class RelayClient {
       let receivedTime = Date.now()
       for (let index in messageList) {
         let message = messageList[index]
-        store.dispatch('chats/receiveMessage', { serverTime, receivedTime, message })
-      }
-      let lastReceived = store.getters['chats/getLastReceived'] || 0
-      lastReceived = Math.max(lastReceived, receivedTime)
-      if (lastReceived) {
-        store.commit('chats/setLastReceived', lastReceived + 1)
+        this.receiveMessage({ serverTime, receivedTime, message }).catch(err => console.error(err))
       }
     }
 
     const disconnectHandler = () => {
-      store.dispatch('relayClient/setConnected', false)
+      this.events.emit('disconnected')
       setTimeout(() => {
-        this.setUpWebsocket(addr, token)
+        this.setUpWebsocket(addr, this.token)
       }, relayReconnectInterval)
     }
 
-    socket.onerror = function (err) {
-      console.error(err)
+    socket.onerror = (err) => {
+      this.events.emit('error', err)
     }
-    socket.onclose = function (close) {
+    socket.onclose = () => {
       disconnectHandler()
     }
-    socket.onopen = function (open) {
-      store.dispatch('relayClient/setConnected', true)
+    socket.onopen = () => {
+      this.events.emit('opened')
     }
 
     // Setup ping timeout
     this.pingTimeout = setTimeout(() => {
       socket.terminate()
     }, pingTimeout)
+
     socket.on('ping', () => {
       clearTimeout(this.pingTimeout)
       this.pingTimeout = setTimeout(() => {
@@ -150,14 +168,15 @@ class RelayClient {
     return acceptancePrice
   }
 
-  async getRawPayload (addr, token, digest) {
+  async getRawPayload (addr, digest) {
     let url = `${this.httpScheme}://${this.url}/payloads/${addr}`
+
     let hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
     let response = await axios({
       method: 'get',
       url,
       headers: {
-        'Authorization': token
+        'Authorization': this.token
       },
       params: {
         digest: hexDigest
@@ -167,20 +186,20 @@ class RelayClient {
     return response.data
   }
 
-  async getPayload (addr, token, digest) {
-    let rawPayload = this.getRawPayload(addr, token, digest)
+  async getPayload (addr, digest) {
+    let rawPayload = this.getRawPayload(addr, digest)
     let payload = messaging.Payload.deserializeBinary(rawPayload)
     return payload
   }
 
-  async deleteMessage (addr, token, digest) {
+  async deleteMessage (addr, digest) {
     let url = `${this.httpScheme}://${this.url}/messages/${addr}`
     let hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
     await axios({
       method: 'delete',
       url,
       headers: {
-        'Authorization': token
+        'Authorization': this.token
       },
       params: {
         digest: hexDigest
@@ -188,26 +207,26 @@ class RelayClient {
     })
   }
 
-  async putProfile (addr, profile, token) {
-    let rawProfile = profile.serializeBinary()
+  async putProfile (addr, metadata) {
+    let rawProfile = metadata.serializeBinary()
     let url = `${this.httpScheme}://${this.url}/profile/${addr}`
     await axios({
       method: 'put',
       url: url,
       headers: {
-        'Authorization': token
+        'Authorization': this.token
       },
       data: rawProfile
     })
   }
 
-  async getMessages (addr, token, startTime, endTime) {
+  async getMessages (addr, startTime, endTime) {
     let url = `${this.httpScheme}://${this.url}/messages/${addr}`
     let response = await axios({
       method: 'get',
       url: url,
       headers: {
-        'Authorization': token
+        'Authorization': this.token
       },
       params: {
         start_time: startTime,
@@ -241,6 +260,478 @@ class RelayClient {
       url: url,
       data: rawMetadata
     })
+  }
+
+  async sendMessage ({ addr, text, replyDigest, stampAmount }) {
+    // Send locally
+    let items = [
+      {
+        type: 'text',
+        text
+      }
+    ]
+    const destPubKey = this.getPubKey(addr)
+    if (replyDigest) {
+      items.unshift({
+        type: 'reply',
+        payloadDigest: replyDigest
+      })
+      var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
+    }
+
+    const wallet = this.wallet
+    const privKey = wallet.identityPrivKey
+
+    // Construct payload
+    const { payload, payloadDigest } = constructTextPayload(text, privKey, destPubKey, 1, replyDigestBuffer)
+
+    // Add localy
+    const payloadDigestHex = payloadDigest.toString('hex')
+    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints: null })
+
+    // Construct message
+    try {
+      var { message, usedIDs, stampTx } = await constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
+    } catch (err) {
+      console.error(err)
+      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, outpoints: null, retryData: { msgType: 'text', text } })
+      return
+    }
+
+    let messageSet = new messaging.MessageSet()
+    messageSet.addMessages(message)
+
+    let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+
+    try {
+      // Send to destination address
+      await this.pushMessages(destAddr, messageSet)
+      let outpoint = {
+        stampTx,
+        vouts: [0]
+      }
+      this.events.emit('messageSent', { addr, index: payloadDigestHex, outpoints: [outpoint], items })
+    } catch (err) {
+      console.error(err)
+      if (err.response) {
+        console.error(err.response)
+      }
+      // Unfreeze UTXOs
+      // TODO: More subtle
+      usedIDs.forEach(id => wallet.fixFrozenUTXO(id))
+
+      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'text', text } })
+    }
+  }
+
+  async sendStealthPayment ({ addr, stampAmount, amount, memo, stamptxId, replyDigest }) {
+    const destPubKey = this.getPubKey(addr)
+
+    // Send locally
+    let items = [
+      {
+        type: 'stealth',
+        amount
+      }
+    ]
+    if (memo !== '') {
+      items.push(
+        {
+          type: 'text',
+          text: memo
+        })
+    }
+
+    if (replyDigest) {
+      items.unshift({
+        type: 'reply',
+        payloadDigest: replyDigest
+      })
+      var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
+    }
+
+    const wallet = this.wallet
+    const privKey = wallet.identityPrivKey
+
+    // Construct payload
+    const { payload, payloadDigest, stealthTx, stealthIdsUsed } = await constructStealthPaymentPayload(wallet, amount, memo, privKey, destPubKey, 1, stamptxId, replyDigestBuffer)
+    let stealthTxHex = stealthTx.toString()
+    try {
+      // TODO: Broadcast should be via wallet API
+      const client = this.wallet.electrumClient
+      await client.request('blockchain.transaction.broadcast', stealthTxHex)
+    } catch (err) {
+      console.error(err)
+      // Unfreeze UTXOs if stealth tx broadcast fails
+      stealthIdsUsed.forEach(id => {
+        wallet.unfreezeUTXO(id)
+      })
+      throw err
+    }
+
+    // Add localy
+    const payloadDigestHex = payloadDigest.toString('hex')
+    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints: null, status: 'sending' })
+    try {
+      var { message, usedIDs, stampTx } = await constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
+    } catch (err) {
+      console.error(err)
+      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'stealth', amount, memo, stamptxId } })
+      return
+    }
+    let messageSet = new messaging.MessageSet()
+    messageSet.addMessages(message)
+
+    let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+    try {
+      await this.pushMessages(destAddr, messageSet)
+      let outpoint = {
+        stampTx,
+        vouts: [0]
+      }
+      this.events.emit('messageSent', { addr, index: payloadDigestHex, outpoints: [outpoint], items })
+    } catch (err) {
+      // Unfreeze UTXOs
+      // TODO: More subtle
+      usedIDs.forEach(id => wallet.unfreezeUTXO(id))
+
+      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'stealth', amount, memo } })
+    }
+  }
+
+  async sendImage ({ addr, image, caption, replyDigest, stampAmount }) {
+    const destPubKey = this.getPubKey(addr)
+
+    // Send locally
+    const items = [
+      {
+        type: 'image',
+        image
+      }
+    ]
+    if (caption !== '') {
+      items.push(
+        {
+          type: 'text',
+          text: caption
+        })
+    }
+
+    if (replyDigest) {
+      items.unshift({
+        type: 'reply',
+        payloadDigest: replyDigest
+      })
+      var replyDigestBuffer = Buffer.from(replyDigest, 'hex')
+    }
+
+    const wallet = this.wallet
+    const privKey = wallet.identityPrivKey
+
+    // Construct payload
+    const { payload, payloadDigest } = constructImagePayload(image, caption, privKey, destPubKey, 1, replyDigestBuffer)
+
+    // Add localy
+    const payloadDigestHex = payloadDigest.toString('hex')
+    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints: null })
+
+    // Construct message
+    try {
+      var { message, usedIDs, stampTx } = await constructMessage(wallet, payload, privKey, destPubKey, stampAmount)
+    } catch (err) {
+      console.error(err)
+
+      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'image', image, caption } })
+      return
+    }
+    let messageSet = new messaging.MessageSet()
+    messageSet.addMessages(message)
+
+    let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+    try {
+      await this.pushMessages(destAddr, messageSet)
+      let outpoint = {
+        stampTx,
+        vouts: [0]
+      }
+      this.events.emit('messageSent', { addr, index: payloadDigestHex, outpoints: [outpoint], items })
+    } catch (err) {
+      // Unfreeze UTXOs
+      // TODO: More subtle
+      usedIDs.forEach(id => wallet.unfreezeUTXO(id))
+      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, retryData: { msgType: 'image', image, caption } })
+    }
+  }
+
+  async receiveMessage ({ serverTime, receivedTime, message }) {
+    const rawSenderPubKey = message.getSenderPubKey()
+    const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
+    const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
+    const wallet = this.wallet
+    const myAddress = wallet.myAddressStr
+    const outbound = (senderAddr === myAddress)
+
+    const rawPayloadFromServer = message.getSerializedPayload()
+    const payloadDigestFromServer = message.getPayloadDigest()
+
+    if (payloadDigestFromServer.length === 0 && rawPayloadFromServer.length === 0) {
+      // TODO: Handle
+      console.error('Missing required fields')
+      return
+    }
+
+    // if this client sent the message, we already have the data and don't need to process it or get the payload again
+    if (payloadDigestFromServer.length !== 0) {
+      const payloadDigestHex = Array.prototype.map.call(payloadDigestFromServer, x => ('00' + x.toString(16)).slice(-2)).join('')
+      const message = this.getStoredMessage(payloadDigestHex)
+      if (message) {
+        // TODO: We really should handle unfreezing UTXOs here via a callback in the future.
+        return
+      }
+    }
+
+    const getPayload = async (payloadDigest, messagePayload) => {
+      if (messagePayload.length !== 0) {
+        return messagePayload
+      }
+      try {
+        return new Uint8Array(await this.getRawPayload(myAddress, payloadDigest))
+      } catch (err) {
+        console.error(err)
+        // TODO: Handle
+      }
+    }
+
+    // Get payload if serialized payload is missing
+    const rawPayload = await getPayload(payloadDigestFromServer, rawPayloadFromServer)
+
+    const payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
+    if (!payloadDigest.equals(payloadDigestFromServer)) {
+      console.error("Payload received doesn't match digest. Refusing to process message", payloadDigest, payloadDigestFromServer)
+      return
+    }
+
+    const payload = messaging.Payload.deserializeBinary(rawPayload)
+    const payloadDigestHex = payloadDigest.toString('hex')
+    const destinationRaw = payload.getDestination()
+    const destPubKey = cashlib.PublicKey.fromBuffer(destinationRaw)
+    const destinationAddr = destPubKey.toAddress('testnet').toCashAddress()
+    const identityPrivKey = wallet.identityPrivKey
+    const copartyAddress = outbound ? destinationAddr : senderAddr
+    const copartyPubKey = outbound ? destPubKey : senderPubKey
+
+    if (outbound && myAddress === destinationAddr) {
+      // TODO: Process self sends
+      console.log('self send')
+      return
+    }
+
+    let scheme = payload.getScheme()
+    let entriesRaw
+    if (scheme === 0) {
+      entriesRaw = payload.getEntries()
+    } else if (scheme === 1) {
+      let entriesCipherText = payload.getEntries()
+
+      let ephemeralPubKeyRaw = payload.getEphemeralPubKey()
+      let ephemeralPubKey = cashlib.PublicKey.fromBuffer(ephemeralPubKeyRaw)
+      if (!outbound) {
+        entriesRaw = decrypt(entriesCipherText, identityPrivKey, senderPubKey, ephemeralPubKey)
+      } else {
+        let ephemeralPrivKeyEncrypted = payload.getEphemeralPrivKey()
+        let entriesDigest = cashlib.crypto.Hash.sha256(entriesCipherText)
+        let ephemeralPrivKey = decryptEphemeralKey(ephemeralPrivKeyEncrypted, identityPrivKey, entriesDigest)
+        entriesRaw = decryptWithEphemPrivKey(entriesCipherText, ephemeralPrivKey, identityPrivKey, destPubKey)
+      }
+    } else {
+      // TODO: Raise error
+    }
+
+    // Add UTXO
+    const stampOutpoints = message.getStampOutpointsList()
+    const outpoints = []
+
+    let stampValue = 0
+
+    const stampRootHDPrivKey = constructStampPrivKey(payloadDigest, identityPrivKey)
+      .deriveChild(44)
+      .deriveChild(145)
+
+    for (const [i, stampOutpoint] of stampOutpoints.entries()) {
+      const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
+      const stampTx = cashlib.Transaction(stampTxRaw)
+      const txId = stampTx.hash
+      const vouts = stampOutpoint.getVoutsList()
+      outpoints.push({
+        stampTx,
+        vouts
+      })
+      const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
+
+      for (const [j, outputIndex] of vouts.entries()) {
+        const output = stampTx.outputs[outputIndex]
+        const satoshis = output.satoshis
+        const address = output.script.toAddress('testnet') // TODO: Make generic
+        stampValue += satoshis
+        if (!outbound) {
+          // Also note, we should use an HD key here.
+          try {
+            const outputPrivKey = stampTxHDPrivKey
+              .deriveChild(j)
+              .privateKey
+
+            // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
+            // HASH160(SHA256(point)) ourself
+            // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
+            const computedAddress = new cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress('testnet')
+            if (!address.toBuffer().equals(computedAddress.toBuffer())) {
+              console.error('invalid stamp address, ignoring')
+              continue
+            }
+            const stampOutput = {
+              address,
+              privKey: outputPrivKey,
+              satoshis,
+              txId,
+              outputIndex,
+              type: 'stamp',
+              payloadDigest
+            }
+            wallet.addUTXO(stampOutput)
+          } catch (err) {
+            console.error(err)
+          }
+        }
+      }
+    }
+
+    // Ignore messages below acceptance price
+    let stealthValue = 0
+
+    // Decode entries
+    let entries = messaging.Entries.deserializeBinary(entriesRaw)
+    let entriesList = entries.getEntriesList()
+    let newMsg = {
+      outbound,
+      status: 'confirmed',
+      items: [],
+      serverTime,
+      receivedTime,
+      outpoints
+    }
+    for (let index in entriesList) {
+      let entry = entriesList[index]
+      // If addr data doesn't exist then add it
+      let kind = entry.getKind()
+      if (kind === 'reply') {
+        const entryData = entry.getEntryData()
+        let payloadDigest = Buffer.from(entryData).toString('hex')
+        newMsg.items.push({
+          type: 'reply',
+          payloadDigest
+        })
+      } else if (kind === 'text-utf8') {
+        let entryData = entry.getEntryData()
+        let text = new TextDecoder().decode(entryData)
+        newMsg.items.push({
+          type: 'text',
+          text
+        })
+      } else if (kind === 'stealth-payment') {
+        let entryData = entry.getEntryData()
+        let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
+
+        // Add stealth outputs
+        const outpointsList = stealthMessage.getOutpointsList()
+        const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
+        const ephemeralPubKey = cashlib.PublicKey.fromBuffer(ephemeralPubKeyRaw)
+        const stealthHDPrivKey = constructStealthPrivKey(ephemeralPubKey, identityPrivKey)
+        for (const [i, outpoint] of outpointsList.entries()) {
+          const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
+          const stealthTx = cashlib.Transaction(stealthTxRaw)
+          const txId = stealthTx.hash
+          const vouts = outpoint.getVoutsList()
+          for (const [j, outputIndex] of vouts.entries()) {
+            const output = stealthTx.outputs[outputIndex]
+            const satoshis = output.satoshis
+
+            if (outbound) {
+              // We don't want to add these to the wallet, but we do want the total
+              // We also can't compute the private key.... So the below address check would
+              // error
+
+              // Assume our output was correct and add to the total
+              stealthValue += satoshis
+              continue
+            }
+            const outpointPrivKey = stealthHDPrivKey
+              .deriveChild(44)
+              .deriveChild(145)
+              .deriveChild(i)
+              .deriveChild(j)
+              .privateKey
+            const address = output.script.toAddress('testnet') // TODO: Make generic
+            // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
+            // HASH160(SHA256(point)) ourself
+            // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
+            const computedAddress = new cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress('testnet')
+            if (!address.toBuffer().equals(computedAddress.toBuffer())) {
+              console.error('invalid stealth address, ignoring')
+              continue
+            }
+            // total up the satoshis only if we know the txn was valid
+            stealthValue += satoshis
+
+            const stampOutput = {
+              address,
+              satoshis,
+              outputIndex,
+              privKey: outpointPrivKey,
+              txId,
+              type: 'stealth',
+              payloadDigest
+            }
+            wallet.addUTXO(stampOutput)
+          }
+        }
+        newMsg.items.push({
+          type: 'stealth',
+          amount: stealthValue
+        })
+      } else if (kind === 'image') {
+        let image = imageUtil.entryToImage(entry)
+
+        // TODO: Save to folder instead of in Vuex
+        newMsg.items.push({
+          type: 'image',
+          image
+        })
+      }
+    }
+
+    this.events.emit('receivedMessage', { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
+  }
+  async refresh ({ lastReceived } = {}) {
+    const wallet = this.wallet
+    const myAddressStr = wallet.myAddressStr
+    console.log('refreshing', lastReceived, myAddressStr)
+    const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
+    const messageList = messagePage.getMessagesList()
+    console.log('processing messages')
+    const receivedTime = Date.now()
+    for (const index in messageList) {
+      const timedMessage = messageList[index]
+
+      // TODO: Check correct destination
+      // const destPubKey = timedMessage.getDestination()
+      try {
+        const serverTime = timedMessage.getServerTime()
+        const message = timedMessage.getMessage()
+        await this.receiveMessage({ serverTime, receivedTime, message })
+      } catch (err) {
+        console.error('Unable to deserialize message for some reason', err)
+      }
+    }
   }
 }
 
