@@ -28,7 +28,7 @@ export const defaultRelayData = {
     pubKey: null
   },
   inbox: {
-    acceptancePrice: 10_000
+    acceptancePrice: defaultAcceptancePrice
   },
   notify: true
 }
