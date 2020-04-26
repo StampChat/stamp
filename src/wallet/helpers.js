@@ -3,15 +3,11 @@ export const calcId = function (output) {
 }
 
 export const stampPrice = function (outpoints) {
-  if (outpoints !== null) {
-    let amount = outpoints.reduce((a, stampOutpoint) => {
-      return stampOutpoint.vouts.reduce((b, vout) => {
-        return stampOutpoint.stampTx.outputs[vout].satoshis + b
-      }, 0) + a
-    }, 0)
-    return amount
-  } else {
-    // We return newline so that the message doesn't move when switching
-    return null
-  }
+  let amount = outpoints
+    .filter((outpoint) => outpoint.type === 'stamp')
+    .reduce(
+      (totalSatoshis, stampOutpoint) => stampOutpoint.satoshis + totalSatoshis,
+      0
+    )
+  return amount
 }

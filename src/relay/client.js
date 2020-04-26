@@ -276,7 +276,13 @@ export class RelayClient {
       item => {
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'stealth') {
-          const { paymentEntry, stealthTx, usedIDs: stealthIdsUsed } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
+          const { paymentEntry, stealthTx, usedIDs: stealthIdsUsed, vouts } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
+          outpoints.push(...vouts.map(vout => ({
+            type: 'stealth',
+            txId: stealthTx.id,
+            satoshis: stealthTx.outputs[vout].satoshis,
+            outputIndex: vout
+          })))
           usedIDs.push(...stealthIdsUsed)
           transactions.push(stealthTx)
           return paymentEntry
@@ -297,7 +303,7 @@ export class RelayClient {
 
     // Add localy
     const payloadDigestHex = payloadDigest.toString('hex')
-    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints })
+    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints, transactions })
 
     // Construct message
     try {
@@ -305,15 +311,17 @@ export class RelayClient {
       // TODO: These need to come back from the constructMessage API
       // We could have more than one, and more than one transaction in the future (ideally)
       let outpoint = {
-        stampTx,
-        vouts: [0]
+        type: 'stamp',
+        txId: stampTx.id,
+        outputIndex: 0,
+        satoshis: stampTx.outputs[0].satoshis
       }
       transactions.push(stampTx)
       usedIDs.push(...usedStampIds)
       outpoints.push(outpoint)
     } catch (err) {
       console.error(err)
-      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, outpoints })
+      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, outpoints, transactions })
       return
     }
 
@@ -328,7 +336,7 @@ export class RelayClient {
       return client.request('blockchain.transaction.broadcast', transaction.toString())
     }))
       .then(() => this.pushMessages(destAddr, messageSet))
-      .then(() => this.events.emit('messageSent', { addr, index: payloadDigestHex, items, outpoints }))
+      .then(() => this.events.emit('messageSent', { addr, index: payloadDigestHex, items, outpoints, transactions }))
       .catch((err) => {
         console.error(err)
         if (err.response) {
@@ -338,7 +346,7 @@ export class RelayClient {
         // TODO: More subtle
         usedIDs.forEach(id => wallet.fixFrozenUTXO(id))
 
-        this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, err })
+        this.events.emit('messageSendError', { addr, index: payloadDigestHex, outpoints, transactions, items, err })
       })
   }
 
@@ -502,23 +510,7 @@ export class RelayClient {
       const stampTx = cashlib.Transaction(stampTxRaw)
       const txId = stampTx.hash
       const vouts = stampOutpoint.getVoutsList()
-      outpoints.push({
-        stampTx,
-        vouts
-      })
       const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
-
-      if (outbound) {
-        // We can remove UTXOs from our set here as we sent this message
-        // this will make multiple devices more reliable, and also ensure importing
-        // a wallet is faster as we won't need to fixup all the previously received utxos
-        for (const input of stampTx.inputs) {
-          const outputIndex = input.outputIndex
-          const txId = input.prevTxId.toString('hex')
-          const utxoId = calcId({ outputIndex, txId })
-          wallet.removeUTXO(utxoId)
-        }
-      }
 
       for (const [j, outputIndex] of vouts.entries()) {
         const output = stampTx.outputs[outputIndex]
@@ -526,35 +518,38 @@ export class RelayClient {
         const address = output.script.toAddress('testnet') // TODO: Make generic
         stampValue += satoshis
 
-        if (!outbound) {
-          // Also note, we should use an HD key here.
-          try {
-            const outputPrivKey = stampTxHDPrivKey
-              .deriveChild(j)
-              .privateKey
+        // Also note, we should use an HD key here.
+        const outputPrivKey = stampTxHDPrivKey
+          .deriveChild(j)
+          .privateKey
 
-            // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
-            // HASH160(SHA256(point)) ourself
-            // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
-            const computedAddress = new cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress('testnet')
-            if (!address.toBuffer().equals(computedAddress.toBuffer())) {
-              console.error('invalid stamp address, ignoring')
-              continue
-            }
-            const stampOutput = {
-              address,
-              privKey: outputPrivKey,
-              satoshis,
-              txId,
-              outputIndex,
-              type: 'stamp',
-              payloadDigest
-            }
-            wallet.addUTXO(stampOutput)
-          } catch (err) {
-            console.error(err)
-          }
+        // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
+        // HASH160(SHA256(point)) ourself
+        // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
+        const computedAddress = new cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress('testnet')
+        if (!outbound && !address.toBuffer().equals(computedAddress.toBuffer())) {
+          // Assume outbound addresses were valid.  Otherwise we need to calclate a different
+          // derivation then based on our identity address.
+          console.error('invalid stamp address, ignoring')
+          continue
         }
+
+        const stampOutput = {
+          address,
+          privKey: outbound ? null : outputPrivKey, // This is okay, we don't add it to the wallet.
+          satoshis,
+          txId,
+          outputIndex,
+          type: 'stamp',
+          payloadDigest
+        }
+        outpoints.push(stampOutput)
+        if (outbound) {
+          const utxoId = calcId({ outputIndex, txId })
+          wallet.removeUTXO(utxoId)
+          continue
+        }
+        wallet.addUTXO(stampOutput)
       }
     }
 
@@ -605,31 +600,10 @@ export class RelayClient {
           const txId = stealthTx.hash
           const vouts = outpoint.getVoutsList()
 
-          if (outbound) {
-            // We can remove UTXOs from our set here as we sent this message
-            // this will make multiple devices more reliable, and also ensure importing
-            // a wallet is faster as we won't need to fixup all the previously received utxos
-            for (const input of stealthTx.inputs) {
-              const outputIndex = input.outputIndex
-              const txId = input.prevTxId.toString('hex')
-              const utxoId = calcId({ outputIndex, txId })
-              wallet.removeUTXO(utxoId)
-            }
-          }
-
           for (const [j, outputIndex] of vouts.entries()) {
             const output = stealthTx.outputs[outputIndex]
             const satoshis = output.satoshis
 
-            if (outbound) {
-              // We don't want to add these to the wallet, but we do want the total
-              // We also can't compute the private key.... So the below address check would
-              // error
-
-              // Assume our output was correct and add to the total
-              stealthValue += satoshis
-              continue
-            }
             const outpointPrivKey = stealthHDPrivKey
               .deriveChild(44)
               .deriveChild(145)
@@ -641,7 +615,7 @@ export class RelayClient {
             // HASH160(SHA256(point)) ourself
             // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
             const computedAddress = new cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress('testnet')
-            if (!address.toBuffer().equals(computedAddress.toBuffer())) {
+            if (!outbound && !address.toBuffer().equals(computedAddress.toBuffer())) {
               console.error('invalid stealth address, ignoring')
               continue
             }
@@ -656,6 +630,15 @@ export class RelayClient {
               txId,
               type: 'stealth',
               payloadDigest
+            }
+            outpoints.push(stampOutput)
+            if (outbound) {
+              // We don't want to add these to the wallet, but we do want the total
+              // We also can't compute the private key.... So the below address check would
+              // error
+              const utxoId = calcId({ outputIndex, txId })
+              wallet.removeUTXO(utxoId)
+              continue
             }
             wallet.addUTXO(stampOutput)
           }

@@ -168,7 +168,7 @@ export default {
       }
       state.activeChatAddr = addr
     },
-    sendMessageLocal (state, { addr, index, items, outpoints = null, status = 'pending', retryData = null }) {
+    sendMessageLocal (state, { addr, index, items, outpoints = [], status = 'pending', retryData = null }) {
       let timestamp = Date.now()
       let newMsg = {
         outbound: true,

@@ -13,35 +13,12 @@
       </q-tabs>
       <q-tab-panel v-for="n in outpoints.length" :key="n" :name="n">
         <q-item-section class='q-py-lg'>
-          <q-item-label>{{outpoints[n-1].stampTx.hash}}</q-item-label>
-          <q-item-label caption>Transaction ID</q-item-label>
-        </q-item-section>
-        <q-item-section>
-          <span class='text-bold'> Inputs </span>
-          <q-list separator>
-            <q-item v-for="(input, index) in outpoints[n-1].stampTx.inputs" :key="index">
-              <q-item-section>
-                <span class='text-bold'> Previous Transaction ID </span>
-                {{ input.prevTxId }}
-                <span class='text-bold'> Output Index </span>
-                {{ input.outputIndex }}
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-item-section>
-        <q-item-section>
-          <span class='text-bold'> Outputs </span>
-          <q-list separator>
-            <q-item v-for="(output, index) in outpoints[n-1].stampTx.outputs" :key="index">
-              <q-item-section>
-                <span class='text-bold' v-if='index in outpoints[n-1].vouts'> Stamp Output </span>
-                <span class='text-bold'> Address </span>
-                {{ extractAddress(output) }}
-                <span class='text-bold'> Amount </span>
-                {{ output.satoshis }}
-              </q-item-section>
-            </q-item>
-          </q-list>
+            <span class='text-bold'> Transaction ID </span>
+            <q-item-label>{{outpoints[n-1].txId}}</q-item-label>
+            <span class='text-bold'> Address </span>
+            {{ outpoints[n-1].address}}
+            <span class='text-bold'> Amount </span>
+            {{ outpoints[n-1].satoshis }}
         </q-item-section>
       </q-tab-panel>
     </q-card-section>
