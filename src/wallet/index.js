@@ -1,4 +1,5 @@
 import * as R from 'ramda'
+import * as P from 'bluebird'
 
 import { numAddresses, numChangeAddresses } from '../utils/constants'
 
@@ -153,8 +154,7 @@ export class Wallet {
   async updateHDUTXOs () {
     // Check HD Wallet
     const scriptHashes = Object.keys(this.electrumScriptHashes)
-    await Promise
-      .all(scriptHashes.map(scriptHash => this.updateUTXOFromScriptHash(scriptHash)))
+    await P.map(scriptHashes, scriptHash => this.updateUTXOFromScriptHash(scriptHash), { concurrency: 20 })
   }
   async fixFrozenUTXO (utxoId) {
     // Unfreeze UTXO if confirmed to be unspent else delete
@@ -184,32 +184,36 @@ export class Wallet {
     // Unfreeze UTXO if confirmed to be unspent else delete, for all frozen UTXOs
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
     const frozenUTXOs = this.storage.getFrozenUTXOs()
-    await Promise.all(Object.values(frozenUTXOs).map(async (id) => {
-      this.fixFrozenUTXO(id)
-    }))
+    await P.map(Object.values(frozenUTXOs),
+      async (id) => {
+        this.fixFrozenUTXO(id)
+      },
+      { concurrency: 10 })
   }
   async fixUTXOs () {
     // Unfreeze UTXO if confirmed to be unspent else delete, for all (non-p2pkh) UTXOs
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
     const client = this.electrumClient
     const utxos = this.storage.getUTXOs()
-    await Promise.all(Object.keys(utxos).map(async id => {
-      const utxo = utxos[id]
-      if (utxo.type !== 'p2pkh') {
-        try {
-          const scriptHash = formatting.toElectrumScriptHash(utxo.address)
-          const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-          if (!elOutputs.some(output => {
-            return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
-          })) {
+    await P.map(Object.keys(utxos),
+      async id => {
+        const utxo = utxos[id]
+        if (utxo.type !== 'p2pkh') {
+          try {
+            const scriptHash = formatting.toElectrumScriptHash(utxo.address)
+            const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
+            if (!elOutputs.some(output => {
+              return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
+            })) {
             // No such utxo
-            this.storage.removeUTXO(id)
+              this.storage.removeUTXO(id)
+            }
+          } catch (err) {
+            console.error('error deserializing utxo address', err, utxo)
           }
-        } catch (err) {
-          console.error('error deserializing utxo address', err, utxo)
         }
-      }
-    }))
+      },
+      { concurrency: 10 })
   }
   async startListeners () {
     let ecl = this.electrumClient
@@ -220,14 +224,16 @@ export class Wallet {
         let scriptHash = result[0]
         await this.updateUTXOFromScriptHash(scriptHash)
       })
-    await Promise.all(addresses.map(addr => {
+
+    await P.map(addresses, addr => {
       let scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
       let scriptHashRaw = scriptHash.toBuffer()
       let digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
       let digestHexReversed = digest.reverse().toString('hex')
 
-      ecl.request('blockchain.scripthash.subscribe', digestHexReversed)
-    }))
+      return ecl.request('blockchain.scripthash.subscribe', digestHexReversed)
+    },
+    { concurrency: 20 })
   }
   constructTransaction ({ outputs, exactOutputs = false }) {
     const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
