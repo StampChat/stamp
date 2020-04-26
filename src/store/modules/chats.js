@@ -257,9 +257,6 @@ export default {
     setStampAmount ({ commit }, { addr, stampAmount }) {
       commit('setStampAmount', { addr, stampAmount })
     },
-    messageSendErrored ({ commit, dispatch }, { addr, index, retryData }) {
-
-    },
     async receiveMessage ({ dispatch, commit, rootGetters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](copartyAddress)) {
