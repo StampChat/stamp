@@ -406,4 +406,8 @@ export class Wallet {
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.addUTXO(utxo)
   }
+  removeUTXO (id) {
+    // TODO: Nobody should be calling this outside of the wallet
+    return this.storage.removeUTXO(id)
+  }
 }

@@ -10,6 +10,7 @@ import EventEmitter from 'events'
 import { constructStealthPaymentPayload, constructImagePayload, constructTextPayload, constructMessage } from './constructors'
 import imageUtil from '../utils/image'
 import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from './crypto'
+import { calcId } from '../wallet/helpers'
 
 const WebSocket = window.require('ws')
 const cashlib = require('bitcore-lib-cash')
@@ -568,11 +569,24 @@ export class RelayClient {
       })
       const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
 
+      if (outbound) {
+        // We can remove UTXOs from our set here as we sent this message
+        // this will make multiple devices more reliable, and also ensure importing
+        // a wallet is faster as we won't need to fixup all the previously received utxos
+        for (const input of stampTx.inputs) {
+          const outputIndex = input.outputIndex
+          const txId = input.prevTxId.toString('hex')
+          const utxoId = calcId({ outputIndex, txId })
+          wallet.removeUTXO(utxoId)
+        }
+      }
+
       for (const [j, outputIndex] of vouts.entries()) {
         const output = stampTx.outputs[outputIndex]
         const satoshis = output.satoshis
         const address = output.script.toAddress('testnet') // TODO: Make generic
         stampValue += satoshis
+
         if (!outbound) {
           // Also note, we should use an HD key here.
           try {
@@ -651,6 +665,19 @@ export class RelayClient {
           const stealthTx = cashlib.Transaction(stealthTxRaw)
           const txId = stealthTx.hash
           const vouts = outpoint.getVoutsList()
+
+          if (outbound) {
+            // We can remove UTXOs from our set here as we sent this message
+            // this will make multiple devices more reliable, and also ensure importing
+            // a wallet is faster as we won't need to fixup all the previously received utxos
+            for (const input of stealthTx.inputs) {
+              const outputIndex = input.outputIndex
+              const txId = input.prevTxId.toString('hex')
+              const utxoId = calcId({ outputIndex, txId })
+              wallet.removeUTXO(utxoId)
+            }
+          }
+
           for (const [j, outputIndex] of vouts.entries()) {
             const output = stealthTx.outputs[outputIndex]
             const satoshis = output.satoshis
