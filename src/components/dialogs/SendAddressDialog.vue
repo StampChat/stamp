@@ -79,7 +79,7 @@ export default {
           satoshis: this.amount
         })
 
-        var { transaction, usedIDs } = await this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
+        var { transaction, usedIDs } = this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
         let txHex = transaction.toString()
 
         let electrumHandler = this.$electrumClient
