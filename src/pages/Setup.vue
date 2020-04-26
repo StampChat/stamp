@@ -541,7 +541,7 @@ export default {
       return ((this.seedData.type === 'new') || (this.seedData.type === 'import' && this.seedData.valid))
     },
     isRelayValid () {
-      return [this.relayData.profile.name && this.relayData.profile.avatar && this.relayData.inbox.acceptancePrice].every(Boolean)
+      return !!(this.relayData.profile.name && this.relayData.profile.avatar && this.relayData.inbox.acceptancePrice)
     }
   },
   async created () {
