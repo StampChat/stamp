@@ -1,6 +1,6 @@
 import { PublicKey } from 'bitcore-lib-cash'
 import { getRelayClient } from '../../utils/relay-client-factory'
-import { defaultUpdateInterval, defaultRelayData } from '../../utils/constants'
+import { defaultUpdateInterval, pendingRelayData } from '../../utils/constants'
 import KeyserverHandler from '../../keyserver/handler'
 import Vue from 'vue'
 import moment from 'moment'
@@ -93,7 +93,7 @@ export default {
   },
   actions: {
     addLoadingContact ({ commit }, { addr, pubKey }) {
-      let contact = { ...defaultRelayData, profile: { ...defaultRelayData.profile, pubKey } }
+      let contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, pubKey } }
       commit('addContact', { addr, contact })
     },
     deleteContact ({ commit }, addr) {
