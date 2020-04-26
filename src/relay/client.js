@@ -276,7 +276,13 @@ export class RelayClient {
       item => {
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'stealth') {
-          const { paymentEntry, stealthTx, usedIDs: stealthIdsUsed } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
+          const { paymentEntry, stealthTx, usedIDs: stealthIdsUsed, vouts } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
+          outpoints.push(...vouts.map(vout => ({
+            type: 'stealth',
+            txId: stealthTx.id,
+            satoshis: stealthTx.outputs[vout].satoshis,
+            outputIndex: vout
+          })))
           usedIDs.push(...stealthIdsUsed)
           transactions.push(stealthTx)
           return paymentEntry
@@ -305,10 +311,11 @@ export class RelayClient {
       // TODO: These need to come back from the constructMessage API
       // We could have more than one, and more than one transaction in the future (ideally)
       let outpoint = {
-        stampTx,
-        vouts: [0]
+        type: 'stamp',
+        txId: stampTx.id,
+        vout: 0,
+        satoshis: stampTx.outputs[0].satoshis
       }
-      transactions.push(stampTx)
       usedIDs.push(...usedStampIds)
       outpoints.push(outpoint)
     } catch (err) {
@@ -501,10 +508,11 @@ export class RelayClient {
       const stampTx = cashlib.Transaction(stampTxRaw)
       const txId = stampTx.hash
       const vouts = stampOutpoint.getVoutsList()
-      outpoints.push({
-        stampTx,
-        vouts
-      })
+      outpoints.push(...vouts.map(vout => ({
+        txId,
+        satoshis: stampTx.outputs[vout].satoshis,
+        outputIndex: vout
+      })))
       const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
 
       if (outbound) {
@@ -615,6 +623,12 @@ export class RelayClient {
               wallet.removeUTXO(utxoId)
             }
           }
+
+          outpoints.push(...vouts.map(vout => ({
+            txId,
+            satoshis: stealthTx.outputs[vout].satoshis,
+            outputIndex: vout
+          })))
 
           for (const [j, outputIndex] of vouts.entries()) {
             const output = stealthTx.outputs[outputIndex]
