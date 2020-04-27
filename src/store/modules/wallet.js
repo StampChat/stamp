@@ -12,6 +12,10 @@ export function rehydrateWallet (wallet) {
     wallet.feePerByte = 2
   }
   wallet.xPrivKey = cashlib.HDPrivateKey.fromObject(wallet.xPrivKey)
+
+  if (!wallet.utxos) {
+    return
+  }
   for (const utxo of Object.values(wallet.utxos)) {
     if (utxo.type === 'p2pkh') {
       // Does not keep it's privKey with it because we like edge cases.
