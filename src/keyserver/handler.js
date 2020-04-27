@@ -45,6 +45,7 @@ class KeyserverHandler {
       {
         method: 'get',
         url: url,
+        timeout: 10_000, // 10 seconds
         responseType: 'arraybuffer'
       }
     )
@@ -95,6 +96,7 @@ class KeyserverHandler {
     await axios({
       method: 'put',
       url: url,
+      timeout: 10_000, // 10 seconds
       headers: {
         'Authorization': token
       },

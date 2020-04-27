@@ -31,6 +31,7 @@ export default {
         'Content-Type': 'application/bitcoincash-payment',
         'Accept': 'application/bitcoincash-paymentack'
       },
+      timeout: 10_000, // 10 seconds
       url: paymentUrl,
       data: rawPayment
     })

@@ -49,6 +49,7 @@ export class RelayClient {
     let response = await axios({
       method: 'get',
       url,
+      timeout: 10_000, // 10 seconds
       responseType: 'arraybuffer'
     })
     let metadata = wrapper.AuthWrapper.deserializeBinary(response.data)
@@ -176,6 +177,7 @@ export class RelayClient {
     let response = await axios({
       method: 'get',
       url,
+      timeout: 10_000, // 10 seconds
       headers: {
         'Authorization': this.token
       },
@@ -199,6 +201,7 @@ export class RelayClient {
     await axios({
       method: 'delete',
       url,
+      timeout: 10_000, // 10 seconds
       headers: {
         'Authorization': this.token
       },
@@ -214,6 +217,7 @@ export class RelayClient {
     await axios({
       method: 'put',
       url: url,
+      timeout: 10_000, // 10 seconds
       headers: {
         'Authorization': this.token
       },
@@ -225,6 +229,7 @@ export class RelayClient {
     let url = `${this.httpScheme}://${this.url}/messages/${addr}`
     let response = await axios({
       method: 'get',
+      timeout: 10_000, // 10 seconds
       url: url,
       headers: {
         'Authorization': this.token
@@ -258,6 +263,7 @@ export class RelayClient {
     let url = `${this.httpScheme}://${this.url}/messages/${addr}`
     await axios({
       method: 'put',
+      timeout: 10_000, // 10 seconds
       url: url,
       data: rawMetadata
     })
