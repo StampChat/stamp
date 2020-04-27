@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { mapMutations, mapGetters } from 'vuex'
 import Profile from '../Profile'
 import { constructProfileMetadata, constructPriceFilter } from '../../relay/constructors'
 import {
@@ -51,7 +51,7 @@ export default {
     ...mapGetters({
       getRelayData: 'myProfile/getRelayData'
     }),
-    ...mapActions({ setRelayData: 'myProfile/setRelayData' }),
+    ...mapMutations({ setRelayData: 'myProfile/setRelayData' }),
     async updateRelayData () {
       // Set profile
       let client = this.$relayClient
