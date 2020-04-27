@@ -122,12 +122,13 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
   return {}
 }
 
-export const constructReplyEntry = function (payloadDigest) {
-  assert(payloadDigest instanceof Buffer)
+export const constructReplyEntry = function ({ payloadDigest }) {
+  assert(typeof payloadDigest === 'string')
+  const payloadDigestBuffer = Buffer.from(payloadDigest, 'hex')
 
   let entry = new messaging.Entry()
   entry.setKind('reply')
-  entry.setEntryData(Buffer.from(payloadDigest))
+  entry.setEntryData(payloadDigestBuffer)
   return entry
 }
 

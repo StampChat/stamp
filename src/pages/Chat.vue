@@ -27,7 +27,7 @@
         :contact="getContact(chatMessage.outbound)"
         :index="index"
         :now="now"
-        @replyClicked="setReply"
+        @replyClicked="({ address, index }) => setReply(index)"
       />
       <q-scroll-observer debounce="500" @scroll="scrollHandler" />
     </q-scroll-area>
@@ -42,7 +42,7 @@
             flat
             color="accent"
             icon="close"
-            @click="setReply({ addr: address, index: null })"
+            @click="setReply(null)"
           />
         </div>
       </div>
@@ -68,7 +68,6 @@
 </template>
 
 <script>
-import assert from 'assert'
 import moment from 'moment'
 import { mapGetters } from 'vuex'
 import { dom } from 'quasar'
@@ -171,9 +170,7 @@ export default {
       // Set a minimum of 50.
       return Math.max(inputBoxHeight + replyHeight, 50)
     },
-    setReply ({ address, index }) {
-      // Address is not useful here as all the stuff in this component is for the same address
-      assert(address === this.address, 'Logic error somewhere!')
+    setReply (index) {
       this.replyDigest = index
     }
   },
