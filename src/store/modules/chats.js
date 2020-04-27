@@ -97,7 +97,7 @@ export default {
       return sortedOrder
     },
     getStampAmount: (state) => (addr) => {
-      return state.data[addr].stampAmount
+      return state.data[addr].stampAmount || defaultStampAmount
     },
     getActiveChat (state) {
       return state.activeChatAddr
@@ -211,13 +211,13 @@ export default {
         Vue.set(state.data[addr].messages, index, newMsg)
       }
       state.messages[index] = newMsg
-      state.lastRead = newMsg.serverTime
-      state.data[addr].lastRead = newMsg.serverTime
+      state.data[addr].lastReceived = newMsg.serverTime
       const messageValue = stampPrice(newMsg.outpoints) + newMsg.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-      if (addr !== state.activeChatAddr) {
+      if (addr !== state.activeChatAddr && state.data[addr].lastRead < newMsg.serverTime) {
         state.data[addr].totalUnreadValue += messageValue
         state.data[addr].totalUnreadMessages += 1
       }
+      state.lastReceived = newMsg.serverTime
       state.data[addr].totalValue += messageValue
     },
     setStampAmount (state, { addr, stampAmount }) {

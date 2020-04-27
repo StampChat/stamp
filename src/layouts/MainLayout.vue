@@ -123,8 +123,8 @@ export default {
     // Setup everything at once. This are independent processes
     try {
       this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
-      const lastReceived = this.lastReceived
-      await this.$relayClient.refresh({ lastReceived })
+      // const lastReceived = this.lastReceived
+      await this.$relayClient.refresh({ lastReceived: null })
       await this.$wallet.init()
     } catch (err) {
       console.error(err)
