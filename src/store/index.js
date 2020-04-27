@@ -23,6 +23,7 @@ const vuexLocal = new VuexPersistence({
   restoreState: (key, storage) => {
     const value = storage.getItem(key)
     let newState = parseState(value)
+    console.log('Restoring state', newState)
     if (newState.version !== STORE_SCHEMA_VERSION) {
       // Import everything else from the server again
       newState = {
@@ -42,7 +43,6 @@ const vuexLocal = new VuexPersistence({
     return newState
   },
   reducer (state) {
-    console.log('reducing state')
     return {
       wallet: {
         xPrivKey: path(['wallet', 'xPrivKey'], state),
@@ -56,16 +56,17 @@ const vuexLocal = new VuexPersistence({
     }
   },
   saveState (key, state, storage) {
-    console.log('saving state')
     storage.setItem(key, JSON.stringify(state))
   },
   filter: (mutation) => {
-    switch (mutation) {
+    switch (mutation.type) {
       case 'relayClient/setToken':
         return true
       case 'wallet/setXPrivKey':
         return true
       case 'wallet/setSeedPhrase':
+        return true
+      case 'myProfile/setRelayData':
         return true
     }
 
