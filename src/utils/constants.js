@@ -2,8 +2,36 @@ export const minSplitter = 20
 export const maxSplitter = 75
 
 // Electrum constants
-export const electrumURL = 'testnet.bitcoincash.network'
-export const electrumPort = 60002
+export const electrumServers = [
+  {
+    electrumURL: 'testnet.bitcoincash.network',
+    electrumPort: 60_002
+  },
+  {
+    electrumURL: 'electroncash.de',
+    electrumPort: 50_004
+  },
+  {
+    electrumURL: 'fulcrum-testnet.bchjs.cash',
+    electrumPort: 50_002
+  },
+  {
+    electrumURL: 'testnet.imaginary.cash',
+    electrumPort: 50_002
+  },
+  {
+    electrumURL: 'bch0.kister.net',
+    electrumPort: 51_002
+  },
+  {
+    electrumURL: 'blackie.c3-soft.com',
+    electrumPort: 60_002
+  },
+  {
+    electrumURL: 'cash-testnet.theblains.org',
+    electrumPort: 50_002
+  }
+]
 export const electrumPingInterval = 10_000
 
 // Wallet constants

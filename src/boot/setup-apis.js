@@ -1,6 +1,6 @@
 
 import { Client as ElectrumClient } from 'electrum-cash'
-import { electrumPingInterval, electrumURL, electrumPort, defaultRelayUrl } from '../utils/constants'
+import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils/constants'
 import { Wallet } from '../wallet'
 import { getRelayClient } from '../utils/relay-client-factory'
 
@@ -91,6 +91,8 @@ function getWalletClient ({ store }) {
 }
 
 export default async ({ store, Vue }) => {
+  const { electrumURL, electrumPort } = electrumServers[Math.floor(Math.random() * electrumServers.length)]
+  console.log('Using electrum server:', electrumURL, electrumPort)
   const { client: electrumClient, observables: electrumObservables } = await getElectrumClient({ host: electrumURL, port: electrumPort })
   // TODO: WE should probably rename this file to something more specific
   // as its instantiating the wallet now also.
