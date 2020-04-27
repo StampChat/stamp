@@ -244,7 +244,6 @@ export default {
   },
   methods: {
     ...mapActions({
-      setRelayData: 'myProfile/setRelayData',
       setRelayToken: 'relayClient/setToken',
       resetChats: 'chats/reset',
       darkMode: 'appearance/setDarkMode'
@@ -254,6 +253,7 @@ export default {
       getDarkMode: 'appearance/getDarkMode'
     }),
     ...mapMutations({
+      setRelayData: 'myProfile/setRelayData',
       resetWallet: 'wallet/reset',
       setXPrivKey: 'wallet/setXPrivKey',
       setSeedPhrase: 'wallet/setSeedPhrase',

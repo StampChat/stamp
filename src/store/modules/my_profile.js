@@ -13,27 +13,9 @@ export default {
     }
   },
   mutations: {
-    setProfile (state, profile) {
-      state.profile = profile
-    },
-    setInbox (state, inbox) {
-      state.inbox = inbox
-    },
     setRelayData (state, relayData) {
       state.profile = relayData.profile
       state.inbox = relayData.inbox
     }
-  },
-  actions: {
-    setProfile ({ commit }, profile) {
-      commit('setProfile', profile)
-    },
-    setInbox ({ commit }, inbox) {
-      commit('setInbox', inbox)
-    },
-    setRelayData ({ commit }, relayData) {
-      commit('setRelayData', relayData)
-    }
   }
-
 }
