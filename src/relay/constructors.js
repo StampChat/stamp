@@ -23,6 +23,7 @@ export const constructStampTransaction = function (wallet, payloadDigest, destPu
     .deriveChild(transactionNumber)
     .deriveChild(outputNumber)
     .publicKey
+
   let stampOutput = new cashlib.Transaction.Output({
     script: cashlib.Script(new cashlib.Address(outpointPubKey)),
     satoshis: amount

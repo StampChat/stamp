@@ -4,7 +4,7 @@ import VuexPersistence from 'vuex-persist'
 import modules from './modules'
 import { rehydateChat } from './modules/chats'
 import { rehydrateWallet } from './modules/wallet'
-import { path } from 'ramda'
+import { path, pathOr, map } from 'ramda'
 
 Vue.use(Vuex)
 
@@ -15,7 +15,9 @@ const parseState = (value) => {
     return (value || {})
   }
 }
-const STORE_SCHEMA_VERSION = 1
+const STORE_SCHEMA_VERSION = 2
+
+let lastSave = Date.now()
 
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
@@ -34,10 +36,20 @@ const vuexLocal = new VuexPersistence({
         relayClient: {
           token: path(['relayClient', 'token'], newState)
         },
+        chats: {
+          data: map(addressData => {
+            return {
+              messages: {},
+              stampAmount: path(['stampAmount'], addressData),
+              lastRead: path(['lastRead'], addressData)
+            }
+          }, pathOr({}, ['chats', 'data'], newState))
+        },
         version: STORE_SCHEMA_VERSION,
         myProfile: newState.myProfile
       }
     }
+    console.log('new new state', newState)
     rehydateChat(newState.chats)
     rehydrateWallet(newState.wallet)
     return newState
@@ -51,26 +63,32 @@ const vuexLocal = new VuexPersistence({
       relayClient: {
         token: path(['relayClient', 'token'], state)
       },
+      chats: {
+        data: map(addressData => {
+          return ({
+            lastRead: addressData.lastRead,
+            // TODO: We need to save this remotely somewhere.
+            stampAmount: path(['stampAmount'], addressData),
+            messages: {}
+          })
+        },
+        pathOr({}, ['chats', 'data'], state))
+      },
       myProfile: state.myProfile,
       version: STORE_SCHEMA_VERSION
     }
   },
   saveState (key, state, storage) {
+    console.log('saving state', state.chats)
     storage.setItem(key, JSON.stringify(state))
   },
   filter: (mutation) => {
-    switch (mutation.type) {
-      case 'relayClient/setToken':
-        return true
-      case 'wallet/setXPrivKey':
-        return true
-      case 'wallet/setSeedPhrase':
-        return true
-      case 'myProfile/setRelayData':
-        return true
+    if (lastSave + 10000 >= Date.now()) {
+      return false
     }
+    lastSave = Date.now()
 
-    return false
+    return true
   }
 })
 
