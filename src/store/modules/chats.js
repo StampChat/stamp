@@ -10,7 +10,7 @@ function calculateUnreadAggregates (messages, lastReadTime) {
     .filter(message => !message.outbound)
     .map((message) => {
       return {
-        read: lastReadTime < message.receivedTime,
+        read: lastReadTime < message.serverTime,
         totalValue: (stampPrice(message.outpoints) || 0) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
       }
     })
@@ -157,7 +157,7 @@ export default {
       if (values.length === 0) {
         state.data[addr].lastRead = null
       } else {
-        state.data[addr].lastRead = values[values.length - 1].receivedTime
+        state.data[addr].lastRead = values[values.length - 1].serverTime
       }
       state.data[addr].totalUnreadMessages = 0
       state.data[addr].totalUnreadValue = 0
@@ -211,8 +211,8 @@ export default {
         Vue.set(state.data[addr].messages, index, newMsg)
       }
       state.messages[index] = newMsg
-      state.lastReceived = newMsg.receivedTime
-      state.data[addr].lastReceived = newMsg.receivedTime
+      state.lastRead = newMsg.serverTime
+      state.data[addr].lastRead = newMsg.serverTime
       const messageValue = stampPrice(newMsg.outpoints) + newMsg.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
       if (addr !== state.activeChatAddr) {
         state.data[addr].totalUnreadValue += messageValue

@@ -82,7 +82,7 @@ export default {
     formatedTimestamp () {
       switch (this.message.status) {
         case 'confirmed':
-          const timestamp = this.message.timestamp || this.message.receivedTime
+          const timestamp = this.message.timestamp || this.message.serverTime
           const howLongAgo = moment(timestamp)
           return moment(this.now).to(howLongAgo)
         case 'pending':
