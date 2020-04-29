@@ -17,10 +17,12 @@
     <q-separator />
     <q-card-section>
       <div class="row">
-        <qrcode
-          class="fit"
+        <qrcode-vue
+          style="margin-left: auto; margin-right: auto;"
           :value="currentAddress"
-        ></qrcode>
+          :size="300"
+          level="H"
+        ></qrcode-vue>
       </div>
       <div class="row">
         <q-input
@@ -68,23 +70,21 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import VueQrcode from '@chenfengyuan/vue-qrcode'
+import QrcodeVue from 'qrcode.vue'
 import SeedPhraseDialog from './SeedPhraseDialog.vue'
 import { mapGetters } from 'vuex'
 import formatting from '../../utils/formatting'
 import { numAddresses } from '../../utils/constants'
 import { copyToClipboard } from 'quasar'
 
-Vue.component(VueQrcode.name, VueQrcode)
-
 export default {
   components: {
-    SeedPhraseDialog
+    SeedPhraseDialog,
+    QrcodeVue
   },
   data () {
     return {
-      currentAddress: this.$wallet.privKeys[0].toAddress('testnet'), // TODO: Generic over network
+      currentAddress: this.$wallet.privKeys[0].toAddress('testnet').toString(), // TODO: Generic over network
       paymentAddrCounter: 0,
       seedPhraseOpen: false
     }
@@ -114,7 +114,7 @@ export default {
       // TODO: This should have no idea what number of addresses there are
       this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
       let privKey = this.$wallet.privKeys[this.paymentAddrCounter]
-      this.currentAddress = privKey.toAddress('testnet')
+      this.currentAddress = privKey.toAddress('testnet').toString()
     }
   }
 }
