@@ -1,6 +1,12 @@
 import { app, BrowserWindow, nativeImage, nativeTheme, Tray, Menu } from 'electron'
 const path = require('path')
 
+// Enable single instance lock
+let isSingleInstance = app.requestSingleInstanceLock()
+if (!isSingleInstance) {
+  app.quit()
+}
+
 try {
   if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
     require('fs').unlinkSync(require('path').join(app.getPath('userData'), 'DevTools Extensions'))
@@ -88,6 +94,14 @@ function createWindow() {
     mainWindow = null
   })
 }
+
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  // Someone tried to run a second instance, we should focus our window.
+  if (mainWindow) {
+    mainWindow.show()
+    mainWindow.focus()
+  }
+})
 
 app.on('ready', createWindow)
 
