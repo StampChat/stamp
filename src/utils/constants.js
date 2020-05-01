@@ -26,10 +26,6 @@ export const electrumServers = [
   {
     electrumURL: 'blackie.c3-soft.com',
     electrumPort: 60_002
-  },
-  {
-    electrumURL: 'cash-testnet.theblains.org',
-    electrumPort: 50_002
   }
 ]
 export const electrumPingInterval = 10_000
