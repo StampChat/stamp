@@ -18,7 +18,7 @@
       <q-page :style-fn="tweak" v-if="loaded">
         <q-splitter
           v-model="splitterRatio"
-          separator-style="width: 0px"
+          separator-style="width: 1px"
           :limits="[minSplitter, maxSplitter]"
           :style="`height: inherit; min-height: inherit;`"
         >

@@ -50,8 +50,6 @@ export default {
     sendFileClicked () {
       this.$emit('sendFileClicked')
     }
-  },
-  computed: {
   }
 }
 </script>

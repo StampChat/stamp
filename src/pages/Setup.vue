@@ -30,7 +30,6 @@
           :name="3"
           title="Deposit Bitcoin Cash"
           icon="attach_money"
-          style="min-height: 300px;"
           :done="step > 3"
         >
           <deposit-step />
@@ -40,7 +39,6 @@
           :name="4"
           title="Choose a relay server"
           icon="email"
-          style="min-height: 300px;"
           :done="step > 4"
         >
           <choose-relay-step v-model="relayUrl" />
@@ -49,7 +47,6 @@
           :name="5"
           title="Setup Profile"
           icon="person"
-          style="min-height: 300px;"
           :done="step > 5"
         >
           <profile-step v-model="relayData" />
@@ -58,7 +55,6 @@
           :name="6"
           title="Settings"
           icon="build"
-          style="min-height: 300px;"
         >
           <settings-step v-model="settings" />
         </q-step>
@@ -115,59 +111,6 @@
             />
           </q-stepper-navigation>
         </template>
-        <template v-slot:message>
-          <q-banner
-            v-if="step === 1"
-            class="bg-primary text-white q-px-lg"
-          >
-            Welcome to Stamp!
-          </q-banner>
-          <q-banner
-            v-else-if="step === 2"
-            class="bg-primary text-white q-px-lg"
-          >
-            How would you like to generate a wallet? </q-banner>
-          <q-banner
-            v-else-if="step === 3"
-            class="bg-primary text-white q-px-lg"
-          >
-            Deposit Bitcoin Cash to your messaging wallet...
-          </q-banner>
-          <q-banner
-            v-else-if="step === 4"
-            class="bg-primary text-white q-px-lg"
-          >
-            Choose a relay server...
-          </q-banner>
-          <q-banner
-            v-else-if="step === 5"
-            class="bg-primary text-white q-px-lg"
-          >
-            Create your profile...
-          </q-banner>
-          <q-banner
-            v-else
-            class="bg-primary text-white q-px-lg"
-          >
-            Tweak settings...
-          </q-banner>
-          <q-banner
-            v-if="step === 2"
-            class="bg-primary text-white"
-            v-show="generatedWarning"
-          >
-            <span class="text-bold">Warning:</span> Forgetting this seed phrase will result in the bitcoin wallet and any contained money being lost.
-            Do not overestimate your ability to remember passphrases especially when you may not use it very often.
-            <template v-slot:action>
-              <q-btn
-                flat
-                color="white"
-                label="Dismiss"
-                @click="generatedWarning = false"
-              />
-            </template>
-          </q-banner>
-        </template>
       </q-stepper>
     </div>
   </q-page>
@@ -185,8 +128,8 @@ import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
 import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
-import ProfileStep from '../components/Profile.vue'
-import SettingsStep from '../components/Settings.vue'
+import ProfileStep from '../components/setup/ProfileStep'
+import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultRelayData, defaultRelayUrl } from '../utils/constants'
 import {
   keyserverDisconnectedNotify,
