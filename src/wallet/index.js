@@ -1,5 +1,6 @@
 import * as R from 'ramda'
 import * as P from 'bluebird'
+import assert from 'assert'
 
 import { numAddresses, numChangeAddresses } from '../utils/constants'
 
@@ -81,7 +82,7 @@ export class Wallet {
 
       // Index by script hash
       let scriptHash = formatting.toElectrumScriptHash(address)
-      this.addElectrumScriptHash({ scriptHash, address, change: false })
+      this.addElectrumScriptHash({ scriptHash, address, change: false, privKey })
     }
     for (var j = 0; j < numChangeAddresses; j++) {
       let privKey = xPrivKey.deriveChild(44, true)
@@ -95,11 +96,11 @@ export class Wallet {
 
       // Index by script hash
       let scriptHash = formatting.toElectrumScriptHash(address)
-      this.addElectrumScriptHash({ scriptHash, address, change: true })
+      this.addElectrumScriptHash({ scriptHash, address, change: true, privKey })
     }
   }
-  addElectrumScriptHash ({ scriptHash, address, change }) {
-    this.electrumScriptHashes[scriptHash] = { address, change }
+  addElectrumScriptHash ({ scriptHash, address, change, privKey }) {
+    this.electrumScriptHashes[scriptHash] = { address, change, privKey }
   }
   setAddress ({ address, privKey }) {
     this.addresses[address] = { privKey }
@@ -125,7 +126,7 @@ export class Wallet {
 
     outputs.forEach(output => {
       const id = calcId(output)
-      this.storage.addUTXO(output)
+      this.addUTXO(output)
       if (id in frozenUTXOs) {
         this.storage.freezeUTXO(id)
       }
@@ -135,14 +136,15 @@ export class Wallet {
     let client = this.electrumClient
     try {
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-      const { address } = this.getAddressByElectrumScriptHash(scriptHash)
+      const { address, privKey } = this.getAddressByElectrumScriptHash(scriptHash)
       const outputs = elOutputs.map(elOutput => {
         const output = {
           txId: elOutput.tx_hash,
           outputIndex: elOutput.tx_pos,
           satoshis: elOutput.value,
           type: 'p2pkh',
-          address
+          address,
+          privKey
         }
         return output
       })
@@ -249,8 +251,6 @@ export class Wallet {
     }
 
     // Coin selection
-    const addresses = this.allAddresses
-
     const signingKeys = []
     const usedUtxos = []
 
@@ -291,11 +291,7 @@ export class Wallet {
       const addr = utxo.address
       utxo['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
       // Grab private key
-      if (utxo.type === 'p2pkh') {
-        signingKeys.push(addresses[addr].privKey)
-      } else {
-        signingKeys.push(utxo.privKey)
-      }
+      signingKeys.push(utxo.privKey)
       transaction = transaction.from(utxo)
       satoshis += utxo.satoshis
     }
@@ -409,6 +405,10 @@ export class Wallet {
     return this.storage.unfreezeUTXO(id)
   }
   addUTXO (utxo) {
+    assert(utxo.type)
+    assert(utxo.privKey)
+    assert(utxo.address)
+    assert(utxo.satoshis)
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.addUTXO(utxo)
   }
