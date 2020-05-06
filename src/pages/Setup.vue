@@ -376,7 +376,7 @@ export default {
 
       this.$q.loading.hide()
       if (this.isBasic) {
-        this.setupSettings()
+        this.nextSettings()
       } else {
         this.$refs.stepper.next()
       }
