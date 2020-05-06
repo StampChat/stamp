@@ -12,6 +12,7 @@
       :id="index"
       :message="message"
       @txClick="transactionDialog = true"
+      @deleteClick="deleteDialog = true"
       @replyClick="replyClicked({ address, index })"
     />
 
@@ -21,6 +22,14 @@
       <transaction-dialog
         title="Stamp Transaction"
         :outpoints="message.outpoints"
+      />
+    </q-dialog>
+
+    <!-- Delete Dialog -->
+    <q-dialog v-model="deleteDialog">
+      <delete-message-dialog
+        :address="address"
+        :index="index"
       />
     </q-dialog>
 
@@ -52,6 +61,7 @@
 import moment from 'moment'
 import ChatMessageSection from './ChatMessageSection.vue'
 import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
+import DeleteMessageDialog from '../dialogs/DeleteMessageDialog'
 import TransactionDialog from '../dialogs/TransactionDialog.vue'
 import { stampPrice } from '../../wallet/helpers'
 
@@ -59,11 +69,13 @@ export default {
   components: {
     ChatMessageSection,
     ChatMessageMenu,
-    TransactionDialog
+    TransactionDialog,
+    DeleteMessageDialog
   },
   data () {
     return {
-      transactionDialog: false
+      transactionDialog: false,
+      deleteDialog: false
     }
   },
   props: {

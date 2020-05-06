@@ -11,6 +11,7 @@ import { constructStealthEntry, constructReplyEntry, constructTextEntry, constru
 import imageUtil from '../utils/image'
 import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from './crypto'
 import { calcId } from '../wallet/helpers'
+import assert from 'assert'
 
 const WebSocket = window.require('ws')
 const cashlib = require('bitcore-lib-cash')
@@ -193,19 +194,33 @@ export class RelayClient {
     return payload
   }
 
-  async deleteMessage (addr, digest) {
-    let url = `${this.httpScheme}://${this.url}/messages/${addr}`
-    let hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
-    await axios({
-      method: 'delete',
-      url,
-      headers: {
-        'Authorization': this.token
-      },
-      params: {
-        digest: hexDigest
-      }
-    })
+  async deleteMessage (digest) {
+    assert(typeof digest === 'string')
+
+    try {
+      const message = this.getStoredMessage(digest)
+      assert(message, 'message not found?')
+
+      // Send utxos to a change address
+      const changeAddresses = Object.keys(this.wallet.changeAddresses)
+      const changeAddress = changeAddresses[changeAddresses.length * Math.random() << 0]
+      await this.wallet.forwardUTXOsToAddress({ utxos: message.outpoints, address: changeAddress })
+
+      let url = `${this.httpScheme}://${this.url}/messages/${this.wallet.myAddressStr}`
+      await axios({
+        method: 'delete',
+        url,
+        headers: {
+          'Authorization': this.token
+        },
+        params: {
+          digest
+        }
+      })
+    } catch (err) {
+      // TODO: Notify user of error
+      console.error(err)
+    }
   }
 
   async putProfile (addr, metadata) {

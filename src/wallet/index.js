@@ -237,6 +237,50 @@ export class Wallet {
     },
     { concurrency: 20 })
   }
+  async forwardUTXOsToAddress ({ utxos, address }) {
+    const feePerByte = this.feePerByte
+    let transaction = new cashlib.Transaction()
+
+    const ourUtxos = this.storage.getUTXOs()
+    const inputIds = utxos.map(utxo => calcId(utxo)).filter(id => id in ourUtxos)
+    const utxoSetToUse = inputIds.map((id) => ourUtxos[id])
+    let satoshis = 0
+    let signingKeys = []
+    if (!utxoSetToUse.length) {
+      return
+    }
+
+    for (const utxo of utxoSetToUse) {
+      const utxoAddress = utxo.address
+      utxo['script'] = cashlib.Script.buildPublicKeyHashOut(utxoAddress).toHex()
+      signingKeys.push(utxo.privKey)
+      transaction = transaction.from(utxo)
+      satoshis += utxo.satoshis
+    }
+
+    const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
+    const txnSize = transaction._estimateSize() + standardUtxoSize
+    const fees = txnSize * feePerByte
+
+    transaction.to(address, satoshis - fees)
+    inputIds.map(id => this.storage.freezeUTXO(id))
+    // Sign transaction
+    transaction = transaction.sign(signingKeys)
+
+    console.log('broadcasting forwarding txn', transaction)
+    const txHex = transaction.toString()
+    try {
+      await this.electrumClient.request('blockchain.transaction.broadcast', txHex)
+    } catch (err) {
+      console.error(err)
+      // Unfreeze UTXOs if stealth tx broadcast fails
+      inputIds.forEach(id => {
+        this.unfreezeUTXO(id)
+      })
+      throw new Error('Error broadcasting forwarding transaction')
+    }
+    return { transaction, usedIDs: inputIds }
+  }
   constructTransaction ({ outputs, exactOutputs = false }) {
     const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
     const standardInputSize = 175 // A few extra bytes
@@ -386,10 +430,12 @@ export class Wallet {
     return Object.values(this.storage.getUTXOs()).reduce((acc, output) => acc + output.satoshis, 0)
   }
   get myAddress () {
+    // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
     return this.identityPrivKey.toAddress('testnet')
   }
   get myAddressStr () {
+    // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
     return this.identityPrivKey.toAddress('testnet')
       .toCashAddress()

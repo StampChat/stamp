@@ -50,7 +50,7 @@
       <q-item
         clickable
         v-close-popup
-        @click="deleteMessage({ addr: address, id })"
+        @click="$emit('deleteClick')"
       >
         <q-item-section>Delete</q-item-section>
       </q-item>

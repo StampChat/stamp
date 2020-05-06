@@ -1,0 +1,55 @@
+<template>
+  <q-card>
+    <q-card-section class="row items-center">
+      <q-avatar
+        icon="delete"
+        color="red"
+        text-color="white"
+      />
+      <span class="q-ml-sm">Are you sure you want to delete this message?</span>
+    </q-card-section>
+
+    <q-card-actions align="right">
+      <q-btn
+        flat
+        label="Cancel"
+        color="primary"
+        v-close-popup
+      />
+      <q-btn
+        flat
+        label="Delete"
+        color="primary"
+        v-close-popup
+        @click="deleteMessageBoth()"
+      />
+    </q-card-actions>
+  </q-card>
+</template>
+
+<script>
+import { mapActions } from 'vuex'
+export default {
+  props: ['address', 'index'],
+  methods: {
+    ...mapActions({
+      deleteMessage: 'chats/deleteMessage'
+    }),
+    async deleteMessageBoth () {
+      // TODO: Move this into wallet API
+      // TODO: More private
+      // Delete message from relay server
+      await this.$relayClient.deleteMessage(this.index)
+      // Delete message from relay server
+      try {
+        this.deleteMessage({ addr: this.address, id: this.index })
+      } catch (err) {
+        console.error(err)
+        if (err.response) {
+          console.error(err.response)
+        }
+      }
+    }
+  }
+}
+</script>
