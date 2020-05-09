@@ -4,11 +4,10 @@
     <q-dialog v-model="sendFileOpen" persistent>
       <send-file-dialog :address="address" />
     </q-dialog>
-
+    <div class="column full-height">
     <q-scroll-area
       ref="chatScroll"
-      class="q-px-md row"
-      :style="scrollAreaStyle"
+      class="q-px-md col"
     >
       <q-chat-message
         class="q-py-sm"
@@ -64,6 +63,7 @@
         @click="scrollBottom"
       />
     </q-page-sticky>
+    </div>
   </div>
 </template>
 
@@ -180,12 +180,6 @@ export default {
       getMessage: 'chats/getMessage',
       getProfile: 'myProfile/getProfile'
     }),
-    scrollAreaStyle () {
-      return {
-        height: `calc(100% - ${this.offsetHeight()}px)`,
-        minHeight: `calc(100%-${this.offsetHeight()}px)`
-      }
-    },
     replyItem () {
       if (!this.replyDigest) {
         return null
