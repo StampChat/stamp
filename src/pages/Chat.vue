@@ -189,6 +189,10 @@ export default {
         return null
       }
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
+
+      // Focus input box
+      this.$refs.chatInput.focus()
+
       return firstNonReply
     }
   },
@@ -199,7 +203,14 @@ export default {
         this.scrollBottom()
       }
     },
-    active () {
+    active (newActive) {
+      if (!newActive) {
+        return
+      }
+
+      // Focus input box
+      this.$refs.chatInput.focus()
+
       const scrollArea = this.$refs.chatScroll
       const scrollTarget = scrollArea.getScrollTarget()
       // Scroll to bottom only if the view was effectively in it's initial state.

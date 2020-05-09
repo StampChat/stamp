@@ -34,6 +34,9 @@ export default {
     message: String
   },
   methods: {
+    focus () {
+      this.$refs.inputBox.focus()
+    },
     onInput (event) {
       this.$emit('input', event)
     },
