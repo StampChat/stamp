@@ -113,9 +113,13 @@ export default {
       }
       this.contact = 'loading'
       try {
+        // Validate address
+        let address = cashlib.Address.fromString(newAddress, 'testnet').toLegacyAddress().toString() // TODO: Make generic
+
+        // Pull information from keyserver then relay server
         let ksHandler = new KeyserverHandler()
-        let relayURL = await ksHandler.getRelayUrl(newAddress)
-        let relayData = await this.$relayClient.getRelayData(newAddress)
+        let relayURL = await ksHandler.getRelayUrl(address)
+        let relayData = await this.$relayClient.getRelayData(address)
         relayData.notify = true
         this.contact = relayData
         this.contact.relayURL = relayURL
