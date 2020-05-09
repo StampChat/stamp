@@ -199,7 +199,10 @@ export default {
         this.scrollBottom()
       }
     },
-    active () {
+    active (newActive) {
+      if (!newActive) {
+        return
+      }
       const scrollArea = this.$refs.chatScroll
       const scrollTarget = scrollArea.getScrollTarget()
       // Scroll to bottom only if the view was effectively in it's initial state.
