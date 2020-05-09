@@ -4,7 +4,7 @@ import assert from 'assert'
 
 import { numAddresses, numChangeAddresses } from '../utils/constants'
 
-import formatting from '../utils/formatting'
+import { toElectrumScriptHash } from '../utils/formatting'
 import { calcId } from './helpers'
 
 const cashlib = require('bitcore-lib-cash')
@@ -81,7 +81,7 @@ export class Wallet {
       this.setAddress({ address, privKey })
 
       // Index by script hash
-      let scriptHash = formatting.toElectrumScriptHash(address)
+      let scriptHash = toElectrumScriptHash(address)
       this.addElectrumScriptHash({ scriptHash, address, change: false, privKey })
     }
     for (var j = 0; j < numChangeAddresses; j++) {
@@ -95,7 +95,7 @@ export class Wallet {
       this.setChangeAddress({ address, privKey })
 
       // Index by script hash
-      let scriptHash = formatting.toElectrumScriptHash(address)
+      let scriptHash = toElectrumScriptHash(address)
       this.addElectrumScriptHash({ scriptHash, address, change: true, privKey })
     }
   }
@@ -168,7 +168,7 @@ export class Wallet {
       return
     }
     try {
-      const scriptHash = formatting.toElectrumScriptHash(utxo.address)
+      const scriptHash = toElectrumScriptHash(utxo.address)
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
       if (elOutputs.some(output => {
         return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
@@ -202,7 +202,7 @@ export class Wallet {
         const utxo = utxos[id]
         if (utxo.type !== 'p2pkh') {
           try {
-            const scriptHash = formatting.toElectrumScriptHash(utxo.address)
+            const scriptHash = toElectrumScriptHash(utxo.address)
             const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
             if (!elOutputs.some(output => {
               return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
