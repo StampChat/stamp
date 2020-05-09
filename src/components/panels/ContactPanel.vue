@@ -1,12 +1,5 @@
 <template>
-  <q-drawer
-    v-model="drawerOpenModel"
-    show-if-above
-    side="right"
-    elevated
-    :width="300"
-    :breakpoint="400"
-  >
+  <div class="column full-height">
     <!-- Send Bitcoin dialog -->
     <q-dialog
       v-model="sendBitcoinOpen"
@@ -45,8 +38,16 @@
       <contact-book-dialog :contactClick="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }" />
     </q-dialog>
 
+    <!-- Contact card -->
+    <contact-card
+      :address="address"
+      :name="contact.profile.name"
+      :avatar="contact.profile.avatar"
+      :acceptancePrice="contact.inbox.acceptancePrice"
+    />
+
     <!-- Scroll area -->
-    <q-scroll-area style="height: calc(100% - 125px); margin-top: 125px; border-right: 1px solid #ddd">
+    <q-scroll-area class="col" >
       <q-list padding>
         <q-item>
           <q-item-section avatar>
@@ -155,21 +156,13 @@
         </q-item>
       </q-list>
     </q-scroll-area>
-
-    <!-- Contact card -->
-    <drawer-contact-card
-      :address="address"
-      :name="contact.profile.name"
-      :avatar="contact.profile.avatar"
-      :acceptancePrice="contact.inbox.acceptancePrice"
-    />
-  </q-drawer>
+  </div>
 </template>
 
 <script>
 import Vue from 'vue'
 import { mapGetters, mapActions, mapMutations } from 'vuex'
-import DrawerContactCard from './DrawerContactCard.vue'
+import ContactCard from './ContactCard.vue'
 import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
 import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
@@ -185,17 +178,13 @@ Vue.filter('truncate', function (text, length, clamp) {
 
 export default {
   components: {
-    DrawerContactCard,
+    ContactCard,
     ClearHistoryDialog,
     DeleteChatDialog,
     ContactBookDialog,
     SendBitcoinDialog
   },
-  props: ['address', 'contact', 'drawerOpen'],
-  model: {
-    prop: 'drawerOpen',
-    event: 'update:drawerOpen'
-  },
+  props: ['address', 'contact'],
   methods: {
     ...mapActions({
       shareContact: 'chats/shareContact',
@@ -210,14 +199,6 @@ export default {
       getNotify: 'contacts/getNotify',
       getStampAmount: 'chats/getStampAmount'
     }),
-    drawerOpenModel: {
-      get () {
-        return this.drawerOpen
-      },
-      set (value) {
-        this.$emit('update:drawerOpen', value)
-      }
-    },
     notifications: {
       get () {
         return this.getNotify(this.address)

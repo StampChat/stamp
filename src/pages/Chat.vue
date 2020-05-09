@@ -1,70 +1,79 @@
 <template>
-  <div>
-    <!-- Send file dialog -->
+  <!-- Send file dialog -->
+  <!-- TODO: Move this up.  We don't need a copy of this dialog for each address (likely) -->
+  <q-layout view="lhh LpR lff" container class="hide-scrollbar absolute full-width">
     <q-dialog v-model="sendFileOpen" persistent>
       <send-file-dialog :address="address" />
     </q-dialog>
-    <div class="column full-height justify-end">
-    <q-scroll-area
-      ref="chatScroll"
-      class="q-px-md col"
-    >
-      <q-chat-message
-        class="q-py-sm"
-        avatar="~/assets/cashweb-avatar.png"
-        :sent="false"
-        :text="[
-            donationMessage
-            ]"
-        size="6"
-      />
-      <chat-message
-        v-for="(chatMessage, index) in messages"
-        :key="index"
-        :address="address"
-        :message="chatMessage"
-        :contact="getContact(chatMessage.outbound)"
-        :index="index"
-        :now="now"
-        @replyClicked="({ address, index }) => setReply(index)"
-      />
-      <q-scroll-observer debounce="500" @scroll="scrollHandler" />
-    </q-scroll-area>
 
-    <!-- Reply box -->
-    <div ref="replyBox">
-      <div class="q-pa-sm" v-if="replyDigest">
-        <div class="q-pa-sm bg-secondary row" style="border-radius: 5px;">
-          <chat-message-reply class="col" :item="replyItem" />
-          <q-btn
-            dense
-            flat
-            color="accent"
-            icon="close"
-            @click="setReply(null)"
+    <q-header bordered>
+      <q-toolbar class="q-pl-none">
+        <q-btn
+          class="q-px-sm bg-primary"
+          flat
+          dense
+          @click="toggleMyDrawerOpen"
+          icon="menu"
+        />
+        <q-toolbar-title class="h6">{{contactName}}</q-toolbar-title>
+        <q-space />
+        <q-btn
+          class="q-px-sm"
+          flat
+          dense
+          color="bg-primary"
+          @click="toggleContactDrawerOpen"
+          icon="person"
+        />
+      </q-toolbar>
+    </q-header>
+    <q-page-container>
+      <q-page>
+        <q-scroll-area ref="chatScroll" class="q-px-md absolute full-width full-height">
+          <q-chat-message
+            avatar="~/assets/cashweb-avatar.png"
+            :sent="false"
+            :text="[
+                donationMessage
+                ]"
+            size="6"
           />
+          <chat-message
+            v-for="(chatMessage, index) in messages"
+            :key="index"
+            :address="address"
+            :message="chatMessage"
+            :contact="getContact(chatMessage.outbound)"
+            :index="index"
+            :now="now"
+            @replyClicked="({ address, index }) => setReply(index)"
+          />
+          <q-scroll-observer debounce="500" @scroll="scrollHandler" />
+        </q-scroll-area>
+        <q-page-sticky position="bottom-right" :offset="[18, 18]" v-show="!bottom">
+          <q-btn round size="md" icon="keyboard_arrow_down" color="accent" @click="scrollBottom" />
+        </q-page-sticky>
+      </q-page>
+    </q-page-container>
+    <!-- Reply box -->
+    <q-footer :class="`${$q.dark.isActive ? 'bg-dark' : 'bg-white'}`" bordered>
+      <div ref="replyBox" v-if="!!replyDigest">
+        <div class="q-pa-sm">
+          <div class="q-pa-sm bg-secondary row" style="border-radius: 5px;">
+            <chat-message-reply class="col" :item="replyItem" />
+            <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- Message box -->
-    <chat-input
-      ref="chatInput"
-      v-model="message"
-      @sendMessage="sendMessage"
-      @sendFileClicked="sendFileClicked"
-    />
-    <q-page-sticky position="bottom-right" :offset="[18, 64]" v-show="!bottom">
-      <q-btn
-        round
-        size="md"
-        icon="keyboard_arrow_down"
-        color="accent"
-        @click="scrollBottom"
+      <!-- Message box -->
+      <chat-input
+        ref="chatInput"
+        v-model="message"
+        @sendMessage="sendMessage"
+        @sendFileClicked="sendFileClicked"
       />
-    </q-page-sticky>
-    </div>
-  </div>
+    </q-footer>
+  </q-layout>
 </template>
 
 <script>
@@ -112,7 +121,9 @@ export default {
     }
   },
   created () {
-    this.timer = setInterval(() => { this.now = moment() }, 60000)
+    this.timer = setInterval(() => {
+      this.now = moment()
+    }, 60000)
   },
   destroyed () {
     clearTimeout(this.timer)
@@ -130,17 +141,33 @@ export default {
         insufficientStampNotify()
       }
       if (message !== '') {
-        this.$relayClient.sendMessage({ addr: this.address, text: message, replyDigest: this.replyDigest, stampAmount })
+        this.$relayClient.sendMessage({
+          addr: this.address,
+          text: message,
+          replyDigest: this.replyDigest,
+          stampAmount
+        })
         this.message = ''
         this.replyDigest = null
         this.$nextTick(() => this.$refs.chatInput.$el.focus())
       }
     },
+    toggleMyDrawerOpen () {
+      this.$emit('toggleMyDrawerOpen')
+    },
+    toggleContactDrawerOpen () {
+      this.$emit('toggleContactDrawerOpen')
+    },
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
       if (scrollArea) {
         const scrollTarget = scrollArea.getScrollTarget()
-        this.$nextTick(() => scrollArea.setScrollPosition(scrollTarget.scrollHeight, scrollDuration))
+        this.$nextTick(() =>
+          scrollArea.setScrollPosition(
+            scrollTarget.scrollHeight,
+            scrollDuration
+          )
+        )
       }
     },
     sendFileClicked () {
@@ -156,7 +183,10 @@ export default {
     scrollHandler (details) {
       const scrollArea = this.$refs.chatScroll
       const scrollTarget = scrollArea.getScrollTarget()
-      if (scrollTarget.scrollHeight === details.position + scrollTarget.offsetHeight) {
+      if (
+        scrollTarget.scrollHeight ===
+        details.position + scrollTarget.offsetHeight
+      ) {
         this.bottom = true
       } else {
         this.bottom = false
@@ -164,7 +194,9 @@ export default {
     },
     offsetHeight () {
       // TODO: This isn't reactive enough. It's somewhat slow to recalculate
-      const inputBoxHeight = this.$refs.chatInput ? height(this.$refs.chatInput.$el) : 50
+      const inputBoxHeight = this.$refs.chatInput
+        ? height(this.$refs.chatInput.$el)
+        : 50
       const replyHeight = this.$refs.replyBox ? height(this.$refs.replyBox) : 0
       // Sometimes this returns zero when the component isnt' shown. However, it then dates some time to update properly when switching to it.
       // Set a minimum of 50.
@@ -194,6 +226,9 @@ export default {
       this.$refs.chatInput.focus()
 
       return firstNonReply
+    },
+    contactName () {
+      return this.getContactVuex(this.address).profile.name
     }
   },
   watch: {
