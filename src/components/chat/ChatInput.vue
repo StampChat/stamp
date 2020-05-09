@@ -1,6 +1,5 @@
 <template>
   <div class="row">
-    <q-resize-observer @resize="onResizeInput" />
     <q-toolbar class="q-pl-none">
       <q-btn dense flat color="primary" icon="attach_file" @click="sendFileClicked" />
       <q-input
@@ -37,9 +36,6 @@ export default {
   methods: {
     onInput (event) {
       this.$emit('input', event)
-    },
-    onResizeInput (size) {
-      this.$emit('resize', size)
     },
     sendMessage () {
       if (this.message === '') {
