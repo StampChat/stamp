@@ -189,6 +189,10 @@ export default {
         return null
       }
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
+
+      // Focus input box
+      this.$refs.chatInput.focus()
+
       return firstNonReply
     }
   },
