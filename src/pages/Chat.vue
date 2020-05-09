@@ -4,7 +4,7 @@
     <q-dialog v-model="sendFileOpen" persistent>
       <send-file-dialog :address="address" />
     </q-dialog>
-    <div class="column full-height">
+    <div class="column full-height justify-end">
     <q-scroll-area
       ref="chatScroll"
       class="q-px-md col"
