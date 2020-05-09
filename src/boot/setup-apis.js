@@ -4,15 +4,21 @@ import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils
 import { Wallet } from '../wallet'
 import { getRelayClient } from '../utils/relay-client-factory'
 
-async function getElectrumClient ({ port, host }) {
-  const client = new ElectrumClient('Stamp Wallet', '1.4.1', host, port)
+async function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
+  const { electrumURL, electrumPort } = electrumServers[Math.floor(Math.random() * electrumServers.length)]
+  console.log('Using electrum server:', electrumURL, electrumPort)
+  const client = new ElectrumClient('Stamp Wallet', '1.4.1', electrumURL, electrumPort)
+  await instrumentElectrumClient({
+    client,
+    observables,
+    reconnector: () => createAndBindNewElectrumClient({ Vue, observables, wallet })
+  })
+  // (Re)set state on Vue prototype
+  Vue.prototype.$electrumClient = client
+  wallet.setElectrumClient(client)
+}
 
-  // This must be an object because otherwise the fields will not be
-  // re-wrapped as Vue observables.
-  const observables = {
-    connected: false
-  }
-
+async function instrumentElectrumClient ({ client, observables, reconnector }) {
   const checkConnection = async () => {
     try {
       await client.request('server_ping')
@@ -42,6 +48,7 @@ async function getElectrumClient ({ port, host }) {
   client.connection.socket.on('close', () => {
     console.log('electrum disconnected')
     observables.connected = false
+    reconnector()
   })
 
   client.connection.socket.on('end', (e) => {
@@ -58,8 +65,6 @@ async function getElectrumClient ({ port, host }) {
   } catch (err) {
     console.error(err)
   }
-
-  return { client, observables }
 }
 
 function getWalletClient ({ store }) {
@@ -91,15 +96,15 @@ function getWalletClient ({ store }) {
 }
 
 export default async ({ store, Vue }) => {
-  const { electrumURL, electrumPort } = electrumServers[Math.floor(Math.random() * electrumServers.length)]
-  console.log('Using electrum server:', electrumURL, electrumPort)
-  const { client: electrumClient, observables: electrumObservables } = await getElectrumClient({ host: electrumURL, port: electrumPort })
   // TODO: WE should probably rename this file to something more specific
   // as its instantiating the wallet now also.
   const wallet = getWalletClient({ store })
-  wallet.setElectrumClient(electrumClient)
+  const electrumObservables = Vue.observable({ connected: false })
+  await createAndBindNewElectrumClient({ Vue, observables: electrumObservables, wallet })
   const xPrivKey = store.getters['wallet/getXPrivKey']
+  console.log('xpriv', xPrivKey)
   if (xPrivKey) {
+    console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
     await wallet.init()
   }
@@ -108,8 +113,7 @@ export default async ({ store, Vue }) => {
   relayClient.setToken(relayToken)
 
   Vue.prototype.$wallet = wallet
-  Vue.prototype.$electrumClient = electrumClient
-  Vue.prototype.$electrum = Vue.observable(electrumObservables)
+  Vue.prototype.$electrum = electrumObservables
   Vue.prototype.$relayClient = relayClient
   Vue.prototype.$relay = Vue.observable(relayObservables)
 }
