@@ -203,6 +203,10 @@ export default {
       if (!newActive) {
         return
       }
+
+      // Focus input box
+      this.$refs.chatInput.focus()
+
       const scrollArea = this.$refs.chatScroll
       const scrollTarget = scrollArea.getScrollTarget()
       // Scroll to bottom only if the view was effectively in it's initial state.
