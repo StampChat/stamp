@@ -189,12 +189,12 @@ export default {
   },
   computed: {
     isImportedValid () {
-      return bip39.validateMnemonic(this.importedSeed)
+      return bip39.validateMnemonic(this.importedSeed.trim())
     },
     computedValues () {
       return {
         type: this.tab,
-        importedSeed: this.importedSeed,
+        importedSeed: this.importedSeed.trim(),
         valid: this.isImportedValid,
         generatedSeed: this.generatedSeed
       }
