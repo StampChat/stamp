@@ -93,7 +93,7 @@ import QrcodeVue from 'qrcode.vue'
 import { copyToClipboard } from 'quasar'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
-import formatting from '../../utils/formatting'
+import { formatBalance } from '../../utils/formatting'
 
 export default {
   components: {
@@ -141,7 +141,7 @@ export default {
       return percentage
     },
     formatBalance () {
-      return formatting.formatBalance(this.getBalance())
+      return formatBalance(this.getBalance())
     }
   }
 }

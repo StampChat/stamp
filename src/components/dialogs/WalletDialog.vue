@@ -73,7 +73,7 @@
 import QrcodeVue from 'qrcode.vue'
 import SeedPhraseDialog from './SeedPhraseDialog.vue'
 import { mapGetters } from 'vuex'
-import formatting from '../../utils/formatting'
+import { formatBalance } from '../../utils/formatting'
 import { numAddresses } from '../../utils/constants'
 import { copyToClipboard } from 'quasar'
 
@@ -93,7 +93,7 @@ export default {
     ...mapGetters({
     }),
     getBalance () {
-      return formatting.formatBalance(this.$wallet.balance)
+      return formatBalance(this.$wallet.balance)
     }
   },
   methods: {

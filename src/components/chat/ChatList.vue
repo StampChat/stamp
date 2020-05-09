@@ -74,7 +74,7 @@
 <script>
 import ChatListItem from './ChatListItem.vue'
 import { mapGetters } from 'vuex'
-import formatting from '../../utils/formatting'
+import { formatBalance } from '../../utils/formatting'
 import WalletDialog from '../dialogs/WalletDialog.vue'
 import WalletConnectDialog from '../dialogs/WalletConnectDialog.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
@@ -99,7 +99,7 @@ export default {
       if (!balance) {
         return balance
       }
-      return formatting.formatBalance(balance)
+      return formatBalance(balance)
     }
   },
   computed: {
@@ -114,7 +114,7 @@ export default {
       return this.$electrum.connected
     },
     getBalance () {
-      return formatting.formatBalance(this.$wallet.balance)
+      return formatBalance(this.$wallet.balance)
     }
   }
 }
