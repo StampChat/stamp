@@ -31,7 +31,7 @@
 
           <template v-slot:after>
             <chat
-              v-for="(item, index) in data"
+              v-for="(item, index) in chats"
               v-show="activeChatAddr === index"
               :key="index"
               :address="index"
@@ -91,7 +91,7 @@ export default {
     }
   },
   computed: {
-    ...mapState('chats', ['data', 'activeChatAddr']),
+    ...mapState('chats', ['chats', 'activeChatAddr']),
     ...mapGetters({
       getContact: 'contacts/getContact',
       lastReceived: 'chats/getLastReceived'
