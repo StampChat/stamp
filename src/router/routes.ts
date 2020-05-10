@@ -1,8 +1,8 @@
+import { RouteConfig } from 'vue-router'
 import store from '../store/index'
 
-async function redirectIfNoProfile (to, from, next) {
+async function redirectIfNoProfile (to: any, from: any, next: any) {
   const name = await store.getters['myProfile/getProfile'].name
-  console.log('name', name)
   if (name !== null) {
     next()
   } else {
@@ -10,7 +10,7 @@ async function redirectIfNoProfile (to, from, next) {
   }
 }
 
-const routes = [
+const routes: RouteConfig[] = [
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),

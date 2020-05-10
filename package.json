@@ -1,55 +1,60 @@
 {
   "name": "stamp",
   "version": "0.0.2-alpha.4",
-  "description": "Stamp is a Bitcoin Cash powered relay chat.",
+  "description": " A Bitcoin Cash powered internet relay chat",
   "productName": "Stamp",
   "cordovaId": "org.cashweb.stamp",
   "capacitorId": "",
   "author": "Harry Barber <harrybarber@protonmail.com>",
   "private": true,
   "scripts": {
-    "lint": "eslint --ext .js,.vue src",
+    "lint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore ./",
+    "dev": "quasar dev -m electron",
     "build": "quasar build -m electron -b builder",
     "test": "quasar test --unit jest",
-    "dev": "quasar dev -m electron",
     "generate:protobuffers": "/bin/sh ./generate_protobufs.sh",
     "clean:protobuffers": "git clean -di && git pull"
   },
   "dependencies": {
-    "@quasar/extras": "^1.6.0",
+    "@quasar/extras": "^1.0.0",
+    "@vue/composition-api": "^0.5.0",
     "axios": "^0.18.1",
     "bip39": "^3.0.2",
-    "bitcore-lib-cash": "^8.14.4",
+    "bitcore-lib-cash": "^8.20.1",
     "bluebird": "^3.7.2",
     "electrum-cash": "^1.0.1",
-    "google-protobuf": "^3.11.2",
-    "moment": "^2.24.0",
+    "google-protobuf": "^3.12.0-rc.1",
+    "moment": "^2.25.3",
     "node-forge": "^0.9.1",
     "qrcode.vue": "^1.7.0",
-    "quasar": "^1.9.12",
+    "quasar": "^1.9.5",
     "ramda": "^0.27.0",
     "vcf": "^2.0.6",
     "vue-i18n": "^8.0.0",
     "vuex-persist": "^2.2.0",
     "worker-loader": "^2.0.0",
-    "ws": "^7.2.1"
+    "ws": "^7.3.0"
   },
   "devDependencies": {
-    "@quasar/app": "^1.6.0",
-    "@quasar/quasar-app-extension-icon-genie": "^1.1.3",
+    "@quasar/app": "^1.6.2",
     "@quasar/quasar-app-extension-testing": "^1.0.0",
     "@quasar/quasar-app-extension-testing-unit-jest": "^1.0.0",
-    "@vue/eslint-config-standard": "^4.0.0",
+    "@types/node": "^10.17.15",
+    "@typescript-eslint/eslint-plugin": "^2.17.0",
+    "@typescript-eslint/parser": "^2.17.0",
     "babel-eslint": "^10.0.1",
     "devtron": "^1.4.0",
-    "electron": "^7.0.0",
-    "electron-builder": "^21.0.0",
-    "electron-debug": "^3.0.0",
+    "electron": "^8.0.1",
+    "electron-debug": "^3.0.1",
     "electron-devtools-installer": "^2.2.4",
-    "electron-packager": "^14.1.1",
-    "eslint": "^5.10.0",
-    "eslint-loader": "^2.1.1",
-    "eslint-plugin-vue": "^5.0.0",
+    "eslint": "^6.8.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-loader": "^3.0.3",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "eslint-plugin-vue": "^6.1.2",
     "protoc": "^1.0.4"
   },
   "engines": {
@@ -59,5 +64,8 @@
   },
   "browserslist": [
     "last 1 version, not dead, ie >= 11"
-  ]
+  ],
+  "resolutions": {
+    "@babel/parser": "7.7.5"
+  }
 }
