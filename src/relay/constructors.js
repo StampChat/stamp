@@ -150,7 +150,7 @@ export const constructStealthEntry = function ({ wallet, amount, destPubKey }) {
   const stealthPaymentEntry = new stealth.StealthPaymentEntry()
   const ephemeralPrivKey = cashlib.PrivateKey()
 
-  var [{ transaction: stealthTx, usedIDs: stealthIdsUsed, vouts }] = constructStealthTransaction(wallet, ephemeralPrivKey, destPubKey, amount)
+  const [{ transaction: stealthTx, usedIDs: stealthIdsUsed, vouts }] = constructStealthTransaction(wallet, ephemeralPrivKey, destPubKey, amount)
 
   stealthPaymentEntry.setEphemeralPubKey(ephemeralPrivKey.publicKey.toBuffer())
   const rawStealthTx = stealthTx.toBuffer()

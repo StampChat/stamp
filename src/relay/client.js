@@ -8,7 +8,7 @@ import { pingTimeout, relayReconnectInterval } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
 import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructPayload, constructMessage } from './constructors'
-import { entryToImage } from '../utils/image'
+import { entryToImage, arrayBufferToBase64 } from '../utils/image'
 import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from './crypto'
 import { calcId } from '../wallet/helpers'
 import assert from 'assert'
@@ -80,18 +80,8 @@ export class RelayClient {
     const avatarEntry = entryList.find(isAvatar)
     const rawAvatar = avatarEntry.getEntryData()
 
-    // TODO: Use util function
-    function _arrayBufferToBase64 (buffer) {
-      var binary = ''
-      var bytes = new Uint8Array(buffer)
-      var len = bytes.byteLength
-      for (var i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i])
-      }
-      return window.btoa(binary)
-    }
     const value = avatarEntry.getHeadersList()[0].getValue()
-    const avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
+    const avatarDataURL = 'data:' + value + ';base64,' + arrayBufferToBase64(rawAvatar)
 
     const profile = {
       name,
@@ -178,7 +168,7 @@ export class RelayClient {
       method: 'get',
       url,
       headers: {
-        'Authorization': this.token
+        Authorization: this.token
       },
       params: {
         digest: hexDigest
@@ -189,7 +179,7 @@ export class RelayClient {
   }
 
   async getPayload (addr, digest) {
-    const rawPayload = this.getRawPayload(addr, digest)
+    const rawPayload = await this.getRawPayload(addr, digest)
     const payload = messaging.Payload.deserializeBinary(rawPayload)
     return payload
   }
@@ -211,7 +201,7 @@ export class RelayClient {
         method: 'delete',
         url,
         headers: {
-          'Authorization': this.token
+          Authorization: this.token
         },
         params: {
           digest
@@ -230,7 +220,7 @@ export class RelayClient {
       method: 'put',
       url: url,
       headers: {
-        'Authorization': this.token
+        Authorization: this.token
       },
       data: rawProfile
     })
@@ -242,7 +232,7 @@ export class RelayClient {
       method: 'get',
       url: url,
       headers: {
-        'Authorization': this.token
+        Authorization: this.token
       },
       params: {
         start_time: startTime,
@@ -321,8 +311,9 @@ export class RelayClient {
     this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints, transactions })
 
     // Construct message
+    let { message, usedStampIds, stampTx }
     try {
-      var { message, usedIDs: usedStampIds, stampTx } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
+      ({ message, usedIDs: usedStampIds, stampTx } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount))
       // TODO: These need to come back from the constructMessage API
       // We could have more than one, and more than one transaction in the future (ideally)
       const outpoint = {
@@ -675,6 +666,7 @@ export class RelayClient {
 
     this.events.emit('receivedMessage', { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
   }
+
   async refresh ({ lastReceived } = {}) {
     const wallet = this.wallet
     const myAddressStr = wallet.myAddressStr

@@ -175,7 +175,7 @@ export default {
     nextIntroduction () {
       this.$refs.stepper.next()
     },
-    async nextWallet () {
+    nextWallet () {
       // Reset wallet
       // TODO: This should not be done "behind the back" of the wallet object
       // (e.g. we should not be fiddling with the store directly here)
@@ -226,7 +226,7 @@ export default {
 
         // Try find relay URL on keyserver
         try {
-          var foundRelayUrl = await ksHandler.getRelayUrl(idAddress)
+          const foundRelayUrl = await ksHandler.getRelayUrl(idAddress)
           this.relayUrl = foundRelayUrl
 
           // No URL entry
@@ -321,8 +321,9 @@ export default {
         message: 'Requesting Payment...'
       })
 
+      let paymentDetails
       try {
-        var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+        ({ paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress))
       } catch (err) {
         keyserverDisconnectedNotify()
         throw err
@@ -333,16 +334,18 @@ export default {
       })
 
       // Construct payment
+      let { paymentUrl, payment }
       try {
-        var { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, paymentDetails)
+        ({ paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, paymentDetails))
       } catch (err) {
         insuffientFundsNotify()
         throw err
       }
 
       // Send payment
+      let token
       try {
-        var { token } = await pop.sendPayment(paymentUrl, payment)
+        ({ token } = await pop.sendPayment(paymentUrl, payment))
       } catch (err) {
         paymentFailureNotify()
         throw err
@@ -391,8 +394,9 @@ export default {
       })
 
       const idAddress = this.$wallet.myAddress
+      let relayPaymentRequest
       try {
-        var relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress())
+        relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress())
       } catch (err) {
         console.error(err)
         relayDisconnectedNotify()
@@ -406,8 +410,9 @@ export default {
       })
 
       // Get token from relay server
+      let { paymentUrl, payment }
       try {
-        var { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
+        ({ paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails))
       } catch (err) {
         console.error(err)
         if (err.response) {
@@ -552,7 +557,7 @@ export default {
       return !!(this.relayData.profile.name && this.relayData.profile.avatar && this.relayData.inbox.acceptancePrice)
     }
   },
-  async created () {
+  created () {
     // Reset all messaging
     this.resetChats()
   }

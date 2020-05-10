@@ -91,7 +91,7 @@ export const desktopNotify = function (title, body, icon, callback) {
     icon
   })
   notify.onclick = () => {
-    var window = remote.getCurrentWindow()
+    const window = remote.getCurrentWindow()
     window.show()
     callback()
     notify.close()
