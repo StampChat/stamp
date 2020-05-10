@@ -7,21 +7,11 @@
     </q-dialog>
 
     <q-header bordered>
-      <q-toolbar class="q-pl-none">
-        <q-btn class="q-px-sm bg-primary" flat dense @click="toggleMyDrawerOpen" icon="menu" />
+      <q-toolbar class="q-pl-sm">
         <q-avatar rounded>
           <img :src="contactProfile.avatar" />
         </q-avatar>
         <q-toolbar-title class="h6">{{contactProfile.name}}</q-toolbar-title>
-        <q-space />
-        <q-btn
-          class="q-px-sm"
-          flat
-          dense
-          color="bg-primary"
-          @click="toggleContactDrawerOpen"
-          icon="person"
-        />
       </q-toolbar>
     </q-header>
     <q-page-container>
@@ -148,12 +138,6 @@ export default {
         this.replyDigest = null
         this.$nextTick(() => this.$refs.chatInput.$el.focus())
       }
-    },
-    toggleMyDrawerOpen () {
-      this.$emit('toggleMyDrawerOpen')
-    },
-    toggleContactDrawerOpen () {
-      this.$emit('toggleContactDrawerOpen')
     },
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
