@@ -16,7 +16,7 @@ async function instrumentElectrumClient ({ client, observables, reconnector }) {
   }
 
   const keepAlive = () => {
-    setTimeout(() => {
+    setTimeout(async () => {
       if (!keepAlive) {
         await client.connect()
       }

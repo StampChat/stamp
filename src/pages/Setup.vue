@@ -321,9 +321,8 @@ export default {
         message: 'Requesting Payment...'
       })
 
-      let paymentDetails
       try {
-        ({ paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress))
+        var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
       } catch (err) {
         keyserverDisconnectedNotify()
         throw err
@@ -334,9 +333,8 @@ export default {
       })
 
       // Construct payment
-      let { paymentUrl, payment }
       try {
-        ({ paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, paymentDetails))
+        var { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, paymentDetails)
       } catch (err) {
         insuffientFundsNotify()
         throw err
@@ -410,9 +408,8 @@ export default {
       })
 
       // Get token from relay server
-      let { paymentUrl, payment }
       try {
-        ({ paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails))
+        var { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
       } catch (err) {
         console.error(err)
         if (err.response) {

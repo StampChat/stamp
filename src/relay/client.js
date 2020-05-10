@@ -311,9 +311,8 @@ export class RelayClient {
     this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints, transactions })
 
     // Construct message
-    let { message, usedStampIds, stampTx }
     try {
-      ({ message, usedIDs: usedStampIds, stampTx } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount))
+      var { message, usedIDs: usedStampIds, stampTx } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
       // TODO: These need to come back from the constructMessage API
       // We could have more than one, and more than one transaction in the future (ideally)
       const outpoint = {
@@ -461,7 +460,7 @@ export class RelayClient {
 
     const payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
     if (!payloadDigest.equals(payloadDigestFromServer)) {
-      console.error("Payload received doesn't match digest. Refusing to process message", payloadDigest, payloadDigestFromServer)
+      console.error('Payload received doesn\'t match digest. Refusing to process message', payloadDigest, payloadDigestFromServer)
       return
     }
 
