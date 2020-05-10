@@ -34,6 +34,7 @@
         @click="sendMessage"
         :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
       />
+      <q-input dense outlined style="width: 125px" label="Stamp" suffix="sats" v-bind:value="stampAmount" @input="stampAmountChanged" input-class="text-right" />
     </q-toolbar>
   </div>
 </template>
@@ -49,7 +50,8 @@ export default {
     event: 'input'
   },
   props: {
-    message: String
+    message: String,
+    stampAmount: Number
   },
   methods: {
     focus () {
@@ -69,6 +71,9 @@ export default {
     },
     sendFileClicked () {
       this.$emit('sendFileClicked')
+    },
+    stampAmountChanged (value) {
+      this.$emit('stampAmountChanged', value)
     }
   }
 }
