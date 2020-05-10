@@ -59,13 +59,13 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapMutations } from 'vuex'
 import { copyToClipboard } from 'quasar'
 
 export default {
   props: ['address', 'id', 'message'],
   methods: {
-    ...mapActions({
+    ...mapMutations({
       deleteMessage: 'chats/deleteMessage'
     }),
     sendMessage (...args) {

@@ -225,9 +225,6 @@ export default {
     }
   },
   actions: {
-    deleteMessage ({ commit }, { addr, id }) {
-      commit('deleteMessage', { addr, id })
-    },
     reset ({ commit }) {
       commit('reset')
     },
