@@ -153,8 +153,8 @@ export default {
       }
     },
     stampAmountChanged (stampAmount) {
-      console.log(this.address, stampAmount)
-      this.setStampAmount({ addr: this.address, stampAmount })
+      const stampAmountNumber = Number(stampAmount)
+      this.setStampAmount({ addr: this.address, stampAmount: stampAmountNumber })
     },
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
