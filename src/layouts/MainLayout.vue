@@ -1,8 +1,5 @@
 <template>
   <q-layout view="hHr LpR lff">
-    <q-dialog v-model="walletConnectOpen">
-      <wallet-connect-dialog />
-    </q-dialog>
     <q-drawer
       v-model="myDrawerOpen"
       v-if="loaded"
@@ -65,7 +62,6 @@ export default {
   },
   data () {
     return {
-      walletConnectOpen: false,
       splitterRatio: 200,
       loaded: false,
       myDrawerOpen: false,
@@ -99,16 +95,7 @@ export default {
     ...mapGetters({
       getContact: 'contacts/getContact',
       lastReceived: 'chats/getLastReceived'
-    }),
-    walletConnected () {
-      return this.$electrum.connected
-    }
-  },
-  watch: {
-    walletConnected (newVal, oldVal) {
-      // TODO: Debounce
-      this.walletConnectOpen = !newVal
-    }
+    })
   },
   async created () {
     this.$q.dark.set(this.getDarkMode())
