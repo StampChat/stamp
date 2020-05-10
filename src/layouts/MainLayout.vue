@@ -8,15 +8,14 @@
       v-if="loaded"
       show-if-above
       overlay
-      elevated
+      bordered
       behavior="mobile"
       :width="splitterRatio"
       :breakpoint="400"
     >
       <settings-panel />
     </q-drawer>
-
-    <q-drawer v-model="contactDrawerOpen" show-if-above side="right" :width="300" :breakpoint="400">
+    <q-drawer v-model="contactDrawerOpen" show-if-above side="right" :width="300" :breakpoint="400" bordered>
       <contact-panel
         v-if="activeChatAddr !== null"
         v-model="contactDrawerOpen"
@@ -28,7 +27,6 @@
       <q-page :style-fn="tweak" v-if="loaded">
         <q-splitter
           v-model="splitterRatio"
-          separator-style="width: 1px"
           class="full-height"
           unit="px"
         >
