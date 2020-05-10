@@ -96,7 +96,7 @@ class KeyserverHandler {
       method: 'put',
       url: url,
       headers: {
-        'Authorization': token
+        Authorization: token
       },
       data: rawMetadata
     })

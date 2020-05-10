@@ -85,10 +85,10 @@ export default {
     }
   },
   watch: {
-    updateInterval (newInterval, oldInterval) {
+    updateInterval () {
       this.$emit('input', this.constructSettings)
     },
-    darkMode (newDarkMode, oldDarkMode) {
+    darkMode () {
       this.$emit('input', this.constructSettings)
     }
   }

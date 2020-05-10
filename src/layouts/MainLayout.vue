@@ -97,6 +97,12 @@ export default {
       lastReceived: 'chats/getLastReceived'
     })
   },
+  watch: {
+    walletConnected (newVal) {
+      // TODO: Debounce
+      this.walletConnectOpen = !newVal
+    }
+  },
   async created () {
     this.$q.dark.set(this.getDarkMode())
     // Start relay listener

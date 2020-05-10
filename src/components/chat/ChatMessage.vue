@@ -78,7 +78,7 @@ export default {
   computed: {
     formatedTimestamp () {
       switch (this.message.status) {
-        case 'confirmed':
+        case 'confirmed': {
           const timestamp = this.message.timestamp || this.message.serverTime
           const howLongAgo = moment(timestamp)
           return howLongAgo.calendar(null, {
@@ -89,6 +89,7 @@ export default {
             lastWeek: '[Last] dddd',
             sameElse: 'DD/MM/YYYY'
           })
+        }
         case 'pending':
           return 'sending...'
         case 'error':

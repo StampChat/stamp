@@ -21,7 +21,7 @@ test('Encrypt', () => {
 test('Decrypt', () => {
   const length = 8
   const raw = new Uint8Array(new ArrayBuffer(length))
-  for (const i = 0; i < length; i++) {
+  for (let i = 0; i < length; i++) {
     raw[i] = getRandomInt(255)
   }
   const sourcePrivKey = PrivateKey()

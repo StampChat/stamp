@@ -106,7 +106,7 @@ export default {
     }
   },
   watch: {
-    address: async function (newAddress, oldAddress) {
+    address: async function (newAddress) {
       if (newAddress === '') {
         this.contact = null
         return

@@ -386,7 +386,7 @@ export class Wallet {
       const size = transaction._estimateSize() + transaction.outputs.length
       const overallChangeUtxoCost = minimumOutputAmount + standardUtxoSize * feePerByte + size * feePerByte
       if (delta < overallChangeUtxoCost) {
-        console.log("Can't make another output given currently available funds", delta, overallChangeUtxoCost)
+        console.log('Can\'t make another output given currently available funds', delta, overallChangeUtxoCost)
         // We can't make more outputs without going over the fee.
         break
       }
