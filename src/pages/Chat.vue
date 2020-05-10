@@ -60,9 +60,11 @@
       <chat-input
         ref="chatInput"
         v-model="message"
+        v-bind:stampAmount="stampAmount"
         @sendMessage="sendMessage"
         @sendFileClicked="sendFileOpen = true"
         @sendMoneyClicked="sendMoneyOpen = true"
+        @stampAmountChanged="stampAmountChanged"
       />
     </q-footer>
   </q-layout>
@@ -70,7 +72,7 @@
 
 <script>
 import moment from 'moment'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import { dom } from 'quasar'
 const { height } = dom
 
@@ -129,6 +131,9 @@ export default {
       getAcceptancePrice: 'contacts/getAcceptancePrice',
       getStampAmount: 'chats/getStampAmount'
     }),
+    ...mapActions({
+      setStampAmount: 'chats/setStampAmount'
+    }),
     sendMessage (message) {
       const stampAmount = this.getStampAmount()(this.address)
       const acceptancePrice = this.getAcceptancePrice()(this.address)
@@ -146,6 +151,10 @@ export default {
         this.replyDigest = null
         this.$nextTick(() => this.$refs.chatInput.$el.focus())
       }
+    },
+    stampAmountChanged (stampAmount) {
+      console.log(this.address, stampAmount)
+      this.setStampAmount({ addr: this.address, stampAmount })
     },
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
@@ -198,6 +207,9 @@ export default {
       getMessage: 'chats/getMessage',
       getProfile: 'myProfile/getProfile'
     }),
+    stampAmount () {
+      return Number(this.getStampAmount()(this.address))
+    },
     replyItem () {
       if (!this.replyDigest) {
         return null
