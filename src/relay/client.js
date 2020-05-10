@@ -8,7 +8,7 @@ import { pingTimeout, relayReconnectInterval } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
 import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructPayload, constructMessage } from './constructors'
-import imageUtil from '../utils/image'
+import { entryToImage } from '../utils/image'
 import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from './crypto'
 import { calcId } from '../wallet/helpers'
 import assert from 'assert'
@@ -663,7 +663,7 @@ export class RelayClient {
           amount: stealthValue
         })
       } else if (kind === 'image') {
-        let image = imageUtil.entryToImage(entry)
+        let image = entryToImage(entry)
 
         // TODO: Save to folder instead of in Vuex
         newMsg.items.push({
