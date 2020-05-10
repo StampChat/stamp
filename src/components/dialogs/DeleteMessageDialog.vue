@@ -28,11 +28,11 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapMutations } from 'vuex'
 export default {
   props: ['address', 'index'],
   methods: {
-    ...mapActions({
+    ...mapMutations({
       deleteMessage: 'chats/deleteMessage'
     }),
     async deleteMessageBoth () {
