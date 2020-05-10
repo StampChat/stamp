@@ -15,9 +15,9 @@ export const formatBalance = function (balance) {
 }
 
 export const toElectrumScriptHash = function (addr) {
-  let scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
-  let scriptHashRaw = scriptHash.toBuffer()
-  let digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
-  let digestHexReversed = digest.reverse().toString('hex')
+  const scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
+  const scriptHashRaw = scriptHash.toBuffer()
+  const digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
+  const digestHexReversed = digest.reverse().toString('hex')
   return digestHexReversed
 }

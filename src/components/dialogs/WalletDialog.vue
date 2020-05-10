@@ -113,7 +113,7 @@ export default {
       // Increment address
       // TODO: This should have no idea what number of addresses there are
       this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
-      let privKey = this.$wallet.privKeys[this.paymentAddrCounter]
+      const privKey = this.$wallet.privKeys[this.paymentAddrCounter]
       this.currentAddress = privKey.toAddress('testnet').toString()
     }
   }

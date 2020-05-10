@@ -97,7 +97,7 @@ export default {
       return 'unknown'
     },
     stampPrice () {
-      let amount = stampPrice(this.message.outpoints)
+      const amount = stampPrice(this.message.outpoints)
       return amount + ' sats'
     }
   },

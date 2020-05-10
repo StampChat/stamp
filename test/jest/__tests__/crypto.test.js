@@ -12,69 +12,69 @@ function getRandomInt (max) {
 }
 
 test('Encrypt', () => {
-  let raw = new ArrayBuffer(8)
-  let privKey = PrivateKey()
-  let destPubKey = PrivateKey().toPublicKey()
+  const raw = new ArrayBuffer(8)
+  const privKey = PrivateKey()
+  const destPubKey = PrivateKey().toPublicKey()
   encrypt(raw, privKey, destPubKey)
 })
 
 test('Decrypt', () => {
-  let length = 8
-  let raw = new Uint8Array(new ArrayBuffer(length))
-  for (let i = 0; i < length; i++) {
+  const length = 8
+  const raw = new Uint8Array(new ArrayBuffer(length))
+  for (const i = 0; i < length; i++) {
     raw[i] = getRandomInt(255)
   }
-  let sourcePrivKey = PrivateKey()
-  let sourcePubKey = sourcePrivKey.toPublicKey()
-  let destPrivKey = PrivateKey()
-  let destPubKey = destPrivKey.toPublicKey()
-  let { cipherText, ephemeralPrivKey } = encrypt(raw, sourcePrivKey, destPubKey)
-  let plainText = decrypt(cipherText, destPrivKey, sourcePubKey, ephemeralPrivKey.toPublicKey())
+  const sourcePrivKey = PrivateKey()
+  const sourcePubKey = sourcePrivKey.toPublicKey()
+  const destPrivKey = PrivateKey()
+  const destPubKey = destPrivKey.toPublicKey()
+  const { cipherText, ephemeralPrivKey } = encrypt(raw, sourcePrivKey, destPubKey)
+  const plainText = decrypt(cipherText, destPrivKey, sourcePubKey, ephemeralPrivKey.toPublicKey())
   expect(plainText).toStrictEqual(raw)
 })
 
 test('Stamp Signatures', () => {
-  let preimage = Buffer.from('hello')
-  let digest = cashlib.crypto.Hash.sha256(preimage)
-  let privKey = PrivateKey()
-  let publicKey = privKey.toPublicKey()
-  let stampPublicKey = constructStampPubKey(digest, publicKey)
-  let stampPrivKey = constructStampPrivKey(digest, privKey)
-  let stampPublicKeyDerived = stampPrivKey.toPublicKey()
+  const preimage = Buffer.from('hello')
+  const digest = cashlib.crypto.Hash.sha256(preimage)
+  const privKey = PrivateKey()
+  const publicKey = privKey.toPublicKey()
+  const stampPublicKey = constructStampPubKey(digest, publicKey)
+  const stampPrivKey = constructStampPrivKey(digest, privKey)
+  const stampPublicKeyDerived = stampPrivKey.toPublicKey()
   expect(stampPublicKey.toBuffer()).toStrictEqual(stampPublicKeyDerived.toBuffer())
 })
 
 test('StealthKey', () => {
-  let destPrivKey = PrivateKey()
-  let destPubKey = destPrivKey.toPublicKey()
+  const destPrivKey = PrivateKey()
+  const destPubKey = destPrivKey.toPublicKey()
 
-  let ephemeralPrivKey = PrivateKey()
-  let ephemeralPubKey = ephemeralPrivKey.toPublicKey()
+  const ephemeralPrivKey = PrivateKey()
+  const ephemeralPubKey = ephemeralPrivKey.toPublicKey()
 
-  let stealthPubKey = constructStealthPubKey(ephemeralPrivKey, destPubKey)
+  const stealthPubKey = constructStealthPubKey(ephemeralPrivKey, destPubKey)
 
-  let stealthPrivKey = constructStealthPrivKey(ephemeralPubKey, destPrivKey)
-  let stealthPubKeyExpected = stealthPrivKey.toPublicKey()
+  const stealthPrivKey = constructStealthPrivKey(ephemeralPubKey, destPrivKey)
+  const stealthPubKeyExpected = stealthPrivKey.toPublicKey()
 
   expect(stealthPubKey.toBuffer()).toStrictEqual(stealthPubKeyExpected.toBuffer())
 })
 
 test('EncryptEphemeral', () => {
-  let privKey = PrivateKey()
-  let ephemeralPrivKey = PrivateKey()
-  let entriesDigest = Buffer.from(new ArrayBuffer(32))
+  const privKey = PrivateKey()
+  const ephemeralPrivKey = PrivateKey()
+  const entriesDigest = Buffer.from(new ArrayBuffer(32))
 
   encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
 })
 
 test('DecryptEphemeral', () => {
-  let privKey = PrivateKey()
-  let ephemeralPrivKey = PrivateKey()
-  let entriesDigest = Buffer.from(new ArrayBuffer(32))
+  const privKey = PrivateKey()
+  const ephemeralPrivKey = PrivateKey()
+  const entriesDigest = Buffer.from(new ArrayBuffer(32))
 
-  let cipherText = encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
+  const cipherText = encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
 
-  let newEphemeralPrivKey = decryptEphemeralKey(cipherText, privKey, entriesDigest)
+  const newEphemeralPrivKey = decryptEphemeralKey(cipherText, privKey, entriesDigest)
 
   expect(ephemeralPrivKey.toBuffer()).toStrictEqual(newEphemeralPrivKey.toBuffer())
 })

@@ -85,7 +85,7 @@ export const sentTransactionFailureNotify = function (tx) {
 }
 
 export const desktopNotify = function (title, body, icon, callback) {
-  let notify = new window.Notification(title, {
+  const notify = new window.Notification(title, {
     title,
     body,
     icon

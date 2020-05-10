@@ -74,15 +74,15 @@ export default {
   methods: {
     async send () {
       try {
-        let output = new cashlib.Transaction.Output({
+        const output = new cashlib.Transaction.Output({
           script: cashlib.Script(new cashlib.Address(this.address)),
           satoshis: this.amount
         })
 
         var { transaction, usedIDs } = this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
-        let txHex = transaction.toString()
+        const txHex = transaction.toString()
 
-        let electrumHandler = this.$electrumClient
+        const electrumHandler = this.$electrumClient
         await electrumHandler.request('blockchain.transaction.broadcast', txHex)
         sentTransactionNotify(transaction)
       } catch (err) {

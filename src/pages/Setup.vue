@@ -187,7 +187,7 @@ export default {
       })
 
       // Setup worker
-      let worker = new WalletGenWorker()
+      const worker = new WalletGenWorker()
       worker.onmessage = async (event) => {
         this.$q.loading.show({
           delay: 100,
@@ -195,7 +195,7 @@ export default {
         })
 
         // Prepare wallet
-        let xPrivKeyObj = event.data
+        const xPrivKeyObj = event.data
         this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
         // TODO: We should not have to update two places.
         this.setXPrivKey(this.xPrivKey)
@@ -221,8 +221,8 @@ export default {
           message: 'Searching for existing keyserver metadata...'
         })
 
-        let ksHandler = new KeyserverHandler()
-        let idAddress = this.$wallet.myAddress
+        const ksHandler = new KeyserverHandler()
+        const idAddress = this.$wallet.myAddress
 
         // Try find relay URL on keyserver
         try {
@@ -290,8 +290,8 @@ export default {
     },
     async setUpKeyserver () {
       // Set profile
-      let ksHandler = new KeyserverHandler()
-      let serverUrl = ksHandler.chooseServer()
+      const ksHandler = new KeyserverHandler()
+      const serverUrl = ksHandler.chooseServer()
 
       // Check for existing metadata
       this.$q.loading.show({
@@ -301,8 +301,8 @@ export default {
 
       // Get profile from relay server
       // We do this first to prevent uploading broken URL to keyserver
-      let idAddress = this.$wallet.myAddress
-      let { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
+      const idAddress = this.$wallet.myAddress
+      const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
 
       try {
         this.relayData = await relayClient.getRelayData(idAddress)
@@ -354,8 +354,8 @@ export default {
       })
 
       // Construct metadata
-      let idPrivKey = this.$wallet.identityPrivKey
-      let metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
+      const idPrivKey = this.$wallet.identityPrivKey
+      const metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
 
       // Put to keyserver
       try {
@@ -382,7 +382,7 @@ export default {
       }
     },
     async setupRelay () {
-      let { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
+      const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
 
       // Set filter
       this.$q.loading.show({
@@ -390,7 +390,7 @@ export default {
         message: 'Requesting Payment...'
       })
 
-      let idAddress = this.$wallet.myAddress
+      const idAddress = this.$wallet.myAddress
       try {
         var relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress())
       } catch (err) {
@@ -431,11 +431,11 @@ export default {
       }
 
       // Create metadata
-      let idPrivKey = this.$wallet.identityPrivKey
+      const idPrivKey = this.$wallet.identityPrivKey
 
-      let acceptancePrice = this.relayData.inbox.acceptancePrice
-      let priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
-      let metadata = constructProfileMetadata(this.relayData.profile, priceFilter, idPrivKey)
+      const acceptancePrice = this.relayData.inbox.acceptancePrice
+      const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
+      const metadata = constructProfileMetadata(this.relayData.profile, priceFilter, idPrivKey)
 
       this.$q.loading.show({
         delay: 100,

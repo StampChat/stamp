@@ -3,7 +3,7 @@ export const calcId = function (output) {
 }
 
 export const stampPrice = function (outpoints) {
-  let amount = outpoints
+  const amount = outpoints
     .filter((outpoint) => outpoint.type === 'stamp')
     .reduce(
       (totalSatoshis, stampOutpoint) => stampOutpoint.satoshis + totalSatoshis,

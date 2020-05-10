@@ -103,18 +103,18 @@ export default {
       return state.activeChatAddr
     },
     getLatestMessage: (state) => (addr) => {
-      let nMessages = Object.keys(state.data[addr].messages).length
+      const nMessages = Object.keys(state.data[addr].messages).length
       if (nMessages === 0) {
         return null
       }
 
-      let lastMessageKey = Object.keys(state.data[addr].messages)[nMessages - 1]
-      let lastMessage = state.data[addr].messages[lastMessageKey]
-      let items = lastMessage.items
-      let lastItem = items[items.length - 1]
+      const lastMessageKey = Object.keys(state.data[addr].messages)[nMessages - 1]
+      const lastMessage = state.data[addr].messages[lastMessageKey]
+      const items = lastMessage.items
+      const lastItem = items[items.length - 1]
 
       if (lastItem.type === 'text') {
-        let info = {
+        const info = {
           outbound: lastMessage.outbound,
           text: lastItem.text
         }
@@ -122,7 +122,7 @@ export default {
       }
 
       if (lastItem.type === 'image') {
-        let info = {
+        const info = {
           outbound: lastMessage.outbound,
           text: 'Sent image'
         }
@@ -130,7 +130,7 @@ export default {
       }
 
       if (lastItem.type === 'stealth') {
-        let info = {
+        const info = {
           outbound: lastMessage.outbound,
           text: 'Sent Bitcoin'
         }
@@ -152,7 +152,7 @@ export default {
       state.lastReceived = null
     },
     readAll (state, addr) {
-      let values = Object.values(state.data[addr].messages)
+      const values = Object.values(state.data[addr].messages)
 
       if (values.length === 0) {
         state.data[addr].lastRead = null
@@ -169,8 +169,8 @@ export default {
       state.activeChatAddr = addr
     },
     sendMessageLocal (state, { addr, index, items, outpoints = [], status = 'pending', retryData = null }) {
-      let timestamp = Date.now()
-      let newMsg = {
+      const timestamp = Date.now()
+      const newMsg = {
         outbound: true,
         status,
         items,
@@ -184,7 +184,7 @@ export default {
         return
       }
       // Handle default case
-      let messages = {
+      const messages = {
         index: newMsg
       }
       Vue.set(state.data, addr, { ...defaultContactObject, messages, address: addr })
@@ -202,7 +202,7 @@ export default {
     },
     receiveMessage (state, { addr, index, newMsg }) {
       if (!(addr in state.data)) {
-        let messages = {}
+        const messages = {}
         // TODO: Better indexing
         messages[index] = newMsg
         Vue.set(state.data, addr, { ...defaultContactObject, messages, address: addr })
@@ -235,8 +235,8 @@ export default {
       commit('readAll', addr)
     },
     shareContact ({ commit, rootGetters, dispatch }, { currentAddr, shareAddr }) {
-      let contact = rootGetters['contacts/getContactProfile'](currentAddr)
-      let text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
+      const contact = rootGetters['contacts/getContactProfile'](currentAddr)
+      const text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
       commit('setInputMessage', { addr: shareAddr, text })
       dispatch('setActiveChat', shareAddr)
     },
@@ -272,7 +272,7 @@ export default {
       const acceptable = (newMsg.stampValue >= acceptancePrice)
       // If not focused (and not outbox message) then notify
       if (!document.hasFocus() && !outbound && acceptable) {
-        let contact = rootGetters['contacts/getContact'](copartyAddress)
+        const contact = rootGetters['contacts/getContact'](copartyAddress)
         const textItem = newMsg.items.find(item => item.type === 'text') || { text: '' }
         if (contact.notify) {
           desktopNotify(contact.profile.name, textItem.text, contact.profile.avatar, () => {
