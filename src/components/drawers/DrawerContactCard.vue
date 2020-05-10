@@ -1,7 +1,7 @@
 <template>
   <q-img
-    class="absolute-top"
-    style="height: 130px; background: royalblue"
+    class="absolute-top bg-secondary"
+    style="height: 130px;"
   >
     <q-list class="absolute-bottom bg-transparent q-pa-none">
       <q-item class="bg-transparent q-pa-none">
