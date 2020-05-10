@@ -5,11 +5,6 @@
       <wallet-dialog />
     </q-dialog>
 
-    <!-- Wallet reconnect dialog -->
-    <q-dialog v-model="walletConnectOpen">
-      <wallet-connect-dialog />
-    </q-dialog>
-
     <!-- Relay reconnect dialog -->
     <q-dialog v-model="relayConnectOpen">
       <relay-connect-dialog />
@@ -26,8 +21,6 @@
       <q-item-section
         v-if="!walletConnected"
         side
-        clickable
-        @click="walletConnectOpen=true"
       >
         <q-btn
           icon='account_balance_wallet'
@@ -76,7 +69,6 @@ import ChatListItem from './ChatListItem.vue'
 import { mapGetters } from 'vuex'
 import { formatBalance } from '../../utils/formatting'
 import WalletDialog from '../dialogs/WalletDialog.vue'
-import WalletConnectDialog from '../dialogs/WalletConnectDialog.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 
 export default {
@@ -84,13 +76,11 @@ export default {
   components: {
     ChatListItem,
     WalletDialog,
-    WalletConnectDialog,
     RelayConnectDialog
   },
   data () {
     return {
       walletOpen: false,
-      walletConnectOpen: false,
       relayConnectOpen: false
     }
   },

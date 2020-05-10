@@ -35,6 +35,11 @@ async function instrumentElectrumClient ({ client, observables, reconnector }) {
         await client.connect()
       }
       observables.connected = await checkConnection()
+      if (!observables.connected) {
+        // We were disconnected anyways
+        // Let reconnect logic find another server/reconnect
+        return
+      }
       keepAlive()
     }, electrumPingInterval)
   }

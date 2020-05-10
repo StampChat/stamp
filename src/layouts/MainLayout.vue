@@ -60,7 +60,6 @@ import Chat from '../pages/Chat.vue'
 import ChatList from '../components/chat/ChatList.vue'
 import SettingsPanel from '../components/panels/SettingsPanel.vue'
 import ContactPanel from '../components/panels/ContactPanel.vue'
-import WalletConnectDialog from '../components/dialogs/WalletConnectDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
 
 export default {
@@ -68,8 +67,7 @@ export default {
     Chat,
     ChatList,
     ContactPanel,
-    SettingsPanel,
-    WalletConnectDialog
+    SettingsPanel
   },
   data () {
     return {
