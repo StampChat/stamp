@@ -1,30 +1,29 @@
 <template>
-  <div class="row">
-    <q-toolbar class="q-pl-none">
-      <q-btn dense flat color="primary" icon="attach_file" @click="sendFileClicked" />
-      <q-input
-        ref="inputBox"
-        style="width: 100%;"
-        dense
-        borderless
-        autogrow
-        @keydown.enter.prevent="sendMessage"
-        v-bind:value="message"
-        v-on:input="onInput"
-        placeholder="Write a message..."
-      />
-      <q-space />
-        <q-btn  dense flat color="primary" icon="send" @click="sendMessage" />
-    </q-toolbar>
+<div class="row">
+  <q-toolbar class="q-pl-none">
+    <q-btn dense flat icon="attach_file" @click="sendFileClicked" :color="`${$q.dark.isActive ? 'light' : 'dark'}`"/>
+    <q-input
+      ref="inputBox"
+      class="full-width"
+      dense
+      borderless
+      autogrow
+      @keydown.enter.prevent="sendMessage"
+      v-bind:value="message"
+      v-on:input="onInput"
+      placeholder="Write a message..."
+    />
+    <q-space />
+    <q-btn dense flat icon="send" @click="sendMessage" :color="`${$q.dark.isActive ? 'light' : 'dark'}`" />
+  </q-toolbar>
   </div>
 </template>
 
 <script>
 export default {
-  components: {
-  },
+  components: {},
   data () {
-    return { }
+    return {}
   },
   model: {
     prop: 'message',

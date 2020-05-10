@@ -3,27 +3,37 @@
     <q-dialog v-model="walletConnectOpen">
       <wallet-connect-dialog />
     </q-dialog>
-    <my-drawer
-      v-if="loaded"
+    <q-drawer
       v-model="myDrawerOpen"
-    />
-    <contact-drawer
-      v-if="activeChatAddr !== null"
-      v-model="contactDrawerOpen"
-      :address="activeChatAddr"
-      :contact="getContact(activeChatAddr)"
-    />
-    <main-header v-bind:splitRatio="splitterRatio" @splitting="setSplitRatio" @toggleMyDrawerOpen="toggleMyDrawerOpen" @toggleContactDrawerOpen="toggleContactDrawerOpen"></main-header>
+      v-if="loaded"
+      show-if-above
+      overlay
+      elevated
+      behavior="mobile"
+      :width="splitterRatio"
+      :breakpoint="400"
+    >
+      <settings-panel />
+    </q-drawer>
+
+    <q-drawer v-model="contactDrawerOpen" show-if-above side="right" :width="300" :breakpoint="400">
+      <contact-panel
+        v-if="activeChatAddr !== null"
+        v-model="contactDrawerOpen"
+        :address="activeChatAddr"
+        :contact="getContact(activeChatAddr)"
+      />
+    </q-drawer>
     <q-page-container>
       <q-page :style-fn="tweak" v-if="loaded">
         <q-splitter
           v-model="splitterRatio"
           separator-style="width: 1px"
-          :limits="[minSplitter, maxSplitter]"
-          :style="`height: inherit; min-height: inherit;`"
+          class="full-height"
+          unit="px"
         >
-          <template v-slot:before :style="`height: 100%; min-height: 100%;`">
-            <chat-list :style="`height: 100%; min-height: 100%;`" />
+          <template v-slot:before>
+            <chat-list class="full-height" />
           </template>
 
           <template v-slot:after>
@@ -35,6 +45,8 @@
               :messages="item.messages"
               :active="activeChatAddr === index"
               :style="`height: inherit; min-height: inherit;`"
+              @toggleContactDrawerOpen="toggleContactDrawerOpen"
+              @toggleMyDrawerOpen="toggleMyDrawerOpen"
             />
           </template>
         </q-splitter>
@@ -46,28 +58,23 @@
 <script>
 import Chat from '../pages/Chat.vue'
 import ChatList from '../components/chat/ChatList.vue'
-import MyDrawer from '../components/drawers/MyDrawer.vue'
-import ContactDrawer from '../components/drawers/ContactDrawer.vue'
-import MainHeader from '../components/MainHeader.vue'
+import SettingsPanel from '../components/panels/SettingsPanel.vue'
+import ContactPanel from '../components/panels/ContactPanel.vue'
 import WalletConnectDialog from '../components/dialogs/WalletConnectDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
-import { minSplitter, maxSplitter } from '../utils/constants'
 
 export default {
   components: {
     Chat,
     ChatList,
-    ContactDrawer,
-    MyDrawer,
-    MainHeader,
+    ContactPanel,
+    SettingsPanel,
     WalletConnectDialog
   },
   data () {
     return {
-      minSplitter,
-      maxSplitter,
       walletConnectOpen: false,
-      splitterRatio: 20,
+      splitterRatio: 200,
       loaded: false,
       myDrawerOpen: false,
       contactDrawerOpen: true
