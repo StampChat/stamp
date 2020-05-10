@@ -41,44 +41,44 @@ export class RelayClient {
   }
 
   async profilePaymentRequest (addr) {
-    let url = `${this.httpScheme}://${this.url}/profile/${addr}`
+    const url = `${this.httpScheme}://${this.url}/profile/${addr}`
     return pop.getPaymentRequest(url, 'put')
   }
 
   async getRelayData (addr) {
-    let url = `${this.httpScheme}://${this.url}/profile/${addr}`
-    let response = await axios({
+    const url = `${this.httpScheme}://${this.url}/profile/${addr}`
+    const response = await axios({
       method: 'get',
       url,
       responseType: 'arraybuffer'
     })
-    let metadata = wrapper.AuthWrapper.deserializeBinary(response.data)
+    const metadata = wrapper.AuthWrapper.deserializeBinary(response.data)
 
     // Get PubKey
-    let pubKey = metadata.getPubKey()
+    const pubKey = metadata.getPubKey()
 
-    let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
+    const payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
 
     // Find vCard
     function isVCard (entry) {
       return entry.getKind() === 'vcard'
     }
-    let entryList = payload.getEntriesList()
-    let rawCard = entryList.find(isVCard).getEntryData() // TODO: Cancel if not found
-    let strCard = new TextDecoder().decode(rawCard)
-    let vCard = new VCard().parse(strCard)
+    const entryList = payload.getEntriesList()
+    const rawCard = entryList.find(isVCard).getEntryData() // TODO: Cancel if not found
+    const strCard = new TextDecoder().decode(rawCard)
+    const vCard = new VCard().parse(strCard)
 
-    let name = vCard.data.fn._data
+    const name = vCard.data.fn._data
 
-    // let bio = vCard.data.note._data
-    let bio = ''
+    // const bio = vCard.data.note._data
+    const bio = ''
 
     // Get avatar
     function isAvatar (entry) {
       return entry.getKind() === 'avatar'
     }
-    let avatarEntry = entryList.find(isAvatar)
-    let rawAvatar = avatarEntry.getEntryData()
+    const avatarEntry = entryList.find(isAvatar)
+    const rawAvatar = avatarEntry.getEntryData()
 
     // TODO: Use util function
     function _arrayBufferToBase64 (buffer) {
@@ -90,19 +90,19 @@ export class RelayClient {
       }
       return window.btoa(binary)
     }
-    let value = avatarEntry.getHeadersList()[0].getValue()
-    let avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
+    const value = avatarEntry.getHeadersList()[0].getValue()
+    const avatarDataURL = 'data:' + value + ';base64,' + _arrayBufferToBase64(rawAvatar)
 
-    let profile = {
+    const profile = {
       name,
       bio,
       avatar: avatarDataURL,
       pubKey
     }
-    let inbox = {
+    const inbox = {
       acceptancePrice: 100 // TODO: Parse
     }
-    let relayData = {
+    const relayData = {
       profile,
       inbox
     }
@@ -110,19 +110,19 @@ export class RelayClient {
   }
 
   setUpWebsocket (addr) {
-    let url = `${this.wsScheme}://${this.url}/ws/${addr}`
-    let opts = { headers: { Authorization: this.token } }
-    let socket = new WebSocket(url, opts)
+    const url = `${this.wsScheme}://${this.url}/ws/${addr}`
+    const opts = { headers: { Authorization: this.token } }
+    const socket = new WebSocket(url, opts)
 
     socket.onmessage = event => {
-      let buffer = event.data
-      let timedMessageSet = messaging.TimedMessageSet.deserializeBinary(buffer)
-      let messageList = timedMessageSet.getMessagesList()
+      const buffer = event.data
+      const timedMessageSet = messaging.TimedMessageSet.deserializeBinary(buffer)
+      const messageList = timedMessageSet.getMessagesList()
 
-      let serverTime = timedMessageSet.getServerTime()
-      let receivedTime = Date.now()
-      for (let index in messageList) {
-        let message = messageList[index]
+      const serverTime = timedMessageSet.getServerTime()
+      const receivedTime = Date.now()
+      for (const index in messageList) {
+        const message = messageList[index]
         this.receiveMessage({ serverTime, receivedTime, message }).catch(err => console.error(err))
       }
     }
@@ -161,8 +161,8 @@ export class RelayClient {
     // Get fee
     let acceptancePrice
     try {
-      let filters = await this.getFilter(addr)
-      let priceFilter = filters.getPriceFilter()
+      const filters = await this.getFilter(addr)
+      const priceFilter = filters.getPriceFilter()
       acceptancePrice = priceFilter.getAcceptancePrice()
     } catch (err) {
       acceptancePrice = 'Unknown'
@@ -171,10 +171,10 @@ export class RelayClient {
   }
 
   async getRawPayload (addr, digest) {
-    let url = `${this.httpScheme}://${this.url}/payloads/${addr}`
+    const url = `${this.httpScheme}://${this.url}/payloads/${addr}`
 
-    let hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
-    let response = await axios({
+    const hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
+    const response = await axios({
       method: 'get',
       url,
       headers: {
@@ -189,8 +189,8 @@ export class RelayClient {
   }
 
   async getPayload (addr, digest) {
-    let rawPayload = this.getRawPayload(addr, digest)
-    let payload = messaging.Payload.deserializeBinary(rawPayload)
+    const rawPayload = this.getRawPayload(addr, digest)
+    const payload = messaging.Payload.deserializeBinary(rawPayload)
     return payload
   }
 
@@ -206,7 +206,7 @@ export class RelayClient {
       const changeAddress = changeAddresses[changeAddresses.length * Math.random() << 0]
       await this.wallet.forwardUTXOsToAddress({ utxos: message.outpoints, address: changeAddress })
 
-      let url = `${this.httpScheme}://${this.url}/messages/${this.wallet.myAddressStr}`
+      const url = `${this.httpScheme}://${this.url}/messages/${this.wallet.myAddressStr}`
       await axios({
         method: 'delete',
         url,
@@ -224,8 +224,8 @@ export class RelayClient {
   }
 
   async putProfile (addr, metadata) {
-    let rawProfile = metadata.serializeBinary()
-    let url = `${this.httpScheme}://${this.url}/profile/${addr}`
+    const rawProfile = metadata.serializeBinary()
+    const url = `${this.httpScheme}://${this.url}/profile/${addr}`
     await axios({
       method: 'put',
       url: url,
@@ -237,8 +237,8 @@ export class RelayClient {
   }
 
   async getMessages (addr, startTime, endTime) {
-    let url = `${this.httpScheme}://${this.url}/messages/${addr}`
-    let response = await axios({
+    const url = `${this.httpScheme}://${this.url}/messages/${addr}`
+    const response = await axios({
       method: 'get',
       url: url,
       headers: {
@@ -252,25 +252,25 @@ export class RelayClient {
     })
 
     if (response.status === 200) {
-      let messagePage = messaging.MessagePage.deserializeBinary(response.data)
+      const messagePage = messaging.MessagePage.deserializeBinary(response.data)
       return messagePage
     }
   }
 
   async messagePaymentRequest (addr) {
-    let url = `${this.httpScheme}://${this.url}/messages/${addr}`
+    const url = `${this.httpScheme}://${this.url}/messages/${addr}`
     return pop.getPaymentRequest(url, 'get')
   }
 
   async sendPayment (paymentUrl, payment) {
     // TODO: Relative vs absolute
-    let url = `${this.httpScheme}://${this.url}${paymentUrl}`
+    const url = `${this.httpScheme}://${this.url}${paymentUrl}`
     return pop.sendPayment(url, payment)
   }
 
   async pushMessages (addr, messageSet) {
-    let rawMetadata = messageSet.serializeBinary()
-    let url = `${this.httpScheme}://${this.url}/messages/${addr}`
+    const rawMetadata = messageSet.serializeBinary()
+    const url = `${this.httpScheme}://${this.url}/messages/${addr}`
     await axios({
       method: 'put',
       url: url,
@@ -325,7 +325,7 @@ export class RelayClient {
       var { message, usedIDs: usedStampIds, stampTx } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
       // TODO: These need to come back from the constructMessage API
       // We could have more than one, and more than one transaction in the future (ideally)
-      let outpoint = {
+      const outpoint = {
         type: 'stamp',
         txId: stampTx.id,
         outputIndex: 0,
@@ -340,9 +340,9 @@ export class RelayClient {
       return
     }
 
-    let messageSet = new messaging.MessageSet()
+    const messageSet = new messaging.MessageSet()
     messageSet.addMessages(message)
-    let destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+    const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
 
     const client = this.wallet.electrumClient
     Promise.all(transactions.map(transaction => {
@@ -369,7 +369,7 @@ export class RelayClient {
   // TODO: Fix clients to not use these APIs at all
   sendMessage ({ addr, text, replyDigest, stampAmount }) {
     // Send locally
-    let items = [
+    const items = [
       {
         type: 'text',
         text
@@ -386,7 +386,7 @@ export class RelayClient {
 
   sendStealthPayment ({ addr, stampAmount, amount, memo }) {
     // Send locally
-    let items = [
+    const items = [
       {
         type: 'stealth',
         amount
@@ -489,21 +489,21 @@ export class RelayClient {
       return
     }
 
-    let scheme = payload.getScheme()
+    const scheme = payload.getScheme()
     let entriesRaw
     if (scheme === 0) {
       entriesRaw = payload.getEntries()
     } else if (scheme === 1) {
-      let entriesCipherText = payload.getEntries()
+      const entriesCipherText = payload.getEntries()
 
-      let ephemeralPubKeyRaw = payload.getEphemeralPubKey()
-      let ephemeralPubKey = cashlib.PublicKey.fromBuffer(ephemeralPubKeyRaw)
+      const ephemeralPubKeyRaw = payload.getEphemeralPubKey()
+      const ephemeralPubKey = cashlib.PublicKey.fromBuffer(ephemeralPubKeyRaw)
       if (!outbound) {
         entriesRaw = decrypt(entriesCipherText, identityPrivKey, senderPubKey, ephemeralPubKey)
       } else {
-        let ephemeralPrivKeyEncrypted = payload.getEphemeralPrivKey()
-        let entriesDigest = cashlib.crypto.Hash.sha256(entriesCipherText)
-        let ephemeralPrivKey = decryptEphemeralKey(ephemeralPrivKeyEncrypted, identityPrivKey, entriesDigest)
+        const ephemeralPrivKeyEncrypted = payload.getEphemeralPrivKey()
+        const entriesDigest = cashlib.crypto.Hash.sha256(entriesCipherText)
+        const ephemeralPrivKey = decryptEphemeralKey(ephemeralPrivKeyEncrypted, identityPrivKey, entriesDigest)
         entriesRaw = decryptWithEphemPrivKey(entriesCipherText, ephemeralPrivKey, identityPrivKey, destPubKey)
       }
     } else {
@@ -572,9 +572,9 @@ export class RelayClient {
     let stealthValue = 0
 
     // Decode entries
-    let entries = messaging.Entries.deserializeBinary(entriesRaw)
-    let entriesList = entries.getEntriesList()
-    let newMsg = {
+    const entries = messaging.Entries.deserializeBinary(entriesRaw)
+    const entriesList = entries.getEntriesList()
+    const newMsg = {
       outbound,
       status: 'confirmed',
       items: [],
@@ -582,27 +582,27 @@ export class RelayClient {
       receivedTime,
       outpoints
     }
-    for (let index in entriesList) {
-      let entry = entriesList[index]
+    for (const index in entriesList) {
+      const entry = entriesList[index]
       // If addr data doesn't exist then add it
-      let kind = entry.getKind()
+      const kind = entry.getKind()
       if (kind === 'reply') {
         const entryData = entry.getEntryData()
-        let payloadDigest = Buffer.from(entryData).toString('hex')
+        const payloadDigest = Buffer.from(entryData).toString('hex')
         newMsg.items.push({
           type: 'reply',
           payloadDigest
         })
       } else if (kind === 'text-utf8') {
-        let entryData = entry.getEntryData()
-        let text = new TextDecoder().decode(entryData)
+        const entryData = entry.getEntryData()
+        const text = new TextDecoder().decode(entryData)
         newMsg.items.push({
           type: 'text',
           text
         })
       } else if (kind === 'stealth-payment') {
-        let entryData = entry.getEntryData()
-        let stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
+        const entryData = entry.getEntryData()
+        const stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
 
         // Add stealth outputs
         const outpointsList = stealthMessage.getOutpointsList()
@@ -663,7 +663,7 @@ export class RelayClient {
           amount: stealthValue
         })
       } else if (kind === 'image') {
-        let image = entryToImage(entry)
+        const image = entryToImage(entry)
 
         // TODO: Save to folder instead of in Vuex
         newMsg.items.push({

@@ -12,11 +12,11 @@ export default {
         responseType: 'arraybuffer'
       })
     } catch (err) {
-      let response = err.response
+      const response = err.response
       if (response.status === 402) {
-        let paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
-        let serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
-        let paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
+        const paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
+        const serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
+        const paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
         return { paymentRequest, paymentDetails }
       }
     }
@@ -24,8 +24,7 @@ export default {
 
   async sendPayment (paymentUrl, payment) {
     var rawPayment = payment.serializeBinary()
-    let response
-    response = await axios({
+    const response = await axios({
       method: 'post',
       headers: {
         'Content-Type': 'application/bitcoincash-payment',
@@ -35,18 +34,18 @@ export default {
       data: rawPayment
     })
 
-    let token = response.headers['authorization']
-    let paymentReceipt = response.data
+    const token = response.headers['authorization']
+    const paymentReceipt = response.data
     return { paymentReceipt, token }
   },
 
   async constructPaymentTransaction (wallet, paymentDetails) {
     // Get Outputs
-    let requestOutputs = paymentDetails.getOutputsList()
-    let outputs = requestOutputs.map(reqOutput => {
-      let script = Buffer.from(reqOutput.getScript())
-      let satoshis = reqOutput.getAmount()
-      let output = new cashlib.Transaction.Output({
+    const requestOutputs = paymentDetails.getOutputsList()
+    const outputs = requestOutputs.map(reqOutput => {
+      const script = Buffer.from(reqOutput.getScript())
+      const satoshis = reqOutput.getAmount()
+      const output = new cashlib.Transaction.Output({
         script,
         satoshis
       })
@@ -54,14 +53,14 @@ export default {
     })
 
     // Construct tx
-    let { transaction, usedIDs } = wallet.constructTransaction({ outputs, exactOutputs: true })
-    let rawTransaction = transaction.toBuffer()
+    const { transaction, usedIDs } = wallet.constructTransaction({ outputs, exactOutputs: true })
+    const rawTransaction = transaction.toBuffer()
 
     // Send payment and receive token
-    let payment = new paymentrequest.Payment()
+    const payment = new paymentrequest.Payment()
     payment.addTransactions(rawTransaction)
     payment.setMerchantData(paymentDetails.getMerchantData())
-    let paymentUrl = paymentDetails.getPaymentUrl()
+    const paymentUrl = paymentDetails.getPaymentUrl()
 
     return { payment, paymentUrl, usedIDs }
   }

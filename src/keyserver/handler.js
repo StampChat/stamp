@@ -13,24 +13,24 @@ class KeyserverHandler {
   }
 
   static constructRelayUrlMetadata (relayUrl, privKey) {
-    let relayUrlEntry = new addressmetadata.Entry()
+    const relayUrlEntry = new addressmetadata.Entry()
     relayUrlEntry.setKind('relay-server')
     const rawRelayUrl = new TextEncoder().encode(relayUrl)
     relayUrlEntry.setEntryData(rawRelayUrl)
 
     // Construct payload
-    let payload = new addressmetadata.Payload()
+    const payload = new addressmetadata.Payload()
     payload.setTimestamp(Math.floor(Date.now() / 1000))
     payload.setTtl(31556952) // 1 year
     payload.addEntries(relayUrlEntry)
 
-    let serializedPayload = payload.serializeBinary()
-    let hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
-    let ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
+    const serializedPayload = payload.serializeBinary()
+    const hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
+    const ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
     ecdsa.sign()
 
-    let metadata = new wrapper.AuthWrapper()
-    let sig = ecdsa.sig.toCompact(1).slice(1)
+    const metadata = new wrapper.AuthWrapper()
+    const sig = ecdsa.sig.toCompact(1).slice(1)
     metadata.setPubKey(privKey.toPublicKey().toBuffer())
     metadata.setSignature(sig)
     metadata.setScheme(1)
@@ -40,8 +40,8 @@ class KeyserverHandler {
   }
 
   static async fetchMetadata (keyserver, addr) {
-    let url = `${keyserver}/keys/${addr}`
-    let response = await axios(
+    const url = `${keyserver}/keys/${addr}`
+    const response = await axios(
       {
         method: 'get',
         url: url,
@@ -49,7 +49,7 @@ class KeyserverHandler {
       }
     )
     if (response.status === 200) {
-      let metadata = wrapper.AuthWrapper.deserializeBinary(response.data)
+      const metadata = wrapper.AuthWrapper.deserializeBinary(response.data)
       return metadata
     }
   }
@@ -60,38 +60,38 @@ class KeyserverHandler {
   }
 
   static async paymentRequest (serverUrl, addr) {
-    let url = `${serverUrl}/keys/${addr.toLegacyAddress()}`
+    const url = `${serverUrl}/keys/${addr.toLegacyAddress()}`
     return pop.getPaymentRequest(url, 'put')
   }
 
   async uniformSample (addr) {
     // TODO: Sample correctly
-    let server = this.chooseServer()
+    const server = this.chooseServer()
     return KeyserverHandler.fetchMetadata(server, addr)
   }
 
   async getRelayUrl (addr) {
     // Get metadata
-    let metadata = await this.uniformSample(addr)
-    let payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
+    const metadata = await this.uniformSample(addr)
+    const payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
 
     // Find vCard
     function isRelay (entry) {
       return entry.getKind() === 'relay-server'
     }
-    let entryList = payload.getEntriesList()
-    let entry = entryList.find(isRelay)
+    const entryList = payload.getEntriesList()
+    const entry = entryList.find(isRelay)
     if (!entry) {
       return null
     }
-    let entryData = entry.getEntryData()
-    let relayUrl = new TextDecoder().decode(entryData)
+    const entryData = entry.getEntryData()
+    const relayUrl = new TextDecoder().decode(entryData)
     return relayUrl
   }
 
   static async putMetadata (addr, server, metadata, token) {
-    let rawMetadata = metadata.serializeBinary()
-    let url = `${server}/keys/${addr.toLegacyAddress()}`
+    const rawMetadata = metadata.serializeBinary()
+    const url = `${server}/keys/${addr.toLegacyAddress()}`
     await axios({
       method: 'put',
       url: url,

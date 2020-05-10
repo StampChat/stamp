@@ -51,7 +51,7 @@ export default {
       getLatestMessage: 'chats/getLatestMessage'
     }),
     latestMessageBody () {
-      let info = this.getLatestMessage(this.chatAddr)
+      const info = this.getLatestMessage(this.chatAddr)
       if (info === null) {
         return ''
       }

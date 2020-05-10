@@ -27,12 +27,12 @@ export class MockWalletStorage {
     this.utxos[calcId(output)] = output
   }
   freezeUTXO (id) {
-    let frozenUTXO = this.utxos[id]
+    const frozenUTXO = this.utxos[id]
     delete this.utxos[id]
     this.frozenUTXOs[id] = frozenUTXO
   }
   unfreezeUTXO (id) {
-    let utxo = this.frozenUTXOs[id]
+    const utxo = this.frozenUTXOs[id]
     delete this.frozenUTXOs[id]
     this.utxos[id] = utxo
   }
@@ -71,31 +71,31 @@ export class Wallet {
     this.changeAddresses = {}
     this.electrumScriptHashes = {}
     for (var i = 0; i < numAddresses; i++) {
-      let privKey = xPrivKey.deriveChild(44, true)
+      const privKey = xPrivKey.deriveChild(44, true)
         .deriveChild(145, true)
         .deriveChild(0, true)
         .deriveChild(0)
         .deriveChild(i)
         .privateKey
-      let address = privKey.toAddress('testnet').toLegacyAddress()
+      const address = privKey.toAddress('testnet').toLegacyAddress()
       this.setAddress({ address, privKey })
 
       // Index by script hash
-      let scriptHash = toElectrumScriptHash(address)
+      const scriptHash = toElectrumScriptHash(address)
       this.addElectrumScriptHash({ scriptHash, address, change: false, privKey })
     }
     for (var j = 0; j < numChangeAddresses; j++) {
-      let privKey = xPrivKey.deriveChild(44, true)
+      const privKey = xPrivKey.deriveChild(44, true)
         .deriveChild(145, true)
         .deriveChild(0, true)
         .deriveChild(1)
         .deriveChild(j)
         .privateKey
-      let address = privKey.toAddress('testnet').toLegacyAddress()
+      const address = privKey.toAddress('testnet').toLegacyAddress()
       this.setChangeAddress({ address, privKey })
 
       // Index by script hash
-      let scriptHash = toElectrumScriptHash(address)
+      const scriptHash = toElectrumScriptHash(address)
       this.addElectrumScriptHash({ scriptHash, address, change: true, privKey })
     }
   }
@@ -133,7 +133,7 @@ export class Wallet {
     })
   }
   async updateUTXOFromScriptHash (scriptHash) {
-    let client = this.electrumClient
+    const client = this.electrumClient
     try {
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
       const { address, privKey } = this.getAddressByElectrumScriptHash(scriptHash)
@@ -218,20 +218,20 @@ export class Wallet {
       { concurrency: 10 })
   }
   async startListeners () {
-    let ecl = this.electrumClient
+    const ecl = this.electrumClient
     const addresses = Object.keys(this.allAddresses)
     await ecl.events.on(
       'blockchain.scripthash.subscribe',
       async (result) => {
-        let scriptHash = result[0]
+        const scriptHash = result[0]
         await this.updateUTXOFromScriptHash(scriptHash)
       })
 
     await P.map(addresses, addr => {
-      let scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
-      let scriptHashRaw = scriptHash.toBuffer()
-      let digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
-      let digestHexReversed = digest.reverse().toString('hex')
+      const scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
+      const scriptHashRaw = scriptHash.toBuffer()
+      const digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
+      const digestHexReversed = digest.reverse().toString('hex')
 
       return ecl.request('blockchain.scripthash.subscribe', digestHexReversed)
     },
@@ -245,7 +245,7 @@ export class Wallet {
     const inputIds = utxos.map(utxo => calcId(utxo)).filter(id => id in ourUtxos)
     const utxoSetToUse = inputIds.map((id) => ourUtxos[id])
     let satoshis = 0
-    let signingKeys = []
+    const signingKeys = []
     if (!utxoSetToUse.length) {
       return
     }

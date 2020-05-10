@@ -54,14 +54,14 @@ export default {
     ...mapMutations({ setRelayData: 'myProfile/setRelayData' }),
     async updateRelayData () {
       // Set profile
-      let client = this.$relayClient
+      const client = this.$relayClient
 
       // Create metadata
-      let idPrivKey = this.$wallet.identityPrivKey
+      const idPrivKey = this.$wallet.identityPrivKey
 
-      let acceptancePrice = this.relayData.inbox.acceptancePrice
-      let priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
-      let metadata = constructProfileMetadata(this.relayData.profile, priceFilter, idPrivKey)
+      const acceptancePrice = this.relayData.inbox.acceptancePrice
+      const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
+      const metadata = constructProfileMetadata(this.relayData.profile, priceFilter, idPrivKey)
 
       this.$q.loading.show({
         delay: 100,
@@ -69,7 +69,7 @@ export default {
       })
 
       // Apply remotely
-      let idAddress = this.$wallet.myAddress
+      const idAddress = this.$wallet.myAddress
       try {
         await client.putProfile(idAddress.toLegacyAddress(), metadata)
       } catch (err) {

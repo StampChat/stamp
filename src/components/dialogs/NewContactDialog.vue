@@ -114,12 +114,12 @@ export default {
       this.contact = 'loading'
       try {
         // Validate address
-        let address = cashlib.Address.fromString(newAddress.trim(), 'testnet').toLegacyAddress().toString() // TODO: Make generic
+        const address = cashlib.Address.fromString(newAddress.trim(), 'testnet').toLegacyAddress().toString() // TODO: Make generic
 
         // Pull information from keyserver then relay server
-        let ksHandler = new KeyserverHandler()
-        let relayURL = await ksHandler.getRelayUrl(address)
-        let relayData = await this.$relayClient.getRelayData(address)
+        const ksHandler = new KeyserverHandler()
+        const relayURL = await ksHandler.getRelayUrl(address)
+        const relayData = await this.$relayClient.getRelayData(address)
         relayData.notify = true
         this.contact = relayData
         this.contact.relayURL = relayURL
@@ -134,7 +134,7 @@ export default {
     }),
 
     addContact () {
-      let cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
+      const cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
       this.addContactVuex({ addr: cashAddress, contact: this.contact })
     }
   }

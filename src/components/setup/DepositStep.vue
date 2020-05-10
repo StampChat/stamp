@@ -119,7 +119,7 @@ export default {
     nextAddress () {
       // Increment address
       this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
-      let privKey = this.$wallet.privKeys[this.paymentAddrCounter]
+      const privKey = this.$wallet.privKeys[this.paymentAddrCounter]
       this.currentAddress = privKey.toAddress('testnet').toString() // TODO: Make generic
       console.log(this.currentAddress)
     },
@@ -137,7 +137,7 @@ export default {
   },
   computed: {
     percentageBalance () {
-      let percentage = 100 * Math.min(this.getBalance() / this.recomendedBalance, 1)
+      const percentage = 100 * Math.min(this.getBalance() / this.recomendedBalance, 1)
       return percentage
     },
     formatBalance () {

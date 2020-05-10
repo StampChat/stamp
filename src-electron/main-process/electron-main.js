@@ -2,7 +2,7 @@ import { app, BrowserWindow, nativeImage, nativeTheme, Tray, Menu } from 'electr
 const path = require('path')
 
 // Enable single instance lock
-let isSingleInstance = app.requestSingleInstanceLock()
+const isSingleInstance = app.requestSingleInstanceLock()
 if (!isSingleInstance) {
   app.quit()
 }
@@ -21,7 +21,7 @@ if (process.env.PROD) {
   global.__statics = require('path').join(__dirname, 'statics').replace(/\\/g, '\\\\')
 }
 
-function getNativeIconPath() {
+function getNativeIconPath () {
   switch (process.platform) {
     case 'linux':
       return path.join(__dirname, '../icons/icon.png')
@@ -32,7 +32,7 @@ function getNativeIconPath() {
   }
 }
 
-function getNativeTrayIcon(path) {
+function getNativeTrayIcon (path) {
   const fullsizeImage = nativeImage.createFromPath(path)
   switch (process.platform) {
     case 'linux':
@@ -47,8 +47,8 @@ function getNativeTrayIcon(path) {
 let mainWindow
 let tray = null
 
-function createWindow() {
-  let contextMenu = Menu.buildFromTemplate([
+function createWindow () {
+  const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Open Stamp',
       click: function () {

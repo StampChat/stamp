@@ -82,7 +82,7 @@ export default {
       this.$relayClient.sendMessageImpl(this.message)
     },
     copyMessage () {
-      let text = this.message.items.find(el => el.type === 'text').text
+      const text = this.message.items.find(el => el.type === 'text').text
       copyToClipboard(text).then(() => {
         this.$q.notify({
           message: '<div class="text-center"> Message copied to clipboard </div>',

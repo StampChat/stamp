@@ -9,9 +9,9 @@ function arrayBufferToBase64 (buffer) {
 }
 
 export const entryToImage = function (entry) {
-  let rawAvatar = entry.getEntryData()
+  const rawAvatar = entry.getEntryData()
 
-  let value = entry.getHeadersList()[0].getValue()
-  let avatarDataURL = 'data:' + value + ';base64,' + arrayBufferToBase64(rawAvatar)
+  const value = entry.getHeadersList()[0].getValue()
+  const avatarDataURL = 'data:' + value + ';base64,' + arrayBufferToBase64(rawAvatar)
   return avatarDataURL
 }

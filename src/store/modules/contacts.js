@@ -50,14 +50,14 @@ export default {
       return state.contacts[addr].inbox.acceptancePrice
     },
     getPubKey: (state) => (addr) => {
-      let arr = Uint8Array.from(Object.values(state.contacts[addr].profile.pubKey))
+      const arr = Uint8Array.from(Object.values(state.contacts[addr].profile.pubKey))
       return PublicKey.fromBuffer(arr)
     },
     searchContacts: (state) => (search) => {
-      let result = {}
-      let contacts = state.contacts
-      for (let key in contacts) {
-        let lowerSearch = search.toLowerCase()
+      const result = {}
+      const contacts = state.contacts
+      for (const key in contacts) {
+        const lowerSearch = search.toLowerCase()
         if (contacts[key].profile.name.toLowerCase().includes(lowerSearch) || key.toLowerCase().includes(lowerSearch)) {
           result[key] = contacts[key]
         }
@@ -93,7 +93,7 @@ export default {
   },
   actions: {
     addLoadingContact ({ commit }, { addr, pubKey }) {
-      let contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, pubKey } }
+      const contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, pubKey } }
       commit('addContact', { addr, contact })
     },
     deleteContact ({ commit }, addr) {

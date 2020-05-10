@@ -68,12 +68,12 @@ export default {
       Vue.set(state.utxos, calcId(output), output)
     },
     freezeUTXO (state, id) {
-      let frozenUTXO = state.utxos[id]
+      const frozenUTXO = state.utxos[id]
       Vue.delete(state.utxos, id)
       Vue.set(state.frozenUTXOs, id, frozenUTXO)
     },
     unfreezeUTXO (state, id) {
-      let utxo = state.frozenUTXOs[id]
+      const utxo = state.frozenUTXOs[id]
       Vue.delete(state.frozenUTXOs, id)
       Vue.set(state.utxos, id, utxo)
     }
