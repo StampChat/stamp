@@ -8,14 +8,11 @@
 
     <q-header bordered>
       <q-toolbar class="q-pl-none">
-        <q-btn
-          class="q-px-sm bg-primary"
-          flat
-          dense
-          @click="toggleMyDrawerOpen"
-          icon="menu"
-        />
-        <q-toolbar-title class="h6">{{contactName}}</q-toolbar-title>
+        <q-btn class="q-px-sm bg-primary" flat dense @click="toggleMyDrawerOpen" icon="menu" />
+        <q-avatar rounded>
+          <img :src="contactProfile.avatar" />
+        </q-avatar>
+        <q-toolbar-title class="h6">{{contactProfile.name}}</q-toolbar-title>
         <q-space />
         <q-btn
           class="q-px-sm"
@@ -227,8 +224,8 @@ export default {
 
       return firstNonReply
     },
-    contactName () {
-      return this.getContactVuex(this.address).profile.name
+    contactProfile () {
+      return this.getContactVuex(this.address).profile
     }
   },
   watch: {
