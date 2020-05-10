@@ -6,6 +6,10 @@
       <send-file-dialog :address="address" />
     </q-dialog>
 
+    <q-dialog v-model="sendMoneyOpen" persistent>
+      <send-bitcoin-dialog :address="address" :contact="contactProfile" />
+    </q-dialog>
+
     <q-header bordered>
       <q-toolbar class="q-pl-sm">
         <q-avatar rounded>
@@ -57,7 +61,8 @@
         ref="chatInput"
         v-model="message"
         @sendMessage="sendMessage"
-        @sendFileClicked="sendFileClicked"
+        @sendFileClicked="sendFileOpen = true"
+        @sendMoneyClicked="sendMoneyOpen = true"
       />
     </q-footer>
   </q-layout>
@@ -73,6 +78,7 @@ import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
+import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
 import { donationMessage } from '../utils/constants'
 import { insufficientStampNotify } from '../utils/notifications'
 
@@ -94,13 +100,15 @@ export default {
     ChatMessage,
     SendFileDialog,
     ChatMessageReply,
-    ChatInput
+    ChatInput,
+    SendBitcoinDialog
   },
   data () {
     return {
       timer: null,
       now: moment(),
       sendFileOpen: false,
+      sendMoneyOpen: false,
       bottom: true,
       message: '',
       replyDigest: null,
@@ -150,9 +158,6 @@ export default {
           )
         )
       }
-    },
-    sendFileClicked () {
-      this.sendFileOpen = true
     },
     getContact (outbound) {
       if (outbound) {

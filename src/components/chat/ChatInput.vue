@@ -1,21 +1,40 @@
 <template>
-<div class="row">
-  <q-toolbar class="q-pl-none">
-    <q-btn dense flat icon="attach_file" @click="sendFileClicked" :color="`${$q.dark.isActive ? 'light' : 'dark'}`"/>
-    <q-input
-      ref="inputBox"
-      class="full-width"
-      dense
-      borderless
-      autogrow
-      @keydown.enter.prevent="sendMessage"
-      v-bind:value="message"
-      v-on:input="onInput"
-      placeholder="Write a message..."
-    />
-    <q-space />
-    <q-btn dense flat icon="send" @click="sendMessage" :color="`${$q.dark.isActive ? 'light' : 'dark'}`" />
-  </q-toolbar>
+  <div class="row">
+    <q-toolbar class="q-pl-none">
+      <q-btn
+        dense
+        flat
+        icon="attach_money"
+        @click="sendMoneyClicked"
+        :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
+      />
+      <q-btn
+        dense
+        flat
+        icon="attach_file"
+        @click="sendFileClicked"
+        :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
+      />
+      <q-input
+        ref="inputBox"
+        class="full-width"
+        dense
+        borderless
+        autogrow
+        @keydown.enter.prevent="sendMessage"
+        v-bind:value="message"
+        v-on:input="onInput"
+        placeholder="Write a message..."
+      />
+      <q-space />
+      <q-btn
+        dense
+        flat
+        icon="send"
+        @click="sendMessage"
+        :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
+      />
+    </q-toolbar>
   </div>
 </template>
 
@@ -44,6 +63,9 @@ export default {
         return
       }
       this.$emit('sendMessage', this.message)
+    },
+    sendMoneyClicked () {
+      this.$emit('sendMoneyClicked')
     },
     sendFileClicked () {
       this.$emit('sendFileClicked')
