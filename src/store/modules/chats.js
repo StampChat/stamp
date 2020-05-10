@@ -217,6 +217,16 @@ export default {
     reset ({ commit }) {
       commit('reset')
     },
+    readAll (state, addr) {
+      const values = Object.values(state.data[addr].messages)
+      if (values.length === 0) {
+        state.data[addr].lastRead = null
+      } else {
+        state.data[addr].lastRead = values[values.length - 1].serverTime
+      }
+      state.data[addr].totalUnreadMessages = 0
+      state.data[addr].totalUnreadValue = 0
+    },
     shareContact ({ commit, rootGetters, dispatch }, { currentAddr, shareAddr }) {
       const contact = rootGetters['contacts/getContactProfile'](currentAddr)
       const text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
