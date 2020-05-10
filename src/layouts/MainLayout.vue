@@ -6,7 +6,6 @@
     <q-drawer
       v-model="myDrawerOpen"
       v-if="loaded"
-      show-if-above
       overlay
       bordered
       behavior="mobile"
@@ -15,10 +14,9 @@
     >
       <settings-panel />
     </q-drawer>
-    <q-drawer v-model="contactDrawerOpen" show-if-above side="right" :width="300" :breakpoint="400" bordered>
+    <q-drawer v-model="contactDrawerOpen" v-if="loaded" side="right" :width="300" :breakpoint="400" bordered>
       <contact-panel
         v-if="activeChatAddr !== null"
-        v-model="contactDrawerOpen"
         :address="activeChatAddr"
         :contact="getContact(activeChatAddr)"
       />
@@ -71,7 +69,7 @@ export default {
       splitterRatio: 200,
       loaded: false,
       myDrawerOpen: false,
-      contactDrawerOpen: true
+      contactDrawerOpen: false
     }
   },
   methods: {
