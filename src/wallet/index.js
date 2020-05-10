@@ -14,23 +14,29 @@ export class MockWalletStorage {
     this.utxos = {}
     this.frozenUTXOs = {}
   }
+
   getFrozenUTXOs () {
     return this.frozenUTXOs
   }
+
   removeUTXO (id) {
     delete this.utxos[id]
   }
+
   removeFrozenUTXO (id) {
     delete this.frozenUTXOs[id]
   }
+
   addUTXO (output) {
     this.utxos[calcId(output)] = output
   }
+
   freezeUTXO (id) {
     const frozenUTXO = this.utxos[id]
     delete this.utxos[id]
     this.frozenUTXOs[id] = frozenUTXO
   }
+
   unfreezeUTXO (id) {
     const utxo = this.frozenUTXOs[id]
     delete this.frozenUTXOs[id]
@@ -42,15 +48,18 @@ export class Wallet {
   constructor (storage) {
     this.storage = storage
   }
+
   setElectrumClient (client) {
     this.electrumClient = client
   }
+
   setXPrivKey (xPrivKey) {
     this._xPrivKey = xPrivKey
     this._identityPrivKey = xPrivKey.deriveChild(20102019)
       .deriveChild(0, true)
       .privateKey // TODO: Proper path for this
   }
+
   async init () {
     console.log('initializing wallet')
     this.initAddresses()
@@ -59,12 +68,15 @@ export class Wallet {
     this.fixFrozenUTXOs()
     this.fixUTXOs()
   }
+
   get xPrivKey () {
     return this._xPrivKey
   }
+
   get identityPrivKey () {
     return this._identityPrivKey
   }
+
   initAddresses () {
     const xPrivKey = this.xPrivKey
     this.addresses = {}
@@ -99,15 +111,19 @@ export class Wallet {
       this.addElectrumScriptHash({ scriptHash, address, change: true, privKey })
     }
   }
+
   addElectrumScriptHash ({ scriptHash, address, change, privKey }) {
     this.electrumScriptHashes[scriptHash] = { address, change, privKey }
   }
+
   setAddress ({ address, privKey }) {
     this.addresses[address] = { privKey }
   }
+
   setChangeAddress ({ address, privKey }) {
     this.changeAddresses[address] = { privKey }
   }
+
   refreshUTXOsByAddr ({ addr, outputs }) {
     // Delete all utxos by address
     Object.entries(this.storage.getUTXOs()).forEach(([id, utxo]) => {
@@ -132,6 +148,7 @@ export class Wallet {
       }
     })
   }
+
   async updateUTXOFromScriptHash (scriptHash) {
     const client = this.electrumClient
     try {
@@ -153,11 +170,13 @@ export class Wallet {
       console.error('error deserializing utxo address', err, scriptHash)
     }
   }
+
   async updateHDUTXOs () {
     // Check HD Wallet
     const scriptHashes = Object.keys(this.electrumScriptHashes)
     await P.map(scriptHashes, scriptHash => this.updateUTXOFromScriptHash(scriptHash), { concurrency: 20 })
   }
+
   async fixFrozenUTXO (utxoId) {
     // Unfreeze UTXO if confirmed to be unspent else delete
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
@@ -182,6 +201,7 @@ export class Wallet {
       console.error('error deserializing utxo address', err, utxo)
     }
   }
+
   async fixFrozenUTXOs () {
     // Unfreeze UTXO if confirmed to be unspent else delete, for all frozen UTXOs
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
@@ -192,6 +212,7 @@ export class Wallet {
       },
       { concurrency: 10 })
   }
+
   async fixUTXOs () {
     // Unfreeze UTXO if confirmed to be unspent else delete, for all (non-p2pkh) UTXOs
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
@@ -217,6 +238,7 @@ export class Wallet {
       },
       { concurrency: 10 })
   }
+
   async startListeners () {
     const ecl = this.electrumClient
     const addresses = Object.keys(this.allAddresses)
@@ -237,6 +259,7 @@ export class Wallet {
     },
     { concurrency: 20 })
   }
+
   async forwardUTXOsToAddress ({ utxos, address }) {
     const feePerByte = this.feePerByte
     let transaction = new cashlib.Transaction()
@@ -281,6 +304,7 @@ export class Wallet {
     }
     return { transaction, usedIDs: inputIds }
   }
+
   constructTransaction ({ outputs, exactOutputs = false }) {
     const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
     const standardInputSize = 175 // A few extra bytes
@@ -417,39 +441,49 @@ export class Wallet {
     console.log(transaction)
     return { transaction, usedIDs: usedUtxos.map(utxo => calcId(utxo)) }
   }
+
   get feePerByte () {
     return 2
   }
+
   getAddressByElectrumScriptHash (scriptHash) {
     return this.electrumScriptHashes[scriptHash]
   }
+
   getPaymentAddress (seqNum) {
     return Object.keys(this.addresses)[seqNum]
   }
+
   get balance () {
     return Object.values(this.storage.getUTXOs()).reduce((acc, output) => acc + output.satoshis, 0)
   }
+
   get myAddress () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
     return this.identityPrivKey.toAddress('testnet')
   }
+  
   get myAddressStr () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
     return this.identityPrivKey.toAddress('testnet')
       .toCashAddress()
   }
+
   get allAddresses () {
     return { ...this.addresses, ...this.changeAddresses }
   }
+
   get privKeys () {
     return Object.freeze(Object.values(this.addresses).map(address => Object.freeze(address.privKey)))
   }
+
   unfreezeUTXO (id) {
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.unfreezeUTXO(id)
   }
+
   addUTXO (utxo) {
     assert(utxo.type)
     assert(utxo.privKey)
@@ -458,6 +492,7 @@ export class Wallet {
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.addUTXO(utxo)
   }
+
   removeUTXO (id) {
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.removeUTXO(id)
