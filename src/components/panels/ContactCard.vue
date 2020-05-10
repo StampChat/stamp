@@ -1,7 +1,7 @@
 <template>
-  <q-img class="top bg-secondary" style="height: 130px">
-    <q-list class="absolute-bottom bg-transparent q-pa-none">
-      <q-item class="bg-transparent q-pa-none">
+  <q-card class="bg-secondary q-pa-sm full-width" style="height: 130px" flat square>
+    <q-list class="bg-transparent q-pa-none">
+      <q-item>
         <q-item-section>
           <q-avatar rounded>
             <img :src="avatar" />
@@ -22,7 +22,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item class="bg-transparent q-pa-none">
+      <q-item>
         <q-item-section>
           <q-item-label class="text-weight-bold text-white" lines="1">{{ name }}</q-item-label>
           <q-item-label class="text-white" caption lines="1">{{ address }}</q-item-label>
@@ -32,7 +32,7 @@
         </q-item-section>
       </q-item>
     </q-list>
-  </q-img>
+  </q-card>
 </template>
 
 <script>
