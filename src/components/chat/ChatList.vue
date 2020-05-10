@@ -38,7 +38,7 @@
         </q-item>
       </q-list>
     </q-scroll-area>
-    <q-item-list>
+    <q-list>
       <q-separator />
       <q-item clickable @click="walletOpen=true">
         <q-item-section>
@@ -52,7 +52,7 @@
           <q-btn icon="email" flat round color="red" />
         </q-item-section>
       </q-item>
-    </q-item-list>
+    </q-list>
   </div>
 </template>
 
