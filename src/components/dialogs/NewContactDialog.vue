@@ -114,7 +114,7 @@ export default {
       this.contact = 'loading'
       try {
         // Validate address
-        let address = cashlib.Address.fromString(newAddress, 'testnet').toLegacyAddress().toString() // TODO: Make generic
+        let address = cashlib.Address.fromString(newAddress.trim(), 'testnet').toLegacyAddress().toString() // TODO: Make generic
 
         // Pull information from keyserver then relay server
         let ksHandler = new KeyserverHandler()
