@@ -151,17 +151,6 @@ export default {
       state.data = {}
       state.lastReceived = null
     },
-    readAll (state, addr) {
-      const values = Object.values(state.data[addr].messages)
-
-      if (values.length === 0) {
-        state.data[addr].lastRead = null
-      } else {
-        state.data[addr].lastRead = values[values.length - 1].serverTime
-      }
-      state.data[addr].totalUnreadMessages = 0
-      state.data[addr].totalUnreadValue = 0
-    },
     setActiveChat (state, addr) {
       if (!(addr in state.data)) {
         Vue.set(state.data, addr, { ...defaultContactObject, messages: {}, address: addr })
@@ -231,9 +220,6 @@ export default {
     reset ({ commit }) {
       commit('reset')
     },
-    readAll ({ commit }, addr) {
-      commit('readAll', addr)
-    },
     shareContact ({ commit, rootGetters, dispatch }, { currentAddr, shareAddr }) {
       const contact = rootGetters['contacts/getContactProfile'](currentAddr)
       const text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
@@ -247,12 +233,6 @@ export default {
     },
     startChatUpdater ({ dispatch }) {
       setInterval(() => { dispatch('refresh') }, 1_000)
-    },
-    clearChat ({ commit }, addr) {
-      commit('clearChat', addr)
-    },
-    deleteChat ({ commit }, addr) {
-      commit('deleteChat', addr)
     },
     setStampAmount ({ commit }, { addr, stampAmount }) {
       commit('setStampAmount', { addr, stampAmount })
