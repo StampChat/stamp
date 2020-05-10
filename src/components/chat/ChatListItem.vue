@@ -3,7 +3,6 @@
     :active="isActive"
     active-class="bg-blue-3 text-black"
     clickable
-    v-ripple
     @click="setActiveChat(chatAddr)"
   >
     <q-item-section avatar>

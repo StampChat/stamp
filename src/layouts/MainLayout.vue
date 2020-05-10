@@ -31,7 +31,7 @@
           unit="px"
         >
           <template v-slot:before>
-            <chat-list class="full-height" />
+            <chat-list class="full-height" @toggleContactDrawerOpen="toggleContactDrawerOpen" @toggleMyDrawerOpen="toggleMyDrawerOpen" />
           </template>
 
           <template v-slot:after>
@@ -43,8 +43,6 @@
               :messages="item.messages"
               :active="activeChatAddr === index"
               :style="`height: inherit; min-height: inherit;`"
-              @toggleContactDrawerOpen="toggleContactDrawerOpen"
-              @toggleMyDrawerOpen="toggleMyDrawerOpen"
             />
           </template>
         </q-splitter>
