@@ -1,12 +1,18 @@
 <template>
-  <q-chat-message
-    class='q-py-sm'
-    :name="stampPrice"
-    :avatar="contact.avatar"
-    :sent="message.outbound"
-    :stamp="formatedTimestamp"
-  >
+  <div class="q-pa-none q-ma-sm col rounded-borders bg-dark-3">
     <!-- Context Menu -->
+
+    <!-- Transaction Dialog -->
+    <q-dialog v-model="transactionDialog">
+      <!-- Switch to outpoints -->
+      <transaction-dialog title="Stamp Transaction" :outpoints="message.outpoints" />
+    </q-dialog>
+
+    <!-- Delete Dialog -->
+    <q-dialog v-model="deleteDialog">
+      <delete-message-dialog :address="address" :index="index" />
+    </q-dialog>
+
     <chat-message-menu
       :address="address"
       :id="index"
@@ -16,45 +22,24 @@
       @replyClick="replyClicked({ address, index })"
     />
 
-    <!-- Transaction Dialog -->
-    <q-dialog v-model="transactionDialog">
-      <!-- Switch to outpoints -->
-      <transaction-dialog
-        title="Stamp Transaction"
-        :outpoints="message.outpoints"
-      />
-    </q-dialog>
+    <div class="row">
+      <div class="col-auto q-pa-sm" style="min-width: 100px">
+        <div class="row-auto">{{stampPrice}}</div>
+        <div class="row-auto">{{formatedTimestamp}}</div>
+      </div>
+      <div class="col">
+        <!-- TODO: Assign random color based on seed from name -->
+        <div class="col text-weight-bold" style="border-bottom: 1px solid grey;">{{contact.name}}</div>
+        <chat-message-section :key="index" :items="message.items" :address="address" />
+      </div>
 
-    <!-- Delete Dialog -->
-    <q-dialog v-model="deleteDialog">
-      <delete-message-dialog
-        :address="address"
-        :index="index"
-      />
-    </q-dialog>
-
-    <chat-message-section
-      v-for="(item, index) in message.items"
-      :key="index"
-      :item="item"
-      :end='message.items.length === index + 1'
-      :single='message.items.length === 1'
-      :address="address"
-    />
-
-    <div
-      v-if="message.status==='error'"
-      class='row justify-end q-pt-xs'
-      style="full-width"
-    >
-      <div class='col-auto'>
-        <q-icon
-          name='error'
-          color="red"
-        />
+      <div v-if="message.status==='error'" class="row justify-end q-pt-xs" style="full-width">
+        <div class="col-auto">
+          <q-icon name="error" color="red" />
+        </div>
       </div>
     </div>
-  </q-chat-message>
+  </div>
 </template>
 
 <script>
@@ -96,7 +81,14 @@ export default {
         case 'confirmed':
           const timestamp = this.message.timestamp || this.message.serverTime
           const howLongAgo = moment(timestamp)
-          return moment(this.now).to(howLongAgo)
+          return howLongAgo.calendar(null, {
+            sameDay: 'HH:mm:ss',
+            nextDay: '[Tomorrow] HH:mm:ss',
+            nextWeek: 'dddd',
+            lastDay: 'HH:mm:ss',
+            lastWeek: '[Last] dddd',
+            sameElse: 'DD/MM/YYYY'
+          })
         case 'pending':
           return 'sending...'
         case 'error':
@@ -104,34 +96,11 @@ export default {
       }
       return 'unknown'
     },
-    isText () {
-      return this.message.type === 'text'
-    },
-    isImage () {
-      return this.message.type === 'image'
-    },
-    text () {
-      if (this.message.type === 'text') {
-        return this.message.body
-      } else if (this.message.type === 'stealth') {
-        return this.message.body.memo
-      } else if (this.message.type === 'image') {
-        return this.message.body.caption
-      } else {
-        return 'Unknown'
-      }
-    },
     stampPrice () {
       let amount = stampPrice(this.message.outpoints)
-      if (amount) {
-        return amount + ' sats'
-      } else {
-        // We return newline so that the message doesn't move when switching
-        return '&nbsp'
-      }
+      return amount + ' sats'
     }
   },
-  created () {
-  }
+  created () {}
 }
 </script>

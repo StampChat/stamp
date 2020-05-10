@@ -1,88 +1,72 @@
 <template>
   <div>
-    <div
-      class='q-py-sm'
-      v-if="item.type=='reply'"
-    >
-      <div class='q-pa-sm bg-secondary' style='border-radius: 5px;'>
-        <chat-message-reply v-if="firstItem(getMessage(address, item.payloadDigest))" :item="firstItem(getMessage(address, item.payloadDigest))" />
-        <div v-else> Reply source not found </div>
-      </div>
-    </div>
-    <div
-      :class="single?'q-py-none':'q-py-sm'"
-      v-else-if="item.type=='text'"
-    >
-      {{ item.text }}
-    </div>
-    <div
-      class='q-py-sm'
-      v-else-if="item.type=='image'"
-    >
-      <!-- Image dialog -->
-      <q-dialog v-model="imageDialog">
-        <image-dialog :image="item.image" />
-      </q-dialog>
+    <q-dialog v-model="imageDialog">
+      <image-dialog :image="image" />
+    </q-dialog>
 
-      <q-img
-        :src="item.image"
-        contain
-        style="width: 10vw;"
-        @click="imageDialog = true"
-      />
-    </div>
-    <div
-      class='q-py-sm'
-      v-else-if="item.type=='stealth'"
-    >
-      <div class='col q-pb-xs'>
-        <div class='row'>
-          <div class='col-auto'>
-            <q-icon
-              name='attach_money'
-              size='md'
-              dense
-              color='green'
-            />
-          </div>
-          <div class='col q-px-sm q-py-sm'>
-            Sent {{ item.amount }} satoshis
-          </div>
-        </div>
+    <template v-for="(item, index) in items">
+      <div class="row-auto q-pa-sm text-left bg-info rounded-borders" v-bind:key="index" v-if="item.type=='reply'">
+        <span class="text-weight-bold">Replying To:</span>
+        <chat-message-section
+          class="q-pa-sm row-auto "
+          style="border-radius: 5px;"
+          :items="getMessage(address, item.payloadDigest).items"
+          :address="address"
+        />
       </div>
-    </div>
-    <q-separator v-if="!end" />
+      <div
+        class="row-auto q-pa-sm text-left"
+        v-bind:key="index"
+        v-if="item.type=='text'"
+      >{{ item.text }}</div>
+      <div class="row-auto q-pa-sm text-left" v-bind:key="index" v-if="item.type=='image'">
+        <q-img
+          :src="item.image"
+          contain
+          style="width: 10vw;"
+          @click="()=> showImageDialog(item.image)"
+        />
+      </div>
+      <div class="row-auto q-pa-sm text-left" v-bind:key="index" v-if="item.type=='stealth'">
+        <q-icon name="attach_money" size="sm" dense />
+        {{ formatSats(item.amount) }}
+      </div>
+    </template>
   </div>
 </template>
 
 <script>
+import { formatBalance } from '../../utils/formatting'
 import ImageDialog from '../../components/dialogs/ImageDialog'
-import ChatMessageReply from './ChatMessageReply'
 import { mapGetters } from 'vuex'
 
 export default {
-  props: ['item', 'end', 'single', 'address'],
+  name: 'chat-message-section',
+  props: ['items', 'address', 'outbound'],
   components: {
-    ImageDialog,
-    ChatMessageReply
+    ImageDialog
   },
   data () {
     return {
-      imageDialog: false
+      imageDialog: false,
+      image: null
     }
   },
   methods: {
-    firstItem (msg) {
-      if (msg) {
-        const firstNonReply = msg.items.find(item => item.type !== 'reply')
-        return firstNonReply
-      }
-    }
-  },
-  computed: {
     ...mapGetters({
-      getMessage: 'chats/getMessage'
-    })
+      getMessageVuex: 'chats/getMessage'
+    }),
+    formatSats (value) {
+      return formatBalance(Number(value))
+    },
+    showImageDialog (image) {
+      this.image = image
+      this.imageDialog = true
+    },
+    getMessage (address, payloadDigest) {
+      const message = this.getMessageVuex()(address, payloadDigest)
+      return message || { items: [] }
+    }
   }
 }
 </script>

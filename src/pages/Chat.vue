@@ -20,25 +20,25 @@
     </q-header>
     <q-page-container>
       <q-page>
-        <q-scroll-area ref="chatScroll" class="q-px-md absolute full-width full-height">
-          <q-chat-message
-            avatar="~/assets/cashweb-avatar.png"
-            :sent="false"
-            :text="[
-                donationMessage
-                ]"
-            size="6"
-          />
+        <q-scroll-area ref="chatScroll" class="q-px-none absolute full-width full-height">
           <chat-message
-            v-for="(chatMessage, index) in messages"
-            :key="index"
-            :address="address"
-            :message="chatMessage"
-            :contact="getContact(chatMessage.outbound)"
-            :index="index"
-            :now="now"
-            @replyClicked="({ address, index }) => setReply(index)"
+            :sent="false"
+            :contact="{name: 'Stamp Developers'}"
+            :message="{items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date()}"
+            index="NA"
+            key="NA"
           />
+          <template v-for="(chatMessage, index) in messages">
+            <chat-message
+              :key="index"
+              :address="address"
+              :message="chatMessage"
+              :contact="getContact(chatMessage.outbound)"
+              :index="index"
+              :now="now"
+              @replyClicked="({ address, index }) => setReply(index)"
+            />
+          </template>
           <q-scroll-observer debounce="500" @scroll="scrollHandler" />
         </q-scroll-area>
         <q-page-sticky position="bottom-right" :offset="[18, 18]" v-show="!bottom">
