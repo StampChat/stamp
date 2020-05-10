@@ -1,3 +1,4 @@
+import assert from 'assert'
 import Vue from 'vue'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../wallet/helpers'
@@ -242,6 +243,7 @@ export default {
       setInterval(() => { dispatch('refresh') }, 1_000)
     },
     setStampAmount ({ commit }, { addr, stampAmount }) {
+      assert(typeof stampAmount === 'number')
       commit('setStampAmount', { addr, stampAmount })
     },
     async receiveMessage ({ dispatch, commit, rootGetters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {

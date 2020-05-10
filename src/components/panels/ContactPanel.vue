@@ -170,9 +170,9 @@ import SendBitcoinDialog from '../dialogs/SendBitcoinDialog.vue'
 
 Vue.filter('truncate', function (text, length, clamp) {
   clamp = clamp || '...'
-  var node = document.createElement('div')
+  const node = document.createElement('div')
   node.innerHTML = text
-  var content = node.textContent
+  const content = node.textContent
   return content.length > length ? content.slice(0, length) + clamp : content
 })
 
@@ -212,10 +212,11 @@ export default {
         return this.getStampAmount(this.address)
       },
       set (amount) {
-        if (isNaN(amount)) {
+        const amountNumber = Number(amount)
+        if (isNaN(amountNumber)) {
           return
         }
-        this.setStampAmount({ addr: this.address, stampAmount: amount })
+        this.setStampAmount({ addr: this.address, stampAmount: amountNumber })
       }
     }
   },
