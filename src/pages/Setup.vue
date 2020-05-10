@@ -36,6 +36,7 @@
         </q-step>
 
         <q-step
+          v-if="!isBasic"
           :name="4"
           title="Choose a relay server"
           icon="email"
@@ -52,6 +53,7 @@
           <profile-step v-model="relayData" />
         </q-step>
         <q-step
+          v-if="!isBasic"
           :name="6"
           title="Settings"
           icon="build"
@@ -61,51 +63,16 @@
         <template v-slot:navigation>
           <q-stepper-navigation>
             <q-btn
-              v-if="step === 1"
               @click="next()"
               color="primary"
-              label="Continue"
-            />
-            <q-btn
-              v-else-if="step === 2"
-              @click="nextWallet()"
-              color="primary"
-              :label="seedData.type==='new'?'New Wallet':'Import Wallet'"
-              :disable="!electrumConnected || !isWalletValid"
-            />
-            <q-btn
-              v-else-if="step === 3"
-              @click="next()"
-              color="primary"
-              :disable="!electrumConnected"
-              label="Continue"
-            />
-            <q-btn
-              v-else-if="step === 4"
-              @click="nextKeyserver()"
-              color="primary"
-              :disable="!electrumConnected"
-              label="Continue"
-            />
-            <q-btn
-              v-else-if="step === 5"
-              @click="nextRelay()"
-              color="primary"
-              :disable="!electrumConnected || !isRelayValid"
-              label="Continue"
-            />
-            <q-btn
-              v-else
-              @click="nextSettings()"
-              color="primary"
-              :disable="!electrumConnected || settings === null"
-              label='Finish'
+              :label="forwardLabel()"
+              :disable="forwardDisabled()"
             />
             <q-btn
               v-if="step > 1"
               flat
               color="primary"
-              @click="$refs.stepper.previous()"
+              @click="previous()"
               label="Back"
               class="q-ml-sm"
             />
@@ -156,6 +123,9 @@ export default {
     ProfileStep,
     SettingsStep
   },
+  props: {
+    isBasic: Boolean
+  },
   data () {
     return {
       step: 1,
@@ -202,7 +172,7 @@ export default {
       setSeedPhrase: 'wallet/setSeedPhrase',
       updateInterval: 'contacts/setUpdateInterval'
     }),
-    next () {
+    nextIntroduction () {
       this.$refs.stepper.next()
     },
     async nextWallet () {
@@ -286,6 +256,22 @@ export default {
         this.seed = this.seedData.importedSeed
       }
       worker.postMessage(this.seed)
+    },
+    async nextDeposit () {
+      if (this.isBasic) {
+        try {
+          await this.setUpKeyserver()
+        } catch (err) {
+          console.error(err)
+          this.$q.loading.hide()
+          return
+        }
+
+        this.$q.loading.hide()
+        this.$refs.stepper.goTo(5)
+      } else {
+        this.$refs.stepper.next()
+      }
     },
     async nextKeyserver () {
       try {
@@ -389,7 +375,11 @@ export default {
       }
 
       this.$q.loading.hide()
-      this.$refs.stepper.next()
+      if (this.isBasic) {
+        this.nextSettings()
+      } else {
+        this.$refs.stepper.next()
+      }
     },
     async setupRelay () {
       let { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
@@ -469,11 +459,86 @@ export default {
       this.setRelayData(this.relayData)
       this.setSeedPhrase(this.seed)
     },
-    nextSettings () {
+    setupSettings () {
       this.darkMode(this.settings.appearance.darkMode)
       this.$q.dark.set(this.settings.appearance.darkMode)
       this.updateInterval(this.settings.networking.updateInterval * 1_000)
+    },
+    nextSettings () {
+      this.setupSettings()
       this.$router.push('/')
+    },
+    next () {
+      switch (this.step) {
+        case 1:
+          this.nextIntroduction()
+          break
+        case 2:
+          this.nextWallet()
+          break
+        case 3:
+          this.nextDeposit()
+          break
+        case 4:
+          this.nextKeyserver()
+          break
+        case 5:
+          this.nextRelay()
+          break
+        case 6:
+          this.nextSettings()
+      }
+    },
+    forwardLabel () {
+      switch (this.step) {
+        case 1:
+          return 'Continue'
+        case 2:
+          return (this.seedData.type === 'new') ? 'New Wallet' : 'Import Wallet'
+        case 3:
+          return 'Continue'
+        case 4:
+          return 'Continue'
+        case 5:
+          return this.isBasic ? 'Finish' : 'Continue'
+        case 6:
+          return 'Finish'
+      }
+    },
+    forwardDisabled () {
+      // Cannot progress while electrum is disconnected
+      if (!this.electrumConnected) {
+        return true
+      }
+
+      switch (this.step) {
+        case 2:
+          return !this.isWalletValid
+        case 5:
+          return !this.isRelayValid
+        case 6:
+          return (this.settings === null)
+      }
+      return false
+    },
+    previous () {
+      switch (this.step) {
+        case 4:
+          if (this.isBasic) {
+            this.$refs.stepper.goTo(2)
+            return
+          }
+      }
+      this.$refs.stepper.previous()
+    }
+  },
+  watch: {
+    isBasic (newValue, oldValue) {
+      if (newValue && this.step === 4) {
+        this.step = 3
+      } else if (newValue && this.step === 6) {
+        this.step = 5
+      }
     }
   },
   computed: {

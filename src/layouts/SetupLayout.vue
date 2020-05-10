@@ -1,10 +1,10 @@
 <template>
   <q-layout view="hHh Lpr fFf">
     <q-page-container>
-      <router-view />
+      <router-view :isBasic = "isBasic" />
     </q-page-container>
 
-    <status-footer />
+    <status-footer v-model="isBasic" />
   </q-layout>
 </template>
 
@@ -15,7 +15,8 @@ export default {
   components: { StatusFooter },
   data () {
     return {
-      leftDrawer: true
+      leftDrawer: true,
+      isBasic: true
     }
   }
 }
