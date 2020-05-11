@@ -29,7 +29,7 @@
         <div class="text-subtitle1 text-bold"> Create a Profile </div>
       </q-card-section>
       <q-card-section>
-        <profile v-bind:input="innerData" @input="innerDataChanged"/>
+        <profile v-model="innerData" />
       </q-card-section>
     </q-card>
   </div>
@@ -49,17 +49,15 @@ export default {
   props: {
     relayData: Object
   },
-  data () {
-    return {
-      innerData: this.relayData
-    }
-  },
-  methods: {
-    innerDataChanged: function (data) {
-      this.$emit('input', data)
-    }
-  },
   computed: {
+    innerData: {
+      get () {
+        return this.relayData
+      },
+      set (val) {
+        this.$emit('input', val)
+      }
+    },
     getMyAddressStr () {
       return this.$wallet.myAddressStr
     }
