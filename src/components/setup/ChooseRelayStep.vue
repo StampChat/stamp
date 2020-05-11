@@ -22,8 +22,7 @@
       <q-card-section>
         <q-select
           outlined
-          v-bind:input="relayUrl"
-          @input="relayUrlChanged"
+          v-model="innerRelayUrl"
           use-input
           hide-selected
           fill-input
@@ -53,16 +52,19 @@
 import { defaultAcceptancePrice, relayUrlOptions } from '../../utils/constants'
 
 export default {
+  model: {
+    prop: 'relayUrl',
+    event: 'input'
+  },
   props: {
-    // This is the relay URL
-    value: {
-      type: String
+    relayUrl: {
+      type: String,
+      required: true
     }
   },
   data () {
     return {
       relayUrls: relayUrlOptions,
-      relayUrl: this.value,
       acceptancePrice: defaultAcceptancePrice,
       options: []
     }
@@ -89,11 +91,17 @@ export default {
       const shell = require('electron').shell
       event.preventDefault()
       shell.openExternal('https://github.com/cashweb/cash-relay')
-    },
-    relayUrlChanged (newUrl) {
-      this.$emit('input', newUrl)
+    }
+  },
+  computed: {
+    innerRelayUrl: {
+      get () {
+        return this.relayUrl
+      },
+      set (val) {
+        this.$emit('input', val)
+      }
     }
   }
-
 }
 </script>

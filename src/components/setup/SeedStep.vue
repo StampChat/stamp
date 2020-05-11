@@ -149,20 +149,27 @@ import { infoNotify } from '../../utils/notifications'
 const bip39 = require('bip39')
 
 export default {
+  model: {
+    prop: 'seedData',
+    event: 'input'
+  },
   props: {
-    // value: {
+    // seedData: {
     // type: 'new',
     // importedSeed: '',
-    // valid: false
+    // valid: false,
     // generatedSeed: '',
     // }
-    value: Object
+    seedData: {
+      type: Object,
+      required: true
+    }
   },
   data () {
     return {
       generatedSeed: bip39.generateMnemonic(),
-      importedSeed: this.value.importedSeed,
-      tab: this.value.type
+      importedSeed: this.seedData.importedSeed,
+      tab: this.seedData.type
     }
   },
   methods: {

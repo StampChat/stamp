@@ -5,7 +5,7 @@
         <div class="text-subtitle1 text-bold"> Tweak Settings </div>
       </q-card-section>
       <q-card-section>
-        <settings v-bind:value="innerData" @input="settingsChanged"/>
+        <settings v-model="innerSettingsChanged" />
       </q-card-section>
     </q-card>
   </div>
@@ -23,17 +23,24 @@ export default {
     event: 'input'
   },
   props: {
-    settingsData: Object
+    settingsData: {
+      type: Object,
+      required: true
+    }
   },
   data () {
     return {
       innerData: this.settingsData
     }
   },
-  methods: {
-    settingsChanged (value) {
-      console.log(value)
-      this.$emit('input', this.value)
+  computed: {
+    innerSettingsChanged: {
+      get () {
+        return this.settingsData
+      },
+      set (val) {
+        this.$emit('input', val)
+      }
     }
   }
 }
