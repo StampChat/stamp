@@ -63,7 +63,7 @@ export class Wallet {
   async init () {
     console.log('initializing wallet')
     this.initAddresses()
-    this.updateHDUTXOs()
+    await this.updateHDUTXOs()
     await this.startListeners()
     await this.fixFrozenUTXOs()
     await this.fixUTXOs()
