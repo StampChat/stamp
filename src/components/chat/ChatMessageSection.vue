@@ -10,7 +10,7 @@
         <chat-message-section
           class="q-pa-sm row-auto "
           style="border-radius: 5px;"
-          :items="getMessage(address, item.payloadDigest).items"
+          :items="getMessage(item.payloadDigest).items"
           :address="address"
         />
       </div>
@@ -54,7 +54,7 @@ export default {
   },
   methods: {
     ...mapGetters({
-      getMessageVuex: 'chats/getMessage'
+      getMessageByPayloadVuex: 'chats/getMessageByPayload'
     }),
     formatSats (value) {
       return formatBalance(Number(value))
@@ -63,8 +63,8 @@ export default {
       this.image = image
       this.imageDialog = true
     },
-    getMessage (address, payloadDigest) {
-      const message = this.getMessageVuex()(address, payloadDigest)
+    getMessage (payloadDigest) {
+      const message = this.getMessageByPayloadVuex()(payloadDigest)
       return message || { items: [] }
     }
   }

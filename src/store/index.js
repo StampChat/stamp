@@ -37,13 +37,13 @@ const vuexLocal = new VuexPersistence({
           token: path(['relayClient', 'token'], newState)
         },
         chats: {
-          data: map(addressData => {
+          chats: map(addressData => {
             return {
-              messages: {},
+              messages: [],
               stampAmount: path(['stampAmount'], addressData),
               lastRead: path(['lastRead'], addressData)
             }
-          }, pathOr({}, ['chats', 'data'], newState))
+          }, pathOr({}, ['chats', 'chats'], newState))
         },
         version: STORE_SCHEMA_VERSION,
         myProfile: newState.myProfile
@@ -64,7 +64,7 @@ const vuexLocal = new VuexPersistence({
         token: path(['relayClient', 'token'], state)
       },
       chats: {
-        data: map(addressData => {
+        chats: map(addressData => {
           return ({
             lastRead: addressData.lastRead,
             // TODO: We need to save this remotely somewhere.

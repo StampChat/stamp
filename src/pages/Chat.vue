@@ -28,13 +28,13 @@
             index="NA"
             key="NA"
           />
-          <template v-for="(chatMessage, index) in messages">
+          <template v-for="chatMessage in messages">
             <chat-message
-              :key="index"
+              :key="chatMessage.payloadDigest"
               :address="address"
               :message="chatMessage"
               :contact="getContact(chatMessage.outbound)"
-              :index="index"
+              :index="chatMessage.payloadDigest"
               :now="now"
               @replyClicked="({ address, index }) => setReply(index)"
             />
@@ -90,8 +90,8 @@ export default {
   props: {
     address: String,
     messages: {
-      type: Object,
-      default: () => {}
+      type: Array,
+      default: () => []
     },
     active: {
       type: Boolean,
@@ -204,7 +204,7 @@ export default {
   computed: {
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
-      getMessage: 'chats/getMessage',
+      getMessageByPayload: 'chats/getMessageByPayload',
       getProfile: 'myProfile/getProfile'
     }),
     stampAmount () {
@@ -214,7 +214,7 @@ export default {
       if (!this.replyDigest) {
         return null
       }
-      const msg = this.getMessage(this.address, this.replyDigest)
+      const msg = this.getMessageByPayload(this.replyDigest)
       if (!msg) {
         return null
       }

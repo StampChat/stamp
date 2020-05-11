@@ -7,7 +7,7 @@ import { desktopNotify } from '../../utils/notifications'
 const defaultContactObject = { inputMessage: '', lastRead: null, stampAmount: defaultStampAmount, totalUnreadMessages: 0, totalUnreadValue: 0, totalValue: 0 }
 
 function calculateUnreadAggregates (messages, lastReadTime) {
-  const messageValues = Object.values(messages)
+  const messageValues = messages
     .filter(message => !message.outbound)
     .map((message) => {
       return {
@@ -25,17 +25,18 @@ function calculateUnreadAggregates (messages, lastReadTime) {
   }
 }
 
-export function rehydateChat (chats) {
-  if (!chats) {
+export function rehydateChat (chatState) {
+  if (!chatState) {
     return
   }
 
-  chats.messages = chats.messages || {}
+  chatState.messages = chatState.messages || {}
 
-  if (chats.data) {
-    for (const contactAddress in chats.data) {
-      const contact = chats.data[contactAddress]
+  if (chatState.chats) {
+    for (const contactAddress in chatState.chats) {
+      const contact = chatState.chats[contactAddress]
       contact.address = contactAddress
+      contact.messages = []
       if (contact.messsages) {
         delete contact.messsages
         contact.messages = {}
@@ -55,14 +56,11 @@ export default {
   namespaced: true,
   state: {
     activeChatAddr: null,
-    data: {},
+    chats: {},
     messages: {},
     lastReceived: null
   },
   getters: {
-    getMessage: (state) => (addr, index) => {
-      return state.data[addr].messages[index]
-    },
     getMessageByPayload: (state) => (index) => {
       if (!state.messages) {
         return null
@@ -70,10 +68,10 @@ export default {
       return state.messages[index]
     },
     getNumUnread: (state) => (addr) => {
-      return state.data[addr] ? state.data[addr].totalUnreadMessages : 0
+      return state.chats[addr] ? state.chats[addr].totalUnreadMessages : 0
     },
     getSortedChatOrder (state) {
-      const sortedOrder = Object.values(state.data).sort(
+      const sortedOrder = Object.values(state.chats).sort(
         (contactA, contactB) => {
           if (contactB.totalUnreadValue - contactA.totalUnreadValue !== 0) {
             return contactB.totalUnreadValue - contactA.totalUnreadValue
@@ -98,19 +96,19 @@ export default {
       return sortedOrder
     },
     getStampAmount: (state) => (addr) => {
-      return state.data[addr].stampAmount || defaultStampAmount
+      return state.chats[addr].stampAmount || defaultStampAmount
     },
     getActiveChat (state) {
       return state.activeChatAddr
     },
     getLatestMessage: (state) => (addr) => {
-      const nMessages = Object.keys(state.data[addr].messages).length
+      const nMessages = Object.keys(state.chats[addr].messages).length
       if (nMessages === 0) {
         return null
       }
 
-      const lastMessageKey = Object.keys(state.data[addr].messages)[nMessages - 1]
-      const lastMessage = state.data[addr].messages[lastMessageKey]
+      const lastMessageKey = Object.keys(state.chats[addr].messages)[nMessages - 1]
+      const lastMessage = state.chats[addr].messages[lastMessageKey]
       const items = lastMessage.items
       const lastItem = items[items.length - 1]
 
@@ -144,17 +142,27 @@ export default {
   },
   mutations: {
     deleteMessage (state, { addr, id }) {
-      Vue.delete(state.data[addr].messages, id)
+      Vue.delete(state.chats[addr].messages, id)
+    },
+    readAll (state, addr) {
+      const values = state.chats[addr].messages
+      if (values.length === 0) {
+        state.chats[addr].lastRead = null
+      } else {
+        state.chats[addr].lastRead = values[values.length - 1].serverTime
+      }
+      state.chats[addr].totalUnreadMessages = 0
+      state.chats[addr].totalUnreadValue = 0
     },
     reset (state) {
       state.order = []
       state.activeChatAddr = null
-      state.data = {}
+      state.chats = {}
       state.lastReceived = null
     },
     setActiveChat (state, addr) {
-      if (!(addr in state.data)) {
-        Vue.set(state.data, addr, { ...defaultContactObject, messages: {}, address: addr })
+      if (!(addr in state.chats)) {
+        Vue.set(state.chats, addr, { ...defaultContactObject, messages: {}, address: addr })
       }
       state.activeChatAddr = addr
     },
@@ -164,54 +172,78 @@ export default {
         outbound: true,
         status,
         items,
-        timestamp,
+        serverTime: timestamp,
+        receivedTime: timestamp,
         outpoints,
         retryData
       }
-      state.messages[index] = newMsg
-      if (addr in state.data) {
-        Vue.set(state.data[addr].messages, index, newMsg)
+      assert(newMsg.outbound !== undefined)
+      assert(newMsg.status !== undefined)
+      assert(newMsg.receivedTime !== undefined)
+      assert(newMsg.serverTime !== undefined)
+      assert(newMsg.items !== undefined)
+      assert(newMsg.outpoints !== undefined)
+
+      const message = { payloadDigest: index, ...newMsg }
+      if (index in state.messages) {
+        // we have the message already, just need to update some fields and return
+        state.messages[index] = Object.assign(state.messages[index], message)
         return
       }
-      // Handle default case
-      const messages = {
-        index: newMsg
+
+      state.messages[index] = message
+      if (addr in state.chats) {
+        state.chats[addr].messages.push(message)
+        return
       }
-      Vue.set(state.data, addr, { ...defaultContactObject, messages, address: addr })
+      Vue.set(state.chats, addr, { ...defaultContactObject, messages: [message], address: addr })
     },
     clearChat (state, addr) {
-      if (addr in state.data) {
-        state.data[addr].messages = {}
+      if (addr in state.chats) {
+        state.chats[addr].messages = {}
       }
     },
     deleteChat (state, addr) {
       if (state.activeChatAddr === addr) {
         state.activeChatAddr = null
       }
-      Vue.delete(state.data, addr)
+      Vue.delete(state.chats, addr)
     },
     receiveMessage (state, { addr, index, newMsg }) {
-      if (!(addr in state.data)) {
-        const messages = {}
-        // TODO: Better indexing
-        messages[index] = newMsg
-        Vue.set(state.data, addr, { ...defaultContactObject, messages, address: addr })
-      } else {
-        // TODO: Better indexing
-        Vue.set(state.data[addr].messages, index, newMsg)
+      assert(newMsg.outbound !== undefined)
+      assert(newMsg.status !== undefined)
+      assert(newMsg.receivedTime !== undefined)
+      assert(newMsg.serverTime !== undefined)
+      assert(newMsg.items !== undefined)
+      assert(newMsg.outpoints !== undefined)
+
+      const message = { payloadDigest: index, ...newMsg }
+      if (index in state.messages) {
+        // Mutate the object so that it striggers reactivity
+        state.messages[index] = Object.assign(state.messages[index], message)
+        // We should already have created the chat if we have the message
+        return
       }
-      state.messages[index] = newMsg
-      state.data[addr].lastReceived = newMsg.serverTime
-      const messageValue = stampPrice(newMsg.outpoints) + newMsg.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-      if (addr !== state.activeChatAddr && state.data[addr].lastRead < newMsg.serverTime) {
-        state.data[addr].totalUnreadValue += messageValue
-        state.data[addr].totalUnreadMessages += 1
+      // We don't need reactivity here
+      state.messages[index] = message
+      if (!(addr in state.chats)) {
+        // We do need reactivity to create a new chat
+        Vue.set(state.chats, addr, { ...defaultContactObject, messages: [], address: addr })
       }
-      state.lastReceived = newMsg.serverTime
-      state.data[addr].totalValue += messageValue
+
+      // TODO: Better indexing
+      state.chats[addr].messages.push(message)
+      state.chats[addr].lastReceived = message.serverTime
+      const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
+      if (addr !== state.activeChatAddr && state.chats[addr].lastRead < message.serverTime) {
+        state.chats[addr].totalUnreadValue += messageValue
+        state.chats[addr].totalUnreadMessages += 1
+      }
+      state.lastReceived = message.serverTime
+      state.chats[addr].totalValue += messageValue
     },
     setStampAmount (state, { addr, stampAmount }) {
-      state.data[addr].stampAmount = stampAmount
+      state.chats[addr].stampAmount = stampAmount
     }
   },
   actions: {
