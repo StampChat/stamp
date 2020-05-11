@@ -23,23 +23,23 @@ export default {
   },
 
   async sendPayment (paymentUrl, payment) {
-    var rawPayment = payment.serializeBinary()
+    const rawPayment = payment.serializeBinary()
     const response = await axios({
       method: 'post',
       headers: {
         'Content-Type': 'application/bitcoincash-payment',
-        'Accept': 'application/bitcoincash-paymentack'
+        Accept: 'application/bitcoincash-paymentack'
       },
       url: paymentUrl,
       data: rawPayment
     })
 
-    const token = response.headers['authorization']
+    const token = response.headers.authorization
     const paymentReceipt = response.data
     return { paymentReceipt, token }
   },
 
-  async constructPaymentTransaction (wallet, paymentDetails) {
+  constructPaymentTransaction (wallet, paymentDetails) {
     // Get Outputs
     const requestOutputs = paymentDetails.getOutputsList()
     const outputs = requestOutputs.map(reqOutput => {

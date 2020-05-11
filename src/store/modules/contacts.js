@@ -110,8 +110,8 @@ export default {
     },
     async refresh ({ commit, getters }, addr) {
       // Make this generic over networks
-      const oldContactInfo = getters['getContact'](addr)
-      const updateInterval = getters['getUpdateInterval']
+      const oldContactInfo = getters.getContact(addr)
+      const updateInterval = getters.getUpdateInterval
       const now = moment()
       const lastUpdateTime = oldContactInfo.lastUpdateTime
       if (lastUpdateTime && moment(lastUpdateTime).add(updateInterval, 'milliseconds').isAfter(now)) {

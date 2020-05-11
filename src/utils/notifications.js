@@ -74,6 +74,8 @@ export const sentTransactionNotify = function (tx) {
 }
 
 export const sentTransactionFailureNotify = function (tx) {
+  // TODO: Display transaction
+  console.log('failure', tx)
   Notify.create({
     message: '<div class="text-center"> Failed to send transaction </div>',
     html: true,
@@ -91,7 +93,7 @@ export const desktopNotify = function (title, body, icon, callback) {
     icon
   })
   notify.onclick = () => {
-    var window = remote.getCurrentWindow()
+    const window = remote.getCurrentWindow()
     window.show()
     callback()
     notify.close()

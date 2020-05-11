@@ -140,7 +140,7 @@ export default {
       if (this.avatarPath == null) {
         return
       }
-      var reader = new FileReader()
+      const reader = new FileReader()
       reader.readAsDataURL(this.avatarPath)
       reader.onload = () => {
         this.avatar = reader.result
@@ -165,16 +165,16 @@ export default {
     }
   },
   watch: {
-    name (newUrl, oldUrl) {
+    name () {
       this.$emit('input', this.constructData)
     },
-    bio (newPrice, oldPrice) {
+    bio () {
       this.$emit('input', this.constructData)
     },
-    avatar (newAvatar, oldAvatar) {
+    avatar () {
       this.$emit('input', this.constructData)
     },
-    acceptancePrice (newPrice, oldPrice) {
+    acceptancePrice () {
       this.$emit('input', this.constructData)
     }
   }

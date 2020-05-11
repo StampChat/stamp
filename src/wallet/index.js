@@ -64,9 +64,9 @@ export class Wallet {
     console.log('initializing wallet')
     this.initAddresses()
     this.updateHDUTXOs()
-    this.startListeners()
-    this.fixFrozenUTXOs()
-    this.fixUTXOs()
+    await this.startListeners()
+    await this.fixFrozenUTXOs()
+    await this.fixUTXOs()
   }
 
   get xPrivKey () {
@@ -82,7 +82,7 @@ export class Wallet {
     this.addresses = {}
     this.changeAddresses = {}
     this.electrumScriptHashes = {}
-    for (var i = 0; i < numAddresses; i++) {
+    for (let i = 0; i < numAddresses; i++) {
       const privKey = xPrivKey.deriveChild(44, true)
         .deriveChild(145, true)
         .deriveChild(0, true)
@@ -96,7 +96,7 @@ export class Wallet {
       const scriptHash = toElectrumScriptHash(address)
       this.addElectrumScriptHash({ scriptHash, address, change: false, privKey })
     }
-    for (var j = 0; j < numChangeAddresses; j++) {
+    for (let j = 0; j < numChangeAddresses; j++) {
       const privKey = xPrivKey.deriveChild(44, true)
         .deriveChild(145, true)
         .deriveChild(0, true)
@@ -208,7 +208,7 @@ export class Wallet {
     const frozenUTXOs = this.storage.getFrozenUTXOs()
     await P.map(Object.values(frozenUTXOs),
       async (id) => {
-        this.fixFrozenUTXO(id)
+        await this.fixFrozenUTXO(id)
       },
       { concurrency: 10 })
   }
@@ -275,7 +275,7 @@ export class Wallet {
 
     for (const utxo of utxoSetToUse) {
       const utxoAddress = utxo.address
-      utxo['script'] = cashlib.Script.buildPublicKeyHashOut(utxoAddress).toHex()
+      utxo.script = cashlib.Script.buildPublicKeyHashOut(utxoAddress).toHex()
       signingKeys.push(utxo.privKey)
       transaction = transaction.from(utxo)
       satoshis += utxo.satoshis
@@ -357,7 +357,7 @@ export class Wallet {
       console.log(utxo)
 
       const addr = utxo.address
-      utxo['script'] = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+      utxo.script = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
       // Grab private key
       signingKeys.push(utxo.privKey)
       transaction = transaction.from(utxo)
@@ -386,7 +386,7 @@ export class Wallet {
       const size = transaction._estimateSize() + transaction.outputs.length
       const overallChangeUtxoCost = minimumOutputAmount + standardUtxoSize * feePerByte + size * feePerByte
       if (delta < overallChangeUtxoCost) {
-        console.log("Can't make another output given currently available funds", delta, overallChangeUtxoCost)
+        console.log('Can\'t make another output given currently available funds', delta, overallChangeUtxoCost)
         // We can't make more outputs without going over the fee.
         break
       }
@@ -463,7 +463,7 @@ export class Wallet {
     // TODO: Not just testnet
     return this.identityPrivKey.toAddress('testnet')
   }
-  
+
   get myAddressStr () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet

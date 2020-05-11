@@ -246,7 +246,7 @@ export default {
       assert(typeof stampAmount === 'number')
       commit('setStampAmount', { addr, stampAmount })
     },
-    async receiveMessage ({ dispatch, commit, rootGetters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
+    receiveMessage ({ dispatch, commit, rootGetters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](copartyAddress)) {
         // Add dummy contact

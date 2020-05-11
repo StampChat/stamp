@@ -78,7 +78,7 @@ export default {
       if (this.filePath == null) {
         return
       }
-      var reader = new FileReader()
+      const reader = new FileReader()
       reader.readAsDataURL(this.filePath)
       reader.onload = () => {
         this.image = reader.result

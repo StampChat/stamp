@@ -179,7 +179,7 @@ export default {
       this.$emit('input', this.computedValues)
     },
     pasteImported () {
-      var el = document.createElement('textarea')
+      const el = document.createElement('textarea')
       document.body.appendChild(el)
       el.focus()
       document.execCommand('paste')
@@ -192,19 +192,22 @@ export default {
       return bip39.validateMnemonic(this.importedSeed.trim())
     },
     computedValues () {
-      return {
+      const importedSeed = this.importedSeed.trim()
+      const valid = bip39.validateMnemonic(importedSeed)
+      const values = {
         type: this.tab,
-        importedSeed: this.importedSeed.trim(),
-        valid: this.isImportedValid,
+        valid,
+        importedSeed,
         generatedSeed: this.generatedSeed
       }
+      return values
     }
   },
   watch: {
-    tab (newTab, oldTab) {
+    tab () {
       this.$emit('input', this.computedValues)
     },
-    importedSeed (newSeed, oldSeed) {
+    importedSeed () {
       this.$emit('input', this.computedValues)
     }
   },
