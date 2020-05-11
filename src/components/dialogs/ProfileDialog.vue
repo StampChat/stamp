@@ -32,10 +32,7 @@
 import { mapMutations, mapGetters } from 'vuex'
 import Profile from '../Profile'
 import { constructProfileMetadata, constructPriceFilter } from '../../relay/constructors'
-import {
-  relayDisconnectedNotify,
-  profileTooLargeNotify
-} from '../../utils/notifications'
+import { errorNotify } from '../../utils/notifications'
 
 export default {
   props: ['currentProfile'],
@@ -74,11 +71,12 @@ export default {
         await client.putProfile(idAddress.toLegacyAddress(), metadata)
       } catch (err) {
         console.error(err)
+        // TODO: Move specialization down error displayer
         if (err.response.status === 413) {
-          profileTooLargeNotify()
+          errorNotify(err)
           throw err
         }
-        relayDisconnectedNotify()
+        errorNotify(err)
         throw err
       }
 

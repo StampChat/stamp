@@ -144,7 +144,7 @@
 
 <script>
 import { copyToClipboard } from 'quasar'
-import { seedCopiedNotify } from '../../utils/notifications'
+import { infoNotify } from '../../utils/notifications'
 
 const bip39 = require('bip39')
 
@@ -168,7 +168,7 @@ export default {
   methods: {
     copyGenerated () {
       copyToClipboard(this.generatedSeed).then(() => {
-        seedCopiedNotify()
+        infoNotify('Seed copied to clipboard')
       })
         .catch(() => {
           // fail

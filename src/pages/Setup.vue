@@ -98,14 +98,7 @@ import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
 import ProfileStep from '../components/setup/ProfileStep'
 import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultRelayData, defaultRelayUrl } from '../utils/constants'
-import {
-  keyserverDisconnectedNotify,
-  insuffientFundsNotify,
-  paymentFailureNotify,
-  relayDisconnectedNotify,
-  walletDisconnectedNotify,
-  profileTooLargeNotify
-} from '../utils/notifications'
+import { errorNotify } from '../utils/notifications'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -210,8 +203,7 @@ export default {
         try {
           await this.$wallet.init()
         } catch (err) {
-          console.error(err)
-          walletDisconnectedNotify()
+          errorNotify(err)
           return
         }
 
@@ -244,7 +236,7 @@ export default {
             this.$q.loading.hide()
           } else {
             this.$q.loading.hide()
-            keyserverDisconnectedNotify()
+            errorNotify(err)
           }
         }
       }
@@ -310,7 +302,7 @@ export default {
         this.relayData = defaultRelayData
         if (!err.response) {
           // Relay URL malformed
-          relayDisconnectedNotify()
+          errorNotify(err)
           throw err
         }
       }
@@ -322,47 +314,29 @@ export default {
       })
 
       try {
-        var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
-      } catch (err) {
-        keyserverDisconnectedNotify()
-        throw err
-      }
-      this.$q.loading.show({
-        delay: 100,
-        message: 'Sending Payment...'
-      })
+        const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
 
-      // Construct payment
-      try {
-        var { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, paymentDetails)
-      } catch (err) {
-        insuffientFundsNotify()
-        throw err
-      }
+        this.$q.loading.show({
+          delay: 100,
+          message: 'Sending Payment...'
+        })
 
-      // Send payment
-      let token
-      try {
-        ({ token } = await pop.sendPayment(paymentUrl, payment))
-      } catch (err) {
-        paymentFailureNotify()
-        throw err
-      }
+        // Construct payment
+        const { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, paymentDetails)
+        const { token } = await pop.sendPayment(paymentUrl, payment)
 
-      this.$q.loading.show({
-        delay: 100,
-        message: 'Uploading Metadata...'
-      })
+        // Construct metadata
+        const idPrivKey = this.$wallet.identityPrivKey
+        const metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
 
-      // Construct metadata
-      const idPrivKey = this.$wallet.identityPrivKey
-      const metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
+        this.$q.loading.show({
+          delay: 100,
+          message: 'Uploading Metadata...'
+        })
 
-      // Put to keyserver
-      try {
         await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
       } catch (err) {
-        keyserverDisconnectedNotify()
+        errorNotify(err)
         throw err
       }
     },
@@ -392,33 +366,16 @@ export default {
       })
 
       const idAddress = this.$wallet.myAddress
-      let relayPaymentRequest
       try {
-        relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress())
-      } catch (err) {
-        console.error(err)
-        relayDisconnectedNotify()
-        throw err
-      }
+        const relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress())
+        // Send payment
+        this.$q.loading.show({
+          delay: 100,
+          message: 'Sending Payment...'
+        })
 
-      // Send payment
-      this.$q.loading.show({
-        delay: 100,
-        message: 'Sending Payment...'
-      })
-
-      // Get token from relay server
-      try {
-        var { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
-      } catch (err) {
-        console.error(err)
-        if (err.response) {
-          console.error(err.response)
-        }
-        insuffientFundsNotify()
-        throw err
-      }
-      try {
+        // Get token from relay server
+        const { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
         const { token } = await relayClient.sendPayment(paymentUrl, payment)
         relayClient.setToken(token)
         this.setRelayToken(token)
@@ -428,7 +385,7 @@ export default {
         if (err.response) {
           console.error(err.response)
         }
-        paymentFailureNotify()
+        errorNotify(err)
         throw err
       }
 
@@ -448,12 +405,12 @@ export default {
       try {
         await relayClient.putProfile(idAddress.toLegacyAddress(), metadata)
       } catch (err) {
-        console.error(err)
+        // TODO: move specialization down to errorNotify
         if (err.response.status === 413) {
-          profileTooLargeNotify()
+          errorNotify(err)
           throw err
         }
-        relayDisconnectedNotify()
+        errorNotify(err)
         throw err
       }
 
@@ -535,7 +492,7 @@ export default {
     }
   },
   watch: {
-    isBasic (newValue, oldValue) {
+    isBasic (newValue) {
       if (newValue && this.step === 4) {
         this.step = 3
       } else if (newValue && this.step === 6) {

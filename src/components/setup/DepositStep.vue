@@ -92,7 +92,7 @@
 import QrcodeVue from 'qrcode.vue'
 import { copyToClipboard } from 'quasar'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
-import { addressCopiedNotify } from '../../utils/notifications'
+import { infoNotify } from '../../utils/notifications'
 import { formatBalance } from '../../utils/formatting'
 
 export default {
@@ -110,7 +110,7 @@ export default {
   methods: {
     copyAddress () {
       copyToClipboard(this.currentAddress).then(() => {
-        addressCopiedNotify()
+        infoNotify('Address copied to clipboard')
       })
         .catch(() => {
           // fail

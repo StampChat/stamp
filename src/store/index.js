@@ -82,6 +82,7 @@ const vuexLocal = new VuexPersistence({
     console.log('saving state', state.chats)
     storage.setItem(key, JSON.stringify(state))
   },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   filter: (mutation) => {
     if (lastSave + 10000 >= Date.now()) {
       return false

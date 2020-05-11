@@ -72,7 +72,9 @@ function createWindow () {
     webPreferences: {
       // Change from /quasar.conf.js > electron > nodeIntegration;
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
+      // eslint-disable-next-line no-undef
       nodeIntegration: QUASAR_NODE_INTEGRATION,
+      // eslint-disable-next-line no-undef
       nodeIntegrationInWorker: QUASAR_NODE_INTEGRATION
 
       // More info: /quasar-cli/developing-electron-apps/electron-preload-script

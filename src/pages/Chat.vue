@@ -82,7 +82,7 @@ import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
 import { donationMessage } from '../utils/constants'
-import { insufficientStampNotify } from '../utils/notifications'
+import { infoNotify } from '../utils/notifications'
 
 const scrollDuration = 0
 
@@ -138,7 +138,7 @@ export default {
       const stampAmount = this.getStampAmount()(this.address)
       const acceptancePrice = this.getAcceptancePrice()(this.address)
       if (stampAmount < acceptancePrice) {
-        insufficientStampNotify()
+        infoNotify('Attempting to send a message with an insufficient stamp price')
       }
       if (message !== '') {
         this.$relayClient.sendMessage({

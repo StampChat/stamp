@@ -37,7 +37,7 @@
 
 <script>
 import { copyToClipboard } from 'quasar'
-import { addressCopiedNotify } from '../../utils/notifications'
+import { infoNotify } from '../../utils/notifications'
 
 export default {
   props: ['avatar', 'name', 'bio', 'address', 'acceptancePrice'],
@@ -45,7 +45,7 @@ export default {
     copyAddress () {
       copyToClipboard(this.address)
         .then(() => {
-          addressCopiedNotify()
+          infoNotify('Address copied to clipboard')
         })
         .catch(() => {
           // fail

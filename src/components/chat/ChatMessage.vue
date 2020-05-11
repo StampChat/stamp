@@ -101,7 +101,6 @@ export default {
       const amount = stampPrice(this.message.outpoints)
       return amount + ' sats'
     }
-  },
-  created () {}
+  }
 }
 </script>

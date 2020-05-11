@@ -12,77 +12,17 @@ const negativeNotify = function (text) {
   })
 }
 
-export const chainTooLongNotify = function () {
-  negativeNotify('Transaction chain too long or relay fee too low.')
-}
-
-export const insuffientFundsNotify = function () {
-  negativeNotify('Insufficent funds.')
-}
-
-export const walletDisconnectedNotify = function () {
-  negativeNotify('Unable to contact wallet server.')
-}
-
-export const keyserverDisconnectedNotify = function () {
-  negativeNotify('Unable to contact keyserver.')
-}
-
-export const relayDisconnectedNotify = function () {
-  negativeNotify('Unable to contact relay server.')
-}
-
-export const paymentFailureNotify = function () {
-  negativeNotify('Payment was rejected.')
-}
-
-export const profileTooLargeNotify = function () {
-  negativeNotify('Profile is too large.')
+export function errorNotify (error) {
+  console.error(error)
+  negativeNotify(error.message)
 }
 
 // Info notifications
-
-const infoNotify = function (text) {
+export function infoNotify (text) {
   Notify.create({
     message: '<div class="text-center"> ' + text + ' </div>',
     html: true,
     color: 'accent'
-  })
-}
-
-export const addressCopiedNotify = function () {
-  infoNotify('Address copied to clipboard.')
-}
-
-export const insufficientStampNotify = function () {
-  infoNotify('Stamp is too small, receiver will not be notified.')
-}
-
-export const seedCopiedNotify = function () {
-  infoNotify('Seed phrase copied to clipboard.')
-}
-
-export const sentTransactionNotify = function (tx) {
-  Notify.create({
-    message: '<div class="text-center"> Sent transaction </div>',
-    html: true,
-    color: 'accent',
-    actions: [
-      { label: 'View', color: 'secondary', handler: () => { /* ... */ } }
-    ]
-  })
-}
-
-export const sentTransactionFailureNotify = function (tx) {
-  // TODO: Display transaction
-  console.log('failure', tx)
-  Notify.create({
-    message: '<div class="text-center"> Failed to send transaction </div>',
-    html: true,
-    color: 'negative',
-    actions: [
-      { label: 'View', color: 'secondary', handler: () => { /* ... */ } }
-    ]
   })
 }
 

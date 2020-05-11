@@ -29,7 +29,7 @@
         <div class="text-subtitle1 text-bold"> Create a Profile </div>
       </q-card-section>
       <q-card-section>
-        <profile v-model="innerData" />
+        <profile v-bind:input="innerData" @input="innerDataChanged"/>
       </q-card-section>
     </q-card>
   </div>
@@ -54,9 +54,9 @@ export default {
       innerData: this.relayData
     }
   },
-  watch: {
-    innerData: function (newData, oldData) {
-      this.$emit('input', this.innerData)
+  methods: {
+    innerDataChanged: function (data) {
+      this.$emit('input', data)
     }
   },
   computed: {

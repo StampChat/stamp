@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import { sentTransactionNotify, sentTransactionFailureNotify } from '../../utils/notifications'
+import { infoNotify, errorNotify } from '../../utils/notifications'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -79,19 +79,23 @@ export default {
           satoshis: this.amount
         })
 
-        var { transaction, usedIDs } = this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
+        const { transaction, usedIDs } = this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
         const txHex = transaction.toString()
 
-        const electrumHandler = this.$electrumClient
-        await electrumHandler.request('blockchain.transaction.broadcast', txHex)
-        sentTransactionNotify(transaction)
+        try {
+          const electrumHandler = this.$electrumClient
+          await electrumHandler.request('blockchain.transaction.broadcast', txHex)
+          infoNotify('Sent transaction!')
+          console.log('Sent transaction', txHex)
+        } catch (err) {
+          usedIDs.forEach(id => {
+            this.$wallet.unfreezeUTXO(id)
+          })
+          throw err
+        }
       } catch (err) {
-        sentTransactionFailureNotify(transaction)
-        console.error(err)
+        errorNotify(err)
         // Unfreeze UTXOs if stealth tx broadcast fails
-        usedIDs.forEach(id => {
-          this.$wallet.unfreezeUTXO(id)
-        })
       }
     }
   }

@@ -22,7 +22,8 @@
       <q-card-section>
         <q-select
           outlined
-          v-model="relayUrl"
+          v-bind:input="relayUrl"
+          @input="relayUrlChanged"
           use-input
           hide-selected
           fill-input
@@ -88,12 +89,11 @@ export default {
       const shell = require('electron').shell
       event.preventDefault()
       shell.openExternal('https://github.com/cashweb/cash-relay')
-    }
-  },
-  watch: {
-    relayUrl (newUrl, oldUrl) {
+    },
+    relayUrlChanged (newUrl) {
       this.$emit('input', newUrl)
     }
   }
+
 }
 </script>
