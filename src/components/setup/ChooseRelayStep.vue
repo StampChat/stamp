@@ -22,7 +22,7 @@
       <q-card-section>
         <q-select
           outlined
-          v-model="relayUrl"
+          v-model="innerRelayUrl"
           use-input
           hide-selected
           fill-input
@@ -52,16 +52,19 @@
 import { defaultAcceptancePrice, relayUrlOptions } from '../../utils/constants'
 
 export default {
+  model: {
+    prop: 'relayUrl',
+    event: 'input'
+  },
   props: {
-    // This is the relay URL
-    value: {
-      type: String
+    relayUrl: {
+      type: String,
+      required: true
     }
   },
   data () {
     return {
       relayUrls: relayUrlOptions,
-      relayUrl: this.value,
       acceptancePrice: defaultAcceptancePrice,
       options: []
     }
@@ -90,9 +93,14 @@ export default {
       shell.openExternal('https://github.com/cashweb/cash-relay')
     }
   },
-  watch: {
-    relayUrl (newUrl, oldUrl) {
-      this.$emit('input', newUrl)
+  computed: {
+    innerRelayUrl: {
+      get () {
+        return this.relayUrl
+      },
+      set (val) {
+        this.$emit('input', val)
+      }
     }
   }
 }

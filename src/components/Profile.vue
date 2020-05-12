@@ -157,6 +157,7 @@ export default {
     },
     constructData () {
       return {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         profile: this.constructProfile,
         inbox: {
           acceptancePrice: this.acceptancePrice

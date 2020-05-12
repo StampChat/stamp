@@ -79,19 +79,24 @@ export default {
           satoshis: this.amount
         })
 
-        var { transaction, usedIDs } = this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
+        const { transaction, usedIDs } = this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
         const txHex = transaction.toString()
 
-        const electrumHandler = this.$electrumClient
-        await electrumHandler.request('blockchain.transaction.broadcast', txHex)
-        sentTransactionNotify(transaction)
+        try {
+          const electrumHandler = this.$electrumClient
+          await electrumHandler.request('blockchain.transaction.broadcast', txHex)
+          sentTransactionNotify()
+          console.log('Sent transaction', txHex)
+        } catch (err) {
+          usedIDs.forEach(id => {
+            this.$wallet.unfreezeUTXO(id)
+          })
+          throw err
+        }
       } catch (err) {
         console.error(err)
         errorNotify(new Error('Failed to send transaction'))
         // Unfreeze UTXOs if stealth tx broadcast fails
-        usedIDs.forEach(id => {
-          this.$wallet.unfreezeUTXO(id)
-        })
       }
     }
   }
