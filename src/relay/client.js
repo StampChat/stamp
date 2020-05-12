@@ -235,7 +235,9 @@ export class RelayClient {
         Authorization: this.token
       },
       params: {
+        // eslint-disable-next-line @typescript-eslint/camelcase
         start_time: startTime,
+        // eslint-disable-next-line @typescript-eslint/camelcase
         end_time: endTime
       },
       responseType: 'arraybuffer'
@@ -312,7 +314,7 @@ export class RelayClient {
 
     // Construct message
     try {
-      var { message, usedIDs: usedStampIds, stampTx } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
+      const { message, usedIDs: usedStampIds, stampTx } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
       // TODO: These need to come back from the constructMessage API
       // We could have more than one, and more than one transaction in the future (ideally)
       const outpoint = {
@@ -324,35 +326,33 @@ export class RelayClient {
       transactions.push(stampTx)
       usedIDs.push(...usedStampIds)
       outpoints.push(outpoint)
+      const messageSet = new messaging.MessageSet()
+      messageSet.addMessages(message)
+      const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+
+      const client = this.wallet.electrumClient
+      Promise.all(transactions.map(transaction => {
+        console.log('broadcasting txn')
+        console.log(transaction)
+        return client.request('blockchain.transaction.broadcast', transaction.toString())
+      }))
+        .then(() => this.pushMessages(destAddr, messageSet))
+        .then(() => this.events.emit('messageSent', { addr, index: payloadDigestHex, items, outpoints, transactions }))
+        .catch((err) => {
+          console.error(err)
+          if (err.response) {
+            console.error(err.response)
+          }
+          // Unfreeze UTXOs
+          // TODO: More subtle
+          usedIDs.forEach(id => wallet.fixFrozenUTXO(id))
+
+          this.events.emit('messageSendError', { addr, index: payloadDigestHex, outpoints, transactions, items, err })
+        })
     } catch (err) {
       console.error(err)
       this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, outpoints, transactions })
-      return
     }
-
-    const messageSet = new messaging.MessageSet()
-    messageSet.addMessages(message)
-    const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
-
-    const client = this.wallet.electrumClient
-    Promise.all(transactions.map(transaction => {
-      console.log('broadcasting txn')
-      console.log(transaction)
-      return client.request('blockchain.transaction.broadcast', transaction.toString())
-    }))
-      .then(() => this.pushMessages(destAddr, messageSet))
-      .then(() => this.events.emit('messageSent', { addr, index: payloadDigestHex, items, outpoints, transactions }))
-      .catch((err) => {
-        console.error(err)
-        if (err.response) {
-          console.error(err.response)
-        }
-        // Unfreeze UTXOs
-        // TODO: More subtle
-        usedIDs.forEach(id => wallet.fixFrozenUTXO(id))
-
-        this.events.emit('messageSendError', { addr, index: payloadDigestHex, outpoints, transactions, items, err })
-      })
   }
 
   // Stub for original API
