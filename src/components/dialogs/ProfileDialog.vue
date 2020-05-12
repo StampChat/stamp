@@ -32,10 +32,7 @@
 import { mapMutations, mapGetters } from 'vuex'
 import Profile from '../Profile'
 import { constructProfileMetadata, constructPriceFilter } from '../../relay/constructors'
-import {
-  relayDisconnectedNotify,
-  profileTooLargeNotify
-} from '../../utils/notifications'
+import { errorNotify } from '../../utils/notifications'
 
 export default {
   props: ['currentProfile'],
@@ -75,10 +72,10 @@ export default {
       } catch (err) {
         console.error(err)
         if (err.response.status === 413) {
-          profileTooLargeNotify()
+          errorNotify('Profile avatar is too large, select a smaller image.')
           throw err
         }
-        relayDisconnectedNotify()
+        errorNotify(new Error('Unable to contact relay server.'))
         throw err
       }
 
