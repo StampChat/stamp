@@ -49,17 +49,15 @@ export default {
   props: {
     relayData: Object
   },
-  data () {
-    return {
-      innerData: this.relayData
-    }
-  },
-  watch: {
-    innerData: function (newData, oldData) {
-      this.$emit('input', this.innerData)
-    }
-  },
   computed: {
+    innerData: {
+      get () {
+        return this.relayData
+      },
+      set (val) {
+        this.$emit('input', val)
+      }
+    },
     getMyAddressStr () {
       return this.$wallet.myAddressStr
     }

@@ -71,6 +71,7 @@ export default {
         await client.putProfile(idAddress.toLegacyAddress(), metadata)
       } catch (err) {
         console.error(err)
+        // TODO: Move specialization down error displayer
         if (err.response.status === 413) {
           errorNotify('Profile avatar is too large, select a smaller image.')
           throw err
