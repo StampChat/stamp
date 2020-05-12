@@ -98,14 +98,7 @@ import ChooseRelayStep from '../components/setup/ChooseRelayStep.vue'
 import ProfileStep from '../components/setup/ProfileStep'
 import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultRelayData, defaultRelayUrl } from '../utils/constants'
-import {
-  keyserverDisconnectedNotify,
-  insuffientFundsNotify,
-  paymentFailureNotify,
-  relayDisconnectedNotify,
-  walletDisconnectedNotify,
-  profileTooLargeNotify
-} from '../utils/notifications'
+import { errorNotify } from '../utils/notifications'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -210,8 +203,7 @@ export default {
         try {
           await this.$wallet.init()
         } catch (err) {
-          console.error(err)
-          walletDisconnectedNotify()
+          errorNotify(err)
           return
         }
 
@@ -244,7 +236,8 @@ export default {
             this.$q.loading.hide()
           } else {
             this.$q.loading.hide()
-            keyserverDisconnectedNotify()
+            const keyserverErr = new Error('Unable to contact keyserver')
+            errorNotify(keyserverErr)
           }
         }
       }
@@ -310,7 +303,7 @@ export default {
         this.relayData = defaultRelayData
         if (!err.response) {
           // Relay URL malformed
-          relayDisconnectedNotify()
+          errorNotify(new Error('Network Error: Relay server connection died. '))
           throw err
         }
       }
@@ -324,7 +317,7 @@ export default {
       try {
         var { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
       } catch (err) {
-        keyserverDisconnectedNotify()
+        errorNotify(err)
         throw err
       }
       this.$q.loading.show({
@@ -336,7 +329,7 @@ export default {
       try {
         var { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, paymentDetails)
       } catch (err) {
-        insuffientFundsNotify()
+        errorNotify(err)
         throw err
       }
 
@@ -345,7 +338,7 @@ export default {
       try {
         ({ token } = await pop.sendPayment(paymentUrl, payment))
       } catch (err) {
-        paymentFailureNotify()
+        errorNotify(new Error('Payment was rejected.'))
         throw err
       }
 
@@ -362,7 +355,7 @@ export default {
       try {
         await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
       } catch (err) {
-        keyserverDisconnectedNotify()
+        errorNotify(err)
         throw err
       }
     },
@@ -396,8 +389,7 @@ export default {
       try {
         relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress())
       } catch (err) {
-        console.error(err)
-        relayDisconnectedNotify()
+        errorNotify(new Error('Network error: Relay disconnnected unexpectedly.'))
         throw err
       }
 
@@ -411,11 +403,7 @@ export default {
       try {
         var { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
       } catch (err) {
-        console.error(err)
-        if (err.response) {
-          console.error(err.response)
-        }
-        insuffientFundsNotify()
+        errorNotify(err)
         throw err
       }
       try {
@@ -424,11 +412,7 @@ export default {
         this.setRelayToken(token)
         this.$relayClient.setToken(token)
       } catch (err) {
-        console.error(err)
-        if (err.response) {
-          console.error(err.response)
-        }
-        paymentFailureNotify()
+        errorNotify(new Error('Network error: Relay disconnnected unexpectedly.'))
         throw err
       }
 
@@ -450,10 +434,10 @@ export default {
       } catch (err) {
         console.error(err)
         if (err.response.status === 413) {
-          profileTooLargeNotify()
+          errorNotify('Profile image is too large, select a smaller image.')
           throw err
         }
-        relayDisconnectedNotify()
+        errorNotify(new Error('Network error: Relay disconnnected unexpectedly.'))
         throw err
       }
 

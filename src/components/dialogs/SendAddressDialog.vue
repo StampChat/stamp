@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import { sentTransactionNotify, sentTransactionFailureNotify } from '../../utils/notifications'
+import { sentTransactionNotify, errorNotify } from '../../utils/notifications'
 
 const cashlib = require('bitcore-lib-cash')
 
@@ -86,8 +86,8 @@ export default {
         await electrumHandler.request('blockchain.transaction.broadcast', txHex)
         sentTransactionNotify(transaction)
       } catch (err) {
-        sentTransactionFailureNotify(transaction)
         console.error(err)
+        errorNotify(new Error('Failed to send transaction')
         // Unfreeze UTXOs if stealth tx broadcast fails
         usedIDs.forEach(id => {
           this.$wallet.unfreezeUTXO(id)
