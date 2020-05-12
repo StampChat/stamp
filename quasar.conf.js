@@ -197,7 +197,11 @@ module.exports = configure(function (ctx) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'stamp'
+        appId: 'stamp',
+        extraFiles: [
+          { from: 'src-electron/icons', to: 'resources/icons' }
+        ],
+        publish: []
       },
 
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
