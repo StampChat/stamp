@@ -1,5 +1,5 @@
 <template>
-  <div class="q-pa-none q-ma-sm col rounded-borders bg-dark-3">
+  <div class="q-pa-none q-ma-none q-ml-sm  q-mr-sm col rounded-borders bg-dark-3">
     <!-- Context Menu -->
 
     <!-- Transaction Dialog -->
@@ -21,18 +21,23 @@
       @deleteClick="deleteDialog = true"
       @replyClick="replyClicked({ address, index })"
     />
+    <q-tooltip>
+      <div class="col-auto q-pa-none">
+        <div class="row-auto">{{stampPrice}}</div>
+        <div class="row-auto">{{timestampString}}</div>
+      </div>
+    </q-tooltip>
 
     <div class="row">
-      <div class="col-auto q-pa-sm" style="min-width: 100px">
-        <div class="row-auto">{{stampPrice}}</div>
-        <div class="row-auto">{{formatedTimestamp}}</div>
-      </div>
       <div class="col">
         <!-- TODO: Assign random color based on seed from name -->
-        <div class="col text-weight-bold" style="border-bottom: 1px solid grey;">{{contact.name}}</div>
+        <div class="col text-weight-bold" style="border-bottom: 1px solid grey;" v-if="showHeader">{{contact.name}}</div>
         <chat-message-section :key="index" :items="message.items" :address="address" />
       </div>
-
+      <div class="col-auto" style="min-width: 100px">
+        <div class="col text-weight-bold" style="border-bottom: 1px solid grey;" v-if="showHeader">&nbsp;</div>
+        <div class="row-auto">{{shortTimestamp}}</div>
+      </div>
       <div v-if="message.status==='error'" class="row justify-end q-pt-xs" style="full-width">
         <div class="col-auto">
           <q-icon name="error" color="red" />
@@ -68,7 +73,11 @@ export default {
     message: Object,
     contact: Object,
     index: String,
-    now: Object
+    now: Object,
+    showHeader: {
+      type: Boolean,
+      default: () => true
+    }
   },
   methods: {
     replyClicked (args) {
@@ -76,7 +85,7 @@ export default {
     }
   },
   computed: {
-    formatedTimestamp () {
+    shortTimestamp () {
       switch (this.message.status) {
         case 'confirmed': {
           const timestamp = this.message.timestamp || this.message.serverTime
@@ -96,6 +105,10 @@ export default {
           return ''
       }
       return 'unknown'
+    },
+    timestampString () {
+      const timestamp = this.message.timestamp || this.message.serverTime
+      return moment(timestamp)
     },
     stampPrice () {
       const amount = stampPrice(this.message.outpoints)

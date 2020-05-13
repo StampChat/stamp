@@ -20,15 +20,15 @@ export function getRelayClient ({ wallet, electrumClient, store, relayUrl = defa
     console.log(err)
   })
   client.events.on('opened', () => { observables.connected = true })
-  client.events.on('messageSending', ({ addr, index, items, outpoints, transactions }) => {
-    store.commit('chats/sendMessageLocal', { addr, index, items, outpoints, transactions })
+  client.events.on('messageSending', ({ addr, senderAddress, index, items, outpoints, transactions }) => {
+    store.commit('chats/sendMessageLocal', { addr, senderAddress, index, items, outpoints, transactions })
   })
-  client.events.on('messageSendError', ({ addr, index, items, outpoints, transactions, retryData }) => {
-    store.commit('chats/sendMessageLocal', { addr, index, items, outpoints, transactions, retryData, status: 'error' })
+  client.events.on('messageSendError', ({ addr, senderAddress, index, items, outpoints, transactions, retryData }) => {
+    store.commit('chats/sendMessageLocal', { addr, senderAddress, index, items, outpoints, transactions, retryData, status: 'error' })
   })
-  client.events.on('messageSent', ({ addr, index, items, outpoints, transactions }) => {
+  client.events.on('messageSent', ({ addr, senderAddress, index, items, outpoints, transactions }) => {
     // TODO: Why no items here?
-    store.commit('chats/sendMessageLocal', { addr, index, items, outpoints, transactions, status: 'confirmed' })
+    store.commit('chats/sendMessageLocal', { addr, senderAddress, index, items, outpoints, transactions, status: 'confirmed' })
   })
   client.events.on('receivedMessage', (args) => {
     // TODO: Why no items here?

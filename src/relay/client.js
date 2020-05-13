@@ -307,10 +307,10 @@ export class RelayClient {
       }
     )
     const { serializedPayload, payloadDigest } = constructPayload(entries, privKey, destPubKey, 1)
-
+    const senderAddress = this.wallet.myAddressStr
     // Add localy
     const payloadDigestHex = payloadDigest.toString('hex')
-    this.events.emit('messageSending', { addr, index: payloadDigestHex, items, outpoints, transactions })
+    this.events.emit('messageSending', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
 
     // Construct message
     try {
@@ -337,7 +337,7 @@ export class RelayClient {
         return client.request('blockchain.transaction.broadcast', transaction.toString())
       }))
         .then(() => this.pushMessages(destAddr, messageSet))
-        .then(() => this.events.emit('messageSent', { addr, index: payloadDigestHex, items, outpoints, transactions }))
+        .then(() => this.events.emit('messageSent', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions }))
         .catch((err) => {
           console.error(err)
           if (err.response) {
@@ -347,11 +347,11 @@ export class RelayClient {
           // TODO: More subtle
           usedIDs.forEach(id => wallet.fixFrozenUTXO(id))
 
-          this.events.emit('messageSendError', { addr, index: payloadDigestHex, outpoints, transactions, items, err })
+          this.events.emit('messageSendError', { addr, senderAddress, index: payloadDigestHex, outpoints, transactions, items, err })
         })
     } catch (err) {
       console.error(err)
-      this.events.emit('messageSendError', { addr, index: payloadDigestHex, items, outpoints, transactions })
+      this.events.emit('messageSendError', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
     }
   }
 
@@ -570,7 +570,8 @@ export class RelayClient {
       items: [],
       serverTime,
       receivedTime,
-      outpoints
+      outpoints,
+      senderAddress: senderAddr
     }
     for (const index in entriesList) {
       const entry = entriesList[index]

@@ -166,7 +166,7 @@ export default {
       }
       state.activeChatAddr = addr
     },
-    sendMessageLocal (state, { addr, index, items, outpoints = [], status = 'pending', retryData = null }) {
+    sendMessageLocal (state, { addr, senderAddress, index, items, outpoints = [], status = 'pending', retryData = null }) {
       const timestamp = Date.now()
       const newMsg = {
         outbound: true,
@@ -175,7 +175,8 @@ export default {
         serverTime: timestamp,
         receivedTime: timestamp,
         outpoints,
-        retryData
+        retryData,
+        senderAddress
       }
       assert(newMsg.outbound !== undefined)
       assert(newMsg.status !== undefined)
@@ -183,6 +184,7 @@ export default {
       assert(newMsg.serverTime !== undefined)
       assert(newMsg.items !== undefined)
       assert(newMsg.outpoints !== undefined)
+      assert(newMsg.senderAddress !== undefined, 'missing sender address')
 
       const message = { payloadDigest: index, ...newMsg }
       if (index in state.messages) {
@@ -216,6 +218,7 @@ export default {
       assert(newMsg.serverTime !== undefined)
       assert(newMsg.items !== undefined)
       assert(newMsg.outpoints !== undefined)
+      assert(newMsg.senderAddress !== undefined)
 
       const message = { payloadDigest: index, ...newMsg }
       if (index in state.messages) {
