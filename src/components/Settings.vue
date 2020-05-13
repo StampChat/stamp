@@ -115,7 +115,6 @@ export default {
       this.$emit('input', this.constructSettings)
     },
     currencyFormat () {
-      // console.log(this.currencyFormat)
       this.$emit('input', this.constructSettings)
     }
   }
