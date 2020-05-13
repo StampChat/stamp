@@ -15,7 +15,7 @@
         <q-avatar rounded>
           <img :src="contactProfile.avatar" />
         </q-avatar>
-        <q-toolbar-title class="h6">{{contactProfile.name}}</q-toolbar-title>
+        <q-toolbar-title class="h6"> {{contactProfile.name}} </q-toolbar-title>
       </q-toolbar>
     </q-header>
     <q-page-container>

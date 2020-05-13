@@ -81,9 +81,15 @@
                 </q-toolbar>
                 <div>
                   <q-img
+                    ref="image"
                     :src="avatar"
                     spinner-color="white"
-                  />
+                  >
+                  </q-img>
+                  <div class="text-center">
+                    <q-btn flat icon="navigate_before" color="black" @click="cycleAvatarLeft" />
+                    <q-btn flat icon="navigate_next" color="black" @click="cycleAvatarRight" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -112,6 +118,8 @@
 </template>
 
 <script>
+import { defaultAvatars } from '../utils/constants'
+
 export default {
   props: {
     // value: {
@@ -132,10 +140,38 @@ export default {
       bio: this.value.profile.bio,
       avatar: this.value.profile.avatar,
       acceptancePrice: this.value.inbox.acceptancePrice,
-      tab: 'profile'
+      tab: 'profile',
+      defaultAvatarIndex: Math.floor(Math.random() * defaultAvatars.length)
     }
   },
   methods: {
+    selectLocalAvatar (name) {
+      const toDataURL = (callback) => {
+        const img = new Image()
+        img.crossOrigin = 'Anonymous'
+        img.onload = function () {
+          const canvas = document.createElement('CANVAS')
+          const ctx = canvas.getContext('2d')
+          canvas.height = this.naturalHeight
+          canvas.width = this.naturalWidth
+          ctx.drawImage(this, 0, 0)
+          const dataURL = canvas.toDataURL()
+          callback(dataURL)
+        }
+        img.src = require(`../assets/avatars/${name}`)
+      }
+      toDataURL((dataUrl) => {
+        this.avatar = dataUrl
+      })
+    },
+    cycleAvatarLeft () {
+      this.defaultAvatarIndex = ((this.defaultAvatarIndex - 1) + defaultAvatars.length) % defaultAvatars.length
+      this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
+    },
+    cycleAvatarRight () {
+      this.defaultAvatarIndex = (this.defaultAvatarIndex + 1) % defaultAvatars.length
+      this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
+    },
     parseImage () {
       if (this.avatarPath == null) {
         return
@@ -178,6 +214,9 @@ export default {
     acceptancePrice () {
       this.$emit('input', this.constructData)
     }
+  },
+  created () {
+    this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
   }
 }
 </script>

@@ -66,6 +66,9 @@ export const pendingRelayData = {
   notify: true
 }
 
+// Avatar constants
+export const defaultAvatars = ['bunny_cyborg.jpg', 'croc_music.jpg', 'kitty_standard.jpg', 'panda_ninja.jpg']
+
 // Chat constants
 export const defaultStampAmount = 5000
 export const donationMessage = 'Thank you for participating in our vision of the future of online communications. Please consider donating to our efforts by sending real BCH to bitcoincash:qq7vt04md0pt6fk5szhcx4cgsfuzmppy5u4hxshr4a'
