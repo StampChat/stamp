@@ -91,9 +91,10 @@ export default {
   },
   computed: {
     ...mapGetters({
+      getCurrencyFormat: 'appearance/getCurrencyFormat'
     }),
     getBalance () {
-      return formatBalance(this.$wallet.balance)
+      return formatBalance(this.$wallet.balance, this.getCurrencyFormat)
     }
   },
   methods: {

@@ -39,15 +39,21 @@ export default {
           updateInterval: this.getUpdateInterval() / 1_000
         },
         appearance: {
-          darkMode: this.getDarkMode()
+          darkMode: this.getDarkMode(),
+          currencyFormat: this.getCurrencyFormat()
         }
       }
     }
   },
   methods: {
-    ...mapGetters({ getUpdateInterval: 'contacts/getUpdateInterval', getDarkMode: 'appearance/getDarkMode' }),
+    ...mapGetters({
+      getUpdateInterval: 'contacts/getUpdateInterval',
+      getDarkMode: 'appearance/getDarkMode',
+      getCurrencyFormat: 'appearance/getCurrencyFormat'
+    }),
     ...mapActions({
-      darkMode: 'appearance/setDarkMode'
+      darkMode: 'appearance/setDarkMode',
+      setCurrencyFormat: 'appearance/setCurrencyFormat'
     }),
     ...mapMutations({
       updateInterval: 'contacts/setUpdateInterval'
@@ -56,6 +62,7 @@ export default {
       this.darkMode(this.settings.appearance.darkMode)
       this.$q.dark.set(this.settings.appearance.darkMode)
       this.updateInterval(this.settings.networking.updateInterval * 1_000)
+      this.setCurrencyFormat(this.settings.appearance.currencyFormat)
     }
   }
 }

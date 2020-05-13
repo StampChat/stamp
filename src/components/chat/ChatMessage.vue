@@ -49,6 +49,8 @@ import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
 import DeleteMessageDialog from '../dialogs/DeleteMessageDialog'
 import TransactionDialog from '../dialogs/TransactionDialog.vue'
 import { stampPrice } from '../../wallet/helpers'
+import { formatBalance } from '../../utils/formatting'
+import { mapGetters } from 'vuex'
 
 export default {
   components: {
@@ -76,6 +78,9 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({
+      getCurrencyFormat: 'appearance/getCurrencyFormat'
+    }),
     formatedTimestamp () {
       switch (this.message.status) {
         case 'confirmed': {
@@ -99,7 +104,7 @@ export default {
     },
     stampPrice () {
       const amount = stampPrice(this.message.outpoints)
-      return amount + ' sats'
+      return formatBalance(amount, this.getCurrencyFormat)
     }
   }
 }

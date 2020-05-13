@@ -84,7 +84,7 @@ export default {
       if (!balance) {
         return balance
       }
-      return formatBalance(balance)
+      return formatBalance(balance, this.getCurrencyFormat)
     },
     toggleMyDrawerOpen () {
       this.$emit('toggleMyDrawerOpen')
@@ -96,7 +96,8 @@ export default {
   computed: {
     ...mapGetters({
       getSortedChatOrder: 'chats/getSortedChatOrder',
-      getNumUnread: 'chats/getNumUnread'
+      getNumUnread: 'chats/getNumUnread',
+      getCurrencyFormat: 'appearance/getCurrencyFormat'
     }),
     relayConnected () {
       return this.$relay.connected
@@ -105,7 +106,7 @@ export default {
       return this.$electrum.connected
     },
     getBalance () {
-      return formatBalance(this.$wallet.balance)
+      return this.formatBalance(this.$wallet.balance)
     }
   }
 }

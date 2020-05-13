@@ -54,10 +54,11 @@ export default {
   },
   methods: {
     ...mapGetters({
-      getMessageByPayloadVuex: 'chats/getMessageByPayload'
+      getMessageByPayloadVuex: 'chats/getMessageByPayload',
+      getCurrencyFormat: 'appearance/getCurrencyFormat'
     }),
     formatSats (value) {
-      return formatBalance(Number(value))
+      return formatBalance(Number(value), this.getCurrencyFormat)
     },
     showImageDialog (image) {
       this.image = image

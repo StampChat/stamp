@@ -94,6 +94,7 @@ import { copyToClipboard } from 'quasar'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
 import { formatBalance } from '../../utils/formatting'
+import { mapGetters } from 'vuex'
 
 export default {
   components: {
@@ -140,8 +141,11 @@ export default {
       const percentage = 100 * Math.min(this.getBalance() / this.recomendedBalance, 1)
       return percentage
     },
+    ...mapGetters({
+      getCurrencyFormat: 'appearance/getCurrencyFormat'
+    }),
     formatBalance () {
-      return formatBalance(this.getBalance())
+      return formatBalance(this.getBalance(), this.getCurrencyFormat)
     }
   }
 }

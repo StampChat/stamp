@@ -45,10 +45,20 @@
           </div>
           </q-tab-panel>
           <q-tab-panel name="appearance">
-            <div class="row">
+            <div class="col">
               <q-toggle
+                class="row"
                 :label="`Dark Mode`"
                 v-model="darkMode"
+              />
+              <q-select
+                class="row"
+                filled
+                v-model="currencyFormat"
+                :options="currentFormatOptions"
+                label="Current Format"
+                emit-value
+                map-options
               />
           </div>
           </q-tab-panel>
@@ -62,14 +72,26 @@
 export default {
   props: {
     value: {
-      type: Object
+      type: Object,
+      required: true
     }
   },
   data () {
     return {
       tab: 'networking',
       darkMode: this.value.appearance.darkMode,
-      updateInterval: this.value.networking.updateInterval
+      currencyFormat: this.value.appearance.currencyFormat,
+      updateInterval: this.value.networking.updateInterval,
+      currentFormatOptions: [
+        {
+          label: 'Bitcoin',
+          value: { type: 'sats' }
+        },
+        {
+          label: 'USD',
+          value: { type: 'fiat', conversion: 0.000002 }
+        }
+      ]
     }
   },
   computed: {
@@ -79,7 +101,8 @@ export default {
           updateInterval: this.updateInterval
         },
         appearance: {
-          darkMode: this.darkMode
+          darkMode: this.darkMode,
+          currencyFormat: this.currencyFormat
         }
       }
     }
@@ -90,7 +113,15 @@ export default {
     },
     darkMode () {
       this.$emit('input', this.constructSettings)
+    },
+    currencyFormat () {
+      // console.log(this.currencyFormat)
+      this.$emit('input', this.constructSettings)
     }
+  },
+  created () {
+    console.log(this.currencyFormat)
+    console.log(this.currentFormatOptions)
   }
 }
 </script>
