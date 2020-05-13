@@ -3,8 +3,7 @@ export default {
   state: {
     darkMode: false,
     currencyFormat: {
-      type: 'fiat',
-      conversion: 0.000002
+      type: 'sats'
     }
   },
   getters: {
