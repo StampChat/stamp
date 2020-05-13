@@ -118,10 +118,6 @@ export default {
       // console.log(this.currencyFormat)
       this.$emit('input', this.constructSettings)
     }
-  },
-  created () {
-    console.log(this.currencyFormat)
-    console.log(this.currentFormatOptions)
   }
 }
 </script>
