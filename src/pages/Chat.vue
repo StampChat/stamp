@@ -37,6 +37,7 @@
               :contact="getContact(chatMessage.outbound)"
               :index="chatMessage.payloadDigest"
               :now="now"
+              :nameColor="chatMessage.outbound ? '': nameColor"
               @replyClicked="({ address, index }) => setReply(index)"
             />
           </template>
@@ -84,6 +85,8 @@ import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
 import { donationMessage } from '../utils/constants'
 import { insufficientStampNotify } from '../utils/notifications'
+import { addressColor } from '../utils/formatting'
+import { Address } from 'bitcore-lib-cash'
 
 const scrollDuration = 0
 
@@ -209,6 +212,16 @@ export default {
     }
   },
   computed: {
+    nameColor () {
+      // Get color
+      if (this.address) {
+        const addr = new Address(this.address)
+        const { hue, saturation } = addressColor(addr)
+        return `color: hsl(${hue}, ${saturation * 100}%, 60%);`
+      } else {
+        return ''
+      }
+    },
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
       getMessageByPayload: 'chats/getMessageByPayload',

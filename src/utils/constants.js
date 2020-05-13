@@ -75,3 +75,7 @@ export const notificationTimeout = 4000
 
 // Contact defaults
 export const defaultUpdateInterval = 60 * 10 * 1_000
+
+// Formatting constants
+// TODO: Generate this
+export const colorSalt = Buffer.from('salt')
