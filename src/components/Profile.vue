@@ -216,7 +216,9 @@ export default {
     }
   },
   created () {
-    this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
+    if (!this.avatar) {
+      this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
+    }
   }
 }
 </script>
