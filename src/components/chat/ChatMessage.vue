@@ -31,8 +31,7 @@
     <div class="row">
       <div class="col">
         <!-- TODO: Assign random color based on seed from name -->
-        <div class="col text-weight-bold" style="border-bottom: 1px solid grey;"><div :style="nameColor"> {{contact.name}} </div></div>
-        <div class="col text-weight-bold" style="border-bottom: 1px solid grey;" v-if="showHeader">{{contact.name}}</div>
+        <div class="col text-weight-bold" style="border-bottom: 1px solid grey;" v-if="showHeader"><div :style="nameColor"> {{contact.name}} </div></div>
         <chat-message-section :key="index" :items="message.items" :address="address" />
       </div>
       <div class="col-auto" style="min-width: 100px">
