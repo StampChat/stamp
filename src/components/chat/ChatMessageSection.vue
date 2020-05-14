@@ -1,25 +1,25 @@
 <template>
-  <div>
+  <div class='q-ml-sm'>
     <q-dialog v-model="imageDialog">
       <image-dialog :image="image" />
     </q-dialog>
 
     <template v-for="(item, index) in items">
-      <div class="row-auto q-pa-sm text-left bg-info rounded-borders" v-bind:key="index" v-if="item.type=='reply'">
+      <div class="row-auto q-pt-xs text-left rounded-borders" v-bind:key="index" v-if="item.type=='reply'">
         <span class="text-weight-bold">Replying To:</span>
         <chat-message-section
-          class="q-pa-sm row-auto "
+          :class="`q-pa-xs row-auto ${$q.dark.isActive ? 'bg-indigo-10' : 'bg-light-blue-4'}`"
           style="border-radius: 5px;"
           :items="getMessage(item.payloadDigest).items"
           :address="address"
         />
       </div>
       <div
-        class="row-auto q-pa-sm text-left"
+        class="row-auto q-pa-xs text-left"
         v-bind:key="index"
         v-if="item.type=='text'"
       >{{ item.text }}</div>
-      <div class="row-auto q-pa-sm text-left" v-bind:key="index" v-if="item.type=='image'">
+      <div class="row-auto q-pt-xs text-left" v-bind:key="index" v-if="item.type=='image'">
         <q-img
           :src="item.image"
           contain
@@ -27,7 +27,7 @@
           @click="()=> showImageDialog(item.image)"
         />
       </div>
-      <div class="row-auto q-pa-sm text-left" v-bind:key="index" v-if="item.type=='stealth'">
+      <div class="row-auto q-pt-xs text-left" v-bind:key="index" v-if="item.type=='stealth'">
         <q-icon name="attach_money" size="sm" dense />
         {{ formatSats(item.amount) }}
       </div>

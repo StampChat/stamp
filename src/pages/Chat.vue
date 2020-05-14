@@ -28,11 +28,12 @@
             index="NA"
             key="NA"
           />
-          <template v-for="chatMessage in messages">
+          <template v-for="(chatMessage, index) in messages">
             <chat-message
               :key="chatMessage.payloadDigest"
               :address="address"
               :message="chatMessage"
+              :showHeader="shouldShowHeader(chatMessage, messages[index-1])"
               :contact="getContact(chatMessage.outbound)"
               :index="chatMessage.payloadDigest"
               :now="now"
@@ -199,6 +200,12 @@ export default {
     },
     setReply (index) {
       this.replyDigest = index
+    },
+    shouldShowHeader (message, previousMessage) {
+      if (previousMessage === undefined) {
+        return true
+      }
+      return previousMessage.senderAddress !== message.senderAddress
     }
   },
   computed: {
