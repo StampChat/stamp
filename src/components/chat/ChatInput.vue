@@ -21,7 +21,8 @@
         dense
         borderless
         autogrow
-        @keydown.enter.prevent="sendMessage"
+        @keydown.enter.exact.prevent
+        @keydown.enter.exact="sendMessage"
         v-bind:value="message"
         v-on:input="onInput"
         placeholder="Write a message..."

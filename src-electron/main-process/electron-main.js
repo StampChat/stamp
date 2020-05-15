@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeImage, nativeTheme, Tray, Menu } from 'electron'
+import { app, BrowserWindow, nativeImage, nativeTheme, Tray, Menu, shell } from 'electron'
 const path = require('path')
 
 // Enable single instance lock
@@ -94,6 +94,11 @@ function createWindow () {
 
   mainWindow.on('closed', function () {
     mainWindow = null
+  })
+
+  mainWindow.webContents.on('will-navigate', (e, url) => {
+    e.preventDefault()
+    shell.openExternal(url)
   })
 }
 

@@ -15,10 +15,12 @@
         />
       </div>
       <div
-        class="row-auto q-pa-xs text-left"
+        class="row-auto text-left"
         v-bind:key="index"
         v-if="item.type=='text'"
-      >{{ item.text }}</div>
+        v-html = "markedMessage(item.text)"
+      >
+      </div>
       <div class="row-auto q-pt-xs text-left" v-bind:key="index" v-if="item.type=='image'">
         <q-img
           :src="item.image"
@@ -39,6 +41,8 @@
 import { formatBalance } from '../../utils/formatting'
 import ImageDialog from '../../components/dialogs/ImageDialog'
 import { mapGetters } from 'vuex'
+import marked from 'marked'
+import DOMPurify from 'dompurify'
 
 export default {
   name: 'chat-message-section',
@@ -66,7 +70,13 @@ export default {
     getMessage (payloadDigest) {
       const message = this.getMessageByPayloadVuex()(payloadDigest)
       return message || { items: [] }
+    },
+    markedMessage (text) {
+      return DOMPurify.sanitize(marked(text))
     }
+  },
+  filters: {
+    marked: marked
   }
 }
 </script>
