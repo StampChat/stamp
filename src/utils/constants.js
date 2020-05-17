@@ -67,7 +67,7 @@ export const pendingRelayData = {
 }
 
 // Avatar constants
-export const defaultAvatars = ['bunny_cyborg.jpg', 'croc_music.jpg', 'kitty_standard.jpg', 'panda_ninja.jpg']
+export const defaultAvatars = ['bunny_cyborg.png', 'croc_music.png', 'kitty_standard.png', 'panda_ninja.png', 'dog_posh.png']
 
 // Chat constants
 export const defaultStampAmount = 5000
