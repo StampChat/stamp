@@ -136,7 +136,7 @@ export class Wallet {
     // Delete all utxos by address
     Object.entries(this.storage.getUTXOs()).forEach(([id, utxo]) => {
       if (utxo.address === addr) {
-        this.storage.removeUTXO(id)
+        this.removeUTXO(id)
       }
     })
     // Make a copy so this is not mutated
@@ -239,7 +239,7 @@ export class Wallet {
               return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
             })) {
             // No such utxo
-              this.storage.removeUTXO(id)
+              this.removeUTXO(id)
             }
           } catch (err) {
             console.error('error deserializing utxo address', err, utxo)
@@ -256,6 +256,7 @@ export class Wallet {
       'blockchain.scripthash.subscribe',
       async (result) => {
         const scriptHash = result[0]
+        console.log('Subscription hit', result)
         await this.updateUTXOFromScriptHash(scriptHash)
       })
 
@@ -504,6 +505,12 @@ export class Wallet {
   }
 
   removeUTXO (id) {
+    const utxos = this.storage.getUTXOs()
+    if (!(id in utxos)) {
+      console.log(id, 'missing from UTXO set?')
+      return
+    }
+    console.log('removing utxo', id)
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.removeUTXO(id)
   }
