@@ -73,7 +73,8 @@ export default {
         console.error(err)
         // TODO: Move specialization down error displayer
         if (err.response.status === 413) {
-          errorNotify('Profile avatar is too large, select a smaller image.')
+          errorNotify(new Error('Profile avatar is too large, select a smaller image.'))
+          this.$q.loading.hide()
           throw err
         }
         errorNotify(new Error('Unable to contact relay server.'))
