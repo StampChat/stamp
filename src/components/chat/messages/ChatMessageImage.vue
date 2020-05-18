@@ -5,11 +5,10 @@
     </q-dialog>
 
     <template v-for="(item, index) in items">
-      <div class="row-auto q-pt-xs text-left rounded-borders" v-bind:key="index" v-if="item.type=='reply'">
-        <span class="text-weight-bold">Replying To:</span>
+      <div class="reply row-auto text-left" v-bind:key="index" v-if="item.type=='reply'">
+        <div class='text-weight-bold' :style="nameColor"> {{ name }} </div>
         <chat-message-section
-          :class="`q-pa-xs row-auto ${$q.dark.isActive ? 'bg-indigo-10' : 'bg-light-blue-4'}`"
-          style="border-radius: 5px;"
+          class="row-auto"
           :items="getMessage(item.payloadDigest).items"
           :address="address"
         />
@@ -46,7 +45,7 @@ import DOMPurify from 'dompurify'
 
 export default {
   name: 'chat-message-section',
-  props: ['items', 'address', 'outbound'],
+  props: ['items', 'address', 'outbound', 'nameColor', 'name'],
   components: {
     ImageDialog
   },
@@ -80,3 +79,14 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.reply {
+  padding: 5px 0;
+  background: #FFF;
+  padding-left: 8px;
+  border-left: 3px;
+  border-left-style: solid;
+  border-left-color: $primary;
+}
+</style>

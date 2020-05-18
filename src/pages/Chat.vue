@@ -21,8 +21,7 @@
     <q-page-container>
       <q-page>
         <q-scroll-area ref="chatScroll" class="q-px-none absolute full-width full-height">
-          <chat-message
-            :sent="false"
+          <chat-message-stack
             :contact="{name: 'Stamp Developers'}"
             :message="{items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date()}"
             :index="-1"
@@ -34,8 +33,6 @@
               v-for="(chatMessage, index) in messages"
               :key="chatMessage.payloadDigest"
               :address="address"
-              :message="chatMessage"
-              :showHeader="shouldShowHeader(chatMessage, messages[index-1])"
               :contact="getContact(chatMessage.outbound)"
               :payloadDigest="chatMessage.payloadDigest"
               :index="index"
@@ -82,7 +79,7 @@ import { dom } from 'quasar'
 const { height } = dom
 
 import ChatInput from '../components/chat/ChatInput.vue'
-import ChatMessage from '../components/chat/ChatMessage.vue'
+import ChatMessageStack from '../components/chat/messages/ChatMessageStack.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
@@ -110,7 +107,7 @@ export default {
     }
   },
   components: {
-    ChatMessage,
+    ChatMessageStack,
     SendFileDialog,
     ChatMessageReply,
     ChatInput,
