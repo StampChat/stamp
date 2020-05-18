@@ -62,11 +62,26 @@ export class Wallet {
 
   async init () {
     console.log('initializing wallet')
+    const t0 = performance.now()
     this.initAddresses()
+    const initAddressTime = performance.now()
     await this.updateHDUTXOs()
+    const updateUTXOTime = performance.now()
     await this.startListeners()
+    const startListenersTime = performance.now()
     await this.fixFrozenUTXOs()
-    await this.fixUTXOs()
+    const fixFrozenUTXOsTime = performance.now()
+    console.log(`initAddresses UTXOs took ${initAddressTime - t0} ms`)
+    console.log(`updateUTXOTime UTXOs took ${updateUTXOTime - t0} ms`)
+    console.log(`startListenersTime UTXOs took ${startListenersTime - t0} ms`)
+    console.log(`fixFrozenUTXOsTime UTXOs took ${fixFrozenUTXOsTime - t0} ms`)
+
+    // Do this async.  It takes 23 seconds.
+    // Omit this step
+    // this.fixUTXOs().then(() => {
+    //   const fixUTXOsTime = performance.now()
+    //   console.log(`fixUTXOsTime UTXOs took ${fixUTXOsTime - t0} ms`)
+    // })
   }
 
   get xPrivKey () {
@@ -218,7 +233,9 @@ export class Wallet {
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
     const client = this.electrumClient
     const utxos = this.storage.getUTXOs()
-    await P.map(Object.keys(utxos),
+    const utxoIds = Object.keys(utxos)
+    console.log(`Refreshing state of ${utxoIds.length} utxos with electrum`)
+    await P.map(utxoIds,
       async id => {
         const utxo = utxos[id]
         if (utxo.type !== 'p2pkh') {
