@@ -149,7 +149,7 @@ export default {
       if (values.length === 0) {
         state.chats[addr].lastRead = null
       } else {
-        state.chats[addr].lastRead = values[values.length - 1].serverTime
+        state.chats[addr].lastRead = Math.max(values[values.length - 1].serverTime, state.chats[addr].lastRead)
       }
       state.chats[addr].totalUnreadMessages = 0
       state.chats[addr].totalUnreadValue = 0
