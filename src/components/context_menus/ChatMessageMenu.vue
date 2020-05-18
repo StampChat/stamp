@@ -63,7 +63,7 @@ import { mapMutations } from 'vuex'
 import { copyToClipboard } from 'quasar'
 
 export default {
-  props: ['address', 'id', 'message'],
+  props: ['address', 'id', 'message', 'stampAmount'],
   methods: {
     ...mapMutations({
       deleteMessage: 'chats/deleteMessage'
@@ -79,7 +79,7 @@ export default {
     },
     resend () {
       this.deleteMessage({ addr: this.address, id: this.id })
-      this.$relayClient.sendMessageImpl(this.message)
+      this.$relayClient.sendMessageImpl({ addr: this.address, items: this.message.items, stampAmount: this.stampAmount })
     },
     copyMessage () {
       const text = this.message.items.find(el => el.type === 'text').text
