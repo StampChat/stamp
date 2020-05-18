@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { splitEvery } from 'ramda'
 import messaging from './messaging_pb'
 import stealth from './stealth_pb'
 import addressmetadata from '../keyserver/addressmetadata_pb'
@@ -675,18 +676,25 @@ export class RelayClient {
     const messageList = messagePage.getMessagesList()
     console.log('processing messages')
     const receivedTime = Date.now()
-    for (const index in messageList) {
-      const timedMessage = messageList[index]
-
-      // TODO: Check correct destination
-      // const destPubKey = timedMessage.getDestination()
-      try {
-        const serverTime = timedMessage.getServerTime()
-        const message = timedMessage.getMessage()
-        await this.receiveMessage({ serverTime, receivedTime, message })
-      } catch (err) {
-        console.error('Unable to deserialize message for some reason', err)
-      }
+    const messageChunks = splitEvery(5, messageList)
+    for (const messageChunk of messageChunks) {
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          for (const timedMessage of messageChunk) {
+            // TODO: Check correct destination
+            // const destPubKey = timedMessage.getDestination()
+            try {
+              const serverTime = timedMessage.getServerTime()
+              const message = timedMessage.getMessage()
+              // Here we are ensuring that their are yields between messages to the event loop.
+              // Ideally, we move this to a webworker in the future.
+              this.receiveMessage({ serverTime, receivedTime, message }).then(resolve).catch(reject)
+            } catch (err) {
+              console.error('Unable to deserialize message for some reason', err)
+            }
+          }
+        }, 0)
+      })
     }
   }
 }
