@@ -99,11 +99,6 @@ export default {
   },
   created () {
     this.$q.dark.set(this.getDarkMode())
-    // Start relay listener
-    this.$q.loading.show({
-      delay: 0,
-      message: 'Updating messages and checking wallet integrity...'
-    })
 
     console.log('loading')
 
@@ -130,7 +125,6 @@ export default {
     }
 
     this.loaded = true
-    this.$q.loading.hide()
   }
 }
 </script>
