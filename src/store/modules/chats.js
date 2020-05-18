@@ -144,8 +144,8 @@ export default {
     }
   },
   mutations: {
-    deleteMessage (state, { addr, id }) {
-      Vue.delete(state.chats[addr].messages, id)
+    deleteMessage (state, { addr, index }) {
+      state.chats[addr].messages.splice(index, 1)
     },
     readAll (state, addr) {
       const values = state.chats[addr].messages

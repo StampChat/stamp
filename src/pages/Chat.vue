@@ -25,7 +25,8 @@
             :sent="false"
             :contact="{name: 'Stamp Developers'}"
             :message="{items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date()}"
-            index="NA"
+            :index="-1"
+            payloadDigest="NA"
             key="NA"
           />
           <template v-if="loaded || active">
@@ -36,10 +37,11 @@
               :message="chatMessage"
               :showHeader="shouldShowHeader(chatMessage, messages[index-1])"
               :contact="getContact(chatMessage.outbound)"
-              :index="chatMessage.payloadDigest"
+              :payloadDigest="chatMessage.payloadDigest"
+              :index="index"
               :now="now"
               :nameColor="chatMessage.outbound ? '': nameColor"
-              @replyClicked="({ address, index }) => setReply(index)"
+              @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
             />
           </template>
           <q-scroll-observer debounce="500" @scroll="scrollHandler" />

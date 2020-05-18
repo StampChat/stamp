@@ -10,16 +10,17 @@
 
     <!-- Delete Dialog -->
     <q-dialog v-model="deleteDialog">
-      <delete-message-dialog :address="address" :index="index" />
+      <delete-message-dialog :address="address" :payloadDigest="payloadDigest" :index="index" />
     </q-dialog>
 
     <chat-message-menu
       :address="address"
-      :id="index"
+      :payloadDigest="payloadDigest"
       :message="message"
+      :index="index"
       @txClick="transactionDialog = true"
       @deleteClick="deleteDialog = true"
-      @replyClick="replyClicked({ address, index })"
+      @replyClick="replyClicked({ address, payloadDigest })"
     />
     <q-tooltip>
       <div class="col-auto q-pa-none">
@@ -73,7 +74,8 @@ export default {
     address: String,
     message: Object,
     contact: Object,
-    index: String,
+    payloadDigest: String,
+    index: Number,
     now: Object,
     showHeader: {
       type: Boolean,

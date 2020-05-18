@@ -30,7 +30,7 @@
 <script>
 import { mapMutations } from 'vuex'
 export default {
-  props: ['address', 'index'],
+  props: ['address', 'payloadDigest', 'index'],
   methods: {
     ...mapMutations({
       deleteMessage: 'chats/deleteMessage'
@@ -39,10 +39,10 @@ export default {
       // TODO: Move this into wallet API
       // TODO: More private
       // Delete message from relay server
-      await this.$relayClient.deleteMessage(this.index)
+      await this.$relayClient.deleteMessage(this.payloadDigest)
       // Delete message from relay server
       try {
-        this.deleteMessage({ addr: this.address, id: this.index })
+        this.deleteMessage({ addr: this.address, payloadDigest: this.payloadDigest, index: this.index })
       } catch (err) {
         console.error(err)
         if (err.response) {
