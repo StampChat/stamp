@@ -683,15 +683,14 @@ export class RelayClient {
           for (const timedMessage of messageChunk) {
             // TODO: Check correct destination
             // const destPubKey = timedMessage.getDestination()
-            try {
-              const serverTime = timedMessage.getServerTime()
-              const message = timedMessage.getMessage()
-              // Here we are ensuring that their are yields between messages to the event loop.
-              // Ideally, we move this to a webworker in the future.
-              this.receiveMessage({ serverTime, receivedTime, message }).then(resolve).catch(reject)
-            } catch (err) {
-              console.error('Unable to deserialize message for some reason', err)
-            }
+            const serverTime = timedMessage.getServerTime()
+            const message = timedMessage.getMessage()
+            // Here we are ensuring that their are yields between messages to the event loop.
+            // Ideally, we move this to a webworker in the future.
+            this.receiveMessage({ serverTime, receivedTime, message }).then(resolve).catch((err) => {
+              console.error('Unable to deserialize message:', err)
+              resolve()
+            })
           }
         }, 0)
       })
