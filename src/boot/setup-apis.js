@@ -107,7 +107,6 @@ export default async ({ store, Vue }) => {
   if (xPrivKey) {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
-    await wallet.init()
   }
   const { client: relayClient, observables: relayObservables } = getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumObservables, store })
   const relayToken = store.getters['relayClient/getToken']
