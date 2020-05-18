@@ -75,13 +75,6 @@ export class Wallet {
     console.log(`updateUTXOTime UTXOs took ${updateUTXOTime - t0} ms`)
     console.log(`startListenersTime UTXOs took ${startListenersTime - t0} ms`)
     console.log(`fixFrozenUTXOsTime UTXOs took ${fixFrozenUTXOsTime - t0} ms`)
-
-    // Do this async.  It takes 23 seconds.
-    // Omit this step
-    // this.fixUTXOs().then(() => {
-    //   const fixUTXOsTime = performance.now()
-    //   console.log(`fixUTXOsTime UTXOs took ${fixUTXOsTime - t0} ms`)
-    // })
   }
 
   get xPrivKey () {
