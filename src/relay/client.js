@@ -517,7 +517,13 @@ export class RelayClient {
       const txId = stampTx.hash
       const vouts = stampOutpoint.getVoutsList()
       const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
-
+      if (outbound) {
+        for (const input of stampTx.inputs) {
+          // In order to update UTXO state more quickly, go ahead and remove the inputs from our set immediately
+          const utxoId = calcId({ txId: input.prevTxId.toString('hex'), outputIndex: input.outputIndex })
+          wallet.removeUTXO(utxoId)
+        }
+      }
       for (const [j, outputIndex] of vouts.entries()) {
         const output = stampTx.outputs[outputIndex]
         const satoshis = output.satoshis
@@ -551,8 +557,7 @@ export class RelayClient {
         }
         outpoints.push(stampOutput)
         if (outbound) {
-          const utxoId = calcId({ outputIndex, txId })
-          wallet.removeUTXO(utxoId)
+          // In order to update UTXO state more quickly, go ahead and remove the inputs from our set immediately
           continue
         }
         wallet.addUTXO(stampOutput)
@@ -607,6 +612,14 @@ export class RelayClient {
           const txId = stealthTx.hash
           const vouts = outpoint.getVoutsList()
 
+          if (outbound) {
+            for (const input of stealthTx.inputs) {
+              // Don't add these outputs to our wallet. They're the other persons
+              const utxoId = calcId({ txId: input.prevTxId.toString('hex'), outputIndex: input.outputIndex })
+              wallet.removeUTXO(utxoId)
+            }
+          }
+
           for (const [j, outputIndex] of vouts.entries()) {
             const output = stealthTx.outputs[outputIndex]
             const satoshis = output.satoshis
@@ -640,11 +653,7 @@ export class RelayClient {
             }
             outpoints.push(stampOutput)
             if (outbound) {
-              // We don't want to add these to the wallet, but we do want the total
-              // We also can't compute the private key.... So the below address check would
-              // error
-              const utxoId = calcId({ outputIndex, txId })
-              wallet.removeUTXO(utxoId)
+              // Don't add these outputs to our wallet. They're the other persons
               continue
             }
             wallet.addUTXO(stampOutput)
