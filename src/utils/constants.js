@@ -13,14 +13,6 @@ export const electrumServers = [
     electrumPort: 50_002
   },
   {
-    electrumURL: 'testnet.imaginary.cash',
-    electrumPort: 50_002
-  },
-  {
-    electrumURL: 'bch0.kister.net',
-    electrumPort: 51_002
-  },
-  {
     electrumURL: 'blackie.c3-soft.com',
     electrumPort: 60_002
   }
