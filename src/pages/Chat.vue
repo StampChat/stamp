@@ -183,8 +183,8 @@ export default {
       const scrollArea = this.$refs.chatScroll
       const scrollTarget = scrollArea.getScrollTarget()
       if (
-        scrollTarget.scrollHeight ===
-        details.position + scrollTarget.offsetHeight
+        // Ten pixels from bottom
+        details.position + scrollTarget.offsetHeight - scrollTarget.scrollHeight <= 10
       ) {
         this.bottom = true
       } else {
