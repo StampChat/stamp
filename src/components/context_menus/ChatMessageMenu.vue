@@ -63,7 +63,7 @@ import { mapMutations, mapGetters } from 'vuex'
 import { copyToClipboard } from 'quasar'
 
 export default {
-  props: ['address', 'id', 'message'],
+  props: ['address', 'payloadDigest', 'index', 'message'],
   methods: {
     ...mapMutations({
       deleteMessage: 'chats/deleteMessage'
@@ -81,7 +81,7 @@ export default {
       this.$relayClient.sendImage(args)
     },
     resend () {
-      this.deleteMessage({ addr: this.address, id: this.id })
+      this.$relayClient.sendMessageImpl(this.message)
       const stampAmount = this.getStampAmount()(this.address)
       this.$relayClient.sendMessageImpl({ addr: this.address, items: this.message.items, stampAmount })
     },
