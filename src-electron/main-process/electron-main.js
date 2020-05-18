@@ -87,7 +87,17 @@ function createWindow () {
 
   mainWindow.loadURL(process.env.APP_URL)
 
+  let forceQuit = false
+  if (process.platform === 'darwin') {
+    app.on('before-quit', function () {
+      forceQuit = true
+    })
+  }
+
   mainWindow.on('close', function (event) {
+    if (forceQuit) {
+      return
+    }
     event.preventDefault()
     mainWindow.hide()
   })
