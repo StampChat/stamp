@@ -97,7 +97,7 @@ export default {
       lastReceived: 'chats/getLastReceived'
     })
   },
-  async created () {
+  created () {
     this.$q.dark.set(this.getDarkMode())
     // Start relay listener
     this.$q.loading.show({
@@ -106,15 +106,6 @@ export default {
     })
 
     console.log('loading')
-    // Setup everything at once. This are independent processes
-    try {
-      this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
-      // const lastReceived = this.lastReceived
-      await this.$relayClient.refresh({ lastReceived: null })
-      await this.$wallet.init()
-    } catch (err) {
-      console.error(err)
-    }
 
     if (!this.activeChatAddr) {
       const contacts = this.getSortedChatOrder()
@@ -122,11 +113,24 @@ export default {
         this.setActiveChat(contacts[0].address)
       }
     }
-    this.$q.loading.hide()
 
-    console.log('loaded')
+    // Setup everything at once. This are independent processes
+    try {
+      this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
+      // const lastReceived = this.lastReceived
+      const t0 = performance.now()
+      this.$relayClient.refresh({ lastReceived: null }).then(() => {
+        const t1 = performance.now()
+        console.log(`Loading messages took ${t1 - t0}ms`)
+        this.$wallet.init()
+        console.log('loaded')
+      })
+    } catch (err) {
+      console.error(err)
+    }
 
     this.loaded = true
+    this.$q.loading.hide()
   }
 }
 </script>
