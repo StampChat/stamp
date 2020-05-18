@@ -95,6 +95,9 @@ export default {
       )
       return sortedOrder
     },
+    lastRead: (state) => (addr) => {
+      return state.chats[addr].lastRead
+    },
     getStampAmount: (state) => (addr) => {
       return state.chats[addr].stampAmount || defaultStampAmount
     },
@@ -281,7 +284,7 @@ export default {
       assert(typeof stampAmount === 'number')
       commit('setStampAmount', { addr, stampAmount })
     },
-    receiveMessage ({ dispatch, commit, rootGetters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
+    receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](copartyAddress)) {
         // Add dummy contact
@@ -293,9 +296,11 @@ export default {
 
       // Ignore messages below acceptance price
       const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
+      const lastRead = getters.lastRead(copartyAddress)
+
       const acceptable = (newMsg.stampValue >= acceptancePrice)
       // If not focused (and not outbox message) then notify
-      if (!document.hasFocus() && !outbound && acceptable) {
+      if (!document.hasFocus() && !outbound && acceptable && lastRead < newMsg.serverTime) {
         const contact = rootGetters['contacts/getContact'](copartyAddress)
         const textItem = newMsg.items.find(item => item.type === 'text') || { text: '' }
         if (contact.notify) {
