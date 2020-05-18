@@ -404,7 +404,7 @@ export default {
       } catch (err) {
         // TODO: move specialization down to errorNotify
         if (err.response.status === 413) {
-          errorNotify('Profile image is too large, select a smaller image.')
+          errorNotify(new Error('Profile image is too large, select a smaller image.'))
           throw err
         }
         errorNotify(new Error('Network error: Relay disconnnected unexpectedly.'))
