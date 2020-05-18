@@ -165,7 +165,7 @@ export default {
     },
     setActiveChat (state, addr) {
       if (!(addr in state.chats)) {
-        Vue.set(state.chats, addr, { ...defaultContactObject, messages: {}, address: addr })
+        Vue.set(state.chats, addr, { ...defaultContactObject, messages: [], address: addr })
       }
       state.activeChatAddr = addr
     },
