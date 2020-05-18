@@ -28,8 +28,9 @@
             index="NA"
             key="NA"
           />
-          <template v-for="(chatMessage, index) in messages">
+          <template v-if="loaded || active">
             <chat-message
+              v-for="(chatMessage, index) in messages"
               :key="chatMessage.payloadDigest"
               :address="address"
               :message="chatMessage"
@@ -96,6 +97,10 @@ export default {
     messages: {
       type: Array,
       default: () => []
+    },
+    loaded: {
+      type: Boolean,
+      default: () => false
     },
     active: {
       type: Boolean,

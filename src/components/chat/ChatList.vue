@@ -30,6 +30,7 @@
           :chatAddr="contact.address"
           :valueUnread="formatBalance(contact.totalUnreadValue)"
           :numUnread="contact.totalUnreadMessages"
+          :loaded="loaded"
         />
         <q-item v-if="getSortedChatOrder.length === 0">
           <q-item-section>
@@ -65,7 +66,7 @@ import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 
 export default {
-  props: ['chatAddr'],
+  props: ['chatAddr', 'loaded'],
   components: {
     ChatListItem,
     WalletDialog,
