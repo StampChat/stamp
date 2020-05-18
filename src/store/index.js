@@ -4,7 +4,8 @@ import VuexPersistence from 'vuex-persist'
 import modules from './modules'
 import { rehydateChat } from './modules/chats'
 import { rehydrateWallet } from './modules/wallet'
-import { path, pathOr, map } from 'ramda'
+import { path, pathOr, mapObjIndexed } from 'ramda'
+import { rehydrateContacts } from './modules/contacts'
 
 Vue.use(Vuex)
 
@@ -37,7 +38,8 @@ const vuexLocal = new VuexPersistence({
           token: path(['relayClient', 'token'], newState)
         },
         chats: {
-          chats: map(addressData => {
+          chats: mapObjIndexed((addressData, address) => {
+            console.log(`Loading lastRead time ${addressData.lastRead} for address ${address}`)
             return {
               messages: [],
               stampAmount: path(['stampAmount'], addressData),
@@ -50,11 +52,13 @@ const vuexLocal = new VuexPersistence({
       }
     }
     console.log('new new state', newState)
-    rehydateChat(newState.chats)
+    rehydrateContacts(newState.contacts)
+    rehydateChat(newState.chats, newState.contacts)
     rehydrateWallet(newState.wallet)
     return newState
   },
   reducer (state) {
+    console.log('reducing state', state)
     return {
       wallet: {
         xPrivKey: path(['wallet', 'xPrivKey'], state),
@@ -64,27 +68,29 @@ const vuexLocal = new VuexPersistence({
         token: path(['relayClient', 'token'], state)
       },
       chats: {
-        chats: map(addressData => {
+        activeChatAddr: pathOr(null, ['chats', 'activeChatAddr'], state),
+        chats: mapObjIndexed((addressData, address) => {
+          console.log(`Saving lastRead time ${addressData.lastRead} for address ${address}`)
           return ({
-            lastRead: addressData.lastRead,
-            // TODO: We need to save this remotely somewhere.
-            stampAmount: path(['stampAmount'], addressData),
+            ...addressData,
+            // Overwrite messages because storing them would be prohibitive.
             messages: {}
           })
         },
-        pathOr({}, ['chats', 'data'], state))
+        pathOr({}, ['chats', 'chats'], state))
       },
+      contacts: state.contacts,
       myProfile: state.myProfile,
       version: STORE_SCHEMA_VERSION
     }
   },
   saveState (key, state, storage) {
-    console.log('saving state', state.chats)
+    console.log('saving state', state)
     storage.setItem(key, JSON.stringify(state))
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   filter: (mutation) => {
-    if (lastSave + 10000 >= Date.now()) {
+    if (lastSave + 1000 >= Date.now()) {
       return false
     }
     lastSave = Date.now()

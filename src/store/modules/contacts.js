@@ -5,6 +5,15 @@ import KeyserverHandler from '../../keyserver/handler'
 import Vue from 'vue'
 import moment from 'moment'
 
+export function rehydrateContacts (contactState) {
+  if (!contactState) {
+    return
+  }
+
+  // This is currentlœy a shim, we don't need any special rehydrate contact at this time.
+  contactState.contacts = contactState.contacts || {}
+}
+
 export default {
   namespaced: true,
   state: {
