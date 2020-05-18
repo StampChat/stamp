@@ -2,7 +2,6 @@
   <q-layout view="hHr LpR lff">
     <q-drawer
       v-model="myDrawerOpen"
-      v-if="loaded"
       overlay
       bordered
       behavior="mobile"
@@ -11,7 +10,7 @@
     >
       <settings-panel />
     </q-drawer>
-    <q-drawer v-model="contactDrawerOpen" v-if="loaded" side="right" :width="300" :breakpoint="400" bordered>
+    <q-drawer v-model="contactDrawerOpen" side="right" :width="300" :breakpoint="400" bordered>
       <contact-panel
         v-if="activeChatAddr !== null"
         :address="activeChatAddr"
@@ -19,14 +18,14 @@
       />
     </q-drawer>
     <q-page-container>
-      <q-page :style-fn="tweak" v-if="loaded">
+      <q-page :style-fn="tweak">
         <q-splitter
           v-model="splitterRatio"
           class="full-height"
           unit="px"
         >
           <template v-slot:before>
-            <chat-list class="full-height" @toggleContactDrawerOpen="toggleContactDrawerOpen" @toggleMyDrawerOpen="toggleMyDrawerOpen" />
+            <chat-list class="full-height" :loaded="loaded" @toggleContactDrawerOpen="toggleContactDrawerOpen" @toggleMyDrawerOpen="toggleMyDrawerOpen" />
           </template>
 
           <template v-slot:after>
@@ -38,6 +37,7 @@
               :messages="item.messages"
               :active="activeChatAddr === index"
               :style="`height: inherit; min-height: inherit;`"
+              :loaded="loaded"
             />
           </template>
         </q-splitter>
@@ -99,12 +99,6 @@ export default {
   },
   created () {
     this.$q.dark.set(this.getDarkMode())
-    // Start relay listener
-    this.$q.loading.show({
-      delay: 0,
-      message: 'Updating messages and checking wallet integrity...'
-    })
-
     console.log('loading')
 
     if (!this.activeChatAddr) {
@@ -124,13 +118,11 @@ export default {
         console.log(`Loading messages took ${t1 - t0}ms`)
         this.$wallet.init()
         console.log('loaded')
+        this.loaded = true
       })
     } catch (err) {
       console.error(err)
     }
-
-    this.loaded = true
-    this.$q.loading.hide()
   }
 }
 </script>

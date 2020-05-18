@@ -15,6 +15,7 @@
       <q-item-label
         caption
         lines="2"
+        v-if="loaded"
       >{{ latestMessageBody }}</q-item-label>
     </q-item-section>
     <q-item-section
@@ -22,13 +23,13 @@
       top
     >
       <q-badge
-        v-if="!!valueUnread"
+        v-if="!!valueUnread && loaded"
         color="primary"
         :label="valueUnread"
         class="q-my-xs"
       />
       <q-badge
-        v-if="!!numUnread"
+        v-if="!!numUnread && loaded"
         color="secondary"
         :label="numUnread"
         class="q-my-xs"
@@ -68,6 +69,6 @@ export default {
       return this.getActiveChat === this.chatAddr
     }
   },
-  props: ['chatAddr', 'numUnread', 'valueUnread']
+  props: ['chatAddr', 'numUnread', 'valueUnread', 'loaded']
 }
 </script>
