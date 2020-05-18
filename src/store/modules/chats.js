@@ -96,7 +96,7 @@ export default {
       return sortedOrder
     },
     lastRead: (state) => (addr) => {
-      return state.chats[addr].lastRead
+      return addr in state.chats ? state.chats[addr].lastRead : 0
     },
     getStampAmount: (state) => (addr) => {
       return state.chats[addr].stampAmount || defaultStampAmount
