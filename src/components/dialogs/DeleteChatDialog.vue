@@ -34,7 +34,7 @@ export default {
   props: ['address', 'name'],
   methods: {
     ...mapMutations({
-      deleteChat: 'contacts/deleteChat'
+      deleteChat: 'chats/deleteChat'
     })
   }
 }
