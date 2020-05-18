@@ -696,6 +696,12 @@ export class RelayClient {
         }, 0)
       })
     }
+
+    const t0 = performance.now()
+    await this.wallet.fixUTXOs().then(() => {
+      const fixUTXOsTime = performance.now()
+      console.log(`fixUTXOsTime UTXOs took ${fixUTXOsTime - t0} ms`)
+    })
   }
 }
 
