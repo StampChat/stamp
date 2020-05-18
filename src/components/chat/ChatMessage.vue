@@ -17,7 +17,6 @@
       :address="address"
       :id="index"
       :message="message"
-      :stampAmount="stampPrice"
       @txClick="transactionDialog = true"
       @deleteClick="deleteDialog = true"
       @replyClick="replyClicked({ address, index })"
