@@ -1,7 +1,7 @@
 <template>
   <q-item
     :active="isActive"
-    active-class="bg-blue-3 text-black"
+    active-class="bg-blue-2 text-black"
     clickable
     @click="setActiveChat(chatAddr)"
   >

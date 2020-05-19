@@ -1,5 +1,5 @@
 <template>
-  <div v-html = "markedMessage(text)"/>
+  <span v-html="markedMessage(text)"/>
 </template>
 
 <script>
@@ -16,7 +16,8 @@ export default {
   },
   methods: {
     markedMessage (text) {
-      return DOMPurify.sanitize(marked(text))
+      const html = DOMPurify.sanitize(marked(text))
+      return html
     }
   },
   filters: {

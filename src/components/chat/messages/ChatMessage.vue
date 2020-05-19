@@ -1,5 +1,10 @@
 <template>
-  <q-item class='q-pa-none' dense clickable>
+  <q-item
+    :class="`q-pa-none ${mouseover ? 'bg-blue-2': 'bg-white'}`"
+    dense
+    @mouseover="mouseover = true"
+    @mouseleave="mouseover = false"
+  >
     <!-- Transaction Dialog -->
     <q-dialog v-model="transactionDialog">
       <!-- Switch to outpoints -->
@@ -11,14 +16,6 @@
       <delete-message-dialog :address="address" :payloadDigest="message.payloadDigest" :index="index" />
     </q-dialog>
 
-    <!-- Information tooltip -->
-    <q-tooltip>
-      <div class="col-auto q-pa-none">
-        <div class="row-auto">{{ stampPrice }}</div>
-        <div class="row-auto">{{ timestampString }}</div>
-      </div>
-    </q-tooltip>
-
     <chat-message-menu
       :address="address"
       :message="message"
@@ -29,11 +26,18 @@
 
     <div class='col'>
       <div class = 'q-px-sm' v-for="(item, index) in message.items" :key="index" >
-        <chat-message-reply v-if="item.type=='reply'" :payloadDigest="item.payloadDigest" :address="address"/>
+        <chat-message-reply :class="`q-pa-none ${mouseover ? 'bg-blue-3': 'bg-white'}`" v-if="item.type=='reply'" :payloadDigest="item.payloadDigest" :address="address"/>
         <chat-message-text v-else-if="item.type=='text'" :text="item.text" />
         <chat-message-image v-else-if="item.type=='image'" :image="item.image" />
         <chat-message-stealth v-else-if="item.type=='stealth'" :amount="item.amount" />
       </div>
+    </div>
+
+    <div class='col-auto' v-show="mouseover">
+      {{ stampAmount }}
+    </div>
+    <div class='q-px-sm col-auto' v-show="mouseover">
+      {{ shortTimestamp }}
     </div>
 
     <div v-if="message.status==='error'" class="col-auto">
@@ -67,7 +71,8 @@ export default {
   data () {
     return {
       transactionDialog: false,
-      deleteDialog: false
+      deleteDialog: false,
+      mouseover: false
     }
   },
   props: {
@@ -108,7 +113,7 @@ export default {
       const timestamp = this.message.timestamp || this.message.serverTime
       return moment(timestamp)
     },
-    stampPrice () {
+    stampAmount () {
       const amount = stampPrice(this.message.outpoints)
       return amount + ' sats'
     }
