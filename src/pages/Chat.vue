@@ -244,7 +244,6 @@ export default {
       }, { chunks: [], currentChunk: [this.messages[0]], globalIndex: 0 })
 
       chunks.push({ chunk: currentChunk, globalIndex: globalIndex - currentChunk.length })
-      console.log('completed chunking', chunks)
       return chunks
     },
     nameColor () {
