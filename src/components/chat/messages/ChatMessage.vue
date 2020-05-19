@@ -1,5 +1,7 @@
 <template>
-  <div class="q-pa-none q-ma-none q-ml-sm  q-mr-sm col rounded-borders bg-dark-3">
+  <q-item class='q-px-none' clickable>
+
+  <!-- <div class="q-pa-none q-ma-none q-ml-sm  q-mr-sm col rounded-borders bg-dark-3"> -->
     <!-- Context Menu -->
 
     <!-- Transaction Dialog -->
@@ -23,25 +25,29 @@
 
     <div v-for="(item, index) in message.items" :key="index" >
       <chat-message-text v-if="item.type=='text'" :text="item.text" />
+      <chat-message-image v-if="item.type=='image'" :image="item.image" />
+      <chat-message-stealth v-if="item.type=='stealth'" :amount="item.amount" />
       <!-- {{ item }} -->
     </div>
 
     <q-tooltip>
       <div class="col-auto q-pa-none">
-        <div class="row-auto">{{stampPrice}}</div>
-        <div class="row-auto">{{timestampString}}</div>
+        <div class="row-auto">{{ stampPrice }}</div>
+        <div class="row-auto">{{ timestampString }}</div>
       </div>
     </q-tooltip>
     <div class="col-auto">
       <q-icon name="error" color="red" />
     </div>
-  </div>
+  </q-item>
 </template>
 
 <script>
 import moment from 'moment'
 import ChatMessageMenu from '../../context_menus/ChatMessageMenu.vue'
 import ChatMessageText from './ChatMessageText.vue'
+import ChatMessageImage from './ChatMessageImage.vue'
+import ChatMessageStealth from './ChatMessageStealth.vue'
 import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog'
 import TransactionDialog from '../../dialogs/TransactionDialog.vue'
 import { stampPrice } from '../../../wallet/helpers'
@@ -50,6 +56,8 @@ export default {
   components: {
     ChatMessageMenu,
     ChatMessageText,
+    ChatMessageImage,
+    ChatMessageStealth,
     TransactionDialog,
     DeleteMessageDialog
   },

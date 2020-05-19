@@ -1,48 +1,63 @@
 <template>
-  <div>
-    <div
-      class="q-py-none"
-      style="word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;"
-      v-if="item.type=='text'"
-    >
-      {{ item.text }}
-    </div>
-    <div
-      class='q-py-sm'
-      v-else-if="item.type=='image'"
-    >
-      <q-img
-        :src="item.image"
-        contain
-        style="width: 10vw;"
-        @click="imageDialog = true"
-      />
-    </div>
-    <div
-      class='q-py-sm'
-      v-else-if="item.type=='stealth'"
-    >
-      <div class='col q-pb-xs'>
-        <div class='row'>
-          <div class='col-auto'>
-            <q-icon
-              name='attach_money'
-              size='md'
-              dense
-              color='green'
-            />
-          </div>
-          <div class='col q-px-sm q-py-sm'>
-            Sent {{ item.amount }} satoshis
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="reply row-auto text-left" v-bind:key="index" v-if="item.type=='reply'">
+    <div class='text-weight-bold' :style="nameColor"> {{ name }} </div>
+    <chat-message
+      class="row-auto"
+      :items="getMessage(item.payloadDigest).items"
+      :address="address"
+    />
   </div>
 </template>
 
 <script>
+import ChatMessage from './ChatMessage.vue'
+import { mapGetters } from 'vuex'
+import marked from 'marked'
+import DOMPurify from 'dompurify'
+
 export default {
-  props: ['item']
+  components: {
+    ChatMessage
+  },
+  props: {
+    name: {
+      type: String,
+      required: true
+    },
+    nameColor: {
+      type: String,
+      required: true
+    },
+    payloadDigest: {
+      type: String,
+      required: true
+    }
+  },
+  methods: {
+    ...mapGetters({
+      getMessageByPayloadVuex: 'chats/getMessageByPayload'
+    }),
+    getMessage (payloadDigest) {
+      const message = this.getMessageByPayloadVuex()(payloadDigest)
+      return message || { items: [] }
+    },
+    markedMessage (text) {
+      return DOMPurify.sanitize(marked(text))
+    }
+  },
+  filters: {
+    marked: marked
+  }
 }
 </script>
+
+<style lang="scss" scoped>
+.reply {
+  padding: 5px 0;
+  background: #FFF;
+  padding-left: 8px;
+  border-left: 3px;
+  border-left-style: solid;
+  border-left-color: $primary;
+}
+</style>
