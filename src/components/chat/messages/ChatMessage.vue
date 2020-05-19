@@ -12,7 +12,7 @@
 
     <!-- Delete Dialog -->
     <q-dialog v-model="deleteDialog">
-      <delete-message-dialog :address="address" :index="message.payloadDigest" />
+      <delete-message-dialog :address="address" :payloadDigest="message.payloadDigest" :index="index" />
     </q-dialog>
 
     <chat-message-menu

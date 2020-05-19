@@ -30,12 +30,13 @@
           /> -->
           <template v-if="loaded || active">
             <chat-message-stack
-              v-for="(messages, index) in stackedMessages"
+              v-for="({ msgChunk, globalIndex }, index) in stackedMessages"
               :key="index"
               :address="address"
-              :messages="messages"
-              :contact="getContact(messages[0].outbound)"
-              :nameColor="messages[0].outbound ? '': nameColor"
+              :messages="msgChunk"
+              :globalIndex="globalIndex"
+              :contact="getContact(msgChunk[0].outbound)"
+              :nameColor="msgChunk[0].outbound ? '': nameColor"
               @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
             />
           </template>
@@ -241,10 +242,12 @@ export default {
         const newAddr = msgs[0]?.senderAddress
         return { msgs, currentAddr: newAddr, msgChunk }
       }
-
+      let globalIndex = 0
       while (true) {
         ({ msgs, currentAddr, msgChunk } = chunk({ msgs, currentAddr }))
-        chunked.push(msgChunk)
+        chunked.push({ msgChunk, globalIndex })
+        globalIndex += msgChunk.length
+        console.log('Global index:', globalIndex)
         if (!msgs) {
           break
         }

@@ -2,13 +2,13 @@
   <div class="row">
     <div class="col q-px-sm">
       <div class="stack-header row">
-        <div class='col text-weight-bold' :style="nameColor"> {{contact.name}} </div>
+        <div class='col text-weight-bold' :style="nameColor"> {{ contact.name }} </div>
          <div class="flex-break"></div>
         <div class='col-auto'>
           {{ stampAmount }}
         </div>
         <div class='q-px-sm col-auto'>
-          {{shortTimestamp}}
+          {{ shortTimestamp }}
         </div>
       </div>
       <q-list>
@@ -16,6 +16,7 @@
           v-for="(message, index) in messages"
           :key="index"
           :message="message"
+          :index="index + globalIndex"
           :items="message.items"
           :address="address"
           :nameColor="nameColor"
@@ -35,21 +36,12 @@ export default {
   components: {
     ChatMessage
   },
-  data () {
-    return {
-      transactionDialog: false,
-      deleteDialog: false
-    }
-  },
   props: {
     nameColor: String,
     contact: Object,
     address: String,
     messages: Array,
-    showHeader: {
-      type: Boolean,
-      default: () => true
-    }
+    globalIndex: Number
   },
   methods: {
     replyClicked (args) {
@@ -65,7 +57,6 @@ export default {
     shortTimestamp () {
       const nMessages = this.messages.length
       const lastMessage = this.messages[nMessages - 1]
-      console.log(lastMessage)
       switch (lastMessage.status) {
         case 'confirmed': {
           const timestamp = lastMessage.timestamp || lastMessage.serverTime
