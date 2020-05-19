@@ -21,24 +21,24 @@
     <q-page-container>
       <q-page>
         <q-scroll-area ref="chatScroll" class="q-px-none absolute full-width full-height">
-          <!-- <chat-message-stack
+          <chat-message-stack
             :contact="{name: 'Stamp Developers'}"
-            :message="{items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date()}"
+            :messages="[{ items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date() }]"
             :index="-1"
-            payloadDigest="NA"
-            key="NA"
-          /> -->
+          />
           <template v-if="loaded || active">
-            <chat-message-stack
-              v-for="({ chunk, globalIndex }, index) in chunkedMessages"
-              :key="index"
-              :address="address"
-              :messages="chunk"
-              :globalIndex="globalIndex"
-              :contact="getContact(chunk[0].outbound)"
-              :nameColor="chunk[0].outbound ? '': nameColor"
-              @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
-            />
+            <template v-for="({ chunk, globalIndex }, index) in chunkedMessages">
+              <chat-message-stack
+                v-if="chunk[0]"
+                :key="index"
+                :address="address"
+                :messages="chunk"
+                :globalIndex="globalIndex"
+                :contact="getContact(chunk[0].outbound)"
+                :nameColor="chunk[0].outbound ? '': nameColor"
+                @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
+              />
+            </template>
           </template>
           <q-scroll-observer debounce="500" @scroll="scrollHandler" />
         </q-scroll-area>
