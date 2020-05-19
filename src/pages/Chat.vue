@@ -15,7 +15,7 @@
         <q-avatar rounded>
           <img :src="contactProfile.avatar" />
         </q-avatar>
-        <q-toolbar-title class="h6"> {{contactProfile.name}} </q-toolbar-title>
+        <q-toolbar-title class="h6"> {{ contactProfile.name }} </q-toolbar-title>
       </q-toolbar>
     </q-header>
     <q-page-container>
@@ -35,7 +35,7 @@
                 :messages="chunk"
                 :globalIndex="globalIndex"
                 :contact="getContact(chunk[0].outbound)"
-                :nameColor="chunk[0].outbound ? '': nameColor"
+                :nameColor="chunk[0].outbound ? '': `color: ${nameColor};`"
                 @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
               />
             </template>
@@ -93,8 +93,6 @@ import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.v
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
 import { donationMessage } from '../utils/constants'
 import { insufficientStampNotify } from '../utils/notifications'
-import { addressColor } from '../utils/formatting'
-import { Address } from 'bitcore-lib-cash'
 
 const scrollDuration = 0
 
@@ -247,14 +245,8 @@ export default {
       return chunks
     },
     nameColor () {
-      // Get color
-      if (this.address) {
-        const addr = new Address(this.address)
-        const { hue, saturation } = addressColor(addr)
-        return `color: hsl(${hue}, ${saturation * 100}%, 60%);`
-      } else {
-        return ''
-      }
+      const color = this.getContactVuex(this.address).color
+      return color
     },
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
