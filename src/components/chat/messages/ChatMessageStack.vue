@@ -1,18 +1,5 @@
 <template>
   <div class="q-pa-none q-ma-none q-ml-sm  q-mr-sm col rounded-borders bg-dark-3">
-    <!-- Context Menu -->
-
-    <!-- Transaction Dialog -->
-    <!-- Switch to outpoints -->
-    <!-- <q-dialog v-model="transactionDialog">
-      <transaction-dialog title="Stamp Transaction" :outpoints="message.outpoints" />
-    </q-dialog> -->
-
-    <!-- Delete Dialog -->
-    <!-- <q-dialog v-model="deleteDialog">
-      <delete-message-dialog :address="address" :index="index" />
-    </q-dialog> -->
-
     <!-- <chat-message-menu
       :address="address"
       :id="index"
@@ -20,13 +7,7 @@
       @txClick="transactionDialog = true"
       @deleteClick="deleteDialog = true"
       @replyClick="replyClicked({ address, index })"
-    />
-    <q-tooltip>
-      <div class="col-auto q-pa-none">
-        <div class="row-auto">{{stampPrice}}</div>
-        <div class="row-auto">{{timestampString}}</div>
-      </div>
-    </q-tooltip> -->
+    /> -->
 
     <div class="row">
       <div class="col">
@@ -35,11 +16,19 @@
           <span class='float-right'>
             {{shortTimestamp}}
           </span>
+                  <!-- <div class="row-auto">{{stampPrice}}</div> -->
         </div>
-        <div v-for="(message, index) in messages" :key="index">
-          <chat-message :message="message" />
-        </div>
-        <!-- <chat-message-section v-for="(index, message) in messages" :key="index" :items="message.items" :address="address" :nameColor="nameColor" :name="contact.name" /> -->
+        <q-list>
+          <chat-message
+            v-for="(message, index) in messages"
+            :key="index"
+            :message="message"
+            :items="message.items"
+            :address="address"
+            :nameColor="nameColor"
+            :name="contact.name"
+          />
+        </q-list>
       </div>
       <!-- <div v-if="message.status==='error'" class="row justify-end q-pt-xs" style="full-width">
         <div class="col-auto">

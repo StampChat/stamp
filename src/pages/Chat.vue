@@ -6,6 +6,7 @@
       <send-file-dialog :address="address" />
     </q-dialog>
 
+
     <q-dialog v-model="sendMoneyOpen" persistent>
       <send-bitcoin-dialog :address="address" :contact="contactProfile" />
     </q-dialog>
@@ -21,23 +22,22 @@
     <q-page-container>
       <q-page>
         <q-scroll-area ref="chatScroll" class="q-px-none absolute full-width full-height">
-          <chat-message-stack
+          {{ stackedMessages.length }}
+          <!-- <chat-message-stack
             :contact="{name: 'Stamp Developers'}"
             :message="{items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date()}"
             :index="-1"
             payloadDigest="NA"
             key="NA"
-          />
+          /> -->
           <template v-if="loaded || active">
-            <chat-message
-              v-for="(chatMessage, index) in messages"
-              :key="chatMessage.payloadDigest"
+            <chat-message-stack
+              v-for="(messages, index) in stackedMessages"
+              :key="index"
               :address="address"
-              :contact="getContact(chatMessage.outbound)"
-              :payloadDigest="chatMessage.payloadDigest"
-              :index="index"
-              :now="now"
-              :nameColor="chatMessage.outbound ? '': nameColor"
+              :messages="messages"
+              :contact="getContact(messages[0].outbound)"
+              :nameColor="messages[0].outbound ? '': nameColor"
               @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
             />
           </template>
@@ -81,7 +81,7 @@ const { height } = dom
 import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessageStack from '../components/chat/messages/ChatMessageStack.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
-import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
+import ChatMessageReply from '../components/chat/messages/ChatMessageReply.vue'
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
 import { donationMessage } from '../utils/constants'
 import { insufficientStampNotify } from '../utils/notifications'
@@ -216,6 +216,45 @@ export default {
     }
   },
   computed: {
+    stackedMessages () {
+      // TODO: Progressively construct this
+      if (!this.loaded) {
+        return []
+      }
+      let msgs = this.messages
+      const firstMsg = this.messages[0]
+      if (!firstMsg) {
+        return []
+      }
+      let currentAddr = firstMsg.senderAddress
+      let msgChunk
+      const chunked = []
+
+      // TODO: Optimize this
+      const chunk = function ({ msgs, currentAddr }) {
+        const spliceIndex = msgs.findIndex((msg) => {
+          return msg.senderAddress !== currentAddr
+        })
+        if (spliceIndex === -1) {
+          return { msgs: [], msgChunk: msgs }
+        }
+        const msgChunk = msgs.splice(0, spliceIndex)
+        const newAddr = msgs[0]?.senderAddress
+        return { msgs, currentAddr: newAddr, msgChunk }
+      }
+
+      while (true) {
+        ({ msgs, currentAddr, msgChunk } = chunk({ msgs, currentAddr }))
+        if (!currentAddr) {
+          break
+        }
+        chunked.push(msgChunk)
+        if (!msgs) {
+          break
+        }
+      }
+      return chunked
+    },
     nameColor () {
       // Get color
       if (this.address) {

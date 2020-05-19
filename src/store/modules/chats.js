@@ -39,7 +39,7 @@ export function rehydateChat (chatState) {
       contact.messages = []
       if (contact.messsages) {
         delete contact.messsages
-        contact.messages = {}
+        contact.messages = []
       }
       // This person has saved data, no need to migrate
       if (contact.totalValue === undefined) {
@@ -57,7 +57,7 @@ export default {
   state: {
     activeChatAddr: null,
     chats: {},
-    messages: {},
+    messages: [],
     lastReceived: null
   },
   getters: {
@@ -205,7 +205,7 @@ export default {
     },
     clearChat (state, addr) {
       if (addr in state.chats) {
-        state.chats[addr].messages = {}
+        state.chats[addr].messages = []
       }
     },
     deleteChat (state, addr) {

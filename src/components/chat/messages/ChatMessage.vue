@@ -22,7 +22,8 @@
     />
 
     <div v-for="(item, index) in message.items" :key="index" >
-      {{ item }}
+      <chat-message-text v-if="item.type=='text'" :text="item.text" />
+      <!-- {{ item }} -->
     </div>
 
     <q-tooltip>
@@ -39,14 +40,16 @@
 
 <script>
 import moment from 'moment'
-import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
-import DeleteMessageDialog from '../dialogs/DeleteMessageDialog'
-import TransactionDialog from '../dialogs/TransactionDialog.vue'
-import { stampPrice } from '../../wallet/helpers'
+import ChatMessageMenu from '../../context_menus/ChatMessageMenu.vue'
+import ChatMessageText from './ChatMessageText.vue'
+import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog'
+import TransactionDialog from '../../dialogs/TransactionDialog.vue'
+import { stampPrice } from '../../../wallet/helpers'
 
 export default {
   components: {
     ChatMessageMenu,
+    ChatMessageText,
     TransactionDialog,
     DeleteMessageDialog
   },
@@ -60,7 +63,9 @@ export default {
     nameColor: String,
     address: String,
     message: Object,
-    contact: Object
+    contact: Object,
+    payloadDigest: String,
+    index: Number
   },
   methods: {
     replyClicked (args) {
