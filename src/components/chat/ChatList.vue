@@ -16,10 +16,9 @@
     </q-dialog>
 
     <q-toolbar>
-      <q-space />
       <q-btn class="q-px-sm" flat dense @click="toggleMyDrawerOpen" icon="menu" />
+      <q-space />
       <q-btn class="q-px-sm" flat dense @click="newContactOpen = true" icon="add" />
-      <q-btn class="q-px-sm" flat dense @click="toggleContactDrawerOpen" icon="person" />
     </q-toolbar>
     <q-scroll-area class="q-px-none col">
       <q-list>
@@ -89,9 +88,6 @@ export default {
     },
     toggleMyDrawerOpen () {
       this.$emit('toggleMyDrawerOpen')
-    },
-    toggleContactDrawerOpen () {
-      this.$emit('toggleContactDrawerOpen')
     }
   },
   computed: {

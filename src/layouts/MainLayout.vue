@@ -3,14 +3,18 @@
     <q-drawer
       v-model="myDrawerOpen"
       overlay
-      bordered
       behavior="mobile"
       :width="splitterRatio"
       :breakpoint="400"
     >
       <settings-panel />
     </q-drawer>
-    <q-drawer v-model="contactDrawerOpen" side="right" :width="300" :breakpoint="400" bordered>
+    <q-drawer
+      v-model="contactDrawerOpen"
+      side="right"
+      :width="300"
+      :breakpoint="400"
+    >
       <contact-panel
         v-if="activeChatAddr !== null"
         :address="activeChatAddr"
@@ -23,9 +27,10 @@
           v-model="splitterRatio"
           class="full-height"
           unit="px"
+          separator-style="width: 0px;"
         >
           <template v-slot:before>
-            <chat-list class="full-height" :loaded="loaded" @toggleContactDrawerOpen="toggleContactDrawerOpen" @toggleMyDrawerOpen="toggleMyDrawerOpen" />
+            <chat-list class="full-height" :loaded="loaded" @toggleMyDrawerOpen="toggleMyDrawerOpen" />
           </template>
 
           <template v-slot:after>
@@ -38,6 +43,7 @@
               :active="activeChatAddr === index"
               :style="`height: inherit; min-height: inherit;`"
               :loaded="loaded"
+              @toggleContactDrawerOpen="toggleContactDrawerOpen"
             />
           </template>
         </q-splitter>

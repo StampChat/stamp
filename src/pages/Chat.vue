@@ -1,26 +1,30 @@
 <template>
-  <!-- Send file dialog -->
-  <!-- TODO: Move this up.  We don't need a copy of this dialog for each address (likely) -->
   <q-layout view="lhh LpR lff" container class="hide-scrollbar absolute full-width">
+    <!-- Send file dialog -->
+    <!-- TODO: Move this up.  We don't need a copy of this dialog for each address (likely) -->
     <q-dialog v-model="sendFileOpen" persistent>
       <send-file-dialog :address="address" />
     </q-dialog>
 
+    <!-- Send money dialog -->
     <q-dialog v-model="sendMoneyOpen" persistent>
       <send-bitcoin-dialog :address="address" :contact="contactProfile" />
     </q-dialog>
 
-    <q-header bordered>
+    <q-header>
       <q-toolbar class="q-pl-sm">
         <q-avatar rounded>
           <img :src="contactProfile.avatar" />
         </q-avatar>
         <q-toolbar-title class="h6"> {{ contactProfile.name }} </q-toolbar-title>
+        <q-space />
+        <q-btn class="q-px-sm" flat dense @click="toggleContactDrawerOpen" icon="person" />
       </q-toolbar>
     </q-header>
+
     <q-page-container>
       <q-page>
-        <q-scroll-area ref="chatScroll" class="q-px-none absolute full-width full-height">
+        <q-scroll-area ref="chatScroll" class="scroll-area-bordered q-px-none absolute full-width full-height">
           <chat-message-stack
             :contact="{name: 'Stamp Developers'}"
             :messages="[{ items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date() }]"
@@ -47,8 +51,9 @@
         </q-page-sticky>
       </q-page>
     </q-page-container>
+
     <!-- Reply box -->
-    <q-footer :class="`${$q.dark.isActive ? 'bg-dark' : 'bg-white'}`" bordered>
+    <q-footer :class="`${$q.dark.isActive ? 'bg-dark' : 'bg-white'}`">
       <div
         v-if="!!replyDigest"
         class='reply col q-px-md q-pt-sm'
@@ -66,6 +71,7 @@
           <chat-message-stealth v-else-if="replyItem.type=='stealth'" :amount="replyItem.amount" />
         </div>
       </div>
+
       <!-- Message box -->
       <chat-input
         ref="chatInput"
@@ -223,6 +229,9 @@ export default {
         return true
       }
       return previousMessage.senderAddress !== message.senderAddress
+    },
+    toggleContactDrawerOpen () {
+      this.$emit('toggleContactDrawerOpen')
     }
   },
   computed: {
@@ -331,5 +340,11 @@ export default {
   border-left: 3px;
   border-left-style: solid;
   border-left-color: $primary;
+}
+
+.scroll-area-bordered {
+  border: 1px;
+  border-style: solid;
+  border-color: $separator-color;
 }
 </style>
