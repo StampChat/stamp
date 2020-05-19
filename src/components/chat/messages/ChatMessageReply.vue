@@ -30,7 +30,7 @@ export default {
   methods: {
     ...mapGetters({
       getMessageByPayloadVuex: 'chats/getMessageByPayload',
-      getContact: 'contacts/getContact',
+      getContact: 'contacts/getContact'
     })
   },
   computed: {
@@ -42,7 +42,6 @@ export default {
       return message || { items: [] }
     },
     name () {
-      // let addr = this.message.senderAddress
       if (this.message.senderAddress === this.$wallet.myAddressStr) {
         return this.getProfile.name
       }

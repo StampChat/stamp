@@ -51,17 +51,19 @@
     <q-footer :class="`${$q.dark.isActive ? 'bg-dark' : 'bg-white'}`" bordered>
       <div
         v-if="!!replyDigest"
-        class='reply q-px-md q-pt-sm row'
+        class='reply col q-px-md q-pt-sm'
         ref="replyBox"
       >
-        <div class="col q-px-sm q-pt-sm text-black">
+        <div class='row'>
+          <div class='col text-weight-bold' :style="`color: ${replyColor};`"> {{ replyName }} </div>
+            <div class='col-auto'>
+              <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
+            </div>
+        </div>
+        <div class='row q-px-sm q-pt-sm text-black'>
           <chat-message-text v-if="replyItem.type=='text'" :text="replyItem.text" />
           <chat-message-image v-else-if="replyItem.type=='image'" :image="replyItem.image" />
           <chat-message-stealth v-else-if="replyItem.type=='stealth'" :amount="replyItem.amount" />
-        </div>
-        <div class="flex-break"></div>
-        <div class='col-auto'>
-          <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
         </div>
       </div>
       <!-- Message box -->
@@ -266,12 +268,26 @@ export default {
       }
 
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
-      console.log(firstNonReply)
 
       // Focus input box
       this.$refs.chatInput.focus()
 
       return firstNonReply
+    },
+    replyName () {
+      const replyAddress = this.getMessageByPayload(this.replyDigest).senderAddress
+      if (replyAddress === this.$wallet.myAddressStr) {
+        return this.getProfile.name
+      }
+      const contact = this.getContactVuex(replyAddress)
+      return contact.profile.name
+    },
+    replyColor () {
+      const replyAddress = this.getMessageByPayload(this.replyDigest).senderAddress
+      if (replyAddress === this.$wallet.myAddressStr) {
+        return 'black'
+      }
+      return this.getContactVuex(this.address).color
     },
     contactProfile () {
       return this.getContactVuex(this.address).profile

@@ -1,4 +1,4 @@
-import { PublicKey, Address } from 'bitcore-lib-cash'
+import { PublicKey } from 'bitcore-lib-cash'
 import { getRelayClient } from '../../utils/relay-client-factory'
 import { addressColorFromStr } from '../../utils/formatting'
 import { defaultUpdateInterval, pendingRelayData } from '../../utils/constants'
