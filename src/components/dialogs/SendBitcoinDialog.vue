@@ -64,7 +64,7 @@ export default {
     }),
     async sendStealthPayment () {
       const stampAmount = this.getStampAmount()(this.address)
-      await this.$relayClient.sendStealthPayment({ addr: this.address, amount: this.amount, memo: this.memo, stampAmount })
+      await this.$relayClient.sendStealthPayment({ addr: this.address, amount: Number(this.amount), memo: this.memo, stampAmount })
     }
   }
 }
