@@ -36,9 +36,9 @@
       </div>
     </div>
 
-    <!-- <div class="col-auto">
+    <div v-if="message.status==='error'" class="col-auto">
       <q-icon name="error" color="red" />
-    </div> -->
+    </div>
   </q-item>
 </template>
 
