@@ -21,7 +21,6 @@
     <q-page-container>
       <q-page>
         <q-scroll-area ref="chatScroll" class="q-px-none absolute full-width full-height">
-          {{ stackedMessages.length }}
           <!-- <chat-message-stack
             :contact="{name: 'Stamp Developers'}"
             :message="{items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date()}"
@@ -217,6 +216,7 @@ export default {
   },
   computed: {
     stackedMessages () {
+      // TODO: Improve stacking logic e.g. long durations between messages prevent stacking
       // TODO: Progressively construct this
       if (!this.loaded) {
         return []

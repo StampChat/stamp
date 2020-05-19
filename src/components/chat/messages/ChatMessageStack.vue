@@ -1,12 +1,15 @@
 <template>
   <div class="row">
     <div class="col q-px-sm">
-      <div class="stack-header col">
-        <span class='text-weight-bold' :style="nameColor"> {{contact.name}} </span>
-        <span class='float-right'>
+      <div class="stack-header row">
+        <div class='col text-weight-bold' :style="nameColor"> {{contact.name}} </div>
+         <div class="flex-break"></div>
+        <div class='col-auto'>
+          {{ stampAmount }}
+        </div>
+        <div class='q-px-sm col-auto'>
           {{shortTimestamp}}
-        </span>
-        <!-- <div class="row-auto">{{stampPrice}}</div> -->
+        </div>
       </div>
       <q-list>
         <chat-message
@@ -26,17 +29,11 @@
 <script>
 import moment from 'moment'
 import ChatMessage from './ChatMessage.vue'
-// import ChatMessageMenu from '../../context_menus/ChatMessageMenu.vue'
-// import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog'
-// import TransactionDialog from '../../dialogs/TransactionDialog.vue'
 import { stampPrice } from '../../../wallet/helpers'
 
 export default {
   components: {
     ChatMessage
-    // ChatMessageMenu
-    // TransactionDialog,
-    // DeleteMessageDialog
   },
   data () {
     return {
@@ -93,9 +90,9 @@ export default {
       const timestamp = this.lastMessage.timestamp || this.lastMessage.serverTime
       return moment(timestamp)
     },
-    stampPrice () {
-      // TODO: Sum
-      const amount = stampPrice(this.lastMessage.outpoints)
+    stampAmount () {
+      // TODO: Don't sum again inside the chat message?
+      const amount = this.messages.reduce((total, msg) => total + stampPrice(msg.outpoints), 0)
       return amount + ' sats'
     }
   }
