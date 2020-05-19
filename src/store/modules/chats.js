@@ -145,11 +145,7 @@ export default {
   },
   mutations: {
     deleteMessage (state, { addr, index }) {
-      console.log(addr)
-      console.log(index)
-      console.log(state.chats[addr].messages[index])
       state.chats[addr].messages.splice(index, 1)
-      console.log(state.chats[addr].messages[index])
     },
     readAll (state, addr) {
       const values = state.chats[addr].messages

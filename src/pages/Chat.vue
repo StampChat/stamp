@@ -247,7 +247,6 @@ export default {
         ({ msgs, currentAddr, msgChunk } = chunk({ msgs, currentAddr }))
         chunked.push({ msgChunk, globalIndex })
         globalIndex += msgChunk.length
-        console.log('Global index:', globalIndex)
         if (!msgs) {
           break
         }
