@@ -217,7 +217,6 @@ export default {
       return Math.max(inputBoxHeight + replyHeight, 50)
     },
     setReply (payloadDigest) {
-      console.log('set reply', payloadDigest, 'hmm')
       this.replyDigest = payloadDigest
     },
     shouldShowHeader (message, previousMessage) {

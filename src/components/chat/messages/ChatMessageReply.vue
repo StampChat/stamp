@@ -1,33 +1,23 @@
 <template>
-  <div class="reply" v-bind:key="index" v-if="item.type=='reply'">
-    <div class='text-weight-bold' :style="nameColor"> {{ name }} </div>
+  <div class="reply">
     <chat-message
       class="row-auto"
-      :items="getMessage(item.payloadDigest).items"
+      :message="message"
       :address="address"
     />
   </div>
 </template>
 
 <script>
-import ChatMessage from './ChatMessage.vue'
 import { mapGetters } from 'vuex'
-import marked from 'marked'
-import DOMPurify from 'dompurify'
 
 export default {
+  name: 'chat-message-reply',
   components: {
-    ChatMessage
+    ChatMessage: () => import('./ChatMessage.vue')
   },
   props: {
-    name: {
-      type: String,
-      required: true
-    },
-    nameColor: {
-      type: String,
-      required: true
-    },
+    address: String,
     payloadDigest: {
       type: String,
       required: true
@@ -36,17 +26,13 @@ export default {
   methods: {
     ...mapGetters({
       getMessageByPayloadVuex: 'chats/getMessageByPayload'
-    }),
-    getMessage (payloadDigest) {
-      const message = this.getMessageByPayloadVuex()(payloadDigest)
-      return message || { items: [] }
-    },
-    markedMessage (text) {
-      return DOMPurify.sanitize(marked(text))
-    }
+    })
   },
-  filters: {
-    marked: marked
+  computed: {
+    message () {
+      const message = this.getMessageByPayloadVuex()(this.payloadDigest)
+      return message || { items: [] }
+    }
   }
 }
 </script>
