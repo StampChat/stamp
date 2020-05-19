@@ -49,8 +49,15 @@
     </q-page-container>
     <!-- Reply box -->
     <q-footer :class="`${$q.dark.isActive ? 'bg-dark' : 'bg-white'}`" bordered>
-      <div class='row' ref="replyBox" v-if="!!replyDigest">
-          <div class="col text-black">
+      <div
+        v-if="!!replyDigest"
+        class='q-px-md q-pt-sm row'
+        ref="replyBox"
+        style="border-bottom: 1px; border-bottom-style: solid; border-bottom-color: gray;">
+          <div>
+            <q-icon class="text-secondary" name="forward"  style="font-size: 32px;" />
+          </div>
+          <div class="col q-px-sm q-pt-sm text-black">
             <chat-message-text v-if="replyItem.type=='text'" :text="replyItem.text" />
             <chat-message-image v-else-if="replyItem.type=='image'" :image="replyItem.image" />
             <chat-message-stealth v-else-if="replyItem.type=='stealth'" :amount="replyItem.amount" />
