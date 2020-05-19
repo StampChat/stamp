@@ -51,21 +51,18 @@
     <q-footer :class="`${$q.dark.isActive ? 'bg-dark' : 'bg-white'}`" bordered>
       <div
         v-if="!!replyDigest"
-        class='q-px-md q-pt-sm row'
+        class='reply q-px-md q-pt-sm row'
         ref="replyBox"
-        style="border-bottom: 1px; border-bottom-style: solid; border-bottom-color: gray;">
-          <div>
-            <q-icon class="text-secondary" name="forward"  style="font-size: 32px;" />
-          </div>
-          <div class="col q-px-sm q-pt-sm text-black">
-            <chat-message-text v-if="replyItem.type=='text'" :text="replyItem.text" />
-            <chat-message-image v-else-if="replyItem.type=='image'" :image="replyItem.image" />
-            <chat-message-stealth v-else-if="replyItem.type=='stealth'" :amount="replyItem.amount" />
-          </div>
-          <div class="flex-break"></div>
-          <div class='col-auto'>
-            <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
-          </div>
+      >
+        <div class="col q-px-sm q-pt-sm text-black">
+          <chat-message-text v-if="replyItem.type=='text'" :text="replyItem.text" />
+          <chat-message-image v-else-if="replyItem.type=='image'" :image="replyItem.image" />
+          <chat-message-stealth v-else-if="replyItem.type=='stealth'" :amount="replyItem.amount" />
+        </div>
+        <div class="flex-break"></div>
+        <div class='col-auto'>
+          <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
+        </div>
       </div>
       <!-- Message box -->
       <chat-input
@@ -337,26 +334,13 @@ export default {
 }
 </script>
 
-<style scoped>
-/* Enter and leave animations can use different */
-/* durations and timing functions.              */
-.slide-enter-active {
-  transition: all 0.3s ease;
-}
-.slide-leave-active {
-  transition: all 0.3s;
-}
-.slide-enter, .slide-leave-to
-/* .slide-fade-leave-active below version 2.1.8 */ {
-  transform: translateX(10px);
-  opacity: 0;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s;
-}
-.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
-  opacity: 0;
+<style lang="scss" scoped>
+.reply {
+  padding: 5px 0;
+  background: #FFF;
+  padding-left: 8px;
+  border-left: 3px;
+  border-left-style: solid;
+  border-left-color: $primary;
 }
 </style>

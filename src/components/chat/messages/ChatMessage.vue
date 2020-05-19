@@ -1,9 +1,5 @@
 <template>
   <q-item class='q-pa-none' dense clickable>
-
-  <!-- <div class="q-pa-none q-ma-none q-ml-sm  q-mr-sm col rounded-borders bg-dark-3"> -->
-    <!-- Context Menu -->
-
     <!-- Transaction Dialog -->
     <q-dialog v-model="transactionDialog">
       <!-- Switch to outpoints -->

@@ -62,7 +62,6 @@ export default {
   },
   getters: {
     getMessageByPayload: (state) => (payloadDigest) => {
-      console.log('getting msg by payload')
       if (!state.messages) {
         return null
       }
