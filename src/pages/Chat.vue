@@ -30,13 +30,13 @@
           /> -->
           <template v-if="loaded || active">
             <chat-message-stack
-              v-for="({ msgChunk, globalIndex }, index) in stackedMessages"
+              v-for="({ chunk, globalIndex }, index) in chunkedMessages"
               :key="index"
               :address="address"
-              :messages="msgChunk"
+              :messages="chunk"
               :globalIndex="globalIndex"
-              :contact="getContact(msgChunk[0].outbound)"
-              :nameColor="msgChunk[0].outbound ? '': nameColor"
+              :contact="getContact(chunk[0].outbound)"
+              :nameColor="chunk[0].outbound ? '': nameColor"
               @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
             />
           </template>
@@ -79,7 +79,6 @@
 </template>
 
 <script>
-import { clone } from 'ramda'
 import moment from 'moment'
 import { mapGetters, mapActions } from 'vuex'
 import { dom } from 'quasar'
@@ -227,42 +226,26 @@ export default {
     }
   },
   computed: {
-    stackedMessages () {
+    chunkedMessages () {
       // TODO: Improve stacking logic e.g. long durations between messages prevent stacking
       // TODO: Optimize this by progressively constructing it
-      if (!this.loaded) {
+      if (!this.messages) {
         return []
       }
-      let msgs = clone(this.messages)
-      const firstMsg = this.messages[0]
-      if (!firstMsg) {
-        return []
-      }
-      let currentAddr = firstMsg.senderAddress
-      let msgChunk
-      const chunked = []
 
-      const chunk = function ({ msgs, currentAddr }) {
-        const spliceIndex = msgs.findIndex((msg) => {
-          return msg.senderAddress !== currentAddr
-        })
-        if (spliceIndex === -1) {
-          return { msgChunk: msgs }
+      const { chunks, currentChunk, globalIndex } = this.messages.reduce(({ chunks, currentChunk, globalIndex }, message) => {
+        if (currentChunk[0].senderAddress === message.senderAddress) {
+          currentChunk.push(message)
+          return { chunks, currentChunk, globalIndex: globalIndex + 1 }
+        } else {
+          chunks.push({ chunk: currentChunk, globalIndex: globalIndex - currentChunk.length })
+          return { chunks, currentChunk: [message], globalIndex: globalIndex + 1 }
         }
-        const msgChunk = msgs.splice(0, spliceIndex)
-        const newAddr = msgs[0]?.senderAddress
-        return { msgs, currentAddr: newAddr, msgChunk }
-      }
-      let globalIndex = 0
-      while (true) {
-        ({ msgs, currentAddr, msgChunk } = chunk({ msgs, currentAddr }))
-        chunked.push({ msgChunk, globalIndex })
-        globalIndex += msgChunk.length
-        if (!msgs) {
-          break
-        }
-      }
-      return chunked
+      }, { chunks: [], currentChunk: [this.messages[0]], globalIndex: 0 })
+
+      chunks.push({ chunk: currentChunk, globalIndex: globalIndex - currentChunk.length })
+      console.log('completed chunking', chunks)
+      return chunks
     },
     nameColor () {
       // Get color
