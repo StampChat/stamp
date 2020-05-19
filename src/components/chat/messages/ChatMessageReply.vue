@@ -1,5 +1,5 @@
 <template>
-  <div class="reply row-auto text-left" v-bind:key="index" v-if="item.type=='reply'">
+  <div class="reply" v-bind:key="index" v-if="item.type=='reply'">
     <div class='text-weight-bold' :style="nameColor"> {{ name }} </div>
     <chat-message
       class="row-auto"

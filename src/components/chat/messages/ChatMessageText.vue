@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="row-auto text-left"
-    v-html = "markedMessage(text)"
-  />
+  <div v-html = "markedMessage(text)"/>
 </template>
 
 <script>

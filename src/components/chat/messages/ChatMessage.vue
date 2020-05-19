@@ -1,5 +1,5 @@
 <template>
-  <q-item class='q-px-none' clickable>
+  <q-item class='q-pa-none' dense clickable>
 
   <!-- <div class="q-pa-none q-ma-none q-ml-sm  q-mr-sm col rounded-borders bg-dark-3"> -->
     <!-- Context Menu -->
@@ -23,11 +23,12 @@
       @replyClick="replyClicked({ address, index: message.payloadDigest })"
     />
 
-    <div v-for="(item, index) in message.items" :key="index" >
-      <chat-message-text v-if="item.type=='text'" :text="item.text" />
-      <chat-message-image v-if="item.type=='image'" :image="item.image" />
-      <chat-message-stealth v-if="item.type=='stealth'" :amount="item.amount" />
-      <!-- {{ item }} -->
+    <div class='col'>
+      <div class = 'q-px-sm' v-for="(item, index) in message.items" :key="index" >
+        <chat-message-text v-if="item.type=='text'" :text="item.text" />
+        <chat-message-image v-else-if="item.type=='image'" :image="item.image" />
+        <chat-message-stealth v-else-if="item.type=='stealth'" :amount="item.amount" />
+      </div>
     </div>
 
     <q-tooltip>

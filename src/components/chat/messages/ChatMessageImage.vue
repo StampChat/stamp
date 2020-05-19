@@ -31,9 +31,6 @@ export default {
       this.image = image
       this.imageDialog = true
     }
-  },
-  created () {
-    console.log('hello')
   }
 }
 </script>

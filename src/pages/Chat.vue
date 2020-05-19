@@ -6,7 +6,6 @@
       <send-file-dialog :address="address" />
     </q-dialog>
 
-
     <q-dialog v-model="sendMoneyOpen" persistent>
       <send-bitcoin-dialog :address="address" :contact="contactProfile" />
     </q-dialog>
@@ -73,6 +72,7 @@
 </template>
 
 <script>
+import { clone } from 'ramda'
 import moment from 'moment'
 import { mapGetters, mapActions } from 'vuex'
 import { dom } from 'quasar'
@@ -221,7 +221,7 @@ export default {
       if (!this.loaded) {
         return []
       }
-      let msgs = this.messages
+      let msgs = clone(this.messages)
       const firstMsg = this.messages[0]
       if (!firstMsg) {
         return []
@@ -230,7 +230,6 @@ export default {
       let msgChunk
       const chunked = []
 
-      // TODO: Optimize this
       const chunk = function ({ msgs, currentAddr }) {
         const spliceIndex = msgs.findIndex((msg) => {
           return msg.senderAddress !== currentAddr
@@ -245,11 +244,8 @@ export default {
 
       while (true) {
         ({ msgs, currentAddr, msgChunk } = chunk({ msgs, currentAddr }))
-        if (!currentAddr) {
-          break
-        }
         chunked.push(msgChunk)
-        if (!msgs) {
+        if (!msgs || !currentAddr) {
           break
         }
       }

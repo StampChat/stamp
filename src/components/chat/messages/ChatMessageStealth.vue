@@ -1,10 +1,7 @@
 <template>
-  <div
-    class="row-auto q-pt-xs text-left"
-    v-bind:key="index" v-if="item.type=='stealth'"
-  >
+  <div>
     <q-icon name="attach_money" size="sm" dense />
-    {{ formatSats(item.amount) }}
+      {{ formatSats(amount) }}
   </div>
 </template>
 
@@ -26,7 +23,7 @@ export default {
   },
   methods: {
     formatSats (value) {
-      return formatBalance(Number(value))
+      return formatBalance(value)
     }
   }
 }
