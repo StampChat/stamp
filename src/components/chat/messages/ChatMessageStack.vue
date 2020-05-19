@@ -1,40 +1,24 @@
 <template>
-  <div class="q-pa-none q-ma-none q-ml-sm  q-mr-sm col rounded-borders bg-dark-3">
-    <!-- <chat-message-menu
-      :address="address"
-      :id="index"
-      :message="message"
-      @txClick="transactionDialog = true"
-      @deleteClick="deleteDialog = true"
-      @replyClick="replyClicked({ address, index })"
-    /> -->
-
-    <div class="row">
-      <div class="col">
-        <div class="col" style="border-bottom: 1px solid grey;" v-if="showHeader">
-          <span class='text-weight-bold' :style="nameColor"> {{contact.name}} </span>
-          <span class='float-right'>
-            {{shortTimestamp}}
-          </span>
-                  <!-- <div class="row-auto">{{stampPrice}}</div> -->
-        </div>
-        <q-list>
-          <chat-message
-            v-for="(message, index) in messages"
-            :key="index"
-            :message="message"
-            :items="message.items"
-            :address="address"
-            :nameColor="nameColor"
-            :name="contact.name"
-          />
-        </q-list>
+  <div class="row">
+    <div class="col q-px-sm">
+      <div class="stack-header col">
+        <span class='text-weight-bold' :style="nameColor"> {{contact.name}} </span>
+        <span class='float-right'>
+          {{shortTimestamp}}
+        </span>
+        <!-- <div class="row-auto">{{stampPrice}}</div> -->
       </div>
-      <!-- <div v-if="message.status==='error'" class="row justify-end q-pt-xs" style="full-width">
-        <div class="col-auto">
-          <q-icon name="error" color="red" />
-        </div>
-      </div> -->
+      <q-list>
+        <chat-message
+          v-for="(message, index) in messages"
+          :key="index"
+          :message="message"
+          :items="message.items"
+          :address="address"
+          :nameColor="nameColor"
+          :name="contact.name"
+        />
+      </q-list>
     </div>
   </div>
 </template>
@@ -117,3 +101,11 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.stack-header {
+  border-bottom: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: gray;
+}
+</style>
