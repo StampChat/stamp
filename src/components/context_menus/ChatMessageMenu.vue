@@ -81,6 +81,7 @@ export default {
       this.$relayClient.sendImage(args)
     },
     resend () {
+      this.deleteMessage({ addr: this.address, payloadDigest: this.payloadDigest, index: this.index })
       const stampAmount = this.getStampAmount()(this.address)
       this.$relayClient.sendMessageImpl({ addr: this.address, items: this.message.items, stampAmount })
     },
