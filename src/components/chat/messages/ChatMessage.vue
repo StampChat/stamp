@@ -1,7 +1,5 @@
 <template>
-  <div class="q-pa-none q-ma-none q-ml-sm  q-mr-sm col rounded-borders bg-dark-3">
-    <!-- Context Menu -->
-
+  <q-item class='q-pa-none' dense clickable>
     <!-- Transaction Dialog -->
     <q-dialog v-model="transactionDialog">
       <!-- Switch to outpoints -->
@@ -10,56 +8,59 @@
 
     <!-- Delete Dialog -->
     <q-dialog v-model="deleteDialog">
-      <delete-message-dialog :address="address" :payloadDigest="payloadDigest" :index="index" />
+      <delete-message-dialog :address="address" :payloadDigest="message.payloadDigest" :index="index" />
     </q-dialog>
 
-    <chat-message-menu
-      :address="address"
-      :payloadDigest="payloadDigest"
-      :message="message"
-      :index="index"
-      @txClick="transactionDialog = true"
-      @deleteClick="deleteDialog = true"
-      @replyClick="replyClicked({ address, payloadDigest })"
-    />
+    <!-- Information tooltip -->
     <q-tooltip>
       <div class="col-auto q-pa-none">
-        <div class="row-auto">{{stampPrice}}</div>
-        <div class="row-auto">{{timestampString}}</div>
+        <div class="row-auto">{{ stampPrice }}</div>
+        <div class="row-auto">{{ timestampString }}</div>
       </div>
     </q-tooltip>
 
-    <div class="row">
-      <div class="col">
-        <!-- TODO: Assign random color based on seed from name -->
-        <div class="col text-weight-bold" style="border-bottom: 1px solid grey;" v-if="showHeader"><div :style="nameColor"> {{contact.name}} </div></div>
-        <chat-message-section :key="index" :items="message.items" :address="address" />
-      </div>
-      <div class="col-auto" style="min-width: 100px">
-        <div class="col text-weight-bold" style="border-bottom: 1px solid grey;" v-if="showHeader">&nbsp;</div>
-        <div class="row-auto">{{shortTimestamp}}</div>
-      </div>
-      <div v-if="message.status==='error'" class="row justify-end q-pt-xs" style="full-width">
-        <div class="col-auto">
-          <q-icon name="error" color="red" />
-        </div>
+    <chat-message-menu
+      :address="address"
+      :message="message"
+      @txClick="transactionDialog = true"
+      @deleteClick="deleteDialog = true"
+      @replyClick="replyClicked({ address, payloadDigest: message.payloadDigest })"
+    />
+
+    <div class='col'>
+      <div class = 'q-px-sm' v-for="(item, index) in message.items" :key="index" >
+        <chat-message-reply v-if="item.type=='reply'" :payloadDigest="item.payloadDigest" :address="address"/>
+        <chat-message-text v-else-if="item.type=='text'" :text="item.text" />
+        <chat-message-image v-else-if="item.type=='image'" :image="item.image" />
+        <chat-message-stealth v-else-if="item.type=='stealth'" :amount="item.amount" />
       </div>
     </div>
-  </div>
+
+    <div v-if="message.status==='error'" class="col-auto">
+      <q-icon name="error" color="red" />
+    </div>
+  </q-item>
 </template>
 
 <script>
 import moment from 'moment'
-import ChatMessageSection from './ChatMessageSection.vue'
-import ChatMessageMenu from '../context_menus/ChatMessageMenu.vue'
-import DeleteMessageDialog from '../dialogs/DeleteMessageDialog'
-import TransactionDialog from '../dialogs/TransactionDialog.vue'
-import { stampPrice } from '../../wallet/helpers'
+import ChatMessageMenu from '../../context_menus/ChatMessageMenu.vue'
+import ChatMessageReply from './ChatMessageReply.vue'
+import ChatMessageText from './ChatMessageText.vue'
+import ChatMessageImage from './ChatMessageImage.vue'
+import ChatMessageStealth from './ChatMessageStealth.vue'
+import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog'
+import TransactionDialog from '../../dialogs/TransactionDialog.vue'
+import { stampPrice } from '../../../wallet/helpers'
 
 export default {
+  name: 'chat-message',
   components: {
-    ChatMessageSection,
     ChatMessageMenu,
+    ChatMessageReply,
+    ChatMessageText,
+    ChatMessageImage,
+    ChatMessageStealth,
     TransactionDialog,
     DeleteMessageDialog
   },
@@ -73,14 +74,8 @@ export default {
     nameColor: String,
     address: String,
     message: Object,
-    contact: Object,
     payloadDigest: String,
-    index: Number,
-    now: Object,
-    showHeader: {
-      type: Boolean,
-      default: () => true
-    }
+    index: Number
   },
   methods: {
     replyClicked (args) {

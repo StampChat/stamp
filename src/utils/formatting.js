@@ -35,3 +35,10 @@ export const addressColor = function (addr) {
 
   return { hue, saturation }
 }
+
+export const addressColorFromStr = function (addrStr) {
+  const addrObj = new cashlib.Address(addrStr)
+  const { hue, saturation } = addressColor(addrObj)
+  const color = `hsl(${hue}, ${saturation * 100}%, 60%)`
+  return color
+}

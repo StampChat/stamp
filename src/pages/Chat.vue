@@ -15,34 +15,30 @@
         <q-avatar rounded>
           <img :src="contactProfile.avatar" />
         </q-avatar>
-        <q-toolbar-title class="h6"> {{contactProfile.name}} </q-toolbar-title>
+        <q-toolbar-title class="h6"> {{ contactProfile.name }} </q-toolbar-title>
       </q-toolbar>
     </q-header>
     <q-page-container>
       <q-page>
         <q-scroll-area ref="chatScroll" class="q-px-none absolute full-width full-height">
-          <chat-message
-            :sent="false"
+          <chat-message-stack
             :contact="{name: 'Stamp Developers'}"
-            :message="{items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date()}"
+            :messages="[{ items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date() }]"
             :index="-1"
-            payloadDigest="NA"
-            key="NA"
           />
           <template v-if="loaded || active">
-            <chat-message
-              v-for="(chatMessage, index) in messages"
-              :key="chatMessage.payloadDigest"
-              :address="address"
-              :message="chatMessage"
-              :showHeader="shouldShowHeader(chatMessage, messages[index-1])"
-              :contact="getContact(chatMessage.outbound)"
-              :payloadDigest="chatMessage.payloadDigest"
-              :index="index"
-              :now="now"
-              :nameColor="chatMessage.outbound ? '': nameColor"
-              @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
-            />
+            <template v-for="({ chunk, globalIndex }, index) in chunkedMessages">
+              <chat-message-stack
+                v-if="chunk[0]"
+                :key="index"
+                :address="address"
+                :messages="chunk"
+                :globalIndex="globalIndex"
+                :contact="getContact(chunk[0].outbound)"
+                :nameColor="chunk[0].outbound ? '': `color: ${nameColor};`"
+                @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
+              />
+            </template>
           </template>
           <q-scroll-observer debounce="500" @scroll="scrollHandler" />
         </q-scroll-area>
@@ -53,12 +49,21 @@
     </q-page-container>
     <!-- Reply box -->
     <q-footer :class="`${$q.dark.isActive ? 'bg-dark' : 'bg-white'}`" bordered>
-      <div ref="replyBox" v-if="!!replyDigest">
-        <div class="q-pa-sm">
-          <div class="q-pa-sm bg-secondary row" style="border-radius: 5px;">
-            <chat-message-reply class="col" :item="replyItem" />
-            <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
-          </div>
+      <div
+        v-if="!!replyDigest"
+        class='reply col q-px-md q-pt-sm'
+        ref="replyBox"
+      >
+        <div class='row'>
+          <div class='col text-weight-bold' :style="`color: ${replyColor};`"> {{ replyName }} </div>
+            <div class='col-auto'>
+              <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
+            </div>
+        </div>
+        <div class='row q-px-sm q-pt-sm text-black'>
+          <chat-message-text v-if="replyItem.type=='text'" :text="replyItem.text" />
+          <chat-message-image v-else-if="replyItem.type=='image'" :image="replyItem.image" />
+          <chat-message-stealth v-else-if="replyItem.type=='stealth'" :amount="replyItem.amount" />
         </div>
       </div>
       <!-- Message box -->
@@ -82,14 +87,14 @@ import { dom } from 'quasar'
 const { height } = dom
 
 import ChatInput from '../components/chat/ChatInput.vue'
-import ChatMessage from '../components/chat/ChatMessage.vue'
+import ChatMessageStack from '../components/chat/messages/ChatMessageStack.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
-import ChatMessageReply from '../components/chat/ChatMessageReply.vue'
+import ChatMessageText from '../components/chat/messages/ChatMessageText.vue'
+import ChatMessageImage from '../components/chat/messages/ChatMessageImage.vue'
+import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.vue'
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
 import { donationMessage } from '../utils/constants'
 import { insufficientStampNotify } from '../utils/notifications'
-import { addressColor } from '../utils/formatting'
-import { Address } from 'bitcore-lib-cash'
 
 const scrollDuration = 0
 
@@ -110,9 +115,11 @@ export default {
     }
   },
   components: {
-    ChatMessage,
+    ChatMessageStack,
+    ChatMessageText,
+    ChatMessageImage,
+    ChatMessageStealth,
     SendFileDialog,
-    ChatMessageReply,
     ChatInput,
     SendBitcoinDialog
   },
@@ -208,8 +215,8 @@ export default {
       // Set a minimum of 50.
       return Math.max(inputBoxHeight + replyHeight, 50)
     },
-    setReply (index) {
-      this.replyDigest = index
+    setReply (payloadDigest) {
+      this.replyDigest = payloadDigest
     },
     shouldShowHeader (message, previousMessage) {
       if (previousMessage === undefined) {
@@ -219,15 +226,29 @@ export default {
     }
   },
   computed: {
-    nameColor () {
-      // Get color
-      if (this.address) {
-        const addr = new Address(this.address)
-        const { hue, saturation } = addressColor(addr)
-        return `color: hsl(${hue}, ${saturation * 100}%, 60%);`
-      } else {
-        return ''
+    chunkedMessages () {
+      // TODO: Improve stacking logic e.g. long durations between messages prevent stacking
+      // TODO: Optimize this by progressively constructing it
+      if (!this.messages) {
+        return []
       }
+
+      const { chunks, currentChunk, globalIndex } = this.messages.reduce(({ chunks, currentChunk, globalIndex }, message) => {
+        if (currentChunk[0].senderAddress === message.senderAddress) {
+          currentChunk.push(message)
+          return { chunks, currentChunk, globalIndex: globalIndex + 1 }
+        } else {
+          chunks.push({ chunk: currentChunk, globalIndex: globalIndex - currentChunk.length })
+          return { chunks, currentChunk: [message], globalIndex: globalIndex + 1 }
+        }
+      }, { chunks: [], currentChunk: [this.messages[0]], globalIndex: 0 })
+
+      chunks.push({ chunk: currentChunk, globalIndex: globalIndex - currentChunk.length })
+      return chunks
+    },
+    nameColor () {
+      const color = this.getContactVuex(this.address).color
+      return color
     },
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
@@ -245,12 +266,28 @@ export default {
       if (!msg) {
         return null
       }
+
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
 
       // Focus input box
       this.$refs.chatInput.focus()
 
       return firstNonReply
+    },
+    replyName () {
+      const replyAddress = this.getMessageByPayload(this.replyDigest).senderAddress
+      if (replyAddress === this.$wallet.myAddressStr) {
+        return this.getProfile.name
+      }
+      const contact = this.getContactVuex(replyAddress)
+      return contact.profile.name
+    },
+    replyColor () {
+      const replyAddress = this.getMessageByPayload(this.replyDigest).senderAddress
+      if (replyAddress === this.$wallet.myAddressStr) {
+        return 'black'
+      }
+      return this.getContactVuex(this.address).color
     },
     contactProfile () {
       return this.getContactVuex(this.address).profile
@@ -286,26 +323,13 @@ export default {
 }
 </script>
 
-<style scoped>
-/* Enter and leave animations can use different */
-/* durations and timing functions.              */
-.slide-enter-active {
-  transition: all 0.3s ease;
-}
-.slide-leave-active {
-  transition: all 0.3s;
-}
-.slide-enter, .slide-leave-to
-/* .slide-fade-leave-active below version 2.1.8 */ {
-  transform: translateX(10px);
-  opacity: 0;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s;
-}
-.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
-  opacity: 0;
+<style lang="scss" scoped>
+.reply {
+  padding: 5px 0;
+  background: #FFF;
+  padding-left: 8px;
+  border-left: 3px;
+  border-left-style: solid;
+  border-left-color: $primary;
 }
 </style>
