@@ -217,7 +217,7 @@ export default {
   computed: {
     stackedMessages () {
       // TODO: Improve stacking logic e.g. long durations between messages prevent stacking
-      // TODO: Progressively construct this
+      // TODO: Optimize this by progressively constructing it
       if (!this.loaded) {
         return []
       }
@@ -235,7 +235,7 @@ export default {
           return msg.senderAddress !== currentAddr
         })
         if (spliceIndex === -1) {
-          return { msgs: [], msgChunk: msgs }
+          return { msgChunk: msgs }
         }
         const msgChunk = msgs.splice(0, spliceIndex)
         const newAddr = msgs[0]?.senderAddress
@@ -245,7 +245,7 @@ export default {
       while (true) {
         ({ msgs, currentAddr, msgChunk } = chunk({ msgs, currentAddr }))
         chunked.push(msgChunk)
-        if (!msgs || !currentAddr) {
+        if (!msgs) {
           break
         }
       }
@@ -274,7 +274,7 @@ export default {
         return null
       }
       const msg = this.getMessageByPayload(this.replyDigest)
-      if (!msg) {
+      if (!msg?.length) {
         return null
       }
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
