@@ -21,6 +21,7 @@
           :address="address"
           :nameColor="nameColor"
           :name="contact.name"
+          @replyClicked="replyClicked"
         />
       </q-list>
     </div>

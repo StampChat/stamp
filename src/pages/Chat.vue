@@ -49,13 +49,16 @@
     </q-page-container>
     <!-- Reply box -->
     <q-footer :class="`${$q.dark.isActive ? 'bg-dark' : 'bg-white'}`" bordered>
-      <div ref="replyBox" v-if="!!replyDigest">
-        <div class="q-pa-sm">
-          <div class="q-pa-sm bg-secondary row" style="border-radius: 5px;">
-            <chat-message-reply class="col" :item="replyItem" />
+      <div class='row' ref="replyBox" v-if="!!replyDigest">
+          <div class="col text-black">
+            <chat-message-text v-if="replyItem.type=='text'" :text="replyItem.text" />
+            <chat-message-image v-else-if="replyItem.type=='image'" :image="replyItem.image" />
+            <chat-message-stealth v-else-if="replyItem.type=='stealth'" :amount="replyItem.amount" />
+          </div>
+          <div class="flex-break"></div>
+          <div class='col-auto'>
             <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
           </div>
-        </div>
       </div>
       <!-- Message box -->
       <chat-input
@@ -81,7 +84,9 @@ const { height } = dom
 import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessageStack from '../components/chat/messages/ChatMessageStack.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
-import ChatMessageReply from '../components/chat/messages/ChatMessageReply.vue'
+import ChatMessageText from '../components/chat/messages/ChatMessageText.vue'
+import ChatMessageImage from '../components/chat/messages/ChatMessageImage.vue'
+import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.vue'
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
 import { donationMessage } from '../utils/constants'
 import { insufficientStampNotify } from '../utils/notifications'
@@ -108,8 +113,10 @@ export default {
   },
   components: {
     ChatMessageStack,
+    ChatMessageText,
+    ChatMessageImage,
+    ChatMessageStealth,
     SendFileDialog,
-    ChatMessageReply,
     ChatInput,
     SendBitcoinDialog
   },
@@ -205,8 +212,9 @@ export default {
       // Set a minimum of 50.
       return Math.max(inputBoxHeight + replyHeight, 50)
     },
-    setReply (index) {
-      this.replyDigest = index
+    setReply (payloadDigest) {
+      console.log('set reply', payloadDigest, 'hmm')
+      this.replyDigest = payloadDigest
     },
     shouldShowHeader (message, previousMessage) {
       if (previousMessage === undefined) {
@@ -276,10 +284,12 @@ export default {
         return null
       }
       const msg = this.getMessageByPayload(this.replyDigest)
-      if (!msg?.length) {
+      if (!msg) {
         return null
       }
+
       const firstNonReply = msg.items.find(item => item.type !== 'reply')
+      console.log(firstNonReply)
 
       // Focus input box
       this.$refs.chatInput.focus()

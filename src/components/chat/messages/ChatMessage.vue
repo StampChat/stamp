@@ -20,7 +20,7 @@
       :message="message"
       @txClick="transactionDialog = true"
       @deleteClick="deleteDialog = true"
-      @replyClick="replyClicked({ address, index: message.payloadDigest })"
+      @replyClick="replyClicked({ address, payloadDigest: message.payloadDigest })"
     />
 
     <div class='col'>

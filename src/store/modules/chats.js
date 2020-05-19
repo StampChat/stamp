@@ -61,11 +61,12 @@ export default {
     lastReceived: null
   },
   getters: {
-    getMessageByPayload: (state) => (index) => {
+    getMessageByPayload: (state) => (payloadDigest) => {
+      console.log('getting msg by payload')
       if (!state.messages) {
         return null
       }
-      return state.messages[index]
+      return state.messages[payloadDigest]
     },
     getNumUnread: (state) => (addr) => {
       return state.chats[addr] ? state.chats[addr].totalUnreadMessages : 0
