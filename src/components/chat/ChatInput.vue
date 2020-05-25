@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <q-toolbar class="q-pl-none">
+    <q-toolbar class="q-px-sm">
       <q-btn
         dense
         flat
@@ -15,9 +15,22 @@
         @click="sendFileClicked"
         :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
       />
+      <q-btn
+        dense
+        flat
+        icon="insert_emoticon"
+        :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
+        @click="menuPicker=true"
+      >
+      <q-menu>
+        <picker :data="emojiIndex" set="twitter" @select="addEmoji" title="Select an emoji" />
+      </q-menu>
+      </q-btn>
+
+      <!-- <q-separator vertical /> -->
       <q-input
         ref="inputBox"
-        class="full-width"
+        class="full-width q-pl-md"
         dense
         borderless
         autogrow
@@ -41,11 +54,23 @@
 
 <script>
 import emoji from 'node-emoji'
+import { Picker, EmojiIndex } from 'emoji-mart-vue-fast'
+import data from '../../assets/emoticons/all.json'
+import 'emoji-mart-vue-fast/css/emoji-mart.css'
+const emojiIndex = new EmojiIndex(data)
 
 export default {
+  components: {
+    Picker
+  },
   model: {
     prop: 'message',
     event: 'input'
+  },
+  data () {
+    return {
+      emojiIndex
+    }
   },
   props: {
     message: String,
@@ -69,6 +94,9 @@ export default {
     },
     stampAmountChanged (value) {
       this.$emit('stampAmountChanged', value)
+    },
+    addEmoji (value) {
+      this.innerMessage += value.colons
     }
   },
   computed: {
@@ -78,6 +106,7 @@ export default {
       },
       set (val) {
         const replacer = (match) => emoji.emojify(match)
+        // TODO: Remove emojify
         val = val.replace(/(:.*:)/g, replacer)
         this.$emit('input', val)
       }
