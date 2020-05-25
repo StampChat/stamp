@@ -23,8 +23,7 @@
         autogrow
         @keydown.enter.exact.prevent
         @keydown.enter.exact="sendMessage"
-        v-bind:value="message"
-        v-on:input="onInput"
+        v-model="innerMessage"
         placeholder="Write a message..."
       />
       <q-space />
@@ -41,11 +40,9 @@
 </template>
 
 <script>
+import emoji from 'node-emoji'
+
 export default {
-  components: {},
-  data () {
-    return {}
-  },
   model: {
     prop: 'message',
     event: 'input'
@@ -57,9 +54,6 @@ export default {
   methods: {
     focus () {
       this.$refs.inputBox.focus()
-    },
-    onInput (event) {
-      this.$emit('input', event)
     },
     sendMessage () {
       if (this.message === '') {
@@ -75,6 +69,18 @@ export default {
     },
     stampAmountChanged (value) {
       this.$emit('stampAmountChanged', value)
+    }
+  },
+  computed: {
+    innerMessage: {
+      get () {
+        return this.message
+      },
+      set (val) {
+        const replacer = (match) => emoji.emojify(match)
+        val = val.replace(/(:.*:)/g, replacer)
+        this.$emit('input', val)
+      }
     }
   }
 }
