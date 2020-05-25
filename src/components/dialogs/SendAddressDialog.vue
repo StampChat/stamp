@@ -83,8 +83,7 @@ export default {
         const txHex = transaction.toString()
 
         try {
-          const electrumHandler = this.$electrumClient
-          await electrumHandler.request('blockchain.transaction.broadcast', txHex)
+          await this.$relayClient.emptySelfSend(transaction)
           sentTransactionNotify()
           console.log('Sent transaction', txHex)
         } catch (err) {

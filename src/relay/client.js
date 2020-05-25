@@ -271,6 +271,37 @@ export class RelayClient {
     })
   }
 
+  async emptySelfSend (transaction) {
+    const wallet = this.wallet
+    const privKey = wallet.identityPrivKey
+    const destPubKey = privKey.toPublicKey()
+    const senderAddress = this.wallet.myAddressStr
+
+    // Create empty payload
+    const { serializedPayload, payloadDigest } = constructPayload([], privKey, destPubKey, 1)
+
+    // Construct message
+    const message = new messaging.Message()
+    const ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
+    ecdsa.sign()
+    const sig = ecdsa.sig.toCompact(1).slice(1)
+    const rawPubkey = privKey.toPublicKey().toBuffer()
+    message.setSenderPubKey(rawPubkey)
+    message.setSignature(sig)
+    message.setSerializedPayload(serializedPayload)
+
+    // Add stamp
+    const rawTransaction = transaction.toBuffer()
+    const stampOutpoints = new messaging.StampOutpoints()
+    stampOutpoints.setStampTx(rawTransaction)
+    message.addStampOutpoints(stampOutpoints)
+
+    const messageSet = new messaging.MessageSet()
+    messageSet.addMessages(message)
+
+    await this.pushMessages(senderAddress, messageSet)
+  }
+
   sendMessageImpl ({ addr, items, stampAmount }) {
     const wallet = this.wallet
     const privKey = wallet.identityPrivKey
@@ -474,12 +505,6 @@ export class RelayClient {
     const copartyAddress = outbound ? destinationAddr : senderAddr
     const copartyPubKey = outbound ? destPubKey : senderPubKey
 
-    if (outbound && myAddress === destinationAddr) {
-      // TODO: Process self sends
-      console.log('self send')
-      return
-    }
-
     const scheme = payload.getScheme()
     let entriesRaw
     if (scheme === 0) {
@@ -672,6 +697,12 @@ export class RelayClient {
           image
         })
       }
+    }
+
+    if (outbound && myAddress === destinationAddr) {
+      // TODO: Process self sends
+      console.log('self send')
+      return
     }
 
     this.events.emit('receivedMessage', { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
