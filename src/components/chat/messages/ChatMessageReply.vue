@@ -1,5 +1,5 @@
 <template>
-  <div class="reply">
+  <div :class="`reply ${mouseover ? 'bg-blue-2': 'bg-white'}`">
     <div class='col text-weight-bold' :style="`color: ${nameColor};`"> {{ name }} </div>
     <chat-message
       class="row-auto"
@@ -25,7 +25,8 @@ export default {
     payloadDigest: {
       type: String,
       required: true
-    }
+    },
+    mouseover: Boolean
   },
   methods: {
     ...mapGetters({

@@ -1,8 +1,8 @@
 <template>
   <div class="row">
-    <div class="col q-px-sm">
+    <div class="col">
       <div class="stack-header row">
-        <div class='col text-weight-bold' :style="nameColor"> {{ contact.name }} </div>
+        <div class='q-px-md col text-weight-bold' :style="nameColor"> {{ contact.name }} </div>
          <div class="flex-break"></div>
         <div class='col-auto'>
           {{ stampAmount }}
@@ -11,7 +11,7 @@
           {{ shortTimestamp }}
         </div>
       </div>
-      <q-list>
+      <q-list class='q-pt-sm'>
         <chat-message
           v-for="(message, index) in messages"
           :key="index"
@@ -95,6 +95,6 @@ export default {
 .stack-header {
   border-bottom: 1px;
   border-bottom-style: solid;
-  border-bottom-color: gray;
+  border-bottom-color: $separator-color;
 }
 </style>
