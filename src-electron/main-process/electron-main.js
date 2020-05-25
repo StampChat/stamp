@@ -107,8 +107,10 @@ function createWindow () {
   })
 
   mainWindow.webContents.on('will-navigate', (e, url) => {
-    e.preventDefault()
-    shell.openExternal(url)
+    if (url !== e.sender.getURL()) {
+      e.preventDefault()
+      shell.openExternal(url)
+    }
   })
 }
 
