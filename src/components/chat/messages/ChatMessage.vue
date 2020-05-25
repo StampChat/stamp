@@ -26,7 +26,7 @@
 
     <div class='col'>
       <div class = 'q-px-lg' v-for="(item, index) in message.items" :key="index" >
-        <chat-message-reply v-if="item.type=='reply'" :payloadDigest="item.payloadDigest" :address="address"/>
+        <chat-message-reply v-if="item.type=='reply'" :payloadDigest="item.payloadDigest" :address="address" :mouseover="mouseover"/>
         <chat-message-text v-else-if="item.type=='text'" :text="item.text" />
         <chat-message-image v-else-if="item.type=='image'" :image="item.image" />
         <chat-message-stealth v-else-if="item.type=='stealth'" :amount="item.amount" />
