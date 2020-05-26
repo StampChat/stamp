@@ -271,7 +271,7 @@ export class RelayClient {
     })
   }
 
-  sendMessageImpl ({ addr, items, stampAmount }) {
+  sendMessageImpl ({ addr, items, stampAmount, errCount = 0 }) {
     const wallet = this.wallet
     const privKey = wallet.identityPrivKey
     const destPubKey = this.getPubKey(addr)
@@ -339,16 +339,23 @@ export class RelayClient {
       }))
         .then(() => this.pushMessages(destAddr, messageSet))
         .then(() => this.events.emit('messageSent', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions }))
-        .catch((err) => {
+        .catch(async (err) => {
           console.error(err)
           if (err.response) {
             console.error(err.response)
           }
           // Unfreeze UTXOs
-          // TODO: More subtle
-          usedIDs.forEach(id => wallet.fixFrozenUTXO(id))
-
-          this.events.emit('messageSendError', { addr, senderAddress, index: payloadDigestHex, outpoints, transactions, items, err })
+          await Promise.all(usedIDs.map(id => wallet.fixFrozenUTXO(id)))
+          errCount += 1
+          console.log('error sending message', err)
+          if (errCount >= 3) {
+            console.log(`unable to send message after ${errCount} retries`)
+            return
+          }
+          // TODO: Currently, we can lose stealth transaction data if the stamp inputs fail.
+          // Also, retries messages are not deleted from the message output window.
+          // Both of these issues need to be fixed.
+          this.sendMessageImpl({ addr, items, stampAmount, errCount })
         })
     } catch (err) {
       console.error(err)
