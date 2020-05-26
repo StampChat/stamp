@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <q-toolbar class="q-pl-none">
+    <q-toolbar class="q-px-sm">
       <q-btn
         dense
         flat
@@ -15,16 +15,28 @@
         @click="sendFileClicked"
         :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
       />
+      <q-btn
+        dense
+        flat
+        icon="insert_emoticon"
+        :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
+        @click="menuPicker=true"
+      >
+      <q-menu>
+        <picker :data="emojiIndex" set="twitter" @select="addEmoji" title="Select an emoji" />
+      </q-menu>
+      </q-btn>
+
+      <!-- <q-separator vertical /> -->
       <q-input
         ref="inputBox"
-        class="full-width"
+        class="full-width q-pl-md"
         dense
         borderless
         autogrow
         @keydown.enter.exact.prevent
         @keydown.enter.exact="sendMessage"
-        v-bind:value="message"
-        v-on:input="onInput"
+        v-model="innerMessage"
         placeholder="Write a message..."
       />
       <q-space />
@@ -41,14 +53,24 @@
 </template>
 
 <script>
+import emoji from 'node-emoji'
+import { Picker, EmojiIndex } from 'emoji-mart-vue-fast'
+import data from '../../assets/emoticons/all.json'
+import 'emoji-mart-vue-fast/css/emoji-mart.css'
+const emojiIndex = new EmojiIndex(data)
+
 export default {
-  components: {},
-  data () {
-    return {}
+  components: {
+    Picker
   },
   model: {
     prop: 'message',
     event: 'input'
+  },
+  data () {
+    return {
+      emojiIndex
+    }
   },
   props: {
     message: String,
@@ -57,9 +79,6 @@ export default {
   methods: {
     focus () {
       this.$refs.inputBox.focus()
-    },
-    onInput (event) {
-      this.$emit('input', event)
     },
     sendMessage () {
       if (this.message === '') {
@@ -75,6 +94,22 @@ export default {
     },
     stampAmountChanged (value) {
       this.$emit('stampAmountChanged', value)
+    },
+    addEmoji (value) {
+      this.innerMessage += value.colons
+    }
+  },
+  computed: {
+    innerMessage: {
+      get () {
+        return this.message
+      },
+      set (val) {
+        const replacer = (match) => emoji.emojify(match)
+        // TODO: Remove emojify
+        val = val.replace(/(:.*:)/g, replacer)
+        this.$emit('input', val)
+      }
     }
   }
 }
