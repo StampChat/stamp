@@ -687,7 +687,7 @@ export class RelayClient {
     const receivedTime = Date.now()
     const messageChunks = splitEvery(5, messageList)
     for (const messageChunk of messageChunks) {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve) => {
         setTimeout(() => {
           for (const timedMessage of messageChunk) {
             // TODO: Check correct destination
