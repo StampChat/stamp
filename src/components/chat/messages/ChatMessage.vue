@@ -19,6 +19,8 @@
     <chat-message-menu
       :address="address"
       :message="message"
+      :payloadDigest="message.payloadDigest"
+      :index="index"
       @txClick="transactionDialog = true"
       @deleteClick="deleteDialog = true"
       @replyClick="replyClicked({ address, payloadDigest: message.payloadDigest })"
@@ -76,11 +78,27 @@ export default {
     }
   },
   props: {
-    nameColor: String,
-    address: String,
-    message: Object,
-    payloadDigest: String,
-    index: Number
+    address: {
+      type: String,
+      required: true
+    },
+    message: {
+      type: Object,
+      required: true
+    },
+    nameColor: {
+      type: String,
+      required: true
+    },
+    // Payload digest and index are not passed when nested in a reply
+    payloadDigest: {
+      type: String,
+      required: false
+    },
+    index: {
+      type: Number,
+      required: false
+    }
   },
   methods: {
     replyClicked (args) {

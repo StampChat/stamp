@@ -38,11 +38,26 @@ export default {
     ChatMessage
   },
   props: {
-    nameColor: String,
-    contact: Object,
-    address: String,
-    messages: Array,
-    globalIndex: Number
+    contact: {
+      type: Object,
+      required: true
+    },
+    address: {
+      type: String,
+      required: true
+    },
+    messages: {
+      type: Array,
+      required: true
+    },
+    nameColor: {
+      type: String,
+      required: true
+    },
+    globalIndex: {
+      type: Number,
+      required: true
+    }
   },
   methods: {
     replyClicked (args) {
