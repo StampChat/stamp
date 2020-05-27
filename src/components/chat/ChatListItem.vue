@@ -76,11 +76,13 @@ export default {
     },
     numUnread: {
       type: Number,
-      required: true
+      // Not passed when all read
+      required: false
     },
     valueUnread: {
-      type: Number,
-      required: true
+      type: String,
+      // Not passed when all read
+      required: false
     },
     loaded: {
       type: Boolean,

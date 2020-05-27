@@ -92,7 +92,7 @@ export default {
   methods: {
     formatBalance (balance) {
       if (!balance) {
-        return balance
+        return
       }
       return formatBalance(balance)
     },
