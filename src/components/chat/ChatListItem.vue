@@ -8,6 +8,14 @@
     <q-item-section avatar>
       <q-avatar rounded>
         <img :src="contact.avatar">
+        <q-badge
+          v-show="compact"
+          v-if="!!numUnread && loaded"
+          floating
+          color="secondary"
+          :label="numUnread"
+          class="q-my-xs"
+        />
       </q-avatar>
     </q-item-section>
     <q-item-section v-show="!compact">
@@ -19,6 +27,7 @@
       >{{ latestMessageBody }}</q-item-label>
     </q-item-section>
     <q-item-section
+      v-show="!compact"
       side
       top
     >
