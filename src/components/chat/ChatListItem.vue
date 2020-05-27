@@ -10,7 +10,7 @@
         <img :src="contact.avatar">
       </q-avatar>
     </q-item-section>
-    <q-item-section>
+    <q-item-section v-show="!compact">
       <q-item-label>{{ contact.name }}</q-item-label>
       <q-item-label
         caption
@@ -69,6 +69,27 @@ export default {
       return this.getActiveChat === this.chatAddr
     }
   },
-  props: ['chatAddr', 'numUnread', 'valueUnread', 'loaded']
+  props: {
+    chatAddr: {
+      type: String,
+      required: true
+    },
+    numUnread: {
+      type: Number,
+      required: true
+    },
+    valueUnread: {
+      type: Number,
+      required: true
+    },
+    loaded: {
+      type: Boolean,
+      required: true
+    },
+    compact: {
+      type: Boolean,
+      required: true
+    }
+  }
 }
 </script>
