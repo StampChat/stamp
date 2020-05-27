@@ -28,9 +28,16 @@
           class="full-height"
           unit="px"
           separator-style="width: 0px;"
+          emit-immediately
+          :limits="[compactWidth, 1000]"
         >
           <template v-slot:before>
-            <chat-list class="full-height" :loaded="loaded" @toggleMyDrawerOpen="toggleMyDrawerOpen" />
+            <chat-list
+              class="full-height"
+              :loaded="loaded"
+              @toggleMyDrawerOpen="toggleMyDrawerOpen"
+              :compact="compact"
+            />
           </template>
 
           <template v-slot:after>
@@ -58,6 +65,11 @@ import ChatList from '../components/chat/ChatList.vue'
 import SettingsPanel from '../components/panels/SettingsPanel.vue'
 import ContactPanel from '../components/panels/ContactPanel.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
+import { debounce } from 'quasar'
+
+const compactWidth = 70
+const compactCutoff = 325
+const compactMidpoint = (compactCutoff + compactWidth) / 2
 
 export default {
   components: {
@@ -68,10 +80,12 @@ export default {
   },
   data () {
     return {
-      splitterRatio: 200,
+      trueSplitterRatio: compactCutoff,
       loaded: false,
       myDrawerOpen: false,
-      contactDrawerOpen: false
+      contactDrawerOpen: false,
+      compact: false,
+      compactWidth
     }
   },
   methods: {
@@ -86,13 +100,14 @@ export default {
       const height = viewportHeight - offset + 'px'
       return { height, minHeight: height }
     },
-    setSplitRatio (value) {
-      this.splitterRatio = value
-    },
     toggleContactDrawerOpen () {
       this.contactDrawerOpen = !this.contactDrawerOpen
     },
     toggleMyDrawerOpen () {
+      if (this.compact) {
+        this.compact = false
+        this.trueSplitterRatio = compactCutoff
+      }
       this.myDrawerOpen = !this.myDrawerOpen
     }
   },
@@ -101,7 +116,26 @@ export default {
     ...mapGetters({
       getContact: 'contacts/getContact',
       lastReceived: 'chats/getLastReceived'
-    })
+    }),
+    splitterRatio: {
+      get: function () {
+        return this.trueSplitterRatio
+      },
+      set: debounce(function (inputRatio) {
+        this.trueSplitterRatio = inputRatio
+        this.$nextTick(() => {
+          if (inputRatio < compactMidpoint) {
+            this.trueSplitterRatio = compactWidth
+            this.compact = true
+          } else if (inputRatio > compactMidpoint && inputRatio < compactCutoff) {
+            this.compact = false
+            this.trueSplitterRatio = compactCutoff
+          } else {
+            this.compact = false
+          }
+        })
+      }, 100)
+    }
   },
   created () {
     this.$q.dark.set(this.getDarkMode())

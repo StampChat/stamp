@@ -18,7 +18,7 @@
     <q-toolbar>
       <q-btn class="q-px-sm" flat dense @click="toggleMyDrawerOpen" icon="menu" />
       <q-space />
-      <q-btn class="q-px-sm" flat dense @click="newContactOpen = true" icon="add" />
+      <q-btn v-if="!compact" class="q-px-sm" flat dense @click="newContactOpen = true" icon="add" />
     </q-toolbar>
     <q-scroll-area class="q-px-none col">
       <q-list>
@@ -30,6 +30,7 @@
           :valueUnread="formatBalance(contact.totalUnreadValue)"
           :numUnread="contact.totalUnreadMessages"
           :loaded="loaded"
+          :compact="compact"
         />
         <q-item v-if="getSortedChatOrder.length === 0">
           <q-item-section>
@@ -40,7 +41,7 @@
     </q-scroll-area>
     <q-list>
       <q-separator />
-      <q-item clickable @click="walletOpen=true">
+      <q-item v-show="!compact" clickable @click="walletOpen=true">
         <q-item-section>
           <q-item-label>Balance</q-item-label>
           <q-item-label caption>{{ getBalance }}</q-item-label>
@@ -65,7 +66,16 @@ import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 
 export default {
-  props: ['chatAddr', 'loaded'],
+  props: {
+    loaded: {
+      type: Boolean,
+      required: true
+    },
+    compact: {
+      type: Boolean,
+      required: true
+    }
+  },
   components: {
     ChatListItem,
     WalletDialog,
@@ -82,7 +92,7 @@ export default {
   methods: {
     formatBalance (balance) {
       if (!balance) {
-        return balance
+        return
       }
       return formatBalance(balance)
     },

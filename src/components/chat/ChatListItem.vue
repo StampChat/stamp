@@ -8,9 +8,17 @@
     <q-item-section avatar>
       <q-avatar rounded>
         <img :src="contact.avatar">
+        <q-badge
+          v-show="compact"
+          v-if="!!numUnread && loaded"
+          floating
+          color="secondary"
+          :label="numUnread"
+          class="q-my-xs"
+        />
       </q-avatar>
     </q-item-section>
-    <q-item-section>
+    <q-item-section v-show="!compact">
       <q-item-label>{{ contact.name }}</q-item-label>
       <q-item-label
         caption
@@ -19,6 +27,7 @@
       >{{ latestMessageBody }}</q-item-label>
     </q-item-section>
     <q-item-section
+      v-show="!compact"
       side
       top
     >
@@ -69,6 +78,29 @@ export default {
       return this.getActiveChat === this.chatAddr
     }
   },
-  props: ['chatAddr', 'numUnread', 'valueUnread', 'loaded']
+  props: {
+    chatAddr: {
+      type: String,
+      required: true
+    },
+    numUnread: {
+      type: Number,
+      // Not passed when all read
+      required: false
+    },
+    valueUnread: {
+      type: String,
+      // Not passed when all read
+      required: false
+    },
+    loaded: {
+      type: Boolean,
+      required: true
+    },
+    compact: {
+      type: Boolean,
+      required: true
+    }
+  }
 }
 </script>
