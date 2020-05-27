@@ -68,7 +68,7 @@ import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
 
 const compactWidth = 70
-const compactCutoff = 250
+const compactCutoff = 325
 const compactMidpoint = (compactCutoff + compactWidth) / 2
 
 export default {
