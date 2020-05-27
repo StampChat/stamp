@@ -243,7 +243,7 @@ export default {
         return []
       }
 
-      const { chunks, currentChunk, globalIndex } = this.messages.reduce(({ chunks, currentChunk, globalIndex }, message) => {
+      const { chunks, currentChunk, globalIndex } = this.messages.slice(1).reduce(({ chunks, currentChunk, globalIndex }, message) => {
         if (currentChunk[0].senderAddress === message.senderAddress) {
           currentChunk.push(message)
           return { chunks, currentChunk, globalIndex: globalIndex + 1 }
