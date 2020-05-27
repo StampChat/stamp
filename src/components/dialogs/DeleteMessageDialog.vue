@@ -55,7 +55,6 @@ export default {
       try {
         await this.$relayClient.deleteMessage(this.payloadDigest)
         // Delete message from relay server
-        console.log('got here', this.index)
         this.deleteMessage({ addr: this.address, payloadDigest: this.payloadDigest, index: this.index })
       } catch (err) {
         console.error(err)

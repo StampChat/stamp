@@ -3,8 +3,9 @@
     <div class='col text-weight-bold' :style="`color: ${nameColor};`"> {{ name }} </div>
     <chat-message
       class="row-auto"
-      :message="message"
       :address="address"
+      :message="message"
+      :nameColor="nameColor"
     />
   </div>
 </template>
@@ -26,7 +27,10 @@ export default {
       type: String,
       required: true
     },
-    mouseover: Boolean
+    mouseover: {
+      type: Boolean,
+      required: true
+    }
   },
   methods: {
     ...mapGetters({

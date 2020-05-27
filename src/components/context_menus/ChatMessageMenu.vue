@@ -32,7 +32,7 @@
         <q-item-section> Stamp Transaction </q-item-section>
       </q-item>
       <q-item
-        v-if='message.retryData !== undefined'
+        v-if='index && payloadDigest'
         clickable
         v-close-popup
         @click="resend"
@@ -61,9 +61,25 @@
 <script>
 import { mapMutations, mapGetters } from 'vuex'
 import { copyToClipboard } from 'quasar'
-
 export default {
-  props: ['address', 'payloadDigest', 'index', 'message'],
+  props: {
+    address: {
+      type: String,
+      required: true
+    },
+    message: {
+      type: Object,
+      required: true
+    },
+    payloadDigest: {
+      type: String,
+      required: true
+    },
+    index: {
+      type: Number,
+      required: false
+    }
+  },
   methods: {
     ...mapMutations({
       deleteMessage: 'chats/deleteMessage'

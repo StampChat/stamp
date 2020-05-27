@@ -25,10 +25,9 @@
     <q-page-container>
       <q-page>
         <q-scroll-area ref="chatScroll" class="scroll-area-bordered q-px-none absolute full-width full-height">
-          <chat-message-stack
-            :contact="{name: 'Stamp Developers'}"
-            :messages="[{ items: [{type:'text', text: donationMessage}], status: 'confirmed', outpoints: [], timestamp: new Date() }]"
-            :index="-1"
+          <anouncement
+            name="Stamp Developers"
+            :text="donationMessage"
           />
           <template v-if="loaded || active">
             <template v-for="({ chunk, globalIndex }, index) in chunkedMessages">
@@ -92,6 +91,7 @@ import { mapGetters, mapActions } from 'vuex'
 import { dom } from 'quasar'
 const { height } = dom
 
+import Anouncement from '../components/chat/messages/Announcement.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessageStack from '../components/chat/messages/ChatMessageStack.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
@@ -121,6 +121,7 @@ export default {
     }
   },
   components: {
+    Anouncement,
     ChatMessageStack,
     ChatMessageText,
     ChatMessageImage,

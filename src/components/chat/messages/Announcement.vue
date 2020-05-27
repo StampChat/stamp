@@ -2,60 +2,42 @@
   <div class="row">
     <div class="col">
       <div class="stack-header row">
-        <div class='q-px-md col text-weight-bold' :style="nameColor"> {{ contact.name }} </div>
-         <div class="flex-break"></div>
-        <div class='col-auto'>
-          {{ stampAmount }}
-        </div>
-        <div class='q-px-sm col-auto'>
-          {{ shortTimestamp }}
+        <div class='q-px-md col text-weight-bold'> {{ name }} </div>
+      </div>
+      <div class='q-py-sm'>
+        <div class='q-px-lg'
+          @mouseover="mouseover = true"
+          @mouseleave="mouseover = false"
+          :class="`q-pa-none ${mouseover ? 'bg-blue-2': 'bg-white'}`"
+        >
+          <chat-message-text :text="text" />
         </div>
       </div>
-      <q-list class='q-pt-sm'>
-        <chat-message
-          v-for="(message, index) in messages"
-          :key="index"
-          :message="message"
-          :index="index + globalIndex"
-          :items="message.items"
-          :address="address"
-          :nameColor="nameColor"
-          :name="contact.name"
-          @replyClicked="replyClicked"
-        />
-      </q-list>
     </div>
   </div>
 </template>
 
 <script>
 import moment from 'moment'
-import ChatMessage from './ChatMessage.vue'
 import { stampPrice } from '../../../wallet/helpers'
+import ChatMessageText from './ChatMessageText.vue'
 
 export default {
   components: {
-    ChatMessage
+    ChatMessageText
+  },
+  data () {
+    return {
+      mouseover: false
+    }
   },
   props: {
-    contact: {
-      type: Object,
-      required: true
-    },
-    address: {
+    name: {
       type: String,
       required: true
     },
-    messages: {
-      type: Array,
-      required: true
-    },
-    nameColor: {
+    text: {
       type: String,
-      required: true
-    },
-    globalIndex: {
-      type: Number,
       required: true
     }
   },
