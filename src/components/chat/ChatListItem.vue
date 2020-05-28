@@ -1,7 +1,7 @@
 <template>
   <q-item
     :active="isActive"
-    active-class="bg-blue-2 text-black"
+    :active-class="`${$q.dark.isActive ? 'bg-blue-grey-10 text-white' : 'bg-blue-2 text-black'}`"
     clickable
     @click="setActiveChat(chatAddr)"
   >
