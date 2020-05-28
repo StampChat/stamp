@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import emoji from 'node-emoji-new'
+import emoji from 'node-emoji'
 import { Picker, EmojiIndex } from 'emoji-mart-vue-fast'
 import data from '../../assets/emoticons/all.json'
 import 'emoji-mart-vue-fast/css/emoji-mart.css'
@@ -96,7 +96,7 @@ export default {
       this.$emit('stampAmountChanged', value)
     },
     addEmoji (value) {
-      this.innerMessage += value.id
+      this.innerMessage += `:${value.id}:`
     }
   },
   computed: {
