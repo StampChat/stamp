@@ -344,8 +344,11 @@ export default {
 }
 
 .scroll-area-bordered {
-  border: 1px;
-  border-style: solid;
-  border-color: $separator-color;
+  border-right: 1px;
+  border-right-style: solid;
+  border-right-color: $separator-color;
+  border-bottom: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: $separator-color;
 }
 </style>
