@@ -27,7 +27,6 @@
           v-model="splitterRatio"
           class="full-height"
           unit="px"
-          separator-style="width: 0px;"
           emit-immediately
           :limits="[compactWidth, 1000]"
         >
