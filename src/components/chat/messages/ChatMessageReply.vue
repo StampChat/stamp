@@ -1,5 +1,5 @@
 <template>
-  <div :class="`reply ${mouseover ? 'bg-blue-2': 'bg-white'}`">
+  <div :class="`reply ${mouseover ? $q.dark.isActive ? 'bg-blue-grey-10' : 'bg-blue-2': $q.dark.isActive ? 'dark' : 'bg-white'}`">
     <div class='col text-weight-bold' :style="`color: ${nameColor};`"> {{ name }} </div>
     <chat-message
       class="row-auto"
@@ -55,7 +55,7 @@ export default {
     },
     nameColor () {
       if (this.message.senderAddress === this.$wallet.myAddressStr) {
-        return 'black'
+        return 'text-black'
       }
       return this.getContact()(this.address).color
     }
@@ -66,7 +66,6 @@ export default {
 <style lang="scss" scoped>
 .reply {
   padding: 5px 0;
-  background: #FFF;
   padding-left: 8px;
   border-left: 3px;
   border-left-style: solid;
