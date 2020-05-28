@@ -23,7 +23,7 @@
         @click="menuPicker=true"
       >
       <q-menu>
-        <picker :data="emojiIndex" set="twitter" @select="addEmoji" title="Select an emoji" />
+        <picker :data="emojiIndex" set="twitter" @select="addEmoji" title="Select an emoji" :showSkinTones="false" />
       </q-menu>
       </q-btn>
 
@@ -53,7 +53,7 @@
 </template>
 
 <script>
-import emoji from 'node-emoji'
+import emoji from 'node-emoji-new'
 import { Picker, EmojiIndex } from 'emoji-mart-vue-fast'
 import data from '../../assets/emoticons/all.json'
 import 'emoji-mart-vue-fast/css/emoji-mart.css'
@@ -96,7 +96,7 @@ export default {
       this.$emit('stampAmountChanged', value)
     },
     addEmoji (value) {
-      this.innerMessage += value.colons
+      this.innerMessage += value.id
     }
   },
   computed: {
