@@ -246,14 +246,14 @@ export default {
       const { chunks, currentChunk, globalIndex } = this.messages.slice(1).reduce(({ chunks, currentChunk, globalIndex }, message) => {
         if (currentChunk[0].senderAddress === message.senderAddress) {
           currentChunk.push(message)
-          return { chunks, currentChunk, globalIndex: globalIndex + 1 }
+          return { chunks, currentChunk, globalIndex: globalIndex }
         } else {
-          chunks.push({ chunk: currentChunk, globalIndex: globalIndex - currentChunk.length })
-          return { chunks, currentChunk: [message], globalIndex: globalIndex + 1 }
+          chunks.push({ chunk: currentChunk, globalIndex: globalIndex })
+          return { chunks, currentChunk: [message], globalIndex: globalIndex + currentChunk.length }
         }
       }, { chunks: [], currentChunk: [this.messages[0]], globalIndex: 0 })
 
-      chunks.push({ chunk: currentChunk, globalIndex: globalIndex - currentChunk.length })
+      chunks.push({ chunk: currentChunk, globalIndex: globalIndex })
       return chunks
     },
     nameColor () {
