@@ -26,6 +26,7 @@
       <q-page>
         <q-scroll-area ref="chatScroll" class="scroll-area-bordered q-px-none absolute full-width full-height">
           <anouncement
+            class='q-pt-sm'
             name="Stamp Developers"
             :text="donationMessage"
           />

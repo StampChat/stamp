@@ -8,7 +8,7 @@
         <div class='q-px-lg'
           @mouseover="mouseover = true"
           @mouseleave="mouseover = false"
-          :class="`q-pa-none ${mouseover ? 'bg-blue-2': 'bg-white'}`"
+          :class="`q-pa-none ${mouseover ? $q.dark.isActive ? 'bg-blue-grey-10' : 'bg-blue-2': $q.dark.isActive ? 'dark' : 'bg-white'}`"
         >
           <chat-message-text :text="text" />
         </div>
