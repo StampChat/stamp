@@ -4,13 +4,12 @@
       <div class="stack-header row">
         <div class='q-px-md col text-weight-bold'> {{ name }} </div>
       </div>
-      <div class='q-py-sm'>
-        <div class='q-px-lg'
-          @mouseover="mouseover = true"
-          @mouseleave="mouseover = false"
-          :class="`q-pa-none ${mouseover ? $q.dark.isActive ? 'bg-blue-grey-10' : 'bg-blue-2': $q.dark.isActive ? 'dark' : 'bg-white'}`"
-        >
+      <div class='q-py-sm q-px-lg'>
+        <div>
           <chat-message-text :text="text" />
+        </div>
+        <div>
+          <q-img src="~assets/donation_qr_code.jpg" width="10vw" />
         </div>
       </div>
     </div>
@@ -25,11 +24,6 @@ import ChatMessageText from './ChatMessageText.vue'
 export default {
   components: {
     ChatMessageText
-  },
-  data () {
-    return {
-      mouseover: false
-    }
   },
   props: {
     name: {
