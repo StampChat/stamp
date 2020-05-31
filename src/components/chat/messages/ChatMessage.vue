@@ -35,11 +35,11 @@
       </div>
     </div>
 
-    <div class='col-auto' v-show="mouseover">
+    <q-tooltip>
       {{ stampAmount }}
-    </div>
-    <div class='q-px-sm col-auto' v-show="mouseover">
-      {{ shortTimestamp }}
+    </q-tooltip>
+    <div class='q-px-sm col-auto'>
+      {{ shortTime }}
     </div>
 
     <div v-if="message.status==='error'" class="col-auto">
@@ -119,6 +119,20 @@ export default {
             lastWeek: '[Last] dddd',
             sameElse: 'DD/MM/YYYY'
           })
+        }
+        case 'pending':
+          return 'sending...'
+        case 'error':
+          return ''
+      }
+      return 'unknown'
+    },
+    shortTime () {
+      switch (this.message.status) {
+        case 'confirmed': {
+          const timestamp = this.message.timestamp || this.message.serverTime
+          const howLongAgo = moment(timestamp)
+          return howLongAgo.format('HH:mm:ss')
         }
         case 'pending':
           return 'sending...'
