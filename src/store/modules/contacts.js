@@ -1,7 +1,7 @@
 import { PublicKey } from 'bitcore-lib-cash'
 import { getRelayClient } from '../../utils/relay-client-factory'
 import { addressColorFromStr } from '../../utils/formatting'
-import { defaultUpdateInterval, pendingRelayData } from '../../utils/constants'
+import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl } from '../../utils/constants'
 import KeyserverHandler from '../../keyserver/handler'
 import Vue from 'vue'
 import moment from 'moment'
@@ -19,21 +19,52 @@ export default {
   namespaced: true,
   state: {
     contacts: {
-      // Example:
-      // 'qz5fqvs0xfp4p53hj0kk7v3h5t8qwx5pdcd7vv72zs': {
-      //   lastUpdate: ...
-      //   profile: {
-      //     name: 'Anon',
-      //     bio: '',
-      //     avatar: ...,
-      //     pubKey: ...,
-      //   },
-      //   inbox: {
-      //     acceptancePrice: ...,
-      //   },
-      //   notify: true,
-      //   relayURL: ...
-      // },
+      'bchtest:qrugj9hv6lcar6hflk26yz8k9qq8wp9tvsmvvqqwgq': {
+        lastUpdate: null,
+        profile: {
+          name: 'Stamp Group Chat #1',
+          pubKey: new Uint8Array([
+            2,
+            111,
+            154,
+            97,
+            51,
+            91,
+            21,
+            201,
+            249,
+            21,
+            64,
+            33,
+            209,
+            44,
+            71,
+            187,
+            52,
+            83,
+            161,
+            168,
+            20,
+            173,
+            139,
+            235,
+            85,
+            155,
+            234,
+            247,
+            223,
+            107,
+            31,
+            88,
+            32
+          ])
+        },
+        inbox: {
+          acceptancePrice: 5000
+        },
+        notify: true,
+        relayURL: defaultRelayUrl
+      }
     },
     updateInterval: defaultUpdateInterval
   },

@@ -6,6 +6,20 @@ import { desktopNotify } from '../../utils/notifications'
 
 const defaultContactObject = { inputMessage: '', lastRead: null, stampAmount: defaultStampAmount, totalUnreadMessages: 0, totalUnreadValue: 0, totalValue: 0 }
 
+const defaultChats = [
+  {
+    inputMessage: '',
+    lastRead: null,
+    stampAmount: 50000,
+    totalUnreadMessages: 0,
+    totalUnreadValue: 0,
+    totalValue: 0,
+    messages: {},
+    address: 'bchtest:qrugj9hv6lcar6hflk26yz8k9qq8wp9tvsmvvqqwgq',
+    lastReceived: null
+  }
+]
+
 function calculateUnreadAggregates (messages, lastReadTime) {
   const messageValues = messages
     .filter(message => !message.outbound)
@@ -33,6 +47,12 @@ export function rehydateChat (chatState) {
   chatState.messages = chatState.messages || {}
 
   if (chatState.chats) {
+    for (const chat of defaultChats) {
+      if (!(chat.address in chatState.chats)) {
+        chatState.chats[chat.address] = chat
+      }
+    }
+
     for (const contactAddress in chatState.chats) {
       const contact = chatState.chats[contactAddress]
       contact.address = contactAddress
@@ -56,7 +76,9 @@ export default {
   namespaced: true,
   state: {
     activeChatAddr: null,
-    chats: {},
+    chats: {
+
+    },
     messages: [],
     lastReceived: null
   },
