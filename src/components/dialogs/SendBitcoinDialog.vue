@@ -15,6 +15,7 @@
         dense
         hint="Set the amount of Bitcoin to be sent (satoshis)."
         placeholder="Enter number of satoshis..."
+        ref="amount"
       />
     </q-card-section>
     <q-card-section>
@@ -66,6 +67,9 @@ export default {
       const stampAmount = this.getStampAmount()(this.address)
       await this.$relayClient.sendStealthPayment({ addr: this.address, amount: Number(this.amount), memo: this.memo, stampAmount })
     }
+  },
+  mounted() {
+    this.$refs.amount.$el.focus()
   }
 }
 </script>

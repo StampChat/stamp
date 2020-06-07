@@ -13,6 +13,7 @@
         filled
         dense
         placeholder="Enter Bitcoin Cash address..."
+        ref="address"
       />
     </q-card-section>
     <q-card-section>
@@ -99,6 +100,9 @@ export default {
         // Unfreeze UTXOs if stealth tx broadcast fails
       }
     }
+  },
+  mounted() {
+    this.$refs.address.$el.focus()
   }
 }
 </script>

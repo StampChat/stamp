@@ -41,6 +41,7 @@
                 type="number"
                 hint="Interval between contact updates"
                 style="width:100%"
+                ref="contactRefreshInterval"
               />
           </div>
           </q-tab-panel>
@@ -91,6 +92,9 @@ export default {
     darkMode () {
       this.$emit('input', this.constructSettings)
     }
+  },
+  mounted() {
+    this.$refs.contactRefreshInterval.$el.focus()
   }
 }
 </script>

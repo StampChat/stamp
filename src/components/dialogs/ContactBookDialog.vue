@@ -24,6 +24,7 @@
         filled
         dense
         placeholder="Search..."
+        ref="contactSearch"
       />
     </q-card-section>
     <q-card-section class="q-pb-none">
@@ -64,6 +65,9 @@ export default {
       search: '',
       newContactOpen: false
     }
+  },
+  mounted() {
+    this.$refs.contactSearch.$el.focus()
   }
 }
 </script>
