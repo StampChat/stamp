@@ -14,6 +14,8 @@
         dense
         placeholder="Enter Bitcoin Cash address..."
         ref="address"
+        @keydown.enter.prevent="addContact()"
+        v-close-popup
       />
     </q-card-section>
     <q-slide-transition>
