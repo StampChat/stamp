@@ -131,8 +131,8 @@ module.exports = configure(function (ctx) {
       workboxPluginMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
       workboxOptions: {}, // only for GenerateSW
       manifest: {
-        name: 'Stamp',
-        short_name: 'Stamp',
+        name: 'StampBot',
+        short_name: 'StampBot',
         description: ' A Bitcoin Cash powered internet relay chat',
         display: 'standalone',
         orientation: 'portrait',
@@ -198,7 +198,7 @@ module.exports = configure(function (ctx) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'stamp',
+        appId: 'stampbot',
         extraFiles: [
           { from: 'src-electron/icons', to: 'resources/icons' }
         ],

@@ -1,16 +1,19 @@
+/* eslint-disable no-unreachable */
 import { RelayClient } from '../relay/client'
 import { defaultRelayUrl } from '../utils/constants'
-import { store as levelDbStore } from '../adapters/level-message-store'
 import { path } from 'ramda'
 
 export function getRelayClient ({ wallet, electrumClient, store, relayUrl = defaultRelayUrl }) {
   const observables = { connected: false }
   const client = new RelayClient(relayUrl, wallet, electrumClient, {
-    getPubKey: (address) => {
-      const destPubKey = store.getters['contacts/getPubKey'](address)
+    getPubKey: (addr) => {
+      const destPubKey = store.getters['contacts/getPubKey'](addr)
       return destPubKey
     },
-    messageStore: levelDbStore
+    getStoredMessage: (payloadDigest) => {
+      const message = store.getters['chats/getMessageByPayload'](payloadDigest)
+      return message
+    }
   })
   client.events.on('disconnected', () => {
     observables.connected = false
@@ -19,17 +22,19 @@ export function getRelayClient ({ wallet, electrumClient, store, relayUrl = defa
     console.log(err)
   })
   client.events.on('opened', () => { observables.connected = true })
-  client.events.on('messageSending', ({ address, senderAddress, index, items, outpoints, transactions }) => {
-    store.commit('chats/sendMessageLocal', { address, senderAddress, index, items, outpoints, transactions })
+  client.events.on('messageSending', ({ addr, senderAddress, index, items, outpoints, transactions }) => {
+    store.commit('chats/sendMessageLocal', { addr, senderAddress, index, items, outpoints, transactions })
   })
-  client.events.on('messageSendError', ({ address, senderAddress, index, items, outpoints, transactions, retryData }) => {
-    store.commit('chats/sendMessageLocal', { address, senderAddress, index, items, outpoints, transactions, retryData, status: 'error' })
+  client.events.on('messageSendError', ({ addr, senderAddress, index, items, outpoints, transactions, retryData }) => {
+    store.commit('chats/sendMessageLocal', { addr, senderAddress, index, items, outpoints, transactions, retryData, status: 'error' })
   })
-  client.events.on('messageSent', ({ address, senderAddress, index, items, outpoints, transactions }) => {
-    store.commit('chats/sendMessageLocal', { address, senderAddress, index, items, outpoints, transactions, status: 'confirmed' })
+  client.events.on('messageSent', ({ addr, senderAddress, index, items, outpoints, transactions }) => {
+    // TODO: Why no items here?
+    store.commit('chats/sendMessageLocal', { addr, senderAddress, index, items, outpoints, transactions, status: 'confirmed' })
   })
-  client.events.on('receivedMessage', ({ outbound, copartyAddress, copartyPubKey, index, newMsg }) => {
-    store.dispatch('chats/receiveMessage', { outbound, copartyAddress, copartyPubKey, index, newMsg })
+  client.events.on('receivedMessage', ({ outbound, index, copartyAddress, newMsg, ...args }) => {
+    // TODO: Why no items here?
+    store.dispatch('chats/receiveMessage', { outbound, index, copartyAddress, newMsg, ...args })
     if (outbound) {
       return
     }
@@ -58,7 +63,7 @@ export function getRelayClient ({ wallet, electrumClient, store, relayUrl = defa
         continue
       }
       console.log(stampAmount)
-      client.sendMessageImpl({ address: contact, items: newItems, stampAmount })
+      client.sendMessageImpl({ addr: contact, items: newItems, stampAmount })
       console.log(contacts[contact])
     }
   })

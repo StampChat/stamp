@@ -1,9 +1,11 @@
 {
-  "name": "stamp",
+  "name": "stampbot",
   "version": "0.0.2-alpha.9",
   "description": " A Bitcoin Cash powered internet relay chat",
-  "productName": "Stamp",
-  "author": "harry@cryptonumismatics.org",
+  "productName": "StampBot",
+  "cordovaId": "org.cashweb.stampbot",
+  "capacitorId": "",
+  "author": "Harry Barber <harrybarber@protonmail.com>",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore ./",
