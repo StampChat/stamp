@@ -1,7 +1,7 @@
 <template>
   <q-item
     :active="isActive"
-    :active-class="`${$q.dark.isActive ? 'bg-blue-grey-10 text-white' : 'bg-blue-2 text-black'}`"
+    active-class="active-chat-list-item"
     clickable
     @click="setActiveChat(chatAddr)"
   >
@@ -104,3 +104,8 @@ export default {
   }
 }
 </script>
+<style lang="scss" scoped>
+.active-chat-list-item {
+    background: var(--q-color-bg-active);
+}
+</style>

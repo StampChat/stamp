@@ -1,6 +1,6 @@
 <template>
   <q-item
-    :class="`q-pa-none ${mouseover ? $q.dark.isActive ? 'bg-blue-grey-10' : 'bg-blue-2': $q.dark.isActive ? 'dark' : 'bg-white'}`"
+    class="q-pa-none"
     dense
     @mouseover="mouseover = true"
     @mouseleave="mouseover = false"
@@ -27,7 +27,7 @@
     />
 
     <div class='col'>
-      <div class = 'q-px-lg' v-for="(item, index) in message.items" :key="index" >
+      <div class='q-px-lg' v-for="(item, index) in message.items" :key="index" >
         <chat-message-reply v-if="item.type=='reply'" :payloadDigest="item.payloadDigest" :address="address" :mouseover="mouseover"/>
         <chat-message-text v-else-if="item.type=='text'" :text="item.text" />
         <chat-message-image v-else-if="item.type=='image'" :image="item.image" />

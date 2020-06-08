@@ -1,0 +1,9 @@
+body.body--dark {
+    --q-color-background: #140025;
+    --q-color-text: white;
+    // TODO: Figure out how to use global quasar scss variables
+    --q-color-bg-active: #b388ff;
+
+    background: var(--q-color-background);
+    color: var(--q-color-text);
+}
