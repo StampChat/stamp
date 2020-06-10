@@ -13,6 +13,9 @@
         filled
         dense
         placeholder="Enter Bitcoin Cash address..."
+        ref="address"
+        @keydown.enter.prevent="addContact()"
+        v-close-popup
       />
     </q-card-section>
     <q-slide-transition>
@@ -137,6 +140,9 @@ export default {
       const cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
       this.addContactVuex({ addr: cashAddress, contact: this.contact })
     }
+  },
+  mounted() {
+    this.$refs.address.$el.focus()
   }
 }
 </script>
