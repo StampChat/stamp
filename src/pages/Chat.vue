@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="lhh LpR lff" container class="hide-scrollbar absolute full-width">
+  <q-layout ref="chatLayout" view="lhh LpR lff" container class="hide-scrollbar absolute full-width">
     <!-- Send file dialog -->
     <!-- TODO: Move this up.  We don't need a copy of this dialog for each address (likely) -->
     <q-dialog v-model="sendFileOpen" persistent>
@@ -24,7 +24,7 @@
 
     <q-page-container>
       <q-page>
-        <q-scroll-area ref="chatScroll" class="scroll-area-bordered q-px-none absolute full-width full-height">
+        <q-scroll-area ref="chatScroll" @scroll=scrollHandler class="scroll-area-bordered q-px-none absolute full-width full-height">
           <anouncement
             class='q-pt-sm'
             name="Stamp Developers"
@@ -44,7 +44,6 @@
               />
             </template>
           </template>
-          <q-scroll-observer debounce="500" @scroll="scrollHandler" />
         </q-scroll-area>
         <q-page-sticky position="bottom-right" :offset="[18, 18]" v-show="!bottom">
           <q-btn round size="md" icon="keyboard_arrow_down" color="accent" @click="scrollBottom" />
@@ -90,7 +89,6 @@
 import moment from 'moment'
 import { mapGetters, mapActions } from 'vuex'
 import { dom } from 'quasar'
-const { height } = dom
 
 import Anouncement from '../components/chat/messages/Announcement.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
@@ -184,15 +182,17 @@ export default {
     },
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
-      if (scrollArea) {
-        const scrollTarget = scrollArea.getScrollTarget()
-        this.$nextTick(() =>
-          scrollArea.setScrollPosition(
-            scrollTarget.scrollHeight,
-            scrollDuration
-          )
-        )
+      if (!scrollArea) {
+        // Not mounted yet
+        return
       }
+      const scrollTarget = scrollArea.getScrollTarget()
+      this.$nextTick(() =>
+        scrollArea.setScrollPosition(
+          scrollTarget.scrollHeight,
+          scrollDuration
+        )
+      )
     },
     getContact (outbound) {
       if (outbound) {
@@ -202,26 +202,14 @@ export default {
       }
     },
     scrollHandler (details) {
-      const scrollArea = this.$refs.chatScroll
-      const scrollTarget = scrollArea.getScrollTarget()
       if (
         // Ten pixels from bottom
-        details.position + scrollTarget.offsetHeight - scrollTarget.scrollHeight <= 10
+        details.verticalSize - details.verticalPosition - details.verticalContainerSize <= 10
       ) {
         this.bottom = true
       } else {
         this.bottom = false
       }
-    },
-    offsetHeight () {
-      // TODO: This isn't reactive enough. It's somewhat slow to recalculate
-      const inputBoxHeight = this.$refs.chatInput
-        ? height(this.$refs.chatInput.$el)
-        : 50
-      const replyHeight = this.$refs.replyBox ? height(this.$refs.replyBox) : 0
-      // Sometimes this returns zero when the component isnt' shown. However, it then dates some time to update properly when switching to it.
-      // Set a minimum of 50.
-      return Math.max(inputBoxHeight + replyHeight, 50)
     },
     setReply (payloadDigest) {
       this.replyDigest = payloadDigest
