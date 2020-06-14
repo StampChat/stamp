@@ -64,6 +64,98 @@ export default {
         },
         notify: true,
         relayURL: defaultRelayUrl
+      },
+      'bchtest:qq3q7kzdds2xuzug05tn7w3lp7kkfulqfsf85x8tty': {
+        lastUpdate: null,
+        profile: {
+          name: 'Harry',
+          pubKey: new Uint8Array([
+            3,
+            14,
+            10,
+            67,
+            80,
+            209,
+            189,
+            177,
+            180,
+            42,
+            144,
+            28,
+            56,
+            182,
+            94,
+            167,
+            89,
+            227,
+            104,
+            46,
+            174,
+            234,
+            241,
+            72,
+            197,
+            63,
+            184,
+            232,
+            181,
+            16,
+            198,
+            7,
+            191
+          ])
+        },
+        inbox: {
+          acceptancePrice: 5000
+        },
+        notify: true,
+        relayURL: defaultRelayUrl
+      },
+      'bchtest:qqu3vqt9hydcmhkydn9h68qzlyduypuwqgnc8vvjhc': {
+        lastUpdate: null,
+        profile: {
+          name: 'Shammah (Always Up)',
+          pubKey: new Uint8Array([
+            2,
+            102,
+            255,
+            22,
+            228,
+            132,
+            236,
+            1,
+            167,
+            197,
+            242,
+            26,
+            230,
+            200,
+            60,
+            103,
+            197,
+            225,
+            249,
+            140,
+            125,
+            104,
+            196,
+            130,
+            160,
+            242,
+            40,
+            178,
+            73,
+            218,
+            99,
+            238,
+            38
+          ])
+        },
+        inbox: {
+          acceptancePrice: 5000
+        },
+        notify: true,
+        relayURL: defaultRelayUrl
       }
     },
     updateInterval: defaultUpdateInterval
