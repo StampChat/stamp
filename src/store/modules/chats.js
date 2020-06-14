@@ -17,6 +17,28 @@ const defaultChats = [
     messages: {},
     address: 'bchtest:qrugj9hv6lcar6hflk26yz8k9qq8wp9tvsmvvqqwgq',
     lastReceived: null
+  },
+  {
+    inputMessage: '',
+    lastRead: null,
+    stampAmount: 5000,
+    totalUnreadMessages: 0,
+    totalUnreadValue: 0,
+    totalValue: 0,
+    messages: {},
+    address: 'bchtest:qq3q7kzdds2xuzug05tn7w3lp7kkfulqfsf85x8tty',
+    lastReceived: null
+  },
+  {
+    inputMessage: '',
+    lastRead: null,
+    stampAmount: 5000,
+    totalUnreadMessages: 0,
+    totalUnreadValue: 0,
+    totalValue: 0,
+    messages: {},
+    address: 'bchtest:qqu3vqt9hydcmhkydn9h68qzlyduypuwqgnc8vvjhc',
+    lastReceived: null
   }
 ]
 
