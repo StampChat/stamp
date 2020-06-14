@@ -66,7 +66,7 @@ export default {
       newContactOpen: false
     }
   },
-  mounted() {
+  mounted () {
     this.$refs.contactSearch.$el.focus()
   }
 }

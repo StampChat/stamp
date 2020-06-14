@@ -141,7 +141,7 @@ export default {
       this.addContactVuex({ addr: cashAddress, contact: this.contact })
     }
   },
-  mounted() {
+  mounted () {
     this.$refs.address.$el.focus()
   }
 }
