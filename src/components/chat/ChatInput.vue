@@ -6,20 +6,17 @@
         flat
         icon="attach_money"
         @click="sendMoneyClicked"
-        :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
       />
       <q-btn
         dense
         flat
         icon="attach_file"
         @click="sendFileClicked"
-        :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
       />
       <q-btn
         dense
         flat
         icon="insert_emoticon"
-        :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
         @click="menuPicker=true"
       >
       <q-menu>
@@ -45,7 +42,6 @@
         flat
         icon="send"
         @click="sendMessage"
-        :color="`${$q.dark.isActive ? 'light' : 'dark'}`"
       />
       <q-input dense outlined style="width: 125px" label="Stamp" suffix="sats" v-bind:value="stampAmount" @input="stampAmountChanged" input-class="text-right" />
     </q-toolbar>

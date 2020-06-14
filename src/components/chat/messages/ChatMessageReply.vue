@@ -1,5 +1,5 @@
 <template>
-  <div :class="`reply ${mouseover ? $q.dark.isActive ? 'bg-blue-grey-10' : 'bg-blue-2': $q.dark.isActive ? 'dark' : 'bg-white'}`">
+  <div class="reply">
     <div class='col text-weight-bold' :style="`color: ${nameColor};`"> {{ name }} </div>
     <chat-message
       class="row-auto"
