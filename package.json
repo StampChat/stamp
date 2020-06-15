@@ -1,6 +1,6 @@
 {
   "name": "stamp",
-  "version": "0.0.2-alpha.6",
+  "version": "0.0.2-alpha.7",
   "description": " A Bitcoin Cash powered internet relay chat",
   "productName": "Stamp",
   "cordovaId": "org.cashweb.stamp",
