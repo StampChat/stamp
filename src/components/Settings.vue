@@ -93,7 +93,7 @@ export default {
       this.$emit('input', this.constructSettings)
     }
   },
-  mounted() {
+  mounted () {
     this.$refs.contactRefreshInterval.$el.focus()
   }
 }

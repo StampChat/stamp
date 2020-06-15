@@ -88,7 +88,6 @@
 <script>
 import moment from 'moment'
 import { mapGetters, mapActions } from 'vuex'
-import { dom } from 'quasar'
 
 import Anouncement from '../components/chat/messages/Announcement.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
