@@ -68,7 +68,7 @@ export default {
       await this.$relayClient.sendStealthPayment({ addr: this.address, amount: Number(this.amount), memo: this.memo, stampAmount })
     }
   },
-  mounted() {
+  mounted () {
     this.$refs.amount.$el.focus()
   }
 }

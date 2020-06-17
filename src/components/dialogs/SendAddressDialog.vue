@@ -101,7 +101,7 @@ export default {
       }
     }
   },
-  mounted() {
+  mounted () {
     this.$refs.address.$el.focus()
   }
 }
