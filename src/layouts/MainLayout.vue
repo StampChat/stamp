@@ -117,6 +117,11 @@ export default {
         this.trueSplitterRatio = compactCutoff
       }
       this.myDrawerOpen = !this.myDrawerOpen
+    },
+    shortcutKeyListener (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        this.toggleContactBookOpen()
+      }
     }
   },
   computed: {
@@ -173,16 +178,10 @@ export default {
     }
   },
   mounted () {
-    this._keyListener = function (e) {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        this.toggleContactBookOpen()
-      }
-    }
-    document.addEventListener('keydown', this._keyListener.bind(this))
+    document.addEventListener('keydown', this.shortcutKeyListener)
   },
   beforeDestroy () {
-    document.removeEventListener('keydown', this._keyListener)
+    document.removeEventListener('keydown', this.shortcutKeyListener)
   }
 }
 </script>
