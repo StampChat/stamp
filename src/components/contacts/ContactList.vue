@@ -7,6 +7,7 @@
     <contact-item
       v-for="(contact, address) in contactsState"
       v-bind:key="address"
+      v-on:mouseover-contact="navigateUsingMouse"
       :key="address"
       :address="address"
       :contact="contact"
@@ -30,7 +31,7 @@ export default {
     }
   },
   mounted () {
-    document.addEventListener('keydown', this.navigate)
+    document.addEventListener('keydown', this.navigateUsingArrowKeys)
   },
   methods: {
     setInitialContactsState () {
@@ -43,7 +44,7 @@ export default {
       contactsState[Object.keys(this.contacts)[0]].inFocus = true
       return contactsState
     },
-    navigate (e) {
+    navigateUsingArrowKeys (e) {
       if (e.key === 'ArrowUp') {
         const addresses = Object.keys(this.contactsState)
 
@@ -67,6 +68,16 @@ export default {
         this.contactsState[currentAddressInFocus].inFocus = false
         this.contactsState[nextAddressInFocus].inFocus = true
       }
+    },
+    navigateUsingMouse (addressToBecomeFocused) {
+      const addresses = Object.keys(this.contactsState)
+      addresses.forEach(address => {
+        if (address === addressToBecomeFocused) {
+          this.contactsState[address].inFocus = true
+        } else {
+         this.contactsState[address].inFocus = false
+        }
+      })
     }
   }
 }

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-on:mouseover="$emit('mouseover-contact', address)">
     <q-item v-if="(contact === null)">
       <q-item-section avatar>
         <q-icon
@@ -79,7 +79,7 @@ export default {
   methods: {
     ...mapActions({
       deleteContact: 'contacts/deleteContact'
-    })
+    }),
   }
 }
 </script>
