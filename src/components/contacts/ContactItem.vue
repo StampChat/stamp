@@ -27,7 +27,6 @@
       </q-item-section>
     </q-item>
     <q-item
-      clickable
       v-ripple
       v-else-if="contact !== null"
       v-close-popup
@@ -53,7 +52,6 @@
       </q-item-section>
       <q-item-section
         side
-        clickable
         @click="deleteContact(address)"
       >
         <q-btn
@@ -66,6 +64,12 @@
     </q-item>
   </div>
 </template>
+
+<style>
+  .active {
+    background-color: rgb(221,221,221);
+  }
+</style>
 
 <script>
 import { mapActions } from 'vuex'
