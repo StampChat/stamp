@@ -9,55 +9,54 @@ import wrapper from '../pop/wrapper_pb'
 const cashlib = require('bitcore-lib-cash')
 const assert = require('assert')
 
-export const constructStampTransaction = function (wallet, payloadDigest, destPubKey, amount) {
+export const constructStampTransactions = function (wallet, payloadDigest, destPubKey, amount) {
   assert(payloadDigest instanceof Buffer)
 
   // Stamp output
   const stampHDPubKey = constructStampPubKey(payloadDigest, destPubKey)
   // Assuming one txn and one output for now.
-  const transactionNumber = 0// This should be the index of the transaction in the outpoint list
+  let transactionNumber = 0// This should be the index of the transaction in the outpoint list
   const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
 
-  const outpointPubKey = stampHDPubKey.deriveChild(44)
-    .deriveChild(145)
-    .deriveChild(transactionNumber)
-    .deriveChild(outputNumber)
-    .publicKey
-
-  const stampOutput = new cashlib.Transaction.Output({
-    script: cashlib.Script(new cashlib.Address(outpointPubKey)),
-    satoshis: amount
-  })
+  const stampAddressGenerator = () => {
+    const outpointPubKey = stampHDPubKey.deriveChild(44)
+      .deriveChild(145)
+      .deriveChild(transactionNumber)
+      .deriveChild(outputNumber)
+      .publicKey
+    const address = cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(outpointPubKey.point))
+    transactionNumber += 1
+    return address
+  }
 
   // Construct transaction
-  const { transaction, usedIDs } = wallet.constructTransaction({ outputs: [stampOutput] })
-  return { transaction, usedIDs }
+  return wallet.constructTransactionSet({ addressGenerator: stampAddressGenerator, amount })
 }
 
-export const constructStealthTransaction = function (wallet, ephemeralPrivKey, destPubKey, amount) {
+export const constructStealthTransactions = function (wallet, ephemeralPrivKey, destPubKey, amount) {
   // Add ephemeral output
   // NOTE: We're only doing 1 stealth txn, and 1 output for now.
   // But the spec should allow doing confidential amounts.
-  const transactionNumber = 0// This should be the index of the transaction in the outpoint list
+  let transactionNumber = 0// This should be the index of the transaction in the outpoint list
   const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
   const stealthHDPubKey = constructStealthPubKey(ephemeralPrivKey, destPubKey)
-  const stealthPubKey = stealthHDPubKey
-    .deriveChild(44)
-    .deriveChild(145)
-    .deriveChild(transactionNumber)
-    .deriveChild(outputNumber)
-    .publicKey
 
-  const stealthAddress = cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(stealthPubKey.point))
+  const stealthPubKeyGenerator = () => {
+    const stealthPubKey = stealthHDPubKey
+      .deriveChild(44)
+      .deriveChild(145)
+      .deriveChild(transactionNumber)
+      .deriveChild(outputNumber)
+      .publicKey
+    const stealthAddress = cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(stealthPubKey.point))
 
-  const stealthOutput = new cashlib.Transaction.Output({
-    script: cashlib.Script(new cashlib.Address(stealthAddress)),
-    satoshis: amount
-  })
+    transactionNumber += 1
+    return stealthAddress
+  }
 
   // Construct transaction
-  const { transaction, usedIDs } = wallet.constructTransaction({ outputs: [stealthOutput] })
-  return [{ transaction, vouts: [0], usedIDs }]
+  const transactionBundle = wallet.constructTransactionSet({ addressGenerator: stealthPubKeyGenerator, amount })
+  return transactionBundle
 }
 
 export const constructMessage = function (wallet, serializedPayload, privKey, destPubKey, stampAmount) {
@@ -72,15 +71,17 @@ export const constructMessage = function (wallet, serializedPayload, privKey, de
   message.setSignature(sig)
   message.setSerializedPayload(serializedPayload)
 
-  const { transaction, usedIDs } = constructStampTransaction(wallet, payloadDigest, destPubKey, stampAmount)
-  const rawStampTx = transaction.toBuffer()
-  const stampOutpoints = new messaging.StampOutpoints()
-  stampOutpoints.setStampTx(rawStampTx)
-  stampOutpoints.addVouts(0)
+  const transactionBundle = constructStampTransactions(wallet, payloadDigest, destPubKey, stampAmount)
 
-  message.addStampOutpoints(stampOutpoints)
+  for (const { transaction: stampTx, vouts } of transactionBundle) {
+    const rawStampTx = stampTx.toBuffer()
+    const stampOutpoints = new messaging.StampOutpoints()
+    stampOutpoints.setStampTx(rawStampTx)
+    vouts.forEach((vout) => stampOutpoints.addVouts(vout))
+    message.addStampOutpoints(stampOutpoints)
+  }
 
-  return { message, usedIDs, stampTx: transaction }
+  return { message, transactionBundle }
 }
 
 export const constructPayload = function (entries, privKey, destPubKey, scheme, timestamp = Date.now()) {
@@ -150,19 +151,25 @@ export const constructStealthEntry = function ({ wallet, amount, destPubKey }) {
   const stealthPaymentEntry = new stealth.StealthPaymentEntry()
   const ephemeralPrivKey = cashlib.PrivateKey()
 
-  const [{ transaction: stealthTx, usedIDs: stealthIdsUsed, vouts }] = constructStealthTransaction(wallet, ephemeralPrivKey, destPubKey, amount)
+  const transactionBundle = constructStealthTransactions(wallet, ephemeralPrivKey, destPubKey, amount)
+
+  // Sent to HASH160(ephemeralPrivKey * destPubKey)
+  // Sent to HASH160(ephemeralPrivKey * destPubKey)
 
   stealthPaymentEntry.setEphemeralPubKey(ephemeralPrivKey.publicKey.toBuffer())
-  const rawStealthTx = stealthTx.toBuffer()
-  const stealthOutpoints = new stealth.StealthOutpoints()
-  stealthOutpoints.setStealthTx(rawStealthTx)
-  vouts.forEach((vout) => stealthOutpoints.addVouts(vout))
-  stealthPaymentEntry.addOutpoints(stealthOutpoints)
+  for (const { transaction: stealthTx, vouts } of transactionBundle) {
+    const rawStealthTx = stealthTx.toBuffer()
+    const stealthOutpoints = new stealth.StealthOutpoints()
+
+    stealthOutpoints.setStealthTx(rawStealthTx)
+    vouts.forEach((vout) => stealthOutpoints.addVouts(vout))
+    stealthPaymentEntry.addOutpoints(stealthOutpoints)
+  }
 
   const paymentEntryRaw = stealthPaymentEntry.serializeBinary()
   paymentEntry.setEntryData(paymentEntryRaw)
 
-  return { paymentEntry, stealthTx, usedIDs: stealthIdsUsed, vouts }
+  return { paymentEntry, transactionBundle }
 }
 
 export const constructImageEntry = function ({ image }) {

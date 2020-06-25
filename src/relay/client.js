@@ -284,15 +284,18 @@ export class RelayClient {
       item => {
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'stealth') {
-          const { paymentEntry, stealthTx, usedIDs: stealthIdsUsed, vouts } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
-          outpoints.push(...vouts.map(vout => ({
-            type: 'stealth',
-            txId: stealthTx.id,
-            satoshis: stealthTx.outputs[vout].satoshis,
-            outputIndex: vout
-          })))
-          usedIDs.push(...stealthIdsUsed)
-          transactions.push(stealthTx)
+          const { paymentEntry, transactionBundle } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
+          outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
+            transactions.push(transaction)
+            usedIDs.push(...usedIds)
+            return vouts.map(vout => ({
+              type: 'stealth',
+              txId: transaction.id,
+              satoshis: transaction.outputs[vout].satoshis,
+              outputIndex: vout
+            }))
+          }).flat(1)
+          )
           return paymentEntry
         }
         // TODO: internal type does not match protocol. Consistency is good.
@@ -315,22 +318,21 @@ export class RelayClient {
 
     // Construct message
     try {
-      const { message, usedIDs: usedStampIds, stampTx } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
-      // TODO: These need to come back from the constructMessage API
-      // We could have more than one, and more than one transaction in the future (ideally)
-      const outpoint = {
-        type: 'stamp',
-        txId: stampTx.id,
-        outputIndex: 0,
-        satoshis: stampTx.outputs[0].satoshis
-      }
-      transactions.push(stampTx)
-      usedIDs.push(...usedStampIds)
-      outpoints.push(outpoint)
+      const { message, transactionBundle } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
+      outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
+        transactions.push(transaction)
+        usedIDs.push(...usedIds)
+        return vouts.map(vout => ({
+          type: 'stamp',
+          txId: transaction.id,
+          satoshis: transaction.outputs[vout].satoshis,
+          outputIndex: vout
+        }))
+      }).flat(1)
+      )
       const messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
       const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
-
       const client = this.wallet.electrumClient
       Promise.all(transactions.map(transaction => {
         console.log('broadcasting txn')
