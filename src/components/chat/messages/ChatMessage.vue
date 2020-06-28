@@ -8,7 +8,7 @@
     <!-- Transaction Dialog -->
     <q-dialog v-model="transactionDialog">
       <!-- Switch to outpoints -->
-      <transaction-dialog title="Stamp Transaction" :outpoints="message.outpoints" />
+      <transaction-dialog title="Backing Transactions" :outpoints="message.outpoints" />
     </q-dialog>
 
     <!-- Delete Dialog -->
