@@ -65,12 +65,6 @@
   </div>
 </template>
 
-<style>
-  .active {
-    background-color: rgb(221,221,221);
-  }
-</style>
-
 <script>
 import { mapActions } from 'vuex'
 
