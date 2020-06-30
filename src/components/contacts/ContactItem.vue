@@ -79,7 +79,7 @@ export default {
   methods: {
     ...mapActions({
       deleteContact: 'contacts/deleteContact'
-    }),
+    })
   }
 }
 </script>
