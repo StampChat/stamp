@@ -15,7 +15,10 @@
 
   <!-- Contact book dialog -->
   <q-dialog v-model="contactBookOpen">
-    <contact-book-dialog :contactClick="function (addr, contact) { return setActiveChat(addr) }" />
+    <contact-book-dialog
+      :contactClick="function (addr, contact) { return setActiveChat(addr) }"
+      v-on:close-contact-search-dialog="closeContactSearchDialog"
+    />
   </q-dialog>
 
   <!-- Contact book dialog -->
@@ -139,6 +142,9 @@ export default {
     }),
     getIdentityPrivKey () {
       return this.$wallet.identityPrivKey
+    },
+    closeContactSearchDialog () {
+      this.contactBookOpen = false
     }
   },
   computed: {

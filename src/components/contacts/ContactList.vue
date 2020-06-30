@@ -43,6 +43,7 @@ export default {
       }
       if (e.key === 'Enter') {
         this.contactClick(this.activeAddress, this.contacts[this.activeAddress])
+        this.$emit('close-contact-search-dialog')
       }
     },
     nextAddressIndex ({direction}) {
