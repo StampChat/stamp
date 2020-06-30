@@ -21,6 +21,9 @@
         :contact="getContact(activeChatAddr)"
       />
     </q-drawer>
+    <q-dialog v-model="contactBookOpen">
+      <contact-book-dialog :contactClick="function (addr, contact) { return setActiveChat(addr) }"/>
+    </q-dialog>
     <q-page-container>
       <q-page :style-fn="tweak">
         <q-splitter
@@ -63,6 +66,7 @@ import Chat from '../pages/Chat.vue'
 import ChatList from '../components/chat/ChatList.vue'
 import SettingsPanel from '../components/panels/SettingsPanel.vue'
 import ContactPanel from '../components/panels/ContactPanel.vue'
+import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
 
@@ -75,7 +79,8 @@ export default {
     Chat,
     ChatList,
     ContactPanel,
-    SettingsPanel
+    SettingsPanel,
+    ContactBookDialog
   },
   data () {
     return {
@@ -83,6 +88,7 @@ export default {
       loaded: false,
       myDrawerOpen: false,
       contactDrawerOpen: false,
+      contactBookOpen: false,
       compact: false,
       compactWidth
     }
@@ -102,12 +108,20 @@ export default {
     toggleContactDrawerOpen () {
       this.contactDrawerOpen = !this.contactDrawerOpen
     },
+    toggleContactBookOpen () {
+      this.contactBookOpen = !this.contactBookOpen
+    },
     toggleMyDrawerOpen () {
       if (this.compact) {
         this.compact = false
         this.trueSplitterRatio = compactCutoff
       }
       this.myDrawerOpen = !this.myDrawerOpen
+    },
+    shortcutKeyListener (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        this.toggleContactBookOpen()
+      }
     }
   },
   computed: {
@@ -162,6 +176,12 @@ export default {
     } catch (err) {
       console.error(err)
     }
+  },
+  mounted () {
+    document.addEventListener('keydown', this.shortcutKeyListener)
+  },
+  beforeDestroy () {
+    document.removeEventListener('keydown', this.shortcutKeyListener)
   }
 }
 </script>
