@@ -6,4 +6,7 @@ body.body--dark {
 
     background: var(--q-color-background);
     color: var(--q-color-text);
+    .active {
+      background-color: var(--q-color-bg-active);
+    }
 }

@@ -31,6 +31,7 @@
       <contact-list
         :contacts="searchContacts(search)"
         :contactClick="contactClick"
+        v-on:close-contact-search-dialog="closeContactSearchDialog"
       />
     </q-card-section>
     <q-card-actions align="right">
@@ -68,6 +69,11 @@ export default {
   },
   mounted () {
     this.$refs.contactSearch.$el.focus()
+  },
+  methods: {
+    closeContactSearchDialog () {
+      this.$emit('close-contact-search-dialog')
+    }
   }
 }
 </script>

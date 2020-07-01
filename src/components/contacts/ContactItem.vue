@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-on:mouseover="$emit('mouseover-contact', address)">
     <q-item v-if="(contact === null)">
       <q-item-section avatar>
         <q-icon
@@ -27,7 +27,6 @@
       </q-item-section>
     </q-item>
     <q-item
-      clickable
       v-ripple
       v-else-if="contact !== null"
       v-close-popup
@@ -53,7 +52,6 @@
       </q-item-section>
       <q-item-section
         side
-        clickable
         @click="deleteContact(address)"
       >
         <q-btn
