@@ -1,5 +1,5 @@
 import { PublicKey } from 'bitcore-lib-cash'
-import { getRelayClient } from '../../utils/relay-client-factory'
+import { getRelayClient } from '../../adapters/vuex-relay-adapter'
 import { addressColorFromStr } from '../../utils/formatting'
 import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl } from '../../utils/constants'
 import KeyserverHandler from '../../keyserver/handler'
