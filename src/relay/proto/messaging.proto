@@ -1,0 +1,124 @@
+syntax = "proto3";
+package messaging;
+
+// Basic key/value used to store header data.
+message Header {
+    string name = 1;
+    string value = 2;
+}
+
+// Entry is an indidual piece of structured data.
+message Entry {
+    // Type informs the wallet what to do with this payload.
+    string kind = 1;
+    // The headers provide some extra metadata about the field that
+    // may be relevant to the wallet.  At this time there are no meaningful headers.
+    repeated Header headers = 2;
+    // Body of the metadata field.
+    bytes entry_data = 3;
+}
+
+// Wrapper for being able to encrypt and decrypt.  We don't want
+// to encrypt individual entries as we would leak the number of items
+// being sent.
+message Entries {
+    repeated Entry entries = 1;
+}
+
+// Payload is the user-specified data section of a AddressMetadata that is covered by the users signature.
+message Payload {
+    // Untrusted timestamp provided by sender.
+    int64 timestamp = 1;
+    // Pubkey of the intended destination.
+    bytes destination = 2;
+    // Standard schemes for generating encryption key.
+    enum EncryptionScheme {
+        // None indicates the message is plaintext.
+        None = 0;
+        // Secret seed is aG where G is the public point for secp256k1
+        // Shared secret is S = H(X(abG)) where X() specifies the X-coordinate of the point
+        // and b is the recipients private key. Payload is encrypted with AES256.
+        EphemeralDH = 1;
+        // TODO: WE need a way to represent a stateful exchange of two ephemeral keys.
+        // Proto is:
+        // 1. Generate a, and aG. send aG.  abG is common secret where bG is the pubkey
+        // 2. Generate c and cP.  Send cbG back.
+        // 3. They add in a, to get acbG.  Original recepient adds bc to aG to get bcaG.
+        // This is forward secret.
+        // Can use AES-256 with shared secret abcG.
+    }
+    EncryptionScheme scheme = 3;
+    // The ephemeral public key.
+    bytes ephemeral_pub_key = 4;
+    // The encrypted ephemeral private key.
+    bytes ephemeral_priv_key = 5;
+    // List of encrypted entries 
+    bytes entries = 6;
+}
+
+// A stamp transaction paired with a list of vouts identifying to stamp outputs.
+message StampOutpoints {
+    bytes stamp_tx = 1;
+    repeated uint32 vouts = 2;
+}
+
+message Message {
+    enum StampType {
+        None = 0;
+        // Hash commitment means the stamp is being sent to the address:
+        // H(n || vout || H(payload))G + P where P is the destinations pubkey, and G is the public point.
+        // H(n || vout || H(payload)) is the hash of the transaction index, the vout and the
+        // serialized payload.
+        MessageCommitment = 1;
+    }
+    StampType stamp_type = 1;
+    // A collection of stamp outpoints.
+    repeated StampOutpoints stamp_outpoints = 2;
+    // The senders serialized pubkey.
+    bytes sender_pub_key = 3;
+    // Signature scheme provided. Default is Schnorr, but can be ecdsa.
+    enum SignatureScheme {
+        SCHNORR = 0;
+        ECDSA = 1;
+    }
+    SignatureScheme scheme = 4;
+    // The signature by sender_pub_key over the SHA-256 digest of the serialized_payload.
+    bytes signature = 5;
+    // The serialized payload covered by the signature.
+    bytes serialized_payload = 6;
+    // The SHA-256 digest of the serialized_payload.
+    bytes payload_digest = 7;
+}
+
+// Collection of messages. Pushed from client to server via HTTP.
+message MessageSet {
+    repeated Message messages = 1;
+}
+
+// Collection of messages paired with server time. Pushed from server to client via WS.
+message TimedMessageSet {
+    int64 server_time = 1;
+    repeated Message messages = 2;
+}
+
+// A message paired with server time.
+message TimedMessage {
+    int64 server_time = 1;
+    Message message = 2;
+}
+
+// A page of messages each paired with server time. Pulled from server via HTTP.
+message MessagePage {
+    repeated TimedMessage messages = 1;
+}
+
+// A payload paired with server time.
+message TimedPayload {
+    int64 server_time = 1;
+    Payload payload = 2;
+}
+
+// A page of payloads each paired with server time. Pulled from server via HTTP.
+message PayloadPage {
+    repeated TimedPayload payloads = 1;
+}
