@@ -501,7 +501,7 @@ export class Wallet {
       })
     }
     console.log(`amountLeft: ${amountLeft} end ${amount}`)
-    console.log('Reduction:', transactionBundle.reduce((total, { transaction, vouts, usedIds }) => {
+    console.log('Reduction:', transactionBundle.reduce((total, { transaction }) => {
       return transaction.outputs[0].satoshis + total
     }, 0))
 

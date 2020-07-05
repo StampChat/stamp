@@ -36,17 +36,17 @@ export default {
     navigateUsingArrowKeys (e) {
       const addresses = Object.keys(this.contacts)
       if (e.key === 'ArrowUp') {
-        this.activeAddress = addresses[this.nextAddressIndex({direction: -1})]
+        this.activeAddress = addresses[this.nextAddressIndex({ direction: -1 })]
       }
       if (e.key === 'ArrowDown') {
-        this.activeAddress = addresses[this.nextAddressIndex({direction: 1})]
+        this.activeAddress = addresses[this.nextAddressIndex({ direction: 1 })]
       }
       if (e.key === 'Enter') {
         this.contactClick(this.activeAddress, this.contacts[this.activeAddress])
         this.$emit('close-contact-search-dialog')
       }
     },
-    nextAddressIndex ({direction}) {
+    nextAddressIndex ({ direction }) {
       const addresses = Object.keys(this.contacts)
       return (addresses.indexOf(this.activeAddress) + direction + addresses.length) % addresses.length
     },
