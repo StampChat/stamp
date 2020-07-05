@@ -3,7 +3,7 @@ package wrapper;
 
 message AuthWrapper {
   // Serialized version of the public key.
-  bytes public_key = 1;
+  bytes pub_key = 1;
   // Signature is the signature of the metadata by public key.
   bytes signature = 2;
   // Signature scheme provided.  Default is Schnorr, but can be ecdsa.
@@ -14,6 +14,4 @@ message AuthWrapper {
   SignatureScheme scheme = 3;
   // The serialized payload covered by the signature.
   bytes serialized_payload = 4;
-  // The SHA256 digest of the serialized_payload.
-  bytes payload_digest = 5;
 }

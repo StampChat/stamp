@@ -6,7 +6,7 @@
 // https://github.com/bitcoin/bips/blob/master/bip-0070/extensions.mediawiki
 //
 
-package payments;
+package bip70;
 option java_package = "org.bitcoin.protocols.payments";
 option java_outer_classname = "Protos";
 
