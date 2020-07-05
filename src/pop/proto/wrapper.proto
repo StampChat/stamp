@@ -1,0 +1,19 @@
+syntax = "proto3";
+package wrapper;
+
+message AuthWrapper {
+  // Serialized version of the public key.
+  bytes public_key = 1;
+  // Signature is the signature of the metadata by public key.
+  bytes signature = 2;
+  // Signature scheme provided.  Default is Schnorr, but can be ecdsa.
+  enum SignatureScheme {
+    SCHNORR = 0;
+    ECDSA = 1;
+  }
+  SignatureScheme scheme = 3;
+  // The serialized payload covered by the signature.
+  bytes serialized_payload = 4;
+  // The SHA256 digest of the serialized_payload.
+  bytes payload_digest = 5;
+}
