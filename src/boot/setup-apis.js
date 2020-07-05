@@ -2,7 +2,7 @@
 import { Client as ElectrumClient } from 'electrum-cash'
 import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils/constants'
 import { Wallet } from '../wallet'
-import { getRelayClient } from '../utils/relay-client-factory'
+import { getRelayClient } from '../adapters/vuex-relay-adapter'
 
 async function instrumentElectrumClient ({ client, observables, reconnector }) {
   const keepAlive = () => {
