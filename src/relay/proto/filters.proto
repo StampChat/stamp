@@ -1,0 +1,18 @@
+syntax = "proto3";
+package filters;
+
+// Price filter to be applied to an inbox.
+message PriceFilter {
+    // Whether the price filter should be publicly viewable.
+    bool public = 1;
+    // Minimum price required for acceptance into inbox.
+    uint64 acceptance_price = 2;
+    // Minimum price required to trigger an inbox notification.
+    uint64 notification_price = 3;
+}
+
+// Collection of filters.
+message Filters {
+    // Price filter
+    PriceFilter price_filter = 1;
+}
