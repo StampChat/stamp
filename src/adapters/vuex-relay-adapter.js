@@ -1,5 +1,6 @@
 import { RelayClient } from '../relay/client'
 import { defaultRelayUrl } from '../utils/constants'
+import { store as levelDbStore } from '../adapters/level-message-store'
 
 export function getRelayClient ({ wallet, electrumClient, store, relayUrl = defaultRelayUrl }) {
   const observables = { connected: false }
@@ -8,10 +9,7 @@ export function getRelayClient ({ wallet, electrumClient, store, relayUrl = defa
       const destPubKey = store.getters['contacts/getPubKey'](address)
       return destPubKey
     },
-    getStoredMessage: (paylgoadDiestHex) => {
-      const message = store.getters['chats/getMessageByPayload'](paylgoadDiestHex)
-      return message
-    }
+    messageStore: levelDbStore
   })
   client.events.on('disconnected', () => {
     observables.connected = false
@@ -27,11 +25,9 @@ export function getRelayClient ({ wallet, electrumClient, store, relayUrl = defa
     store.commit('chats/sendMessageLocal', { address, senderAddress, index, items, outpoints, transactions, retryData, status: 'error' })
   })
   client.events.on('messageSent', ({ address, senderAddress, index, items, outpoints, transactions }) => {
-    // TODO: Why no items here?
     store.commit('chats/sendMessageLocal', { address, senderAddress, index, items, outpoints, transactions, status: 'confirmed' })
   })
   client.events.on('receivedMessage', (args) => {
-    // TODO: Why no items here?
     store.dispatch('chats/receiveMessage', args)
   })
 

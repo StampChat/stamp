@@ -18,7 +18,7 @@ const WebSocket = window.require('ws')
 const cashlib = require('bitcore-lib-cash')
 
 export class RelayClient {
-  constructor (url, wallet, electrumClient, { getPubKey, getStoredMessage }) {
+  constructor (url, wallet, electrumClient, { getPubKey, messageStore }) {
     this.url = url
     this.httpScheme = 'http'
     this.wsScheme = 'ws'
@@ -26,7 +26,7 @@ export class RelayClient {
     this.wallet = wallet
     this.electrumClient = electrumClient
     this.getPubKey = getPubKey
-    this.getStoredMessage = getStoredMessage
+    this.messageStore = messageStore
   }
 
   setToken (token) {
@@ -189,7 +189,7 @@ export class RelayClient {
     assert(typeof digest === 'string')
 
     try {
-      const message = this.getStoredMessage(digest)
+      const message = this.messageStore.getMessage(digest)
       assert(message, 'message not found?')
 
       // Send utxos to a change address
@@ -330,6 +330,7 @@ export class RelayClient {
         }))
       }).flat(1)
       )
+
       const messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
       const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
@@ -446,7 +447,7 @@ export class RelayClient {
     // if this client sent the message, we already have the data and don't need to process it or get the payload again
     if (payloadDigestFromServer.length !== 0) {
       const payloadDigestHex = Array.prototype.map.call(payloadDigestFromServer, x => ('00' + x.toString(16)).slice(-2)).join('')
-      const message = this.getStoredMessage(payloadDigestHex)
+      const message = await this.messageStore.getMessage(payloadDigestHex)
       if (message) {
         // TODO: We really should handle unfreezing UTXOs here via a callback in the future.
         return
@@ -684,12 +685,14 @@ export class RelayClient {
     }
 
     const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
+    await this.messageStore.saveMessage(finalizedMessage)
     this.events.emit('receivedMessage', finalizedMessage)
   }
 
-  async refresh ({ lastReceived } = {}) {
+  async refresh () {
     const wallet = this.wallet
     const myAddressStr = wallet.myAddressStr
+    const lastReceived = await this.messageStore.mostRecentMessageTime()
     console.log('refreshing', lastReceived, myAddressStr)
     const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
     const messageList = messagePage.getMessagesList()

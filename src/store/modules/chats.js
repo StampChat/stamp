@@ -3,6 +3,7 @@ import Vue from 'vue'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
+import { store } from '../../adapters/level-message-store'
 
 const defaultContactObject = { inputMessage: '', lastRead: null, stampAmount: defaultStampAmount, totalUnreadMessages: 0, totalUnreadValue: 0, totalValue: 0 }
 
@@ -61,7 +62,7 @@ function calculateUnreadAggregates (messages, lastReadTime) {
   }
 }
 
-export function rehydateChat (chatState) {
+export async function rehydateChat (chatState) {
   if (!chatState) {
     return
   }
@@ -91,6 +92,45 @@ export function rehydateChat (chatState) {
         contact.totalValue = totalValue
       }
     }
+  }
+
+  const messageIterator = await store.getIterator()
+  // Todo, this rehydrate stuff is common to receiveMessage
+  for await (const messageWrapper of messageIterator) {
+    if (!messageWrapper.newMsg) {
+      continue
+    }
+    const { index, newMsg, address } = messageWrapper
+    assert(newMsg.outbound !== undefined)
+    assert(newMsg.status !== undefined)
+    assert(newMsg.receivedTime !== undefined)
+    assert(newMsg.serverTime !== undefined)
+    assert(newMsg.items !== undefined)
+    assert(newMsg.outpoints !== undefined)
+    assert(newMsg.senderAddress !== undefined)
+
+    const message = { payloadDigest: index, ...newMsg }
+    if (!chatState.messages) {
+      chatState.messages = {}
+    }
+    if (!chatState.chats[address]) {
+      chatState.chats[address] = { ...defaultContactObject, messages: [], address }
+    }
+    chatState.messages[index] = message
+    chatState.chats[address].messages.push(message)
+    chatState.chats[address].lastReceived = message.serverTime
+    const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
+    if (address !== chatState.activeChatAddr && chatState.chats[address].lastRead < message.serverTime) {
+      chatState.chats[address].totalUnreadValue += messageValue
+      chatState.chats[address].totalUnreadMessages += 1
+    }
+    chatState.lastReceived = message.serverTime
+    chatState.chats[address].totalValue += messageValue
+  }
+
+  // Resort chats
+  for (const contactAddress in chatState.chats) {
+    chatState.chats[contactAddress].messages.sort((messageA, messageB) => messageA.serverTime - messageB.serverTime)
   }
 }
 

@@ -23,7 +23,7 @@ let lastSave = Date.now()
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
   // Hack to allow us to easily rehydrate the store
-  restoreState: (key, storage) => {
+  restoreState: async (key, storage) => {
     const value = storage.getItem(key)
     let newState = parseState(value)
     console.log('Restoring state', newState)
@@ -50,7 +50,7 @@ const vuexLocal = new VuexPersistence({
     }
     console.log('new new state', newState)
     rehydrateContacts(newState.contacts)
-    rehydateChat(newState.chats, newState.contacts)
+    await rehydateChat(newState.chats, newState.contacts)
     rehydrateWallet(newState.wallet)
     return newState
   },
@@ -90,7 +90,8 @@ const vuexLocal = new VuexPersistence({
     lastSave = Date.now()
 
     return true
-  }
+  },
+  asyncStorage: true
 })
 
 export default new Vuex.Store({
