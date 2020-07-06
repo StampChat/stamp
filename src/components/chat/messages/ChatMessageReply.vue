@@ -12,6 +12,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { addressColorFromStr } from '../../../utils/formatting'
 
 export default {
   name: 'chat-message-reply',
@@ -47,17 +48,22 @@ export default {
       return message || { items: [] }
     },
     name () {
+      console.log('IsSame', this.message.senderAddress === this.$wallet.myAddressStr)
       if (this.message.senderAddress === this.$wallet.myAddressStr) {
         return this.getProfile.name
       }
       const contact = this.getContact()(this.message.senderAddress)
+      console.log('Not is Same', this.message.senderAddress, contact)
+      if (!contact) {
+        return 'Not Found'
+      }
       return contact.profile.name
     },
     nameColor () {
       if (this.message.senderAddress === this.$wallet.myAddressStr) {
         return 'text-black'
       }
-      return this.getContact()(this.address).color
+      return addressColorFromStr(this.address)
     }
   }
 }

@@ -99,9 +99,8 @@ export default {
   state: {
     activeChatAddr: null,
     chats: {
-
     },
-    messages: [],
+    messages: {},
     lastReceived: null
   },
   getters: {

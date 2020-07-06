@@ -67,7 +67,7 @@ export default {
         case 'error':
           return ''
       }
-      return 'unknown'
+      return 'N/A'
     },
     timestampString () {
       const timestamp = this.lastMessage.timestamp || this.lastMessage.serverTime
