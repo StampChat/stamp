@@ -99,6 +99,7 @@ import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.v
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
 import { donationMessage } from '../utils/constants'
 import { insufficientStampNotify } from '../utils/notifications'
+import { addressColorFromStr } from '../utils/formatting'
 
 const scrollDuration = 0
 
@@ -245,8 +246,7 @@ export default {
       return chunks
     },
     nameColor () {
-      const color = this.getContactVuex(this.address).color
-      return color
+      return addressColorFromStr(this.address)
     },
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
@@ -285,9 +285,12 @@ export default {
       if (replyAddress === this.$wallet.myAddressStr) {
         return 'black'
       }
+      onsole.log('Hit', this.address, this.getContactVuex(this.address))
+
       return this.getContactVuex(this.address).color
     },
     contactProfile () {
+      console.log('Hit', this.address, this.getContactVuex(this.address))
       return this.getContactVuex(this.address).profile
     }
   },

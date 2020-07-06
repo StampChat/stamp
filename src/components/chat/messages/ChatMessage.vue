@@ -17,6 +17,7 @@
     </q-dialog>
 
     <chat-message-menu
+      v-if="message.payloadDigest"
       :address="address"
       :message="message"
       :payloadDigest="message.payloadDigest"
@@ -26,13 +27,16 @@
       @replyClick="replyClicked({ address, payloadDigest: message.payloadDigest })"
     />
 
-    <div class='col'>
-      <div class='q-px-lg' v-for="(item, index) in message.items" :key="index" >
+    <div class='col' v-if="message.payloadDigest">
+      <div  class='q-px-lg' v-for="(item, index) in message.items" :key="index" >
         <chat-message-reply v-if="item.type=='reply'" :payloadDigest="item.payloadDigest" :address="address" :mouseover="mouseover"/>
         <chat-message-text v-else-if="item.type=='text'" :text="item.text" />
         <chat-message-image v-else-if="item.type=='image'" :image="item.image" />
         <chat-message-stealth v-else-if="item.type=='stealth'" :amount="item.amount" />
       </div>
+    </div>
+    <div class='col' v-else-if="!message.payloadDigest">
+      unable to find message payload
     </div>
 
     <q-tooltip>
@@ -125,7 +129,7 @@ export default {
         case 'error':
           return ''
       }
-      return 'unknown'
+      return 'N/A'
     },
     shortTime () {
       switch (this.message.status) {
@@ -139,13 +143,16 @@ export default {
         case 'error':
           return ''
       }
-      return 'unknown'
+      return 'N/A'
     },
     timestampString () {
       const timestamp = this.message.timestamp || this.message.serverTime
       return moment(timestamp)
     },
     stampAmount () {
+      if (!this.message) {
+        return '0 sats'
+      }
       const amount = stampPrice(this.message.outpoints)
       return amount + ' sats'
     }
