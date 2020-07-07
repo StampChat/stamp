@@ -109,11 +109,10 @@ export class RelayClient {
       const timedMessageSet = Message.deserializeBinary(buffer)
       const messageList = timedMessageSet.getMessagesList()
 
-      const serverTime = timedMessageSet.getServerTime()
       const receivedTime = Date.now()
       for (const index in messageList) {
         const message = messageList[index]
-        this.receiveMessage({ serverTime, receivedTime, message }).catch(err => console.error(err))
+        this.receiveMessage({ receivedTime, message }).catch(err => console.error(err))
       }
     }
 
@@ -698,14 +697,12 @@ export class RelayClient {
     for (const messageChunk of messageChunks) {
       await new Promise((resolve) => {
         setTimeout(() => {
-          for (const timedMessage of messageChunk) {
+          for (const message of messageChunk) {
             // TODO: Check correct destination
             // const destPubKey = timedMessage.getDestination()
-            const serverTime = timedMessage.getServerTime()
-            const message = timedMessage.getMessage()
             // Here we are ensuring that their are yields between messages to the event loop.
             // Ideally, we move this to a webworker in the future.
-            this.receiveMessage({ serverTime, receivedTime, message }).then(resolve).catch((err) => {
+            this.receiveMessage({ receivedTime, message }).then(resolve).catch((err) => {
               console.error('Unable to deserialize message:', err)
               resolve()
             })
