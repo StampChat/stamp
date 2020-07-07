@@ -1,10 +1,9 @@
 import axios from 'axios'
 import { splitEvery } from 'ramda'
-import messaging from './messaging_pb'
+import { Payload, Message, MessagePage, MessageSet, PayloadEntries, Profile } from './relay_pb'
 import stealth from './stealth_pb'
-import addressmetadata from '../keyserver/addressmetadata_pb'
 import wrapper from '../auth_wrapper/wrapper_pb'
-import pop from '../index'
+import pop from '../pop'
 import { pingTimeout, relayReconnectInterval } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
@@ -58,7 +57,7 @@ export class RelayClient {
     // Get PubKey
     const pubKey = metadata.getPubKey()
 
-    const payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
+    const payload = Profile.deserializeBinary(metadata.getSerializedPayload())
 
     // Find vCard
     function isVCard (entry) {
@@ -107,7 +106,7 @@ export class RelayClient {
 
     socket.onmessage = event => {
       const buffer = event.data
-      const timedMessageSet = messaging.TimedMessageSet.deserializeBinary(buffer)
+      const timedMessageSet = Message.deserializeBinary(buffer)
       const messageList = timedMessageSet.getMessagesList()
 
       const serverTime = timedMessageSet.getServerTime()
@@ -181,7 +180,7 @@ export class RelayClient {
 
   async getPayload (addr, digest) {
     const rawPayload = await this.getRawPayload(addr, digest)
-    const payload = messaging.Payload.deserializeBinary(rawPayload)
+    const payload = Payload.deserializeBinary(rawPayload)
     return payload
   }
 
@@ -245,7 +244,7 @@ export class RelayClient {
     })
 
     if (response.status === 200) {
-      const messagePage = messaging.MessagePage.deserializeBinary(response.data)
+      const messagePage = MessagePage.deserializeBinary(response.data)
       return messagePage
     }
   }
@@ -330,7 +329,7 @@ export class RelayClient {
         }))
       }).flat(1)
       )
-      const messageSet = new messaging.MessageSet()
+      const messageSet = new MessageSet()
       messageSet.addMessages(message)
       const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       const client = this.wallet.electrumClient
@@ -426,13 +425,14 @@ export class RelayClient {
     this.sendMessageImpl({ addr, items, stampAmount })
   }
 
-  async receiveMessage ({ serverTime, receivedTime, message }) {
+  async receiveMessage ({ receivedTime, message }) {
     const rawSenderPubKey = message.getSenderPubKey()
     const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
     const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
     const wallet = this.wallet
     const myAddress = wallet.myAddressStr
     const outbound = (senderAddr === myAddress)
+    const serverTime = message.received_time
 
     const rawPayloadFromServer = message.getSerializedPayload()
     const payloadDigestFromServer = message.getPayloadDigest()
@@ -474,7 +474,7 @@ export class RelayClient {
       return
     }
 
-    const payload = messaging.Payload.deserializeBinary(rawPayload)
+    const payload = Payload.deserializeBinary(rawPayload)
     const payloadDigestHex = payloadDigest.toString('hex')
     const destinationRaw = payload.getDestination()
     const destPubKey = cashlib.PublicKey.fromBuffer(destinationRaw)
@@ -577,7 +577,7 @@ export class RelayClient {
     let stealthValue = 0
 
     // Decode entries
-    const entries = messaging.Entries.deserializeBinary(entriesRaw)
+    const entries = PayloadEntries.deserializeBinary(entriesRaw)
     const entriesList = entries.getEntriesList()
     const newMsg = {
       outbound,
