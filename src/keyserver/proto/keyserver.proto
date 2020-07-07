@@ -1,0 +1,42 @@
+syntax = "proto3";
+package keyserver;
+
+// Basic key/value used to store header data.
+message Header {
+  string name = 1;
+  string value = 2;
+}
+
+// Entry is an individual piece of structured data provided by wallet authors.
+message Entry {
+  // Kind is a hint to wallets as to what type of data to deserialize from the
+  // metadata field.
+  string kind = 1;
+  // The headers is excess metadata that may be useful to a wallet.
+  repeated Header headers = 2;
+  // Body of the metadata field.
+  bytes entry_data = 3;
+}
+
+// AddressMetadata is the user-specified data that is covered by the users
+// signature.
+message AddressMetadata {
+  // Timestamp allows servers to determine which version of the data is the most
+  // recent. Given in milliseconds.
+  int64 timestamp = 1;
+  // TTL tells us how long this entry should exist before being considered
+  // invalid. Given in milliseconds.
+  int64 ttl = 2;
+  // User specified data.  Presumably some conventional data determined by
+  // wallet authors.
+  repeated Entry entries = 3;
+}
+
+// Peer represents a single peer.
+message Peer {
+  // The URL pointing to the root of the keyserver REST API.
+  string url = 1;
+}
+
+// A list of peers.
+message Peers { repeated Peer peers = 1; }
