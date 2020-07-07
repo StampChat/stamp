@@ -1,7 +1,7 @@
 import axios from 'axios'
 import addressmetadata from './addressmetadata_pb'
-import wrapper from '../pop/wrapper_pb'
-import pop from '../pop/index'
+import wrapper from '../auth_wrapper/wrapper_pb'
+import pop from '../pop'
 import { trustedKeyservers } from '../utils/constants'
 
 const cashlib = require('bitcore-lib-cash')

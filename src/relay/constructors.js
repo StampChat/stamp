@@ -4,7 +4,7 @@ import filters from './filters_pb'
 import { constructStampPubKey, constructStealthPubKey, encrypt, encryptEphemeralKey } from './crypto'
 import VCard from 'vcf'
 import addressmetadata from '../keyserver/addressmetadata_pb'
-import wrapper from '../pop/wrapper_pb'
+import wrapper from '../auth_wrapper/wrapper_pb'
 
 const cashlib = require('bitcore-lib-cash')
 const assert = require('assert')
