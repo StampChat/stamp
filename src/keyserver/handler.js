@@ -61,7 +61,7 @@ class KeyserverHandler {
 
   static async paymentRequest (serverUrl, addr) {
     const url = `${serverUrl}/keys/${addr.toLegacyAddress()}`
-    return pop.getPaymentRequest(url, 'put')
+    return await pop.getPaymentRequest(url, 'put')
   }
 
   async uniformSample (addr) {

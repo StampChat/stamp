@@ -43,7 +43,7 @@ export class RelayClient {
 
   async profilePaymentRequest (addr) {
     const url = `${this.httpScheme}://${this.url}/profile/${addr}`
-    return pop.getPaymentRequest(url, 'put')
+    return await pop.getPaymentRequest(url, 'put')
   }
 
   async getRelayData (addr) {
@@ -252,13 +252,13 @@ export class RelayClient {
 
   async messagePaymentRequest (addr) {
     const url = `${this.httpScheme}://${this.url}/messages/${addr}`
-    return pop.getPaymentRequest(url, 'get')
+    return await pop.getPaymentRequest(url, 'get')
   }
 
   async sendPayment (paymentUrl, payment) {
     // TODO: Relative vs absolute
     const url = `${this.httpScheme}://${this.url}${paymentUrl}`
-    return pop.sendPayment(url, payment)
+    return await pop.sendPayment(url, payment)
   }
 
   async pushMessages (addr, messageSet) {
