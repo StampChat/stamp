@@ -4,12 +4,13 @@ import paymentrequest from './paymentrequest_pb'
 const cashlib = require('bitcore-lib-cash')
 
 export default {
-  async getPaymentRequest (url, method) {
+  async getPaymentRequest (url, method, data) {
     try {
       await axios({
         method,
         url,
-        responseType: 'arraybuffer'
+        responseType: 'arraybuffer',
+        data
       })
     } catch (err) {
       const response = err.response

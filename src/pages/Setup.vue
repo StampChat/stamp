@@ -99,6 +99,7 @@ import ProfileStep from '../components/setup/ProfileStep'
 import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultRelayData, defaultRelayUrl } from '../utils/constants'
 import { errorNotify } from '../utils/notifications'
+import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -315,6 +316,15 @@ export default {
       })
 
       try {
+        // Construct metadata
+        const idPrivKey = this.$wallet.identityPrivKey
+        const metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
+
+        // Truncate metadata
+        const payloadDigest = cashlib.crypto.Hash.sha256(metadata.payload)
+        const truncatedAuthWrapper = new AuthWrapper()
+        truncatedAuthWrapper.setPayloadDigest(payloadDigest)
+
         const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
 
         this.$q.loading.show({
@@ -325,10 +335,6 @@ export default {
         // Construct payment
         const { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, paymentDetails)
         const { token } = await pop.sendPayment(paymentUrl, payment)
-
-        // Construct metadata
-        const idPrivKey = this.$wallet.identityPrivKey
-        const metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
 
         this.$q.loading.show({
           delay: 100,
