@@ -1,4 +1,4 @@
-// source: messaging.proto
+// source: relay.proto
 /**
  * @fileoverview
  * @enhanceable
