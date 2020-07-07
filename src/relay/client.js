@@ -42,12 +42,12 @@ export class RelayClient {
   }
 
   async profilePaymentRequest (addr) {
-    const url = `${this.httpScheme}://${this.url}/profile/${addr}`
+    const url = `${this.httpScheme}://${this.url}/profiles/${addr}`
     return await pop.getPaymentRequest(url, 'put')
   }
 
   async getRelayData (addr) {
-    const url = `${this.httpScheme}://${this.url}/profile/${addr}`
+    const url = `${this.httpScheme}://${this.url}/profiles/${addr}`
     const response = await axios({
       method: 'get',
       url,
@@ -216,7 +216,7 @@ export class RelayClient {
 
   async putProfile (addr, metadata) {
     const rawProfile = metadata.serializeBinary()
-    const url = `${this.httpScheme}://${this.url}/profile/${addr}`
+    const url = `${this.httpScheme}://${this.url}/profiles/${addr}`
     await axios({
       method: 'put',
       url: url,
