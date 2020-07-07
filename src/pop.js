@@ -1,5 +1,5 @@
 import axios from 'axios'
-import paymentrequest from './paymentrequest_pb'
+import paymentrequest from './bip70/paymentrequest_pb'
 
 const cashlib = require('bitcore-lib-cash')
 
