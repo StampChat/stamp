@@ -2,13 +2,13 @@ import axios from 'axios'
 import addressmetadata from './addressmetadata_pb'
 import wrapper from '../pop/wrapper_pb'
 import pop from '../pop/index'
+import { trustedKeyservers } from '../utils/constants'
 
 const cashlib = require('bitcore-lib-cash')
 
 class KeyserverHandler {
-  trustedServers = ['http://34.68.170.199:8533']
   constructor (defaultSampleSize, keyservers) {
-    this.keyservers = keyservers || this.trustedServers
+    this.keyservers = keyservers || trustedKeyservers
     this.defaultSampleSize = defaultSampleSize || 3
   }
 
