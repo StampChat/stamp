@@ -1,0 +1,12 @@
+syntax = "proto3";
+package stealth;
+
+message StealthOutpoints {
+    bytes stealth_tx = 1;
+    repeated uint32 vouts = 2;
+}
+
+message StealthPaymentEntry {
+    bytes ephemeral_pub_key = 1;
+    repeated StealthOutpoints outpoints = 2;
+}
