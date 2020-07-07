@@ -285,7 +285,7 @@ export default {
       if (replyAddress === this.$wallet.myAddressStr) {
         return 'black'
       }
-      onsole.log('Hit', this.address, this.getContactVuex(this.address))
+      console.log('Hit', this.address, this.getContactVuex(this.address))
 
       return this.getContactVuex(this.address).color
     },
