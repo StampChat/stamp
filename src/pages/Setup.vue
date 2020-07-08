@@ -321,14 +321,11 @@ export default {
 
         // Truncate metadata
         const payload = Buffer.from(authWrapper.getPayload())
-        const payloadDigest = Buffer.from(cashlib.crypto.Hash.sha256(payload))
-        console.log(payloadDigest)
+        const payloadDigest = cashlib.crypto.Hash.sha256(payload)
         const truncatedAuthWrapper = new AuthWrapper()
         const publicKey = authWrapper.getPublicKey()
-        console.log(publicKey)
         truncatedAuthWrapper.setPublicKey(publicKey)
         truncatedAuthWrapper.setPayloadDigest(payloadDigest)
-        // const truncatedAuthWrapper = authWrapper
 
         const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper)
 
@@ -391,7 +388,9 @@ export default {
 
         // Get token from relay server
         const { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
-        const { token } = await relayClient.sendPayment(paymentUrl, payment)
+        const paymentUrlFull = new URL(paymentUrl, this.relayUrl)
+        console.log('Sending payment to', paymentUrlFull.href)
+        const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
         relayClient.setToken(token)
         this.setRelayToken(token)
         this.$relayClient.setToken(token)

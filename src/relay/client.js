@@ -19,8 +19,6 @@ const cashlib = require('bitcore-lib-cash')
 export class RelayClient {
   constructor (url, wallet, electrumClient, { getPubKey, getStoredMessage }) {
     this.url = url
-    this.httpScheme = 'http'
-    this.wsScheme = 'ws'
     this.events = new EventEmitter()
     this.wallet = wallet
     this.electrumClient = electrumClient
@@ -41,12 +39,12 @@ export class RelayClient {
   }
 
   async profilePaymentRequest (addr) {
-    const url = `${this.httpScheme}://${this.url}/profiles/${addr}`
+    const url = `${this.url}/profiles/${addr}`
     return await pop.getPaymentRequest(url, 'put')
   }
 
   async getRelayData (addr) {
-    const url = `${this.httpScheme}://${this.url}/profiles/${addr}`
+    const url = `${this.url}/profiles/${addr}`
     const response = await axios({
       method: 'get',
       url,
@@ -100,7 +98,7 @@ export class RelayClient {
   }
 
   setUpWebsocket (addr) {
-    const url = `${this.wsScheme}://${this.url}/ws/${addr}`
+    const url = `${this.url}/ws/${addr}`
     const opts = { headers: { Authorization: this.token } }
     const socket = new WebSocket(url, opts)
 
@@ -160,7 +158,7 @@ export class RelayClient {
   }
 
   async getRawPayload (addr, digest) {
-    const url = `${this.httpScheme}://${this.url}/payloads/${addr}`
+    const url = `${this.url}/payloads/${addr}`
 
     const hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
     const response = await axios({
@@ -195,7 +193,7 @@ export class RelayClient {
       const changeAddress = changeAddresses[changeAddresses.length * Math.random() << 0]
       await this.wallet.forwardUTXOsToAddress({ utxos: message.outpoints, address: changeAddress })
 
-      const url = `${this.httpScheme}://${this.url}/messages/${this.wallet.myAddressStr}`
+      const url = `${this.url}/messages/${this.wallet.myAddressStr}`
       await axios({
         method: 'delete',
         url,
@@ -214,7 +212,7 @@ export class RelayClient {
 
   async putProfile (addr, metadata) {
     const rawProfile = metadata.serializeBinary()
-    const url = `${this.httpScheme}://${this.url}/profiles/${addr}`
+    const url = `${this.url}/profiles/${addr}`
     await axios({
       method: 'put',
       url: url,
@@ -226,7 +224,7 @@ export class RelayClient {
   }
 
   async getMessages (addr, startTime, endTime) {
-    const url = `${this.httpScheme}://${this.url}/messages/${addr}`
+    const url = `${this.url}/messages/${addr}`
     const response = await axios({
       method: 'get',
       url: url,
@@ -249,19 +247,17 @@ export class RelayClient {
   }
 
   async messagePaymentRequest (addr) {
-    const url = `${this.httpScheme}://${this.url}/messages/${addr}`
+    const url = `${this.url}/messages/${addr}`
     return await pop.getPaymentRequest(url, 'get')
   }
 
   async sendPayment (paymentUrl, payment) {
-    // TODO: Relative vs absolute
-    const url = `${this.httpScheme}://${this.url}${paymentUrl}`
-    return await pop.sendPayment(url, payment)
+    return await pop.sendPayment(paymentUrl, payment)
   }
 
   async pushMessages (addr, messageSet) {
     const rawMetadata = messageSet.serializeBinary()
-    const url = `${this.httpScheme}://${this.url}/messages/${addr}`
+    const url = `${this.url}/messages/${addr}`
     await axios({
       method: 'put',
       url: url,
