@@ -57,7 +57,7 @@ export class RelayClient {
     // Get PubKey
     const pubKey = metadata.getPubKey()
 
-    const payload = Profile.deserializeBinary(metadata.getSerializedPayload())
+    const payload = Profile.deserializeBinary(metadata.getPayload())
 
     // Find vCard
     function isVCard (entry) {
@@ -433,7 +433,7 @@ export class RelayClient {
     const outbound = (senderAddr === myAddress)
     const serverTime = message.received_time
 
-    const rawPayloadFromServer = message.getSerializedPayload()
+    const rawPayloadFromServer = message.getPayload()
     const payloadDigestFromServer = message.getPayloadDigest()
 
     if (payloadDigestFromServer.length === 0 && rawPayloadFromServer.length === 0) {

@@ -297,7 +297,6 @@ export default {
       // We do this first to prevent uploading broken URL to keyserver
       const idAddress = this.$wallet.myAddress
       const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
-
       try {
         this.relayData = await relayClient.getRelayData(idAddress)
       } catch (err) {
@@ -318,13 +317,18 @@ export default {
       try {
         // Construct metadata
         const idPrivKey = this.$wallet.identityPrivKey
-        const metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
+        const authWrapper = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
 
         // Truncate metadata
-        const payload = metadata.getPayload()
-        const payloadDigest = cashlib.crypto.Hash.sha256(payload)
+        const payload = Buffer.from(authWrapper.getPayload())
+        const payloadDigest = Buffer.from(cashlib.crypto.Hash.sha256(payload))
+        console.log(payloadDigest)
         const truncatedAuthWrapper = new AuthWrapper()
+        const publicKey = authWrapper.getPublicKey()
+        console.log(publicKey)
+        truncatedAuthWrapper.setPublicKey(publicKey)
         truncatedAuthWrapper.setPayloadDigest(payloadDigest)
+        // const truncatedAuthWrapper = authWrapper
 
         const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper)
 
@@ -338,13 +342,14 @@ export default {
         const paymentUrlFull = new URL(paymentUrl, serverUrl)
         console.log('Sending payment to', paymentUrlFull.href)
         const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+        console.log(token)
 
         this.$q.loading.show({
           delay: 100,
           message: 'Uploading Metadata...'
         })
 
-        await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
+        await KeyserverHandler.putMetadata(idAddress, serverUrl, authWrapper, token)
       } catch (err) {
         errorNotify(err)
         throw err

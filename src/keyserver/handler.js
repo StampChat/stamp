@@ -74,7 +74,7 @@ class KeyserverHandler {
   async getRelayUrl (addr) {
     // Get metadata
     const metadata = await this.uniformSample(addr)
-    const payload = AddressMetadata.deserializeBinary(metadata.getSerializedPayload())
+    const payload = AddressMetadata.deserializeBinary(metadata.getPayload())
 
     // Find vCard
     function isRelay (entry) {
