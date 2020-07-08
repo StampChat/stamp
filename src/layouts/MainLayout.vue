@@ -119,7 +119,7 @@ export default {
       this.myDrawerOpen = !this.myDrawerOpen
     },
     shortcutKeyListener (e) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         this.toggleContactBookOpen()
       }
     }
