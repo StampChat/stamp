@@ -1,5 +1,5 @@
 import axios from 'axios'
-import keyserver from './keyserver_pb'
+import { Entry, AddressMetadata } from './keyserver_pb'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
 import { trustedKeyservers } from '../utils/constants'
@@ -13,25 +13,25 @@ class KeyserverHandler {
   }
 
   static constructRelayUrlMetadata (relayUrl, privKey) {
-    const relayUrlEntry = new keyserver.Entry()
+    const relayUrlEntry = new Entry()
     relayUrlEntry.setKind('relay-server')
     const rawRelayUrl = new TextEncoder().encode(relayUrl)
     relayUrlEntry.setEntryData(rawRelayUrl)
 
     // Construct payload
-    const payload = new keyserver.Payload()
-    payload.setTimestamp(Math.floor(Date.now() / 1000))
-    payload.setTtl(31556952) // 1 year
-    payload.addEntries(relayUrlEntry)
+    const metadata = new AddressMetadata()
+    metadata.setTimestamp(Math.floor(Date.now() / 1000))
+    metadata.setTtl(31556952) // 1 year
+    metadata.addEntries(relayUrlEntry)
 
-    const serializedPayload = payload.serializeBinary()
+    const serializedPayload = metadata.serializeBinary()
     const hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
     const ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
     ecdsa.sign()
 
     const authWrapper = new AuthWrapper()
     const sig = ecdsa.sig.toCompact(1).slice(1)
-    authWrapper.setPubKey(privKey.toPublicKey().toBuffer())
+    authWrapper.setPublicKey(privKey.toPublicKey().toBuffer())
     authWrapper.setSignature(sig)
     authWrapper.setScheme(1)
     authWrapper.setPayload(serializedPayload)
@@ -74,7 +74,7 @@ class KeyserverHandler {
   async getRelayUrl (addr) {
     // Get metadata
     const metadata = await this.uniformSample(addr)
-    const payload = keyserver.Payload.deserializeBinary(metadata.getSerializedPayload())
+    const payload = AddressMetadata.deserializeBinary(metadata.getSerializedPayload())
 
     // Find vCard
     function isRelay (entry) {

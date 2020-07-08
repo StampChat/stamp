@@ -34,8 +34,8 @@ export const trustedKeyservers = ['https://keyserver.cashweb.io']
 export const pingTimeout = 20_000
 export const relayReconnectInterval = 10_000
 export const defaultAcceptancePrice = 100
-export const defaultRelayUrl = 'https://relay.cashweb.io'
-export const relayUrlOptions = ['https://relay.cashweb.io']
+export const defaultRelayUrl = 'relay.cashweb.io'
+export const relayUrlOptions = ['relay.cashweb.io']
 export const defaultRelayData = {
   profile: {
     name: '',

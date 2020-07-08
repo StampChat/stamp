@@ -92,12 +92,12 @@ export const constructMessage = function (wallet, serializedPayload, privKey, de
   return { message, transactionBundle }
 }
 
-export const constructPayload = function (entries, privKey, destPubKey, scheme, timestamp = Date.now()) {
+export const constructProfile = function (entries, privKey, destPubKey, scheme, timestamp = Date.now()) {
   const entriesPb = new PayloadEntries()
-  const payload = new Payload()
-  payload.setTimestamp(timestamp)
+  const profile = new Profile()
+  profile.setTimestamp(timestamp)
   const rawDestPubKey = destPubKey.toBuffer()
-  payload.setDestination(rawDestPubKey)
+  profile.setDestination(rawDestPubKey)
 
   // Convert to PB
   for (const entry of entries) {
@@ -107,8 +107,8 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
   // Serialize and encrypt
   const rawEntries = entriesPb.serializeBinary()
   if (scheme === 0) {
-    payload.setEntries(rawEntries)
-    const serializedPayload = payload.serializeBinary()
+    profile.setEntries(rawEntries)
+    const serializedPayload = profile.serializeBinary()
     const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
     return { serializedPayload, payloadDigest }
   } else if (scheme === 1) {
@@ -118,12 +118,12 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
     const entriesDigest = cashlib.crypto.Hash.sha256(cipherText)
     const encryptedEphemeralKey = encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
 
-    payload.setEntries(cipherText)
-    payload.setEphemeralPubKey(ephemeralPubKeyRaw)
-    payload.setEphemeralPrivKey(encryptedEphemeralKey)
-    payload.setScheme(Payload.EncryptionScheme.EPHEMERALDH)
+    profile.setEntries(cipherText)
+    profile.setEphemeralPubKey(ephemeralPubKeyRaw)
+    profile.setEphemeralPrivKey(encryptedEphemeralKey)
+    profile.setScheme(Payload.EncryptionScheme.EPHEMERALDH)
 
-    const serializedPayload = payload.serializeBinary()
+    const serializedPayload = profile.serializeBinary()
     const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
     return { serializedPayload, payloadDigest }
   }

@@ -321,11 +321,12 @@ export default {
         const metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
 
         // Truncate metadata
-        const payloadDigest = cashlib.crypto.Hash.sha256(metadata.payload)
+        const payload = metadata.getPayload()
+        const payloadDigest = cashlib.crypto.Hash.sha256(payload)
         const truncatedAuthWrapper = new AuthWrapper()
         truncatedAuthWrapper.setPayloadDigest(payloadDigest)
 
-        const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+        const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper)
 
         this.$q.loading.show({
           delay: 100,
@@ -334,7 +335,9 @@ export default {
 
         // Construct payment
         const { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, paymentDetails)
-        const { token } = await pop.sendPayment(paymentUrl, payment)
+        const paymentUrlFull = new URL(paymentUrl, serverUrl)
+        console.log('Sending payment to', paymentUrlFull.href)
+        const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
 
         this.$q.loading.show({
           delay: 100,

@@ -7,7 +7,7 @@ import pop from '../pop'
 import { pingTimeout, relayReconnectInterval } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
-import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructPayload, constructMessage } from './constructors'
+import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructProfile, constructMessage } from './constructors'
 import { entryToImage, arrayBufferToBase64 } from '../utils/image'
 import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from './crypto'
 import { calcId } from '../wallet/helpers'
@@ -177,9 +177,9 @@ export class RelayClient {
     return response.data
   }
 
-  async getPayload (addr, digest) {
+  async getProfile (addr, digest) {
     const rawPayload = await this.getRawPayload(addr, digest)
-    const payload = Payload.deserializeBinary(rawPayload)
+    const payload = Profile.deserializeBinary(rawPayload)
     return payload
   }
 
@@ -308,7 +308,7 @@ export class RelayClient {
         }
       }
     )
-    const { serializedPayload, payloadDigest } = constructPayload(entries, privKey, destPubKey, 1)
+    const { serializedPayload, payloadDigest } = constructProfile(entries, privKey, destPubKey, 1)
     const senderAddress = this.wallet.myAddressStr
     // Add localy
     const payloadDigestHex = payloadDigest.toString('hex')
