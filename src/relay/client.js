@@ -53,7 +53,7 @@ export class RelayClient {
     const metadata = wrapper.AuthWrapper.deserializeBinary(response.data)
 
     // Get PubKey
-    const pubKey = metadata.getPubKey()
+    const pubKey = metadata.getPublicKey()
 
     const payload = Profile.deserializeBinary(metadata.getPayload())
 
@@ -62,7 +62,7 @@ export class RelayClient {
       return entry.getKind() === 'vcard'
     }
     const entryList = payload.getEntriesList()
-    const rawCard = entryList.find(isVCard).getEntryData() // TODO: Cancel if not found
+    const rawCard = entryList.find(isVCard).getBody() // TODO: Cancel if not found
     const strCard = new TextDecoder().decode(rawCard)
     const vCard = new VCard().parse(strCard)
 
@@ -76,7 +76,7 @@ export class RelayClient {
       return entry.getKind() === 'avatar'
     }
     const avatarEntry = entryList.find(isAvatar)
-    const rawAvatar = avatarEntry.getEntryData()
+    const rawAvatar = avatarEntry.getBody()
 
     const value = avatarEntry.getHeadersList()[0].getValue()
     const avatarDataURL = 'data:' + value + ';base64,' + arrayBufferToBase64(rawAvatar)
@@ -588,21 +588,21 @@ export class RelayClient {
       // If addr data doesn't exist then add it
       const kind = entry.getKind()
       if (kind === 'reply') {
-        const entryData = entry.getEntryData()
+        const entryData = entry.getBody()
         const payloadDigest = Buffer.from(entryData).toString('hex')
         newMsg.items.push({
           type: 'reply',
           payloadDigest
         })
       } else if (kind === 'text-utf8') {
-        const entryData = entry.getEntryData()
+        const entryData = entry.getBody()
         const text = new TextDecoder().decode(entryData)
         newMsg.items.push({
           type: 'text',
           text
         })
       } else if (kind === 'stealth-payment') {
-        const entryData = entry.getEntryData()
+        const entryData = entry.getBody()
         const stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
 
         // Add stealth outputs

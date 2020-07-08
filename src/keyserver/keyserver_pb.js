@@ -324,7 +324,7 @@ proto.keyserver.Entry.toObject = function(includeInstance, msg) {
     kind: jspb.Message.getFieldWithDefault(msg, 1, ""),
     headersList: jspb.Message.toObjectList(msg.getHeadersList(),
     proto.keyserver.Header.toObject, includeInstance),
-    entryData: msg.getEntryData_asB64()
+    body: msg.getBody_asB64()
   };
 
   if (includeInstance) {
@@ -372,7 +372,7 @@ proto.keyserver.Entry.deserializeBinaryFromReader = function(msg, reader) {
       break;
     case 3:
       var value = /** @type {!Uint8Array} */ (reader.readBytes());
-      msg.setEntryData(value);
+      msg.setBody(value);
       break;
     default:
       reader.skipField();
@@ -418,7 +418,7 @@ proto.keyserver.Entry.serializeBinaryToWriter = function(message, writer) {
       proto.keyserver.Header.serializeBinaryToWriter
     );
   }
-  f = message.getEntryData_asU8();
+  f = message.getBody_asU8();
   if (f.length > 0) {
     writer.writeBytes(
       3,
@@ -485,35 +485,35 @@ proto.keyserver.Entry.prototype.clearHeadersList = function() {
 
 
 /**
- * optional bytes entry_data = 3;
+ * optional bytes body = 3;
  * @return {!(string|Uint8Array)}
  */
-proto.keyserver.Entry.prototype.getEntryData = function() {
+proto.keyserver.Entry.prototype.getBody = function() {
   return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
 };
 
 
 /**
- * optional bytes entry_data = 3;
- * This is a type-conversion wrapper around `getEntryData()`
+ * optional bytes body = 3;
+ * This is a type-conversion wrapper around `getBody()`
  * @return {string}
  */
-proto.keyserver.Entry.prototype.getEntryData_asB64 = function() {
+proto.keyserver.Entry.prototype.getBody_asB64 = function() {
   return /** @type {string} */ (jspb.Message.bytesAsB64(
-      this.getEntryData()));
+      this.getBody()));
 };
 
 
 /**
- * optional bytes entry_data = 3;
+ * optional bytes body = 3;
  * Note that Uint8Array is not supported on all browsers.
  * @see http://caniuse.com/Uint8Array
- * This is a type-conversion wrapper around `getEntryData()`
+ * This is a type-conversion wrapper around `getBody()`
  * @return {!Uint8Array}
  */
-proto.keyserver.Entry.prototype.getEntryData_asU8 = function() {
+proto.keyserver.Entry.prototype.getBody_asU8 = function() {
   return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
-      this.getEntryData()));
+      this.getBody()));
 };
 
 
@@ -521,7 +521,7 @@ proto.keyserver.Entry.prototype.getEntryData_asU8 = function() {
  * @param {!(string|Uint8Array)} value
  * @return {!proto.keyserver.Entry} returns this
  */
-proto.keyserver.Entry.prototype.setEntryData = function(value) {
+proto.keyserver.Entry.prototype.setBody = function(value) {
   return jspb.Message.setProto3BytesField(this, 3, value);
 };
 

@@ -14,8 +14,8 @@ message Entry {
   string kind = 1;
   // The headers is excess metadata that may be useful to a wallet.
   repeated Header headers = 2;
-  // Body of the metadata field.
-  bytes entry_data = 3;
+  // Body of the `Entry`.
+  bytes body = 3;
 }
 
 // AddressMetadata is the user-specified data that is covered by the users

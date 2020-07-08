@@ -138,7 +138,7 @@ export const constructReplyEntry = function ({ payloadDigest }) {
 
   const entry = new PayloadEntry()
   entry.setKind('reply')
-  entry.setEntryData(payloadDigestBuffer)
+  entry.setBody(payloadDigestBuffer)
   return entry
 }
 
@@ -147,7 +147,7 @@ export const constructTextEntry = function ({ text }) {
   const textEntry = new PayloadEntry()
   textEntry.setKind('text-utf8')
   const rawText = new TextEncoder('utf-8').encode(text)
-  textEntry.setEntryData(rawText)
+  textEntry.setBody(rawText)
   return textEntry
 }
 
@@ -175,7 +175,7 @@ export const constructStealthEntry = function ({ wallet, amount, destPubKey }) {
   }
 
   const paymentEntryRaw = stealthPaymentEntry.serializeBinary()
-  paymentEntry.setEntryData(paymentEntryRaw)
+  paymentEntry.setBody(paymentEntryRaw)
 
   return { paymentEntry, transactionBundle }
 }
@@ -197,7 +197,7 @@ export const constructImageEntry = function ({ image }) {
   const imgHeader = new Header()
   imgHeader.setName('data')
   imgHeader.setValue(avatarType)
-  imgEntry.setEntryData(rawAvatar)
+  imgEntry.setBody(rawAvatar)
   imgEntry.addHeaders(imgHeader)
 
   return imgEntry

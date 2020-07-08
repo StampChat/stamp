@@ -16,7 +16,7 @@ class KeyserverHandler {
     const relayUrlEntry = new Entry()
     relayUrlEntry.setKind('relay-server')
     const rawRelayUrl = new TextEncoder().encode(relayUrl)
-    relayUrlEntry.setEntryData(rawRelayUrl)
+    relayUrlEntry.setBody(rawRelayUrl)
 
     // Construct payload
     const metadata = new AddressMetadata()
@@ -85,7 +85,7 @@ class KeyserverHandler {
     if (!entry) {
       return null
     }
-    const entryData = entry.getEntryData()
+    const entryData = entry.getBody()
     const relayUrl = new TextDecoder().decode(entryData)
     return relayUrl
   }
