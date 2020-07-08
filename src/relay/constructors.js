@@ -1,7 +1,7 @@
-import { Header, Message, Payload, PayloadEntry, PayloadEntries, Profile, ProfileEntry, Stamp, StampOutpoints } from './relay_pb'
+import { Header, Message, PayloadEntry, Profile, ProfileEntry, Stamp, StampOutpoints } from './relay_pb'
 import stealth from './stealth_pb'
 import filters from './filters_pb'
-import { constructStampPubKey, constructStealthPubKey, encrypt, encryptEphemeralKey } from './crypto'
+import { constructStampPubKey, constructStealthPubKey, constructPayloadHmac, encrypt } from './crypto'
 import VCard from 'vcf'
 // import { * } from '../keyserver/keyserver_pb'
 import wrapper from '../auth_wrapper/wrapper_pb'
@@ -59,15 +59,26 @@ export const constructStealthTransactions = function (wallet, ephemeralPrivKey, 
   return transactionBundle
 }
 
-export const constructMessage = function (wallet, serializedPayload, privKey, destPubKey, stampAmount) {
-  const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
+export const constructMessage = function (wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount) {
+  const plainPayloadDigest = cashlib.crypto.Hash.sha256(plainTextPayload)
+
+  // Construct salt
+  const salt = cashlib.hash.Hash.sha256hmac(sourcePrivateKey, plainPayloadDigest)
+
+  // Construct shared key
+  const mergedKey = cashlib.PublicKey.fromPoint(destinationPublicKey.point.mul(sourcePrivateKey))
+  const rawMergedKey = mergedKey.toBuffer()
+  const sharedKey = cashlib.hash.Hash.sha256hmac(salt, rawMergedKey)
+
+  // Encrypt payload
+  const payload = encrypt(sharedKey, plainTextPayload)
+
+  const payloadDigest = cashlib.hash.Hash.sha256(payload)
+  const sourcePublicKey = sourcePrivateKey.toPublicKey()
+  const payloadHmac = constructPayloadHmac(sharedKey, payloadDigest)
 
   // Get transaction bundle from wallet
-  const transactionBundle = constructStampTransactions(wallet, payloadDigest, destPubKey, stampAmount)
-
-  // Create signature
-  const ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
-  ecdsa.sign()
+  const transactionBundle = constructStampTransactions(wallet, payloadDigest, destinationPublicKey, stampAmount)
 
   // Construct Stamp
   const stamp = new Stamp()
@@ -82,54 +93,15 @@ export const constructMessage = function (wallet, serializedPayload, privKey, de
 
   // Construct message
   const message = new Message()
-  const sig = ecdsa.sig.toCompact(1).slice(1)
-  const rawPubkey = privKey.toPublicKey().toBuffer()
-  message.setSenderPubKey(rawPubkey)
-  message.setSignature(sig)
-  message.setSerializedPayload(serializedPayload)
+  const rawSourcePubkey = sourcePublicKey.toBuffer()
+  message.setScheme(1)
+  message.setSenderPublicKey(rawSourcePubkey)
+  message.setPayload(payload)
+  message.setPayloadHmac(payloadHmac)
+  message.setSalt(salt)
   message.addStamp(stamp)
 
   return { message, transactionBundle }
-}
-
-export const constructProfile = function (entries, privKey, destPubKey, scheme, timestamp = Date.now()) {
-  const entriesPb = new PayloadEntries()
-  const profile = new Profile()
-  profile.setTimestamp(timestamp)
-  const rawDestPubKey = destPubKey.toBuffer()
-  profile.setDestination(rawDestPubKey)
-
-  // Convert to PB
-  for (const entry of entries) {
-    entriesPb.addEntries(entry)
-  }
-
-  // Serialize and encrypt
-  const rawEntries = entriesPb.serializeBinary()
-  if (scheme === 0) {
-    profile.setEntries(rawEntries)
-    const serializedPayload = profile.serializeBinary()
-    const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
-    return { serializedPayload, payloadDigest }
-  } else if (scheme === 1) {
-    const { cipherText, ephemeralPrivKey } = encrypt(rawEntries, privKey, destPubKey)
-    const ephemeralPubKey = ephemeralPrivKey.toPublicKey()
-    const ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
-    const entriesDigest = cashlib.crypto.Hash.sha256(cipherText)
-    const encryptedEphemeralKey = encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
-
-    profile.setEntries(cipherText)
-    profile.setEphemeralPubKey(ephemeralPubKeyRaw)
-    profile.setEphemeralPrivKey(encryptedEphemeralKey)
-    profile.setScheme(Payload.EncryptionScheme.EPHEMERALDH)
-
-    const serializedPayload = profile.serializeBinary()
-    const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
-    return { serializedPayload, payloadDigest }
-  }
-
-  assert(false, 'Trying to create a payload with an unknown encryption scheme')
-  return {}
 }
 
 export const constructReplyEntry = function ({ payloadDigest }) {

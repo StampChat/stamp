@@ -1,15 +1,15 @@
 import axios from 'axios'
 import { splitEvery } from 'ramda'
-import { Payload, Message, MessagePage, MessageSet, PayloadEntries, Profile } from './relay_pb'
+import { Payload, Message, MessagePage, MessageSet, Profile } from './relay_pb'
 import stealth from './stealth_pb'
 import wrapper from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
 import { pingTimeout, relayReconnectInterval } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
-import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructProfile, constructMessage } from './constructors'
+import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage } from './constructors'
 import { entryToImage, arrayBufferToBase64 } from '../utils/image'
-import { decrypt, decryptWithEphemPrivKey, decryptEphemeralKey, constructStampPrivKey, constructStealthPrivKey } from './crypto'
+import { constructStampPrivKey, constructStealthPrivKey } from './crypto'
 import { calcId } from '../wallet/helpers'
 import assert from 'assert'
 
@@ -107,10 +107,9 @@ export class RelayClient {
       const timedMessageSet = Message.deserializeBinary(buffer)
       const messageList = timedMessageSet.getMessagesList()
 
-      const receivedTime = Date.now()
       for (const index in messageList) {
         const message = messageList[index]
-        this.receiveMessage({ receivedTime, message }).catch(err => console.error(err))
+        this.receiveMessage(message).catch(err => console.error(err))
       }
     }
 
@@ -304,7 +303,7 @@ export class RelayClient {
         }
       }
     )
-    const { serializedPayload, payloadDigest } = constructProfile(entries, privKey, destPubKey, 1)
+    const { serializedPayload, payloadDigest } = constructMessagePayload(entries, privKey, destPubKey, 1)
     const senderAddress = this.wallet.myAddressStr
     // Add localy
     const payloadDigestHex = payloadDigest.toString('hex')
@@ -420,27 +419,19 @@ export class RelayClient {
     this.sendMessageImpl({ addr, items, stampAmount })
   }
 
-  async receiveMessage ({ receivedTime, message }) {
-    const rawSenderPubKey = message.getSenderPubKey()
-    const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
-    const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
+  async receiveMessage (message, receivedTime = Date.now()) {
+    // Parse message
+    const parsedMessage = message.parse()
+
+    const sourceAddr = parsedMessage.sourcePublicKey.toAddress('testnet').toCashAddress() // TODO: Make generic
     const wallet = this.wallet
     const myAddress = wallet.myAddressStr
-    const outbound = (senderAddr === myAddress)
+    const outbound = (sourceAddr === myAddress)
     const serverTime = message.received_time
 
-    const rawPayloadFromServer = message.getPayload()
-    const payloadDigestFromServer = message.getPayloadDigest()
-
-    if (payloadDigestFromServer.length === 0 && rawPayloadFromServer.length === 0) {
-      // TODO: Handle
-      console.error('Missing required fields')
-      return
-    }
-
     // if this client sent the message, we already have the data and don't need to process it or get the payload again
-    if (payloadDigestFromServer.length !== 0) {
-      const payloadDigestHex = Array.prototype.map.call(payloadDigestFromServer, x => ('00' + x.toString(16)).slice(-2)).join('')
+    if (parsedMessage.payloadDigest.length !== 0) {
+      const payloadDigestHex = Array.prototype.map.call(parsedMessage.payloadDigest, x => ('00' + x.toString(16)).slice(-2)).join('')
       const message = this.getStoredMessage(payloadDigestHex)
       if (message) {
         // TODO: We really should handle unfreezing UTXOs here via a callback in the future.
@@ -461,22 +452,15 @@ export class RelayClient {
     }
 
     // Get payload if serialized payload is missing
-    const rawPayload = await getPayload(payloadDigestFromServer, rawPayloadFromServer)
+    const rawCipherPayload = await getPayload(parsedMessage.payloadDigest, parsedMessage.payload)
 
-    const payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
-    if (!payloadDigest.equals(payloadDigestFromServer)) {
-      console.error('Payload received doesn\'t match digest. Refusing to process message', payloadDigest, payloadDigestFromServer)
+    const payloadDigest = cashlib.crypto.Hash.sha256(rawCipherPayload)
+    if (!payloadDigest.equals(parsedMessage.payloadDigest)) {
+      console.error('Payload received doesn\'t match digest. Refusing to process message', payloadDigest, parsedMessage.payloadDigest)
       return
     }
 
-    const payload = Payload.deserializeBinary(rawPayload)
-    const payloadDigestHex = payloadDigest.toString('hex')
-    const destinationRaw = payload.getDestination()
-    const destPubKey = cashlib.PublicKey.fromBuffer(destinationRaw)
-    const destinationAddr = destPubKey.toAddress('testnet').toCashAddress()
-    const identityPrivKey = wallet.identityPrivKey
-    const copartyAddress = outbound ? destinationAddr : senderAddr
-    const copartyPubKey = outbound ? destPubKey : senderPubKey
+    const destinationAddr = parsedMessage.destinationPublicKey.toAddress('testnet').toCashAddress()
 
     if (outbound && myAddress === destinationAddr) {
       // TODO: Process self sends
@@ -484,34 +468,13 @@ export class RelayClient {
       return
     }
 
-    const scheme = payload.getScheme()
-    let entriesRaw
-    if (scheme === 0) {
-      entriesRaw = payload.getEntries()
-    } else if (scheme === 1) {
-      const entriesCipherText = payload.getEntries()
-
-      const ephemeralPubKeyRaw = payload.getEphemeralPubKey()
-      const ephemeralPubKey = cashlib.PublicKey.fromBuffer(ephemeralPubKeyRaw)
-      if (!outbound) {
-        entriesRaw = decrypt(entriesCipherText, identityPrivKey, senderPubKey, ephemeralPubKey)
-      } else {
-        const ephemeralPrivKeyEncrypted = payload.getEphemeralPrivKey()
-        const entriesDigest = cashlib.crypto.Hash.sha256(entriesCipherText)
-        const ephemeralPrivKey = decryptEphemeralKey(ephemeralPrivKeyEncrypted, identityPrivKey, entriesDigest)
-        entriesRaw = decryptWithEphemPrivKey(entriesCipherText, ephemeralPrivKey, identityPrivKey, destPubKey)
-      }
-    } else {
-      // TODO: Raise error
-    }
-
     // Add UTXO
-    const stampOutpoints = message.getStampOutpointsList()
+    const stampOutpoints = message.stamp.getStampOutpoints()
     const outpoints = []
 
     let stampValue = 0
 
-    const stampRootHDPrivKey = constructStampPrivKey(payloadDigest, identityPrivKey)
+    const stampRootHDPrivKey = constructStampPrivKey(payloadDigest, wallet.identityPrivKey)
       .deriveChild(44)
       .deriveChild(145)
 
@@ -568,12 +531,14 @@ export class RelayClient {
       }
     }
 
+    const rawPayload = parsedMessage.open()
+    const payload = Payload.deserializeBinary(rawPayload)
+
     // Ignore messages below acceptance price
     let stealthValue = 0
 
     // Decode entries
-    const entries = PayloadEntries.deserializeBinary(entriesRaw)
-    const entriesList = entries.getEntriesList()
+    const entriesList = payload.getEntriesList()
     const newMsg = {
       outbound,
       status: 'confirmed',
@@ -581,7 +546,7 @@ export class RelayClient {
       serverTime,
       receivedTime,
       outpoints,
-      senderAddress: senderAddr
+      senderAddress: sourceAddr
     }
     for (const index in entriesList) {
       const entry = entriesList[index]
@@ -609,7 +574,7 @@ export class RelayClient {
         const outpointsList = stealthMessage.getOutpointsList()
         const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
         const ephemeralPubKey = cashlib.PublicKey.fromBuffer(ephemeralPubKeyRaw)
-        const stealthHDPrivKey = constructStealthPrivKey(ephemeralPubKey, identityPrivKey)
+        const stealthHDPrivKey = constructStealthPrivKey(ephemeralPubKey, wallet.identityPrivKey)
         for (const [i, outpoint] of outpointsList.entries()) {
           const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
           const stealthTx = cashlib.Transaction(stealthTxRaw)
@@ -678,7 +643,10 @@ export class RelayClient {
       }
     }
 
-    this.events.emit('receivedMessage', { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
+    const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
+    const payloadDigestHex = payloadDigest.toHex()
+
+    this.events.emit('receivedMessage', { outbound, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
   }
 
   async refresh ({ lastReceived } = {}) {
@@ -688,7 +656,6 @@ export class RelayClient {
     const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
     const messageList = messagePage.getMessagesList()
     console.log('processing messages')
-    const receivedTime = Date.now()
     const messageChunks = splitEvery(5, messageList)
     for (const messageChunk of messageChunks) {
       await new Promise((resolve) => {
@@ -698,7 +665,7 @@ export class RelayClient {
             // const destPubKey = timedMessage.getDestination()
             // Here we are ensuring that their are yields between messages to the event loop.
             // Ideally, we move this to a webworker in the future.
-            this.receiveMessage({ receivedTime, message }).then(resolve).catch((err) => {
+            this.receiveMessage(message).then(resolve).catch((err) => {
               console.error('Unable to deserialize message:', err)
               resolve()
             })
