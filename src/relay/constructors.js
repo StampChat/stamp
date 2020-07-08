@@ -222,7 +222,7 @@ export const constructProfileMetadata = function (profileObj, priceFilter, privK
 
   const cardEntry = new ProfileEntry()
   cardEntry.setKind('vcard')
-  cardEntry.setEntryData(rawCard)
+  cardEntry.setBody(rawCard)
 
   // Construct avatar
   const imgEntry = new ProfileEntry()
@@ -240,14 +240,14 @@ export const constructProfileMetadata = function (profileObj, priceFilter, privK
   const imgHeader = new Header()
   imgHeader.setName('data')
   imgHeader.setValue(avatarType)
-  imgEntry.setEntryData(rawAvatar)
+  imgEntry.setBody(rawAvatar)
   imgEntry.addHeaders(imgHeader)
 
   // Construct price filter
   const filterEntry = new ProfileEntry()
   filterEntry.setKind('price-filter')
   const rawPriceFilter = priceFilter.serializeBinary()
-  filterEntry.setEntryData(rawPriceFilter)
+  filterEntry.setBody(rawPriceFilter)
 
   // Construct payload
   const profile = new Profile()
