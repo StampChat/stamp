@@ -105,13 +105,8 @@ export class RelayClient {
 
     socket.onmessage = event => {
       const buffer = event.data
-      const timedMessageSet = Message.deserializeBinary(buffer)
-      const messageList = timedMessageSet.getMessagesList()
-
-      for (const index in messageList) {
-        const message = messageList[index]
-        this.receiveMessage(message).catch(err => console.error(err))
-      }
+      const message = Message.deserializeBinary(buffer)
+      this.receiveMessage(message).catch(err => console.error(err))
     }
 
     const disconnectHandler = () => {

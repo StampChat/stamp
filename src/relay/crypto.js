@@ -66,7 +66,7 @@ export const constructStampHDPublicKey = function (payloadDigest, destinationPub
 
 export const constructStampPrivateKey = function (payloadDigest, destinationPrivateKey) {
   const digestBn = cashlib.crypto.BN.fromBuffer(payloadDigest)
-  const stampPrivBn = destinationPrivateKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN())
+  const stampPrivBn = digestBn.add(destinationPrivateKey.bn).mod(cashlib.crypto.Point.getN())
   const stampPrivKey = PrivateKey(stampPrivBn)
   return stampPrivKey
 }
