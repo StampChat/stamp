@@ -1,7 +1,7 @@
 import { Header, Message, PayloadEntry, Profile, ProfileEntry, Stamp, StampOutpoints } from './relay_pb'
 import stealth from './stealth_pb'
 import filters from './filters_pb'
-import { constructStampPubKey, constructStealthPubKey, constructPayloadHmac, encrypt } from './crypto'
+import { constructStampHDPublicKey, constructStealthPubKey, constructPayloadHmac, encrypt } from './crypto'
 import VCard from 'vcf'
 // import { * } from '../keyserver/keyserver_pb'
 import wrapper from '../auth_wrapper/wrapper_pb'
@@ -13,7 +13,7 @@ export const constructStampTransactions = function (wallet, payloadDigest, destP
   assert(payloadDigest instanceof Buffer)
 
   // Stamp output
-  const stampHDPubKey = constructStampPubKey(payloadDigest, destPubKey)
+  const stampHDPubKey = constructStampHDPublicKey(payloadDigest, destPubKey)
   // Assuming one txn and one output for now.
   let transactionNumber = 0// This should be the index of the transaction in the outpoint list
   const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
@@ -63,45 +63,54 @@ export const constructMessage = function (wallet, plainTextPayload, sourcePrivat
   const plainPayloadDigest = cashlib.crypto.Hash.sha256(plainTextPayload)
 
   // Construct salt
-  const salt = cashlib.hash.Hash.sha256hmac(sourcePrivateKey, plainPayloadDigest)
+  const rawSourcePrivateKey = sourcePrivateKey.toBuffer()
+  const salt = cashlib.crypto.Hash.sha256hmac(plainPayloadDigest, rawSourcePrivateKey)
 
   // Construct shared key
-  const mergedKey = cashlib.PublicKey.fromPoint(destinationPublicKey.point.mul(sourcePrivateKey))
+  const mergedKey = cashlib.PublicKey.fromPoint(destinationPublicKey.point.mul(sourcePrivateKey.toBigNumber()))
   const rawMergedKey = mergedKey.toBuffer()
-  const sharedKey = cashlib.hash.Hash.sha256hmac(salt, rawMergedKey)
+  const sharedKey = cashlib.crypto.Hash.sha256hmac(salt, rawMergedKey)
 
   // Encrypt payload
   const payload = encrypt(sharedKey, plainTextPayload)
 
-  const payloadDigest = cashlib.hash.Hash.sha256(payload)
-  const sourcePublicKey = sourcePrivateKey.toPublicKey()
+  // Calculate payload hmac
+  const payloadDigest = cashlib.crypto.Hash.sha256(payload)
   const payloadHmac = constructPayloadHmac(sharedKey, payloadDigest)
 
   // Get transaction bundle from wallet
-  const transactionBundle = constructStampTransactions(wallet, payloadDigest, destinationPublicKey, stampAmount)
+  try {
+    const transactionBundle = constructStampTransactions(wallet, payloadDigest, destinationPublicKey, stampAmount)
+    // Construct Stamp
+    const stamp = new Stamp()
+    stamp.setStampType(1)
+    for (const { transaction: stampTx, vouts } of transactionBundle) {
+      const rawStampTx = stampTx.toBuffer()
+      const stampOutpoints = new StampOutpoints()
+      stampOutpoints.setStampTx(rawStampTx)
+      vouts.forEach((vout) => stampOutpoints.addVouts(vout))
+      stamp.addStampOutpoints(stampOutpoints)
+    }
 
-  // Construct Stamp
-  const stamp = new Stamp()
-  stamp.setStampType(1)
-  for (const { transaction: stampTx, vouts } of transactionBundle) {
-    const rawStampTx = stampTx.toBuffer()
-    const stampOutpoints = new StampOutpoints()
-    stampOutpoints.setStampTx(rawStampTx)
-    vouts.forEach((vout) => stampOutpoints.addVouts(vout))
-    stamp.addStampOutpoints(stampOutpoints)
+    // Construct message
+    const message = new Message()
+    const rawSourcePublickey = sourcePrivateKey.toPublicKey().toBuffer()
+    const rawDestinationPublicKey = destinationPublicKey.toBuffer()
+    message.setScheme(1)
+    message.setDestinationPublicKey(rawDestinationPublicKey)
+    message.setSourcePublicKey(rawSourcePublickey)
+    message.setPayload(payload)
+    message.setPayloadHmac(payloadHmac)
+    message.setSalt(salt)
+    message.setStamp(stamp)
+
+    return { message, transactionBundle, payloadDigest }
+  } catch (err) {
+    throw Object({
+      payloadDigest,
+      err
+    })
   }
-
-  // Construct message
-  const message = new Message()
-  const rawSourcePubkey = sourcePublicKey.toBuffer()
-  message.setScheme(1)
-  message.setSenderPublicKey(rawSourcePubkey)
-  message.setPayload(payload)
-  message.setPayloadHmac(payloadHmac)
-  message.setSalt(salt)
-  message.addStamp(stamp)
-
-  return { message, transactionBundle }
 }
 
 export const constructReplyEntry = function ({ payloadDigest }) {

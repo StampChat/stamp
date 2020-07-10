@@ -4,7 +4,7 @@ const forge = require('node-forge')
 const cashlib = require('bitcore-lib-cash')
 
 export const constructPayloadHmac = function (sharedKey, payloadDigest) {
-  return cashlib.hash.Hash.sha256hmac(sharedKey, payloadDigest)
+  return cashlib.crypto.Hash.sha256hmac(sharedKey, payloadDigest)
 }
 
 export const constructStealthPubKey = function (emphemeralPrivKey, destinationPublicKey) {
@@ -44,34 +44,43 @@ export const constructStealthPrivKey = function (emphemeralPubKey, destinationPr
   })
 }
 
-export const constructStampPubKey = function (payloadDigest, destinationPublicKey) {
+export const constructStampPublicKey = function (payloadDigest, destinationPublicKey) {
   const digestPrivateKey = PrivateKey.fromBuffer(payloadDigest)
   const digestPublicKey = digestPrivateKey.toPublicKey()
-  const stampPoint = digestPublicKey.point.add(destinationPublicKey.point)
+  const stampPoint = destinationPublicKey.point.add(digestPublicKey.point)
   const stampPublicKey = PublicKey.fromPoint(stampPoint)
+  return stampPublicKey
+}
+
+export const constructStampHDPublicKey = function (payloadDigest, destinationPublicKey) {
+  const stampPublicKey = constructStampPublicKey(payloadDigest, destinationPublicKey)
   return new cashlib.HDPublicKey({
     publicKey: stampPublicKey.toBuffer(),
     depth: 0,
     network: 'testnet',
     childIndex: 0,
-    chainCode: payloadDigest.slice(0, 32),
+    chainCode: payloadDigest,
     parentFingerPrint: 0
   })
 }
 
-export const constructStampPrivKey = function (payloadDigest, destinationPrivateKey) {
+export const constructStampPrivateKey = function (payloadDigest, destinationPrivateKey) {
   const digestBn = cashlib.crypto.BN.fromBuffer(payloadDigest)
   const stampPrivBn = destinationPrivateKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN())
   const stampPrivKey = PrivateKey(stampPrivBn)
-  const key = new cashlib.HDPrivateKey({
-    privateKey: stampPrivKey.toBuffer(),
+  return stampPrivKey
+}
+
+export const constructStampHDPrivateKey = function (payloadDigest, destinationPrivateKey) {
+  const stampPrivateKey = constructStampPrivateKey(payloadDigest, destinationPrivateKey)
+  return new cashlib.HDPrivateKey({
+    privateKey: stampPrivateKey.toBuffer(),
     depth: 0,
     network: 'testnet',
     childIndex: 0,
-    chainCode: payloadDigest.slice(0, 32),
+    chainCode: payloadDigest,
     parentFingerPrint: 0
   })
-  return key
 }
 
 export const constructStampAddress = function (outpointDigest, privKey) {
@@ -79,22 +88,6 @@ export const constructStampAddress = function (outpointDigest, privKey) {
   const stampPrivBn = privKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN())
   const stampAddress = PrivateKey(stampPrivBn).toAddress('testnet')
   return stampAddress
-}
-
-export const constructDHKeyFromEphemPrivKey = function (ephemeralPrivKey, privKey, destPubKey) {
-  // Generate new (random) emphemeral key
-  const emphemeralPrivKeyBn = ephemeralPrivKey.toBigNumber()
-
-  // Construct DH key
-  const dhKeyPoint = destPubKey.point.mul(emphemeralPrivKeyBn).add(privKey.toPublicKey().point)
-  const dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
-
-  // Extract encryption params from digest
-  const digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw)
-  const iv = new forge.util.ByteBuffer(digest.slice(0, 16))
-  const key = new forge.util.ByteBuffer(digest.slice(16))
-
-  return { key, iv }
 }
 
 export const encrypt = function (sharedKey, plainText) {

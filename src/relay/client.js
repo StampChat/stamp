@@ -9,7 +9,8 @@ import VCard from 'vcf'
 import EventEmitter from 'events'
 import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage } from './constructors'
 import { entryToImage, arrayBufferToBase64 } from '../utils/image'
-import { constructStampPrivKey, constructStealthPrivKey } from './crypto'
+import { constructStampHDPrivateKey, constructStealthPrivKey } from './crypto'
+import { messageMixin } from './extension'
 import { calcId } from '../wallet/helpers'
 import assert from 'assert'
 
@@ -266,8 +267,8 @@ export class RelayClient {
 
   sendMessageImpl ({ addr, items, stampAmount, errCount = 0 }) {
     const wallet = this.wallet
-    const privKey = wallet.identityPrivKey
-    const destPubKey = this.getPubKey(addr)
+    const sourcePrivateKey = wallet.identityPrivKey
+    const destinationPublicKey = this.getPubKey(addr)
 
     const usedIDs = []
     const outpoints = []
@@ -277,7 +278,7 @@ export class RelayClient {
       item => {
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'stealth') {
-          const { paymentEntry, transactionBundle } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
+          const { paymentEntry, transactionBundle } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey: destinationPublicKey })
           outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
             transactions.push(transaction)
             usedIDs.push(...usedIds)
@@ -303,15 +304,22 @@ export class RelayClient {
         }
       }
     )
-    const { serializedPayload, payloadDigest } = constructMessagePayload(entries, privKey, destPubKey, 1)
     const senderAddress = this.wallet.myAddressStr
-    // Add localy
-    const payloadDigestHex = payloadDigest.toString('hex')
-    this.events.emit('messageSending', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
+
+    // Construct payload
+    const payload = new Payload()
+    payload.setTimestamp(Date.now())
+    payload.setEntriesList(entries)
+    const plainTextPayload = payload.serializeBinary()
 
     // Construct message
     try {
-      const { message, transactionBundle } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
+      const { message, transactionBundle, payloadDigest } = constructMessage(wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount)
+      const payloadDigestHex = payloadDigest.toString('hex')
+
+      // Add localy
+      this.events.emit('messageSending', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
+
       outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
         transactions.push(transaction)
         usedIDs.push(...usedIds)
@@ -321,18 +329,19 @@ export class RelayClient {
           satoshis: transaction.outputs[vout].satoshis,
           outputIndex: vout
         }))
-      }).flat(1)
-      )
+      }).flat(1))
       const messageSet = new MessageSet()
       messageSet.addMessages(message)
-      const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+      const destinationAddr = destinationPublicKey.toAddress('testnet').toLegacyAddress()
       const client = this.wallet.electrumClient
+
+      // Send messages
       Promise.all(transactions.map(transaction => {
         console.log('broadcasting txn')
         console.log(transaction)
         return client.request('blockchain.transaction.broadcast', transaction.toString())
       }))
-        .then(() => this.pushMessages(destAddr, messageSet))
+        .then(() => this.pushMessages(destinationAddr, messageSet))
         .then(() => this.events.emit('messageSent', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions }))
         .catch(async (err) => {
           console.error(err)
@@ -354,6 +363,8 @@ export class RelayClient {
         })
     } catch (err) {
       console.error(err)
+      const payloadDigestHex = err.payloadDigest.toString('hex')
+
       this.events.emit('messageSendError', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
     }
   }
@@ -421,6 +432,7 @@ export class RelayClient {
 
   async receiveMessage (message, receivedTime = Date.now()) {
     // Parse message
+    Object.assign(Message.prototype, messageMixin)
     const parsedMessage = message.parse()
 
     const sourceAddr = parsedMessage.sourcePublicKey.toAddress('testnet').toCashAddress() // TODO: Make generic
@@ -474,7 +486,7 @@ export class RelayClient {
 
     let stampValue = 0
 
-    const stampRootHDPrivKey = constructStampPrivKey(payloadDigest, wallet.identityPrivKey)
+    const stampRootHDPrivKey = constructStampHDPrivateKey(payloadDigest, wallet.identityPrivKey)
       .deriveChild(44)
       .deriveChild(145)
 
