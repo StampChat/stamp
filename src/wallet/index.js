@@ -137,10 +137,10 @@ export class Wallet {
     this.changeAddresses[address] = { privKey }
   }
 
-  refreshUTXOsByAddr ({ addr, outputs }) {
+  refreshUTXOsByAddr ({ address, outputs }) {
     // Delete all utxos by address
     Object.entries(this.storage.getUTXOs()).forEach(([id, utxo]) => {
-      if (utxo.address === addr) {
+      if (utxo.address === address) {
         this.removeUTXO(id)
       }
     })
@@ -148,7 +148,7 @@ export class Wallet {
     const frozenUTXOs = { ...this.storage.getFrozenUTXOs() }
     // Remove all frozen utxos by address
     Object.entries(frozenUTXOs).forEach(([id, utxo]) => {
-      if (utxo.address === addr) {
+      if (utxo.address === address) {
         this.storage.removeFrozenUTXO(id)
       }
     })
@@ -178,7 +178,7 @@ export class Wallet {
         }
         return output
       })
-      this.refreshUTXOsByAddr({ addr: address, outputs })
+      this.refreshUTXOsByAddr({ address, outputs })
     } catch (err) {
       console.error('error deserializing utxo address', err, scriptHash)
     }
@@ -265,8 +265,8 @@ export class Wallet {
         await this.updateUTXOFromScriptHash(scriptHash)
       })
 
-    await P.map(addresses, addr => {
-      const scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
+    await P.map(addresses, address => {
+      const scriptHash = cashlib.Script.buildPublicKeyHashOut(address)
       const scriptHashRaw = scriptHash.toBuffer()
       const digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
       const digestHexReversed = digest.reverse().toString('hex')
@@ -556,8 +556,8 @@ export class Wallet {
       usedUtxos.push(utxo)
       console.log(utxo)
 
-      const addr = utxo.address
-      utxo.script = cashlib.Script.buildPublicKeyHashOut(addr).toHex()
+      const address = utxo.address
+      utxo.script = cashlib.Script.buildPublicKeyHashOut(address).toHex()
       // Grab private key
       signingKeys.push(utxo.privKey)
       transaction = transaction.from(utxo)

@@ -86,7 +86,7 @@ export default {
     },
     async sendImage () {
       const stampAmount = this.getStampAmount()(this.address)
-      await this.$relayClient.sendImage({ addr: this.address, image: this.image, caption: this.caption, stampAmount })
+      await this.$relayClient.sendImage({ address: this.address, image: this.image, caption: this.caption, stampAmount })
     }
   }
 }

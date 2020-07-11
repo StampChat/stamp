@@ -164,26 +164,26 @@ export default {
     getUpdateInterval (state) {
       return state.updateInterval
     },
-    getNotify: (state) => (addr) => {
-      return state.contacts[addr].notify
+    getNotify: (state) => (address) => {
+      return state.contacts[address].notify
     },
-    getRelayURL: (state) => (addr) => {
-      return state.contacts[addr].relayURL
+    getRelayURL: (state) => (address) => {
+      return state.contacts[address].relayURL
     },
-    isContact: (state) => (addr) => {
-      return (addr in state.contacts)
+    isContact: (state) => (address) => {
+      return (address in state.contacts)
     },
-    getContact: (state) => (addr) => {
-      return state.contacts[addr]
+    getContact: (state) => (address) => {
+      return state.contacts[address]
     },
-    getContactProfile: (state) => (addr) => {
-      return state.contacts[addr].profile
+    getContactProfile: (state) => (address) => {
+      return state.contacts[address].profile
     },
-    getAcceptancePrice: (state) => (addr) => {
-      return state.contacts[addr].inbox.acceptancePrice
+    getAcceptancePrice: (state) => (address) => {
+      return state.contacts[address].inbox.acceptancePrice
     },
-    getPubKey: (state) => (addr) => {
-      const arr = Uint8Array.from(Object.values(state.contacts[addr].profile.pubKey))
+    getPubKey: (state) => (address) => {
+      const arr = Uint8Array.from(Object.values(state.contacts[address].profile.pubKey))
       return PublicKey.fromBuffer(arr)
     },
     searchContacts: (state) => (search) => {
@@ -200,56 +200,56 @@ export default {
     }
   },
   mutations: {
-    addContact (state, { addr, contact }) {
-      Vue.set(state.contacts, addr, contact)
+    addContact (state, { address, contact }) {
+      Vue.set(state.contacts, address, contact)
     },
     setUpdateInterval (state, interval) {
       state.updateInterval = interval
     },
-    updateContact (state, { addr, profile, inbox }) {
-      if (!(addr in state.contacts)) {
+    updateContact (state, { address, profile, inbox }) {
+      if (!(address in state.contacts)) {
         return
       }
-      state.contacts[addr].lastUpdateTime = moment().valueOf()
-      state.contacts[addr].profile = profile || state.contacts[addr].profile
-      state.contacts[addr].inbox = inbox || state.contacts[addr].inbox
+      state.contacts[address].lastUpdateTime = moment().valueOf()
+      state.contacts[address].profile = profile || state.contacts[address].profile
+      state.contacts[address].inbox = inbox || state.contacts[address].inbox
     },
-    setNotify (state, { addr, value }) {
-      state.contacts[addr].notify = value
+    setNotify (state, { address, value }) {
+      state.contacts[address].notify = value
     },
-    deleteContact (state, addr) {
-      Vue.delete(state.contacts, addr)
+    deleteContact (state, address) {
+      Vue.delete(state.contacts, address)
     },
-    setPubKey (state, { addr, pubKey }) {
-      state.contacts[addr].profile.pubKey = pubKey
+    setPubKey (state, { address, pubKey }) {
+      state.contacts[address].profile.pubKey = pubKey
     }
   },
   actions: {
-    addLoadingContact ({ commit }, { addr, pubKey }) {
+    addLoadingContact ({ commit }, { address, pubKey }) {
       /// Add color
-      const color = addressColorFromStr(addr)
+      const color = addressColorFromStr(address)
 
       const contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, pubKey }, color }
-      commit('addContact', { addr, contact })
+      commit('addContact', { address, contact })
     },
-    deleteContact ({ commit }, addr) {
-      commit('chats/clearChat', addr, { root: true })
-      commit('chats/deleteChat', addr, { root: true })
-      commit('deleteContact', addr)
+    deleteContact ({ commit }, address) {
+      commit('chats/clearChat', address, { root: true })
+      commit('chats/deleteChat', address, { root: true })
+      commit('deleteContact', address)
     },
-    addContact ({ commit }, { addr, contact }) {
+    addContact ({ commit }, { address, contact }) {
       /// Add color
-      contact.color = addressColorFromStr(addr)
+      contact.color = addressColorFromStr(address)
 
-      commit('addContact', { addr, contact })
-      commit('chats/setActiveChat', addr, { root: true })
+      commit('addContact', { address, contact })
+      commit('chats/setActiveChat', address, { root: true })
     },
-    deleteChat ({ commit }, addr) {
-      commit('chats/deleteChat', addr, { root: true })
+    deleteChat ({ commit }, address) {
+      commit('chats/deleteChat', address, { root: true })
     },
-    async refresh ({ commit, getters }, addr) {
+    async refresh ({ commit, getters }, address) {
       // Make this generic over networks
-      const oldContactInfo = getters.getContact(addr)
+      const oldContactInfo = getters.getContact(address)
       const updateInterval = getters.getUpdateInterval
       const now = moment()
       const lastUpdateTime = oldContactInfo.lastUpdateTime
@@ -258,16 +258,16 @@ export default {
         console.log('skipping contact update, checked recently')
         return
       }
-      console.log('Updating contact', addr)
+      console.log('Updating contact', address)
 
       // Get metadata
       try {
         const handler = new KeyserverHandler()
-        const relayURL = await handler.getRelayUrl(addr)
+        const relayURL = await handler.getRelayUrl(address)
 
         const { client: relayClient } = getRelayClient({ relayURL })
-        const relayData = await relayClient.getRelayData(addr)
-        commit('updateContact', { addr, profile: relayData.profile, inbox: relayData.inbox })
+        const relayData = await relayClient.getRelayData(address)
+        commit('updateContact', { address, profile: relayData.profile, inbox: relayData.inbox })
       } catch (err) {
         console.error(err)
       }

@@ -39,8 +39,8 @@ class KeyserverHandler {
     return metadata
   }
 
-  static async fetchMetadata (keyserver, addr) {
-    const url = `${keyserver}/keys/${addr}`
+  static async fetchMetadata (keyserver, address) {
+    const url = `${keyserver}/keys/${address}`
     const response = await axios(
       {
         method: 'get',
@@ -59,20 +59,20 @@ class KeyserverHandler {
     return this.keyservers[0]
   }
 
-  static async paymentRequest (serverUrl, addr) {
-    const url = `${serverUrl}/keys/${addr.toLegacyAddress()}`
+  static async paymentRequest (serverUrl, address) {
+    const url = `${serverUrl}/keys/${address.toLegacyAddress()}`
     return pop.getPaymentRequest(url, 'put')
   }
 
-  async uniformSample (addr) {
+  async uniformSample (address) {
     // TODO: Sample correctly
     const server = this.chooseServer()
-    return KeyserverHandler.fetchMetadata(server, addr)
+    return KeyserverHandler.fetchMetadata(server, address)
   }
 
-  async getRelayUrl (addr) {
+  async getRelayUrl (address) {
     // Get metadata
-    const metadata = await this.uniformSample(addr)
+    const metadata = await this.uniformSample(address)
     const payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
 
     // Find vCard
@@ -89,9 +89,9 @@ class KeyserverHandler {
     return relayUrl
   }
 
-  static async putMetadata (addr, server, metadata, token) {
+  static async putMetadata (address, server, metadata, token) {
     const rawMetadata = metadata.serializeBinary()
-    const url = `${server}/keys/${addr.toLegacyAddress()}`
+    const url = `${server}/keys/${address.toLegacyAddress()}`
     await axios({
       method: 'put',
       url: url,

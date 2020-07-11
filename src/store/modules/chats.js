@@ -110,8 +110,8 @@ export default {
       }
       return state.messages[payloadDigest]
     },
-    getNumUnread: (state) => (addr) => {
-      return state.chats[addr] ? state.chats[addr].totalUnreadMessages : 0
+    getNumUnread: (state) => (address) => {
+      return state.chats[address] ? state.chats[address].totalUnreadMessages : 0
     },
     getSortedChatOrder (state) {
       const sortedOrder = Object.values(state.chats).sort(
@@ -138,23 +138,23 @@ export default {
       )
       return sortedOrder
     },
-    lastRead: (state) => (addr) => {
-      return addr in state.chats ? state.chats[addr].lastRead : 0
+    lastRead: (state) => (address) => {
+      return address in state.chats ? state.chats[address].lastRead : 0
     },
-    getStampAmount: (state) => (addr) => {
-      return state.chats[addr].stampAmount || defaultStampAmount
+    getStampAmount: (state) => (address) => {
+      return state.chats[address].stampAmount || defaultStampAmount
     },
     getActiveChat (state) {
       return state.activeChatAddr
     },
-    getLatestMessage: (state) => (addr) => {
-      const nMessages = Object.keys(state.chats[addr].messages).length
+    getLatestMessage: (state) => (address) => {
+      const nMessages = Object.keys(state.chats[address].messages).length
       if (nMessages === 0) {
         return null
       }
 
-      const lastMessageKey = Object.keys(state.chats[addr].messages)[nMessages - 1]
-      const lastMessage = state.chats[addr].messages[lastMessageKey]
+      const lastMessageKey = Object.keys(state.chats[address].messages)[nMessages - 1]
+      const lastMessage = state.chats[address].messages[lastMessageKey]
       const items = lastMessage.items
       const lastItem = items[items.length - 1]
 
@@ -187,18 +187,18 @@ export default {
     }
   },
   mutations: {
-    deleteMessage (state, { addr, index }) {
-      state.chats[addr].messages.splice(index, 1)
+    deleteMessage (state, { address, index }) {
+      state.chats[address].messages.splice(index, 1)
     },
-    readAll (state, addr) {
-      const values = state.chats[addr].messages
+    readAll (state, address) {
+      const values = state.chats[address].messages
       if (values.length === 0) {
-        state.chats[addr].lastRead = null
+        state.chats[address].lastRead = null
       } else {
-        state.chats[addr].lastRead = Math.max(values[values.length - 1].serverTime, state.chats[addr].lastRead)
+        state.chats[address].lastRead = Math.max(values[values.length - 1].serverTime, state.chats[address].lastRead)
       }
-      state.chats[addr].totalUnreadMessages = 0
-      state.chats[addr].totalUnreadValue = 0
+      state.chats[address].totalUnreadMessages = 0
+      state.chats[address].totalUnreadValue = 0
     },
     reset (state) {
       state.order = []
@@ -206,13 +206,13 @@ export default {
       state.chats = {}
       state.lastReceived = null
     },
-    setActiveChat (state, addr) {
-      if (!(addr in state.chats)) {
-        Vue.set(state.chats, addr, { ...defaultContactObject, messages: [], address: addr })
+    setActiveChat (state, address) {
+      if (!(address in state.chats)) {
+        Vue.set(state.chats, address, { ...defaultContactObject, messages: [], address })
       }
-      state.activeChatAddr = addr
+      state.activeChatAddr = address
     },
-    sendMessageLocal (state, { addr, senderAddress, index, items, outpoints = [], status = 'pending', retryData = null }) {
+    sendMessageLocal (state, { address, senderAddress, index, items, outpoints = [], status = 'pending', retryData = null }) {
       const timestamp = Date.now()
       const newMsg = {
         outbound: true,
@@ -240,24 +240,24 @@ export default {
       }
 
       state.messages[index] = message
-      if (addr in state.chats) {
-        state.chats[addr].messages.push(message)
+      if (address in state.chats) {
+        state.chats[address].messages.push(message)
         return
       }
-      Vue.set(state.chats, addr, { ...defaultContactObject, messages: [message], address: addr })
+      Vue.set(state.chats, address, { ...defaultContactObject, messages: [message], address })
     },
-    clearChat (state, addr) {
-      if (addr in state.chats) {
-        state.chats[addr].messages = []
+    clearChat (state, address) {
+      if (address in state.chats) {
+        state.chats[address].messages = []
       }
     },
-    deleteChat (state, addr) {
-      if (state.activeChatAddr === addr) {
+    deleteChat (state, address) {
+      if (state.activeChatAddr === address) {
         state.activeChatAddr = null
       }
-      Vue.delete(state.chats, addr)
+      Vue.delete(state.chats, address)
     },
-    receiveMessage (state, { addr, index, newMsg }) {
+    receiveMessage (state, { address, index, newMsg }) {
       assert(newMsg.outbound !== undefined)
       assert(newMsg.status !== undefined)
       assert(newMsg.receivedTime !== undefined)
@@ -275,63 +275,63 @@ export default {
       }
       // We don't need reactivity here
       state.messages[index] = message
-      if (!(addr in state.chats)) {
+      if (!(address in state.chats)) {
         // We do need reactivity to create a new chat
-        Vue.set(state.chats, addr, { ...defaultContactObject, messages: [], address: addr })
+        Vue.set(state.chats, address, { ...defaultContactObject, messages: [], address })
       }
 
       // TODO: Better indexing
-      state.chats[addr].messages.push(message)
-      state.chats[addr].lastReceived = message.serverTime
+      state.chats[address].messages.push(message)
+      state.chats[address].lastReceived = message.serverTime
       const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-      if (addr !== state.activeChatAddr && state.chats[addr].lastRead < message.serverTime) {
-        state.chats[addr].totalUnreadValue += messageValue
-        state.chats[addr].totalUnreadMessages += 1
+      if (address !== state.activeChatAddr && state.chats[address].lastRead < message.serverTime) {
+        state.chats[address].totalUnreadValue += messageValue
+        state.chats[address].totalUnreadMessages += 1
       }
       state.lastReceived = message.serverTime
-      state.chats[addr].totalValue += messageValue
+      state.chats[address].totalValue += messageValue
     },
-    setStampAmount (state, { addr, stampAmount }) {
-      state.chats[addr].stampAmount = stampAmount
+    setStampAmount (state, { address, stampAmount }) {
+      state.chats[address].stampAmount = stampAmount
     }
   },
   actions: {
     reset ({ commit }) {
       commit('reset')
     },
-    readAll (state, addr) {
-      const values = Object.values(state.data[addr].messages)
+    readAll (state, address) {
+      const values = Object.values(state.data[address].messages)
       if (values.length === 0) {
-        state.data[addr].lastRead = null
+        state.data[address].lastRead = null
       } else {
-        state.data[addr].lastRead = values[values.length - 1].serverTime
+        state.data[address].lastRead = values[values.length - 1].serverTime
       }
-      state.data[addr].totalUnreadMessages = 0
-      state.data[addr].totalUnreadValue = 0
+      state.data[address].totalUnreadMessages = 0
+      state.data[address].totalUnreadValue = 0
     },
     shareContact ({ commit, rootGetters, dispatch }, { currentAddr, shareAddr }) {
       const contact = rootGetters['contacts/getContactProfile'](currentAddr)
       const text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
-      commit('setInputMessage', { addr: shareAddr, text })
+      commit('setInputMessage', { address: shareAddr, text })
       dispatch('setActiveChat', shareAddr)
     },
-    setActiveChat ({ commit, dispatch }, addr) {
-      dispatch('contacts/refresh', addr, { root: true })
-      commit('setActiveChat', addr)
-      commit('readAll', addr)
+    setActiveChat ({ commit, dispatch }, address) {
+      dispatch('contacts/refresh', address, { root: true })
+      commit('setActiveChat', address)
+      commit('readAll', address)
     },
     startChatUpdater ({ dispatch }) {
       setInterval(() => { dispatch('refresh') }, 1_000)
     },
-    setStampAmount ({ commit }, { addr, stampAmount }) {
+    setStampAmount ({ commit }, { address, stampAmount }) {
       assert(typeof stampAmount === 'number')
-      commit('setStampAmount', { addr, stampAmount })
+      commit('setStampAmount', { address, stampAmount })
     },
     receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](copartyAddress)) {
         // Add dummy contact
-        dispatch('contacts/addLoadingContact', { addr: copartyAddress, pubKey: copartyPubKey }, { root: true })
+        dispatch('contacts/addLoadingContact', { address: copartyAddress, pubKey: copartyPubKey }, { root: true })
 
         // Load contact
         dispatch('contacts/refresh', copartyAddress, { root: true })
@@ -352,7 +352,7 @@ export default {
           })
         }
       }
-      commit('receiveMessage', { addr: copartyAddress, index, newMsg })
+      commit('receiveMessage', { address: copartyAddress, index, newMsg })
     }
   }
 }

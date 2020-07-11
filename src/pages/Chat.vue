@@ -166,7 +166,7 @@ export default {
       }
       if (message !== '') {
         this.$relayClient.sendMessage({
-          addr: this.address,
+          address: this.address,
           text: message,
           replyDigest: this.replyDigest,
           stampAmount
@@ -178,7 +178,7 @@ export default {
     },
     stampAmountChanged (stampAmount) {
       const stampAmountNumber = Number(stampAmount)
-      this.setStampAmount({ addr: this.address, stampAmount: stampAmountNumber })
+      this.setStampAmount({ address: this.address, stampAmount: stampAmountNumber })
     },
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll

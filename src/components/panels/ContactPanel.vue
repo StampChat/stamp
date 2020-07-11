@@ -204,7 +204,7 @@ export default {
         return this.getNotify(this.address)
       },
       set (value) {
-        this.setNotify({ addr: this.address, value })
+        this.setNotify({ address: this.address, value })
       }
     },
     stampAmount: {
@@ -216,7 +216,7 @@ export default {
         if (isNaN(amountNumber)) {
           return
         }
-        this.setStampAmount({ addr: this.address, stampAmount: amountNumber })
+        this.setStampAmount({ address: this.address, stampAmount: amountNumber })
       }
     }
   },

@@ -15,16 +15,16 @@ export const formatBalance = function (balance) {
   }
 }
 
-export const toElectrumScriptHash = function (addr) {
-  const scriptHash = cashlib.Script.buildPublicKeyHashOut(addr)
+export const toElectrumScriptHash = function (address) {
+  const scriptHash = cashlib.Script.buildPublicKeyHashOut(address)
   const scriptHashRaw = scriptHash.toBuffer()
   const digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
   const digestHexReversed = digest.reverse().toString('hex')
   return digestHexReversed
 }
 
-export const addressColor = function (addr) {
-  const rawAddress = addr.toBuffer()
+export const addressColor = function (address) {
+  const rawAddress = address.toBuffer()
 
   // Add salt
   const saltedAddress = Buffer.concat([rawAddress, colorSalt])

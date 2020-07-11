@@ -138,7 +138,7 @@ export default {
 
     addContact () {
       const cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
-      this.addContactVuex({ addr: cashAddress, contact: this.contact })
+      this.addContactVuex({ address: cashAddress, contact: this.contact })
     }
   },
   mounted () {

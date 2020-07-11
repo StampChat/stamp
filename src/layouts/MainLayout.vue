@@ -22,7 +22,7 @@
       />
     </q-drawer>
     <q-dialog v-model="contactBookOpen">
-      <contact-book-dialog :contactClick="function (addr, contact) { return setActiveChat(addr) }"/>
+      <contact-book-dialog :contactClick="function (address, contact) { return setActiveChat(address) }"/>
     </q-dialog>
     <q-page-container>
       <q-page :style-fn="tweak">
