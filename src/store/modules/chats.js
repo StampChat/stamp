@@ -3,6 +3,7 @@ import Vue from 'vue'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
+import { store } from '../../adapters/level-message-store'
 
 const defaultContactObject = { inputMessage: '', lastRead: null, stampAmount: defaultStampAmount, totalUnreadMessages: 0, totalUnreadValue: 0, totalValue: 0 }
 
@@ -61,7 +62,7 @@ function calculateUnreadAggregates (messages, lastReadTime) {
   }
 }
 
-export function rehydateChat (chatState) {
+export async function rehydateChat (chatState) {
   if (!chatState) {
     return
   }
@@ -91,6 +92,45 @@ export function rehydateChat (chatState) {
         contact.totalValue = totalValue
       }
     }
+  }
+
+  // Todo, this rehydrate stuff is common to receiveMessage
+  for await (const stuff of store.messages) {
+    console.log(stuff)
+    if (!stuff.newMsg) {
+      continue
+    }
+    const { index, newMsg, address } = stuff
+    assert(newMsg.outbound !== undefined)
+    assert(newMsg.status !== undefined)
+    assert(newMsg.receivedTime !== undefined)
+    assert(newMsg.serverTime !== undefined)
+    assert(newMsg.items !== undefined)
+    assert(newMsg.outpoints !== undefined)
+    assert(newMsg.senderAddress !== undefined)
+
+    const message = { payloadDigest: index, ...newMsg }
+    if (!chatState.messages) {
+      chatState.messages = {}
+    }
+    if (!chatState.chats[address]) {
+      chatState.chats[address] = { ...defaultContactObject, messages: [], address }
+    }
+    chatState.messages[index] = message
+    chatState.chats[address].messages.push(message)
+    chatState.chats[address].lastReceived = message.serverTime
+    const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
+    if (address !== chatState.activeChatAddr && chatState.chats[address].lastRead < message.serverTime) {
+      chatState.chats[address].totalUnreadValue += messageValue
+      chatState.chats[address].totalUnreadMessages += 1
+    }
+    chatState.lastReceived = message.serverTime
+    chatState.chats[address].totalValue += messageValue
+  }
+
+  // Resort chats
+  for (const contactAddress in chatState.chats) {
+    chatState.chats[contactAddress].messages.sort((messageA, messageB) => messageA.serverTime - messageB.serverTime)
   }
 }
 
@@ -257,7 +297,7 @@ export default {
       }
       Vue.delete(state.chats, addr)
     },
-    receiveMessage (state, { addr, index, newMsg }) {
+    receiveMessage (state, { address, index, newMsg }) {
       assert(newMsg.outbound !== undefined)
       assert(newMsg.status !== undefined)
       assert(newMsg.receivedTime !== undefined)
@@ -275,21 +315,21 @@ export default {
       }
       // We don't need reactivity here
       state.messages[index] = message
-      if (!(addr in state.chats)) {
+      if (!(address in state.chats)) {
         // We do need reactivity to create a new chat
-        Vue.set(state.chats, addr, { ...defaultContactObject, messages: [], address: addr })
+        Vue.set(state.chats, address, { ...defaultContactObject, messages: [], address })
       }
 
       // TODO: Better indexing
-      state.chats[addr].messages.push(message)
-      state.chats[addr].lastReceived = message.serverTime
+      state.chats[address].messages.push(message)
+      state.chats[address].lastReceived = message.serverTime
       const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-      if (addr !== state.activeChatAddr && state.chats[addr].lastRead < message.serverTime) {
-        state.chats[addr].totalUnreadValue += messageValue
-        state.chats[addr].totalUnreadMessages += 1
+      if (address !== state.activeChatAddr && state.chats[address].lastRead < message.serverTime) {
+        state.chats[address].totalUnreadValue += messageValue
+        state.chats[address].totalUnreadMessages += 1
       }
       state.lastReceived = message.serverTime
-      state.chats[addr].totalValue += messageValue
+      state.chats[address].totalValue += messageValue
     },
     setStampAmount (state, { addr, stampAmount }) {
       state.chats[addr].stampAmount = stampAmount
@@ -327,32 +367,32 @@ export default {
       assert(typeof stampAmount === 'number')
       commit('setStampAmount', { addr, stampAmount })
     },
-    receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
+    receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, address, pubKey, index, newMsg }) {
       // Check whether contact exists
-      if (!rootGetters['contacts/isContact'](copartyAddress)) {
+      if (!rootGetters['contacts/isContact'](address)) {
         // Add dummy contact
-        dispatch('contacts/addLoadingContact', { addr: copartyAddress, pubKey: copartyPubKey }, { root: true })
+        dispatch('contacts/addLoadingContact', { addr: address, pubKey }, { root: true })
 
         // Load contact
-        dispatch('contacts/refresh', copartyAddress, { root: true })
+        dispatch('contacts/refresh', address, { root: true })
       }
 
       // Ignore messages below acceptance price
       const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
-      const lastRead = getters.lastRead(copartyAddress)
+      const lastRead = getters.lastRead(address)
 
       const acceptable = (newMsg.stampValue >= acceptancePrice)
       // If not focused (and not outbox message) then notify
       if (!document.hasFocus() && !outbound && acceptable && lastRead < newMsg.serverTime) {
-        const contact = rootGetters['contacts/getContact'](copartyAddress)
+        const contact = rootGetters['contacts/getContact'](address)
         const textItem = newMsg.items.find(item => item.type === 'text') || { text: '' }
         if (contact.notify) {
           desktopNotify(contact.profile.name, textItem.text, contact.profile.avatar, () => {
-            dispatch('setActiveChat', copartyAddress)
+            dispatch('setActiveChat', address)
           })
         }
       }
-      commit('receiveMessage', { addr: copartyAddress, index, newMsg })
+      commit('receiveMessage', { address, index, newMsg })
     }
   }
 }

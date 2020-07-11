@@ -3,6 +3,7 @@ import store from '../store/index'
 
 function redirectIfNoProfile (to: Route, from: Route, next: (route?: string) => void) {
   const name = store.getters['myProfile/getProfile'].name
+  console.log('Found', name)
   if (name) {
     next()
   } else {
