@@ -16,9 +16,11 @@
     "clean:protobuffers": "git clean -di && git pull"
   },
   "dependencies": {
+    "@babel/preset-typescript": "^7.10.4",
     "@quasar/extras": "^1.0.0",
     "@vue/composition-api": "^0.5.0",
     "axios": "^0.18.1",
+    "babel-jest": "^26.1.0",
     "bip39": "^3.0.2",
     "bitcore-lib-cash": "^8.20.1",
     "bluebird": "^3.7.2",
@@ -45,7 +47,7 @@
     "@quasar/app": "^1.6.2",
     "@quasar/icongenie": "^2.2.0",
     "@quasar/quasar-app-extension-testing": "^1.0.0",
-    "@quasar/quasar-app-extension-testing-unit-jest": "^1.0.0",
+    "@quasar/quasar-app-extension-testing-unit-jest": "^1.0.1",
     "@types/node": "12.12.21",
     "@typescript-eslint/eslint-plugin": "^2.17.0",
     "@typescript-eslint/parser": "^2.17.0",
