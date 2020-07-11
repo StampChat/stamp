@@ -39,6 +39,10 @@ export class ParsedMessage {
   }
 
   constructSharedKey (privateKey) {
+    return constructSharedKey(privateKey, this.sourcePublicKey, this.salt)
+  }
+
+  constructSharedKeySelf (privateKey) {
     return constructSharedKey(privateKey, this.destinationPublicKey, this.salt)
   }
 
@@ -54,6 +58,15 @@ export class ParsedMessage {
 
   open (privateKey) {
     const sharedKey = this.constructSharedKey(privateKey)
+    if (!this.authenticate(sharedKey)) {
+      throw new Error('Failed to authenticate message')
+    }
+
+    return this.decrypt(sharedKey)
+  }
+
+  openSelf (privateKey) {
+    const sharedKey = this.constructSharedKeySelf(privateKey)
     if (!this.authenticate(sharedKey)) {
       throw new Error('Failed to authenticate message')
     }

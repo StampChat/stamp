@@ -339,7 +339,6 @@ export default {
         const paymentUrlFull = new URL(paymentUrl, serverUrl)
         console.log('Sending payment to', paymentUrlFull.href)
         const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
-        console.log(token)
 
         this.$q.loading.show({
           delay: 100,

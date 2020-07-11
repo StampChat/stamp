@@ -538,7 +538,7 @@ export class RelayClient {
       }
     }
 
-    const rawPayload = parsedMessage.open(wallet.identityPrivKey)
+    const rawPayload = outbound ? parsedMessage.openSelf(wallet.identityPrivKey) : parsedMessage.open(wallet.identityPrivKey)
     const payload = Payload.deserializeBinary(rawPayload)
 
     // Ignore messages below acceptance price
