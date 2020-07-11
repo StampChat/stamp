@@ -164,24 +164,27 @@ export default {
       return state.updateInterval
     },
     getNotify: (state) => (address) => {
-      return state.contacts[address].notify
+      return state.contacts[address] ? state.contacts[address].notify : false
     },
     getRelayURL: (state) => (address) => {
-      return state.contacts[address].relayURL
+      return state.contacts[address] ? state.contacts[address].relayURL : defaultRelayUrl
     },
     isContact: (state) => (address) => {
       return (address in state.contacts)
     },
     getContact: (state) => (address) => {
-      return state.contacts[address]
+      return state.contacts[address] ? state.contacts[address] : { ...pendingRelayData, profile: { ...pendingRelayData.profile } }
     },
     getContactProfile: (state) => (address) => {
-      return state.contacts[address].profile
+      return state.contacts[address] ? state.contacts[address].profile : { ...pendingRelayData.profile }
     },
     getAcceptancePrice: (state) => (address) => {
       return state.contacts[address].inbox.acceptancePrice
     },
     getPubKey: (state) => (address) => {
+      if (!state.contacts[address] || !state.contacts[address].profile) {
+        return undefined
+      }
       const arr = Uint8Array.from(Object.values(state.contacts[address].profile.pubKey))
       return PublicKey.fromBuffer(arr)
     },
@@ -214,6 +217,9 @@ export default {
       state.contacts[address].inbox = inbox || state.contacts[address].inbox
     },
     setNotify (state, { address, value }) {
+      if (!state.contacts[address]) {
+        return
+      }
       state.contacts[address].notify = value
     },
     deleteContact (state, address) {

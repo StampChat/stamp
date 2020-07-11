@@ -45,7 +45,7 @@ export default {
     }),
     message () {
       const message = this.getMessageByPayloadVuex()(this.payloadDigest)
-      return message || { items: [] }
+      return message || { items: [], senderAddress: 'undefined' }
     },
     name () {
       console.log('IsSame', this.message.senderAddress === this.$wallet.myAddressStr)
@@ -53,7 +53,6 @@ export default {
         return this.getProfile.name
       }
       const contact = this.getContact()(this.message.senderAddress)
-      console.log('Not is Same', this.message.senderAddress, contact)
       if (!contact) {
         return 'Not Found'
       }
