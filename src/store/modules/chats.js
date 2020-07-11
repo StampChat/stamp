@@ -261,7 +261,6 @@ export default {
       assert(newMsg.outbound !== undefined)
       assert(newMsg.status !== undefined)
       assert(newMsg.receivedTime !== undefined)
-      assert(newMsg.serverTime !== undefined)
       assert(newMsg.items !== undefined)
       assert(newMsg.outpoints !== undefined)
       assert(newMsg.senderAddress !== undefined)
@@ -282,13 +281,13 @@ export default {
 
       // TODO: Better indexing
       state.chats[addr].messages.push(message)
-      state.chats[addr].lastReceived = message.serverTime
+      state.chats[addr].lastReceived = message.receivedTime
       const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-      if (addr !== state.activeChatAddr && state.chats[addr].lastRead < message.serverTime) {
+      if (addr !== state.activeChatAddr && state.chats[addr].lastRead < message.receivedTime) {
         state.chats[addr].totalUnreadValue += messageValue
         state.chats[addr].totalUnreadMessages += 1
       }
-      state.lastReceived = message.serverTime
+      state.lastReceived = message.receivedTime
       state.chats[addr].totalValue += messageValue
     },
     setStampAmount (state, { addr, stampAmount }) {
@@ -327,7 +326,8 @@ export default {
       assert(typeof stampAmount === 'number')
       commit('setStampAmount', { addr, stampAmount })
     },
-    receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
+    receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyPubKey, index, newMsg }) {
+      const copartyAddress = copartyPubKey.toAddress('testnet').toString()
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](copartyAddress)) {
         // Add dummy contact
@@ -340,8 +340,8 @@ export default {
       // Ignore messages below acceptance price
       const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
       const lastRead = getters.lastRead(copartyAddress)
-
       const acceptable = (newMsg.stampValue >= acceptancePrice)
+
       // If not focused (and not outbox message) then notify
       if (!document.hasFocus() && !outbound && acceptable && lastRead < newMsg.serverTime) {
         const contact = rootGetters['contacts/getContact'](copartyAddress)
