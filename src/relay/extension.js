@@ -6,17 +6,23 @@ export class ParsedMessage {
   constructor (
     sourcePublicKey,
     destinationPublicKey,
+    receivedTime,
     salt,
-    payloadHmac,
     stamp,
     scheme,
+    payloadDigest,
+    payloadHmac,
+    payloadSize,
     payload) {
     this.sourcePublicKey = sourcePublicKey
     this.destinationPublicKey = destinationPublicKey
+    this.receivedTime = receivedTime
     this.salt = salt
-    this.payloadHmac = payloadHmac
     this.stamp = stamp
     this.scheme = scheme
+    this.payloadDigest = payloadDigest
+    this.payloadHmac = payloadHmac
+    this.payloadSize = payloadSize
     this.payload = payload
   }
 
@@ -28,6 +34,7 @@ export class ParsedMessage {
     message.setStamp(this.stamp)
     message.setScheme(this.scheme)
     message.setPayloadHmac(this.payloadHmac)
+    message.setPayload(this.payload)
     return message
   }
 
@@ -92,14 +99,14 @@ export const messageMixin = {
     const payloadDigest = this.digest()
 
     const payloadHmac = this.getPayloadHmac()
-    if (payloadHmac !== 32) {
+    if (payloadHmac.length !== 32) {
       throw new Error('Unexpected length payload hmac')
     }
 
     const payload = this.getPayload()
-    const payloadSize = payload.len()
-
-    if (payloadSize !== this.getPayloadSize()) {
+    const payloadSize = payload.length
+    const reportedPayloadSize = this.getPayloadSize()
+    if (reportedPayloadSize !== 0 && reportedPayloadSize !== payloadSize) {
       throw new Error('Unexpected payload size')
     }
 
@@ -107,15 +114,12 @@ export const messageMixin = {
       sourcePublicKey,
       destinationPublicKey,
       this.getReceivedTime(),
-      payloadDigest,
+      this.getSalt(),
       this.getStamp(),
       this.getScheme(),
+      payloadDigest,
       payloadHmac,
       payloadSize,
       payload)
   }
-}
-
-Message.prototype.parse = function () {
-
 }

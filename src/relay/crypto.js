@@ -20,7 +20,7 @@ export const constructStealthPubKey = function (emphemeralPrivKey, destinationPu
     depth: 0,
     network: 'testnet',
     childIndex: 0,
-    chainCode: digest.slice(0, 32),
+    chainCode: digest,
     parentFingerPrint: 0
   })
 }

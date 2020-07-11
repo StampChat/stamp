@@ -476,7 +476,7 @@ export class RelayClient {
     }
 
     // Add UTXO
-    const stampOutpoints = message.stamp.getStampOutpoints()
+    const stampOutpoints = parsedMessage.stamp.getStampOutpointsList()
     const outpoints = []
 
     let stampValue = 0
@@ -538,7 +538,7 @@ export class RelayClient {
       }
     }
 
-    const rawPayload = parsedMessage.open()
+    const rawPayload = parsedMessage.open(wallet.identityPrivKey)
     const payload = Payload.deserializeBinary(rawPayload)
 
     // Ignore messages below acceptance price
