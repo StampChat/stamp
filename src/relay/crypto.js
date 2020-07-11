@@ -7,6 +7,16 @@ export const constructPayloadHmac = function (sharedKey, payloadDigest) {
   return cashlib.crypto.Hash.sha256hmac(sharedKey, payloadDigest)
 }
 
+export const constructMergedKey = function (privateKey, publicKey) {
+  return cashlib.PublicKey.fromPoint(publicKey.point.mul(privateKey.toBigNumber()))
+}
+
+export const constructSharedKey = function (privateKey, publicKey, salt) {
+  const mergedKey = constructMergedKey(privateKey, publicKey)
+  const rawMergedKey = mergedKey.toBuffer()
+  return cashlib.crypto.Hash.sha256hmac(salt, rawMergedKey)
+}
+
 export const constructStealthPubKey = function (emphemeralPrivKey, destinationPublicKey) {
   const dhKeyPoint = destinationPublicKey.point.mul(emphemeralPrivKey.bn) // ebG
   const dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)

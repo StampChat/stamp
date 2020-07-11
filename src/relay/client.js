@@ -651,7 +651,7 @@ export class RelayClient {
     }
 
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
-    const payloadDigestHex = payloadDigest.toHex()
+    const payloadDigestHex = payloadDigest.toString('hex')
 
     this.events.emit('receivedMessage', { outbound, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
   }

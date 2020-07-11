@@ -1,5 +1,5 @@
 import { Message } from './relay_pb'
-import { decrypt, constructPayloadHmac } from './crypto'
+import { decrypt, constructPayloadHmac, constructSharedKey } from './crypto'
 const cashlib = require('bitcore-lib-cash')
 
 export class ParsedMessage {
@@ -38,19 +38,13 @@ export class ParsedMessage {
     return message
   }
 
-  createMergedKey (privateKey) {
-    return cashlib.PublicKey.fromPoint(this.sourcePublicKey.point.mul(privateKey.toBigNumber()))
-  }
-
-  createSharedKey (privateKey) {
-    const mergedKey = this.createMergedKey(privateKey)
-    const rawMergedKey = mergedKey.toBuffer()
-    return cashlib.crypto.Hash.sha256hmac(this.salt, rawMergedKey)
+  constructSharedKey (privateKey) {
+    return constructSharedKey(privateKey, this.destinationPublicKey, this.salt)
   }
 
   authenticate (sharedKey) {
     const payloadHmac = constructPayloadHmac(sharedKey, this.payloadDigest)
-    return (payloadHmac === this.payloadHmac)
+    return (this.payloadHmac.every((value, index) => value === payloadHmac[index]))
   }
 
   decrypt (sharedKey) {
@@ -59,7 +53,7 @@ export class ParsedMessage {
   }
 
   open (privateKey) {
-    const sharedKey = this.createSharedKey(privateKey)
+    const sharedKey = this.constructSharedKey(privateKey)
     if (!this.authenticate(sharedKey)) {
       throw new Error('Failed to authenticate message')
     }

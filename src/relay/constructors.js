@@ -1,7 +1,7 @@
 import { Header, Message, PayloadEntry, Profile, ProfileEntry, Stamp, StampOutpoints } from './relay_pb'
 import stealth from './stealth_pb'
 import filters from './filters_pb'
-import { constructStampHDPublicKey, constructStealthPubKey, constructPayloadHmac, encrypt } from './crypto'
+import { constructSharedKey, constructStampHDPublicKey, constructStealthPubKey, constructPayloadHmac, encrypt } from './crypto'
 import VCard from 'vcf'
 // import { * } from '../keyserver/keyserver_pb'
 import wrapper from '../auth_wrapper/wrapper_pb'
@@ -67,9 +67,7 @@ export const constructMessage = function (wallet, plainTextPayload, sourcePrivat
   const salt = cashlib.crypto.Hash.sha256hmac(plainPayloadDigest, rawSourcePrivateKey)
 
   // Construct shared key
-  const mergedKey = cashlib.PublicKey.fromPoint(destinationPublicKey.point.mul(sourcePrivateKey.toBigNumber()))
-  const rawMergedKey = mergedKey.toBuffer()
-  const sharedKey = cashlib.crypto.Hash.sha256hmac(salt, rawMergedKey)
+  const sharedKey = constructSharedKey(sourcePrivateKey, destinationPublicKey, salt)
 
   // Encrypt payload
   const payload = encrypt(sharedKey, plainTextPayload)
