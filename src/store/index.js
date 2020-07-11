@@ -30,10 +30,7 @@ const vuexLocal = new VuexPersistence({
     if (newState.version !== STORE_SCHEMA_VERSION) {
       // Import everything else from the server again
       newState = {
-        wallet: {
-          xPrivKey: path(['wallet', 'xPrivKey'], newState),
-          seedPhrase: path(['wallet', 'seedPhrase'], newState)
-        },
+        wallet: newState.wallet,
         relayClient: {
           token: path(['relayClient', 'token'], newState)
         },
@@ -60,10 +57,7 @@ const vuexLocal = new VuexPersistence({
   reducer (state) {
     console.log('reducing state', state)
     return {
-      wallet: {
-        xPrivKey: path(['wallet', 'xPrivKey'], state),
-        seedPhrase: path(['wallet', 'seedPhrase'], state)
-      },
+      wallet: state.wallet,
       relayClient: {
         token: path(['relayClient', 'token'], state)
       },
