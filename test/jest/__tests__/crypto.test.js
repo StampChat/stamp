@@ -1,47 +1,51 @@
 import {
-  encrypt, decrypt, constructStampPubKey,
-  constructStampPrivKey, constructStealthPubKey,
-  constructStealthPrivKey, encryptEphemeralKey, decryptEphemeralKey
+  encrypt, decrypt, constructStealthPublicKey,
+  constructStealthPrivateKey, constructSharedKey
 } from '../../../src/relay/crypto'
 import { PrivateKey } from 'bitcore-lib-cash'
-
-const cashlib = require('bitcore-lib-cash')
 
 function getRandomInt (max) {
   return Math.floor(Math.random() * Math.floor(max))
 }
 
 test('Encrypt', () => {
-  const raw = new ArrayBuffer(8)
-  const privKey = PrivateKey()
-  const destPubKey = PrivateKey().toPublicKey()
-  encrypt(raw, privKey, destPubKey)
+  const length = 8
+  const plainText = new Uint8Array(new ArrayBuffer(length))
+  for (let i = 0; i < length; i++) {
+    plainText[i] = getRandomInt(255)
+  }
+
+  const salt = new Uint8Array(new ArrayBuffer(32))
+  for (let i = 0; i < length; i++) {
+    salt[i] = getRandomInt(255)
+  }
+
+  const privateKey = PrivateKey()
+  const destinationPublicKey = PrivateKey().toPublicKey()
+  const sharedKey = constructSharedKey(privateKey, destinationPublicKey, salt)
+
+  encrypt(sharedKey, plainText)
 })
 
 test('Decrypt', () => {
   const length = 8
-  const raw = new Uint8Array(new ArrayBuffer(length))
+  const prePlainText = new Uint8Array(new ArrayBuffer(length))
   for (let i = 0; i < length; i++) {
-    raw[i] = getRandomInt(255)
+    prePlainText[i] = getRandomInt(255)
   }
-  const sourcePrivKey = PrivateKey()
-  const sourcePubKey = sourcePrivKey.toPublicKey()
-  const destPrivKey = PrivateKey()
-  const destPubKey = destPrivKey.toPublicKey()
-  const { cipherText, ephemeralPrivKey } = encrypt(raw, sourcePrivKey, destPubKey)
-  const plainText = decrypt(cipherText, destPrivKey, sourcePubKey, ephemeralPrivKey.toPublicKey())
-  expect(plainText).toStrictEqual(raw)
-})
 
-test('Stamp Signatures', () => {
-  const preimage = Buffer.from('hello')
-  const digest = cashlib.crypto.Hash.sha256(preimage)
-  const privKey = PrivateKey()
-  const publicKey = privKey.toPublicKey()
-  const stampPublicKey = constructStampPubKey(digest, publicKey)
-  const stampPrivKey = constructStampPrivKey(digest, privKey)
-  const stampPublicKeyDerived = stampPrivKey.toPublicKey()
-  expect(stampPublicKey.toBuffer()).toStrictEqual(stampPublicKeyDerived.toBuffer())
+  const salt = new Uint8Array(new ArrayBuffer(32))
+  for (let i = 0; i < length; i++) {
+    salt[i] = getRandomInt(255)
+  }
+
+  const privateKey = PrivateKey()
+  const destinationPublicKey = PrivateKey().toPublicKey()
+  const sharedKey = constructSharedKey(privateKey, destinationPublicKey, salt)
+
+  const cipherText = encrypt(sharedKey, prePlainText)
+  const postPlainText = decrypt(sharedKey, cipherText)
+  expect(postPlainText).toStrictEqual(prePlainText)
 })
 
 test('StealthKey', () => {
@@ -51,30 +55,9 @@ test('StealthKey', () => {
   const ephemeralPrivKey = PrivateKey()
   const ephemeralPubKey = ephemeralPrivKey.toPublicKey()
 
-  const stealthPubKey = constructStealthPubKey(ephemeralPrivKey, destPubKey)
+  const { stealthPublicKey } = constructStealthPublicKey(ephemeralPrivKey, destPubKey)
 
-  const stealthPrivKey = constructStealthPrivKey(ephemeralPubKey, destPrivKey)
-  const stealthPubKeyExpected = stealthPrivKey.toPublicKey()
+  const { stealthPrivateKey } = constructStealthPrivateKey(ephemeralPubKey, destPrivKey)
 
-  expect(stealthPubKey.toBuffer()).toStrictEqual(stealthPubKeyExpected.toBuffer())
-})
-
-test('EncryptEphemeral', () => {
-  const privKey = PrivateKey()
-  const ephemeralPrivKey = PrivateKey()
-  const entriesDigest = Buffer.from(new ArrayBuffer(32))
-
-  encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
-})
-
-test('DecryptEphemeral', () => {
-  const privKey = PrivateKey()
-  const ephemeralPrivKey = PrivateKey()
-  const entriesDigest = Buffer.from(new ArrayBuffer(32))
-
-  const cipherText = encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
-
-  const newEphemeralPrivKey = decryptEphemeralKey(cipherText, privKey, entriesDigest)
-
-  expect(ephemeralPrivKey.toBuffer()).toStrictEqual(newEphemeralPrivKey.toBuffer())
+  expect(stealthPublicKey.toBuffer()).toStrictEqual(stealthPrivateKey.toPublicKey().toBuffer())
 })

@@ -17,7 +17,7 @@ export const constructSharedKey = function (privateKey, publicKey, salt) {
   return cashlib.crypto.Hash.sha256hmac(salt, rawMergedKey)
 }
 
-export const constructStealthPubKey = function (emphemeralPrivKey, destinationPublicKey) {
+export const constructStealthPublicKey = function (emphemeralPrivKey, destinationPublicKey) {
   const dhKeyPoint = destinationPublicKey.point.mul(emphemeralPrivKey.bn) // ebG
   const dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
 
@@ -25,6 +25,11 @@ export const constructStealthPubKey = function (emphemeralPrivKey, destinationPu
   const digestPublicKey = PrivateKey.fromBuffer(digest).toPublicKey() // H(ebG)G
 
   const stealthPublicKey = PublicKey(digestPublicKey.point.add(destinationPublicKey.point)) // H(ebG)G + bG
+  return { stealthPublicKey, digest }
+}
+
+export const constructHDStealthPublicKey = function (emphemeralPrivKey, destinationPublicKey) {
+  const { stealthPublicKey, digest } = constructStealthPublicKey(emphemeralPrivKey, destinationPublicKey)
   return new cashlib.HDPublicKey({
     publicKey: stealthPublicKey.toBuffer(),
     depth: 0,
@@ -35,7 +40,7 @@ export const constructStealthPubKey = function (emphemeralPrivKey, destinationPu
   })
 }
 
-export const constructStealthPrivKey = function (emphemeralPubKey, destinationPrivateKey) {
+export const constructStealthPrivateKey = function (emphemeralPubKey, destinationPrivateKey) {
   const dhKeyPoint = emphemeralPubKey.point.mul(destinationPrivateKey.bn) // ebG
   const dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
 
@@ -44,12 +49,17 @@ export const constructStealthPrivKey = function (emphemeralPubKey, destinationPr
 
   const stealthPrivBn = digestBn.add(destinationPrivateKey.bn).mod(cashlib.crypto.Point.getN()) // H(ebG) + b
   const stealthPrivateKey = PrivateKey(stealthPrivBn)
+  return { stealthPrivateKey, digest }
+}
+
+export const constructHDStealthPrivateKey = function (emphemeralPubKey, destinationPrivateKey) {
+  const { stealthPrivateKey, digest } = constructStealthPrivateKey(emphemeralPubKey, destinationPrivateKey)
   return new cashlib.HDPrivateKey({
     privateKey: stealthPrivateKey.toBuffer(),
     depth: 0,
     network: 'testnet',
     childIndex: 0,
-    chainCode: digest.slice(0, 32),
+    chainCode: digest,
     parentFingerPrint: 0
   })
 }

@@ -1,7 +1,7 @@
 import { Header, Message, PayloadEntry, Profile, ProfileEntry, Stamp, StampOutpoints } from './relay_pb'
 import stealth from './stealth_pb'
 import filters from './filters_pb'
-import { constructSharedKey, constructStampHDPublicKey, constructStealthPubKey, constructPayloadHmac, encrypt } from './crypto'
+import { constructSharedKey, constructStampHDPublicKey, constructHDStealthPublicKey, constructPayloadHmac, encrypt } from './crypto'
 import VCard from 'vcf'
 // import { * } from '../keyserver/keyserver_pb'
 import wrapper from '../auth_wrapper/wrapper_pb'
@@ -39,7 +39,7 @@ export const constructStealthTransactions = function (wallet, ephemeralPrivKey, 
   // But the spec should allow doing confidential amounts.
   let transactionNumber = 0// This should be the index of the transaction in the outpoint list
   const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
-  const stealthHDPubKey = constructStealthPubKey(ephemeralPrivKey, destPubKey)
+  const stealthHDPubKey = constructHDStealthPublicKey(ephemeralPrivKey, destPubKey)
 
   const stealthPubKeyGenerator = () => {
     const stealthPubKey = stealthHDPubKey

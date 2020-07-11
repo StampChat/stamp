@@ -9,7 +9,7 @@ import VCard from 'vcf'
 import EventEmitter from 'events'
 import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage } from './constructors'
 import { entryToImage, arrayBufferToBase64 } from '../utils/image'
-import { constructStampHDPrivateKey, constructStealthPrivKey } from './crypto'
+import { constructStampHDPrivateKey, constructHDStealthPrivateKey } from './crypto'
 import { messageMixin } from './extension'
 import { calcId } from '../wallet/helpers'
 import assert from 'assert'
@@ -581,7 +581,7 @@ export class RelayClient {
         const outpointsList = stealthMessage.getOutpointsList()
         const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
         const ephemeralPubKey = cashlib.PublicKey.fromBuffer(ephemeralPubKeyRaw)
-        const stealthHDPrivKey = constructStealthPrivKey(ephemeralPubKey, wallet.identityPrivKey)
+        const stealthHDPrivKey = constructHDStealthPrivateKey(ephemeralPubKey, wallet.identityPrivKey)
         for (const [i, outpoint] of outpointsList.entries()) {
           const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
           const stealthTx = cashlib.Transaction(stealthTxRaw)
