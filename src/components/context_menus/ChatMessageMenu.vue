@@ -97,9 +97,9 @@ export default {
       this.$relayClient.sendImage(args)
     },
     resend () {
-      this.deleteMessage({ addr: this.address, payloadDigest: this.payloadDigest, index: this.index })
+      this.deleteMessage({ address: this.address, payloadDigest: this.payloadDigest, index: this.index })
       const stampAmount = this.getStampAmount()(this.address)
-      this.$relayClient.sendMessageImpl({ addr: this.address, items: this.message.items, stampAmount })
+      this.$relayClient.sendMessageImpl({ address: this.address, items: this.message.items, stampAmount })
     },
     copyMessage () {
       const text = this.message.items.find(el => el.type === 'text').text

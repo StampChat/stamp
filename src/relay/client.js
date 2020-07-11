@@ -41,13 +41,13 @@ export class RelayClient {
     this.electrumClient = electrumClient
   }
 
-  async profilePaymentRequest (addr) {
-    const url = `${this.httpScheme}://${this.url}/profile/${addr}`
+  async profilePaymentRequest (address) {
+    const url = `${this.httpScheme}://${this.url}/profile/${address}`
     return pop.getPaymentRequest(url, 'put')
   }
 
-  async getRelayData (addr) {
-    const url = `${this.httpScheme}://${this.url}/profile/${addr}`
+  async getRelayData (address) {
+    const url = `${this.httpScheme}://${this.url}/profile/${address}`
     const response = await axios({
       method: 'get',
       url,
@@ -100,8 +100,8 @@ export class RelayClient {
     return relayData
   }
 
-  setUpWebsocket (addr) {
-    const url = `${this.wsScheme}://${this.url}/ws/${addr}`
+  setUpWebsocket (address) {
+    const url = `${this.wsScheme}://${this.url}/ws/${address}`
     const opts = { headers: { Authorization: this.token } }
     const socket = new WebSocket(url, opts)
 
@@ -121,7 +121,7 @@ export class RelayClient {
     const disconnectHandler = () => {
       this.events.emit('disconnected')
       setTimeout(() => {
-        this.setUpWebsocket(addr, this.token)
+        this.setUpWebsocket(address, this.token)
       }, relayReconnectInterval)
     }
 
@@ -148,11 +148,11 @@ export class RelayClient {
     })
   }
 
-  async getAcceptancePrice (addr) {
+  async getAcceptancePrice (address) {
     // Get fee
     let acceptancePrice
     try {
-      const filters = await this.getFilter(addr)
+      const filters = await this.getFilter(address)
       const priceFilter = filters.getPriceFilter()
       acceptancePrice = priceFilter.getAcceptancePrice()
     } catch (err) {
@@ -161,8 +161,8 @@ export class RelayClient {
     return acceptancePrice
   }
 
-  async getRawPayload (addr, digest) {
-    const url = `${this.httpScheme}://${this.url}/payloads/${addr}`
+  async getRawPayload (address, digest) {
+    const url = `${this.httpScheme}://${this.url}/payloads/${address}`
 
     const hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
     const response = await axios({
@@ -179,8 +179,8 @@ export class RelayClient {
     return response.data
   }
 
-  async getPayload (addr, digest) {
-    const rawPayload = await this.getRawPayload(addr, digest)
+  async getPayload (address, digest) {
+    const rawPayload = await this.getRawPayload(address, digest)
     const payload = messaging.Payload.deserializeBinary(rawPayload)
     return payload
   }
@@ -214,9 +214,9 @@ export class RelayClient {
     }
   }
 
-  async putProfile (addr, metadata) {
+  async putProfile (address, metadata) {
     const rawProfile = metadata.serializeBinary()
-    const url = `${this.httpScheme}://${this.url}/profile/${addr}`
+    const url = `${this.httpScheme}://${this.url}/profile/${address}`
     await axios({
       method: 'put',
       url: url,
@@ -227,8 +227,8 @@ export class RelayClient {
     })
   }
 
-  async getMessages (addr, startTime, endTime) {
-    const url = `${this.httpScheme}://${this.url}/messages/${addr}`
+  async getMessages (address, startTime, endTime) {
+    const url = `${this.httpScheme}://${this.url}/messages/${address}`
     const response = await axios({
       method: 'get',
       url: url,
@@ -250,8 +250,8 @@ export class RelayClient {
     }
   }
 
-  async messagePaymentRequest (addr) {
-    const url = `${this.httpScheme}://${this.url}/messages/${addr}`
+  async messagePaymentRequest (address) {
+    const url = `${this.httpScheme}://${this.url}/messages/${address}`
     return pop.getPaymentRequest(url, 'get')
   }
 
@@ -261,9 +261,9 @@ export class RelayClient {
     return pop.sendPayment(url, payment)
   }
 
-  async pushMessages (addr, messageSet) {
+  async pushMessages (address, messageSet) {
     const rawMetadata = messageSet.serializeBinary()
-    const url = `${this.httpScheme}://${this.url}/messages/${addr}`
+    const url = `${this.httpScheme}://${this.url}/messages/${address}`
     await axios({
       method: 'put',
       url: url,
@@ -271,10 +271,10 @@ export class RelayClient {
     })
   }
 
-  sendMessageImpl ({ addr, items, stampAmount, errCount = 0 }) {
+  sendMessageImpl ({ address, items, stampAmount, errCount = 0 }) {
     const wallet = this.wallet
     const privKey = wallet.identityPrivKey
-    const destPubKey = this.getPubKey(addr)
+    const destPubKey = this.getPubKey(address)
 
     const usedIDs = []
     const outpoints = []
@@ -314,7 +314,7 @@ export class RelayClient {
     const senderAddress = this.wallet.myAddressStr
     // Add localy
     const payloadDigestHex = payloadDigest.toString('hex')
-    this.events.emit('messageSending', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
+    this.events.emit('messageSending', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
 
     // Construct message
     try {
@@ -340,7 +340,7 @@ export class RelayClient {
         return client.request('blockchain.transaction.broadcast', transaction.toString())
       }))
         .then(() => this.pushMessages(destAddr, messageSet))
-        .then(() => this.events.emit('messageSent', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions }))
+        .then(() => this.events.emit('messageSent', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions }))
         .catch(async (err) => {
           console.error(err)
           if (err.response) {
@@ -357,17 +357,17 @@ export class RelayClient {
           // TODO: Currently, we can lose stealth transaction data if the stamp inputs fail.
           // Also, retries messages are not deleted from the message output window.
           // Both of these issues need to be fixed.
-          this.sendMessageImpl({ addr, items, stampAmount, errCount })
+          this.sendMessageImpl({ address, items, stampAmount, errCount })
         })
     } catch (err) {
       console.error(err)
-      this.events.emit('messageSendError', { addr, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
+      this.events.emit('messageSendError', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
     }
   }
 
   // Stub for original API
   // TODO: Fix clients to not use these APIs at all
-  sendMessage ({ addr, text, replyDigest, stampAmount }) {
+  sendMessage ({ address, text, replyDigest, stampAmount }) {
     // Send locally
     const items = [
       {
@@ -381,10 +381,10 @@ export class RelayClient {
         payloadDigest: replyDigest
       })
     }
-    this.sendMessageImpl({ addr, items, stampAmount })
+    this.sendMessageImpl({ address, items, stampAmount })
   }
 
-  sendStealthPayment ({ addr, stampAmount, amount, memo }) {
+  sendStealthPayment ({ address, stampAmount, amount, memo }) {
     // Send locally
     const items = [
       {
@@ -399,10 +399,10 @@ export class RelayClient {
           text: memo
         })
     }
-    this.sendMessageImpl({ addr, items, stampAmount })
+    this.sendMessageImpl({ address, items, stampAmount })
   }
 
-  sendImage ({ addr, image, caption, replyDigest, stampAmount }) {
+  sendImage ({ address, image, caption, replyDigest, stampAmount }) {
     const items = [
       {
         type: 'image',
@@ -423,7 +423,7 @@ export class RelayClient {
       })
     }
 
-    this.sendMessageImpl({ addr, items, stampAmount })
+    this.sendMessageImpl({ address, items, stampAmount })
   }
 
   async receiveMessage ({ serverTime, receivedTime, message }) {
@@ -590,7 +590,7 @@ export class RelayClient {
     }
     for (const index in entriesList) {
       const entry = entriesList[index]
-      // If addr data doesn't exist then add it
+      // If address data doesn't exist then add it
       const kind = entry.getKind()
       if (kind === 'reply') {
         const entryData = entry.getEntryData()

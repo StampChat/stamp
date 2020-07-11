@@ -16,7 +16,7 @@
   <!-- Contact book dialog -->
   <q-dialog v-model="contactBookOpen">
     <contact-book-dialog
-      :contactClick="function (addr, contact) { return setActiveChat(addr) }"
+      :contactClick="function (address, contact) { return setActiveChat(address) }"
       v-on:close-contact-search-dialog="closeContactSearchDialog"
     />
   </q-dialog>
