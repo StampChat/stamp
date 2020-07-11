@@ -286,7 +286,7 @@ export default {
         return 'black'
       }
 
-      return this.getContactVuex(this.address).color
+      return this.addressColorFromStr(this.address)
     },
     contactProfile () {
       return this.getContactVuex(this.address).profile

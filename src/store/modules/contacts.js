@@ -1,6 +1,5 @@
 import { PublicKey } from 'bitcore-lib-cash'
 import { getRelayClient } from '../../adapters/vuex-relay-adapter'
-import { addressColorFromStr } from '../../utils/formatting'
 import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl } from '../../utils/constants'
 import KeyserverHandler from '../../keyserver/handler'
 import Vue from 'vue'
@@ -226,10 +225,7 @@ export default {
   },
   actions: {
     addLoadingContact ({ commit }, { address, pubKey }) {
-      /// Add color
-      const color = addressColorFromStr(address)
-
-      const contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, pubKey }, color }
+      const contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, pubKey } }
       commit('addContact', { address, contact })
     },
     deleteContact ({ commit }, address) {
@@ -238,9 +234,6 @@ export default {
       commit('deleteContact', address)
     },
     addContact ({ commit }, { address, contact }) {
-      /// Add color
-      contact.color = addressColorFromStr(address)
-
       commit('addContact', { address, contact })
       commit('chats/setActiveChat', address, { root: true })
     },
