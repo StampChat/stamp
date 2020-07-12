@@ -324,7 +324,7 @@ export default {
         })
 
         // Construct payment
-        const { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, paymentDetails)
+        const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, paymentDetails)
         const { token } = await pop.sendPayment(paymentUrl, payment)
 
         // Construct metadata
@@ -377,7 +377,7 @@ export default {
         })
 
         // Get token from relay server
-        const { paymentUrl, payment } = pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
+        const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
         const { token } = await relayClient.sendPayment(paymentUrl, payment)
         relayClient.setToken(token)
         this.setRelayToken(token)

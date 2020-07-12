@@ -3,6 +3,7 @@ import { Client as ElectrumClient } from 'electrum-cash'
 import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils/constants'
 import { Wallet } from '../wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
+import { store as levelDbOutpointStore } from '../adapters/level-outpoint-store'
 
 function instrumentElectrumClient ({ client, observables, reconnector }) {
   const keepAlive = () => {
@@ -64,27 +65,31 @@ function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
 }
 
 function getWalletClient ({ store }) {
+  // FIXME: This shouldn't be necessary, but the GUI needs real time
+  // balance updates. In the future, we should just aggregate a total over time here.
   const storageAdapter = {
-    getFrozenUTXOs () {
-      return store.getters['wallet/getFrozenUTXOs']
+    getOutpoint (id) {
+      return levelDbOutpointStore.getOutpoint(id)
     },
-    freezeUTXO (id) {
-      store.commit('wallet/freezeUTXO', id)
-    },
-    unfreezeUTXO (id) {
-      store.commit('wallet/unfreezeUTXO', id)
-    },
-    removeFrozenUTXO (id) {
-      store.commit('wallet/removeFrozenUTXO', id)
-    },
-    getUTXOs () {
-      return store.getters['wallet/getUTXOs']
-    },
-    removeUTXO (id) {
+    deleteOutpoint (id) {
       store.commit('wallet/removeUTXO', id)
+      return levelDbOutpointStore.deleteOutpoint(id)
     },
-    addUTXO (output) {
-      store.commit('wallet/addUTXO', output)
+    putOutpoint (outpoint) {
+      store.commit('wallet/addUTXO', outpoint)
+      return levelDbOutpointStore.putOutpoint(outpoint)
+    },
+    freezeOutpoint (id) {
+      return levelDbOutpointStore.freezeOutpoint(id)
+    },
+    unfreezeOutpoint (id) {
+      return levelDbOutpointStore.unfreezeOutpoint(id)
+    },
+    getOutpointIterator () {
+      return levelDbOutpointStore.getOutpointIterator()
+    },
+    getFrozenOutpointIterator () {
+      return levelDbOutpointStore.getFrozenOutpointIterator()
     }
   }
 

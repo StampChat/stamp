@@ -271,7 +271,7 @@ export class RelayClient {
     })
   }
 
-  sendMessageImpl ({ address, items, stampAmount, errCount = 0 }) {
+  async sendMessageImpl ({ address, items, stampAmount, errCount = 0 }) {
     const wallet = this.wallet
     const privKey = wallet.identityPrivKey
     const destPubKey = this.getPubKey(address)
@@ -280,11 +280,11 @@ export class RelayClient {
     const outpoints = []
     const transactions = []
     // Construct payload
-    const entries = items.map(
-      item => {
+    const entries = await Promise.all(items.map(
+      async item => {
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'stealth') {
-          const { paymentEntry, transactionBundle } = constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
+          const { paymentEntry, transactionBundle } = await constructStealthEntry({ ...item, wallet: this.wallet, destPubKey })
           outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
             transactions.push(transaction)
             usedIDs.push(...usedIds)
@@ -309,7 +309,7 @@ export class RelayClient {
           return constructImageEntry({ ...item })
         }
       }
-    )
+    ))
     const { serializedPayload, payloadDigest } = constructPayload(entries, privKey, destPubKey, 1)
     const senderAddress = this.wallet.myAddressStr
     // Add localy
@@ -318,7 +318,7 @@ export class RelayClient {
 
     // Construct message
     try {
-      const { message, transactionBundle } = constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
+      const { message, transactionBundle } = await constructMessage(wallet, serializedPayload, privKey, destPubKey, stampAmount)
       outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
         transactions.push(transaction)
         usedIDs.push(...usedIds)
@@ -346,8 +346,7 @@ export class RelayClient {
           if (err.response) {
             console.error(err.response)
           }
-          // Unfreeze UTXOs
-          await Promise.all(usedIDs.map(id => wallet.fixFrozenUTXO(id)))
+          await Promise.all(usedIDs.map(id => wallet.fixOutpoint(id)))
           errCount += 1
           console.log('error sending message', err)
           if (errCount >= 3) {
@@ -357,7 +356,7 @@ export class RelayClient {
           // TODO: Currently, we can lose stealth transaction data if the stamp inputs fail.
           // Also, retries messages are not deleted from the message output window.
           // Both of these issues need to be fixed.
-          this.sendMessageImpl({ address, items, stampAmount, errCount })
+          await this.sendMessageImpl({ address, items, stampAmount, errCount })
         })
     } catch (err) {
       console.error(err)
@@ -367,7 +366,7 @@ export class RelayClient {
 
   // Stub for original API
   // TODO: Fix clients to not use these APIs at all
-  sendMessage ({ address, text, replyDigest, stampAmount }) {
+  async sendMessage ({ address, text, replyDigest, stampAmount }) {
     // Send locally
     const items = [
       {
@@ -381,7 +380,7 @@ export class RelayClient {
         payloadDigest: replyDigest
       })
     }
-    this.sendMessageImpl({ address, items, stampAmount })
+    return this.sendMessageImpl({ address, items, stampAmount })
   }
 
   sendStealthPayment ({ address, stampAmount, amount, memo }) {
@@ -399,7 +398,7 @@ export class RelayClient {
           text: memo
         })
     }
-    this.sendMessageImpl({ address, items, stampAmount })
+    return this.sendMessageImpl({ address, items, stampAmount })
   }
 
   sendImage ({ address, image, caption, replyDigest, stampAmount }) {
@@ -423,7 +422,7 @@ export class RelayClient {
       })
     }
 
-    this.sendMessageImpl({ address, items, stampAmount })
+    return this.sendMessageImpl({ address, items, stampAmount })
   }
 
   async receiveMessage ({ serverTime, receivedTime, message }) {
@@ -530,7 +529,7 @@ export class RelayClient {
         for (const input of stampTx.inputs) {
           // In order to update UTXO state more quickly, go ahead and remove the inputs from our set immediately
           const utxoId = calcId({ txId: input.prevTxId.toString('hex'), outputIndex: input.outputIndex })
-          wallet.removeUTXO(utxoId)
+          await wallet.deleteOutpoint(utxoId)
         }
       }
       for (const [j, outputIndex] of vouts.entries()) {
@@ -569,7 +568,7 @@ export class RelayClient {
           // In order to update UTXO state more quickly, go ahead and remove the inputs from our set immediately
           continue
         }
-        wallet.addUTXO(stampOutput)
+        wallet.putOutpoint(stampOutput)
       }
     }
 
@@ -586,7 +585,8 @@ export class RelayClient {
       serverTime,
       receivedTime,
       outpoints,
-      senderAddress: senderAddr
+      senderAddress: senderAddr,
+      destinationAddress: destinationAddr
     }
     for (const index in entriesList) {
       const entry = entriesList[index]
@@ -625,7 +625,7 @@ export class RelayClient {
             for (const input of stealthTx.inputs) {
               // Don't add these outputs to our wallet. They're the other persons
               const utxoId = calcId({ txId: input.prevTxId.toString('hex'), outputIndex: input.outputIndex })
-              wallet.removeUTXO(utxoId)
+              wallet.deleteOutpoint(utxoId)
             }
           }
 
@@ -665,7 +665,7 @@ export class RelayClient {
               // Don't add these outputs to our wallet. They're the other persons
               continue
             }
-            wallet.addUTXO(stampOutput)
+            wallet.putOutpoint(stampOutput)
           }
         }
         newMsg.items.push({
@@ -716,12 +716,6 @@ export class RelayClient {
         }, 0)
       })
     }
-
-    // const t0 = performance.now()
-    // await this.wallet.fixUTXOs().then(() => {
-    //   const fixUTXOsTime = performance.now()
-    //   console.log(`fixUTXOsTime UTXOs took ${fixUTXOsTime - t0} ms`)
-    // })
   }
 }
 

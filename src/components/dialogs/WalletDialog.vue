@@ -12,7 +12,7 @@
       <div class="text-h6">Wallet Status</div>
     </q-card-section>
     <q-card-section>
-      <div class="text-bold text-subtitle1 text-center"> {{getBalance}}</div>
+      <div class="text-bold text-subtitle1 text-center"> {{formattedBalance}}</div>
     </q-card-section>
     <q-separator />
     <q-card-section>
@@ -91,9 +91,10 @@ export default {
   },
   computed: {
     ...mapGetters({
+      balance: 'wallet/balance'
     }),
-    getBalance () {
-      return formatBalance(this.$wallet.balance)
+    formattedBalance () {
+      return formatBalance(this.balance)
     }
   },
   methods: {

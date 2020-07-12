@@ -1,5 +1,8 @@
 export const calcId = function (output) {
-  return output.txId.slice(0, 20) + output.outputIndex
+  if (!output.txId === undefined || !output.outputIndex === undefined) {
+    throw new Error(`Missing values ${JSON.stringify(output)}`)
+  }
+  return output.txId + '_' + output.outputIndex
 }
 
 export const stampPrice = function (outpoints) {

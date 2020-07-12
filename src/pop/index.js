@@ -39,7 +39,7 @@ export default {
     return { paymentReceipt, token }
   },
 
-  constructPaymentTransaction (wallet, paymentDetails) {
+  async constructPaymentTransaction (wallet, paymentDetails) {
     // Get Outputs
     const requestOutputs = paymentDetails.getOutputsList()
     const outputs = requestOutputs.map(reqOutput => {
@@ -53,7 +53,7 @@ export default {
     })
 
     // Construct tx
-    const { transaction, usedIDs } = wallet.constructTransaction({ outputs, exactOutputs: true })
+    const { transaction, usedIDs } = await wallet.constructTransaction({ outputs, exactOutputs: true })
     const rawTransaction = transaction.toBuffer()
 
     // Send payment and receive token

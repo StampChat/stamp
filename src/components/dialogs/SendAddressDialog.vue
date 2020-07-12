@@ -80,7 +80,7 @@ export default {
           satoshis: this.amount
         })
 
-        const { transaction, usedIDs } = this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
+        const { transaction, usedIDs } = await this.$wallet.constructTransaction({ outputs: [output], exactOutputs: true })
         const txHex = transaction.toString()
 
         try {

@@ -55,11 +55,10 @@ export const constructStealthTransactions = function (wallet, ephemeralPrivKey, 
   }
 
   // Construct transaction
-  const transactionBundle = wallet.constructTransactionSet({ addressGenerator: stealthPubKeyGenerator, amount })
-  return transactionBundle
+  return wallet.constructTransactionSet({ addressGenerator: stealthPubKeyGenerator, amount })
 }
 
-export const constructMessage = function (wallet, serializedPayload, privKey, destPubKey, stampAmount) {
+export const constructMessage = async function (wallet, serializedPayload, privKey, destPubKey, stampAmount) {
   const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
   const ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
   ecdsa.sign()
@@ -71,7 +70,7 @@ export const constructMessage = function (wallet, serializedPayload, privKey, de
   message.setSignature(sig)
   message.setSerializedPayload(serializedPayload)
 
-  const transactionBundle = constructStampTransactions(wallet, payloadDigest, destPubKey, stampAmount)
+  const transactionBundle = await constructStampTransactions(wallet, payloadDigest, destPubKey, stampAmount)
 
   for (const { transaction: stampTx, vouts } of transactionBundle) {
     const rawStampTx = stampTx.toBuffer()
@@ -143,7 +142,7 @@ export const constructTextEntry = function ({ text }) {
   return textEntry
 }
 
-export const constructStealthEntry = function ({ wallet, amount, destPubKey }) {
+export const constructStealthEntry = async function ({ wallet, amount, destPubKey }) {
   // Construct payment entry
   const paymentEntry = new messaging.Entry()
   paymentEntry.setKind('stealth-payment')
@@ -151,7 +150,7 @@ export const constructStealthEntry = function ({ wallet, amount, destPubKey }) {
   const stealthPaymentEntry = new stealth.StealthPaymentEntry()
   const ephemeralPrivKey = cashlib.PrivateKey()
 
-  const transactionBundle = constructStealthTransactions(wallet, ephemeralPrivKey, destPubKey, amount)
+  const transactionBundle = await constructStealthTransactions(wallet, ephemeralPrivKey, destPubKey, amount)
 
   // Sent to HASH160(ephemeralPrivKey * destPubKey)
   // Sent to HASH160(ephemeralPrivKey * destPubKey)
