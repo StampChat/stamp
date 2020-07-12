@@ -166,7 +166,7 @@ export default {
       this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
       // const lastReceived = this.lastReceived
       const t0 = performance.now()
-      this.$relayClient.refresh({ lastReceived: null }).then(() => {
+      this.$relayClient.refresh().then(() => {
         const t1 = performance.now()
         console.log(`Loading messages took ${t1 - t0}ms`)
         this.$wallet.init()
