@@ -4,17 +4,12 @@ import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils
 import { Wallet } from '../wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
 
-async function instrumentElectrumClient ({ client, observables, reconnector }) {
+function instrumentElectrumClient ({ client, observables, reconnector }) {
   const keepAlive = () => {
     setTimeout(() =>
       client.request('server_ping')
-        .catch(err => {
-          console.error('Error pinging electrum server. Likely disconnected', err)
-          observables.connected = false
-        })
         .then(
           () => {
-            observables.connected = true
             if (!observables.connected) {
               // We were disconnected anyways
               // Let reconnect logic find another server/reconnect
@@ -22,7 +17,10 @@ async function instrumentElectrumClient ({ client, observables, reconnector }) {
             }
             keepAlive()
           }
-        )
+        ).catch(err => {
+          console.error('Error pinging electrum server. Likely disconnected', err)
+          observables.connected = false
+        })
     , electrumPingInterval)
   }
 
@@ -47,18 +45,15 @@ async function instrumentElectrumClient ({ client, observables, reconnector }) {
     console.error(err)
   })
 
-  try {
-    await client.connect()
-  } catch (err) {
-    console.error(err)
-  }
+  // No await here... May cause issues down the road
+  client.connect()
 }
 
-async function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
+function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
   const { electrumURL, electrumPort } = electrumServers[Math.floor(Math.random() * electrumServers.length)]
   console.log('Using electrum server:', electrumURL, electrumPort)
   const client = new ElectrumClient('Stamp Wallet', '1.4.1', electrumURL, electrumPort)
-  await instrumentElectrumClient({
+  instrumentElectrumClient({
     client,
     observables,
     reconnector: () => createAndBindNewElectrumClient({ Vue, observables, wallet })
@@ -101,7 +96,7 @@ export default async ({ store, Vue }) => {
   // as its instantiating the wallet now also.
   const wallet = getWalletClient({ store })
   const electrumObservables = Vue.observable({ connected: false })
-  await createAndBindNewElectrumClient({ Vue, observables: electrumObservables, wallet })
+  createAndBindNewElectrumClient({ Vue, observables: electrumObservables, wallet })
   const xPrivKey = store.getters['wallet/getXPrivKey']
   console.log('xpriv', xPrivKey)
   if (xPrivKey) {
@@ -114,7 +109,7 @@ export default async ({ store, Vue }) => {
   relayClient.setToken(relayToken)
 
   Vue.prototype.$wallet = wallet
-  Vue.prototype.$electrum = electrumObservables
+  Vue.prototype.instrumentElectrumClient = electrumObservables
   Vue.prototype.$relayClient = relayClient
   Vue.prototype.$relay = Vue.observable(relayObservables)
 }

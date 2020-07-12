@@ -65,8 +65,8 @@
             <q-btn
               @click="next()"
               color="primary"
-              :label="forwardLabel()"
-              :disable="forwardDisabled()"
+              :label="forwardLabel"
+              :disable="forwardDisabled"
             />
             <q-btn
               v-if="step > 1"
@@ -121,6 +121,7 @@ export default {
   },
   data () {
     return {
+      forwardDisabled: false,
       step: 1,
       name: '',
       bio: '',
@@ -445,38 +446,6 @@ export default {
           this.nextSettings()
       }
     },
-    forwardLabel () {
-      switch (this.step) {
-        case 1:
-          return 'Continue'
-        case 2:
-          return (this.seedData.type === 'new') ? 'New Wallet' : 'Import Wallet'
-        case 3:
-          return 'Continue'
-        case 4:
-          return 'Continue'
-        case 5:
-          return this.isBasic ? 'Finish' : 'Continue'
-        case 6:
-          return 'Finish'
-      }
-    },
-    forwardDisabled () {
-      // Cannot progress while electrum is disconnected
-      if (!this.electrumConnected) {
-        return true
-      }
-
-      switch (this.step) {
-        case 2:
-          return !this.isWalletValid
-        case 5:
-          return !this.isRelayValid
-        case 6:
-          return (this.settings === null)
-      }
-      return false
-    },
     previous () {
       switch (this.step) {
         case 4:
@@ -495,17 +464,50 @@ export default {
       } else if (newValue && this.step === 6) {
         this.step = 5
       }
+    },
+    '$electrumClient.connected' () {
+      if (!this.$electrum.connected) {
+        this.forwardDisabled = true
+      }
+
+      switch (this.step) {
+        case 2:
+          this.forwardDisabled = !this.isWalletValid
+          break
+        case 5:
+          this.forwardDisabled = !this.isRelayValid
+          break
+        case 6:
+          this.forwardDisabled = (this.settings === null)
+          break
+        default:
+          this.forwardDisabled = false
+      }
     }
   },
   computed: {
-    electrumConnected () {
-      return this.$electrum.connected
-    },
     isWalletValid () {
       return ((this.seedData.type === 'new') || (this.seedData.type === 'import' && this.seedData.valid))
     },
     isRelayValid () {
       return !!(this.relayData.profile.name && this.relayData.profile.avatar && this.relayData.inbox.acceptancePrice)
+    },
+    forwardLabel () {
+      switch (this.step) {
+        case 1:
+          return 'Continue'
+        case 2:
+          return (this.seedData.type === 'new') ? 'New Wallet' : 'Import Wallet'
+        case 3:
+          return 'Continue'
+        case 4:
+          return 'Continue'
+        case 5:
+          return this.isBasic ? 'Finish' : 'Continue'
+        case 6:
+          return 'Finish'
+      }
+      return 'Unknown'
     }
   },
   created () {

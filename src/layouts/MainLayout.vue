@@ -164,18 +164,29 @@ export default {
     // Setup everything at once. This are independent processes
     try {
       this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
-      // const lastReceived = this.lastReceived
-      const t0 = performance.now()
+    } catch (err) {
+      console.error(err)
+    }
+
+    // const lastReceived = this.lastReceived
+    const t0 = performance.now()
+    const refreshMessages = () => {
+      // Wait for a connected electrum client
+      if (!this.$electrum.connected) {
+        setTimeout(refreshMessages, 100)
+      }
       this.$relayClient.refresh().then(() => {
         const t1 = performance.now()
         console.log(`Loading messages took ${t1 - t0}ms`)
         this.$wallet.init()
-        console.log('loaded')
+        console.log('Wallet initialized')
         this.loaded = true
+      }).catch((err) => {
+        console.error(err)
+        setTimeout(refreshMessages, 100)
       })
-    } catch (err) {
-      console.error(err)
     }
+    refreshMessages()
   },
   mounted () {
     document.addEventListener('keydown', this.shortcutKeyListener)

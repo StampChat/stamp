@@ -1,12 +1,28 @@
 // Electrum constants
 export const electrumServers = [
   {
-    electrumURL: 'testnet.bitcoincash.network',
+    electrumURL: 'bch0.kister.net',
+    electrumPort: 51_002
+  },
+  {
+    electrumURL: 'blackie.c3-soft.com',
     electrumPort: 60_002
   },
   {
     electrumURL: 'electroncash.de',
     electrumPort: 50_004
+  },
+  {
+    electrumURL: 'tbch.loping.net',
+    electrumPort: 60_002
+  },
+  {
+    electrumURL: 'testnet.bitcoincash.network',
+    electrumPort: 60_002
+  },
+  {
+    electrumURL: 'testnet.imaginary.cash',
+    electrumPort: 50_002
   }
 ]
 export const electrumPingInterval = 10_000
