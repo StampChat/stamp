@@ -683,7 +683,8 @@ export class RelayClient {
       }
     }
 
-    this.events.emit('receivedMessage', { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) })
+    const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
+    this.events.emit('receivedMessage', finalizedMessage)
   }
 
   async refresh ({ lastReceived } = {}) {

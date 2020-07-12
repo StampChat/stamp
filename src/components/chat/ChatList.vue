@@ -26,7 +26,7 @@
         <chat-list-item
           v-for="(contact) in getSortedChatOrder"
           :key="contact.address"
-          :chatAddr="contact.address"
+          :chatAddress="contact.address"
           :valueUnread="formatBalance(contact.totalUnreadValue)"
           :numUnread="contact.totalUnreadMessages"
           :loaded="loaded"

@@ -265,6 +265,8 @@ export default {
       assert(newMsg.items !== undefined)
       assert(newMsg.outpoints !== undefined)
       assert(newMsg.senderAddress !== undefined)
+      assert(address !== undefined)
+      assert(index !== undefined)
 
       const message = { payloadDigest: index, ...newMsg }
       if (index in state.messages) {
@@ -346,7 +348,7 @@ export default {
       if (!document.hasFocus() && !outbound && acceptable && lastRead < newMsg.serverTime) {
         const contact = rootGetters['contacts/getContact'](copartyAddress)
         const textItem = newMsg.items.find(item => item.type === 'text') || { text: '' }
-        if (contact.notify) {
+        if (contact && contact.notify) {
           desktopNotify(contact.profile.name, textItem.text, contact.profile.avatar, () => {
             dispatch('setActiveChat', copartyAddress)
           })

@@ -150,7 +150,7 @@ export default {
       return moment(timestamp)
     },
     stampAmount () {
-      if (!this.message) {
+      if (!this.message || !this.message.outpoints) {
         return '0 sats'
       }
       const amount = stampPrice(this.message.outpoints)

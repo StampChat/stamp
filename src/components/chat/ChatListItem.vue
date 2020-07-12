@@ -3,7 +3,7 @@
     :active="isActive"
     active-class="active-chat-list-item"
     clickable
-    @click="setActiveChat(chatAddr)"
+    @click="setActiveChat(chatAddress)"
   >
     <q-item-section avatar>
       <q-avatar rounded>
@@ -61,7 +61,7 @@ export default {
       getLatestMessage: 'chats/getLatestMessage'
     }),
     latestMessageBody () {
-      const info = this.getLatestMessage(this.chatAddr)
+      const info = this.getLatestMessage(this.chatAddress)
       if (info === null) {
         return ''
       }
@@ -72,14 +72,14 @@ export default {
       }
     },
     contact () {
-      return this.getContactProfile(this.chatAddr)
+      return this.getContactProfile(this.chatAddress)
     },
     isActive () {
-      return this.getActiveChat === this.chatAddr
+      return this.getActiveChat === this.chatAddress
     }
   },
   props: {
-    chatAddr: {
+    chatAddress: {
       type: String,
       required: true
     },
