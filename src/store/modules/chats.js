@@ -100,7 +100,7 @@ export async function rehydateChat (chatState) {
     if (!messageWrapper.newMsg) {
       continue
     }
-    const { index, newMsg, address } = messageWrapper
+    const { index, newMsg, copartyAddress } = messageWrapper
     assert(newMsg.outbound !== undefined)
     assert(newMsg.status !== undefined)
     assert(newMsg.receivedTime !== undefined)
@@ -113,19 +113,19 @@ export async function rehydateChat (chatState) {
     if (!chatState.messages) {
       chatState.messages = {}
     }
-    if (!chatState.chats[address]) {
-      chatState.chats[address] = { ...defaultContactObject, messages: [], address }
+    if (!chatState.chats[copartyAddress]) {
+      chatState.chats[copartyAddress] = { ...defaultContactObject, messages: [], copartyAddress }
     }
     chatState.messages[index] = message
-    chatState.chats[address].messages.push(message)
-    chatState.chats[address].lastReceived = message.serverTime
+    chatState.chats[copartyAddress].messages.push(message)
+    chatState.chats[copartyAddress].lastReceived = message.serverTime
     const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-    if (address !== chatState.activeChatAddr && chatState.chats[address].lastRead < message.serverTime) {
-      chatState.chats[address].totalUnreadValue += messageValue
-      chatState.chats[address].totalUnreadMessages += 1
+    if (copartyAddress !== chatState.activeChatAddr && chatState.chats[copartyAddress].lastRead < message.serverTime) {
+      chatState.chats[copartyAddress].totalUnreadValue += messageValue
+      chatState.chats[copartyAddress].totalUnreadMessages += 1
     }
     chatState.lastReceived = message.serverTime
-    chatState.chats[address].totalValue += messageValue
+    chatState.chats[copartyAddress].totalValue += messageValue
   }
 
   // Resort chats
