@@ -89,7 +89,6 @@
         label="Add"
         color="primary"
         @click="addContact()"
-        v-close-popup
       />
     </q-card-actions>
   </q-card>
