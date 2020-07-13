@@ -62,6 +62,18 @@ function calculateUnreadAggregates (messages, lastReadTime) {
   }
 }
 
+export function addDefaultChats (chatState) {
+  if (chatState.chats) {
+    for (const chat of defaultChats) {
+      if (!(chat.address in chatState.chats)) {
+        chatState.chats[chat.address] = chat
+      }
+    }
+
+    console.log('filled out default contacts')
+  }
+}
+
 export async function rehydateChat (chatState) {
   if (!chatState) {
     return
@@ -70,11 +82,7 @@ export async function rehydateChat (chatState) {
   chatState.messages = chatState.messages || {}
 
   if (chatState.chats) {
-    for (const chat of defaultChats) {
-      if (!(chat.address in chatState.chats)) {
-        chatState.chats[chat.address] = chat
-      }
-    }
+    addDefaultChats(chatState)
 
     for (const contactAddress in chatState.chats) {
       const contact = chatState.chats[contactAddress]
@@ -157,6 +165,7 @@ export default {
       return Object.values(state.chats).map((chat) => chat.totalUnreadMessages).reduce((acc, val) => acc + val, 0)
     },
     getSortedChatOrder (state) {
+      addDefaultChats(state)
       const sortedOrder = Object.values(state.chats).sort(
         (contactA, contactB) => {
           if (contactB.totalUnreadValue - contactA.totalUnreadValue !== 0) {
