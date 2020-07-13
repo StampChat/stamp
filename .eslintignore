@@ -1,4 +1,9 @@
 /dist
+/src-bex/www
+/src-capacitor
+/src-cordova
+/.quasar
+/node_modules
 /src/keyserver/addressmetadata_pb.js
 /src/relay/messaging_pb.js
 /src/relay/filters_pb.js

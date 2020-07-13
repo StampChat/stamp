@@ -21,8 +21,7 @@ module.exports = {
   },
 
   env: {
-    browser: true,
-    jest: true
+    browser: true
   },
 
   // Rules order is important, please avoid shuffling them
@@ -59,12 +58,12 @@ module.exports = {
   ],
 
   globals: {
-    'ga': true, // Google Analytics
-    'cordova': true,
-    '__statics': true,
-    'process': true,
-    'Capacitor': true,
-    'chrome': true
+    ga: true, // Google Analytics
+    cordova: true,
+    __statics: true,
+    process: true,
+    Capacitor: true,
+    chrome: true
   },
 
   // add your custom rules here
@@ -86,10 +85,9 @@ module.exports = {
     'prefer-promise-reject-errors': 'off',
 
     // TypeScript
-    'quotes': ['warn', 'single'],
+    quotes: ['warn', 'single', { avoidEscape: true }],
     '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/no-var-requires': 0,
-    "@typescript-eslint/no-empty-function": 1,
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
 
     // allow debugger during development only
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'

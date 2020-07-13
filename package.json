@@ -3,9 +3,7 @@
   "version": "0.0.2-alpha.7",
   "description": " A Bitcoin Cash powered internet relay chat",
   "productName": "Stamp",
-  "cordovaId": "org.cashweb.stamp",
-  "capacitorId": "",
-  "author": "Harry Barber <harrybarber@protonmail.com>",
+  "author": "harry@cryptonumismatics.org",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore ./",
@@ -17,12 +15,12 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
-    "@vue/composition-api": "^0.5.0",
+    "@vue/composition-api": "^0.6.4",
     "axios": "^0.18.1",
     "bip39": "^3.0.2",
     "bitcore-lib-cash": "^8.20.1",
     "bluebird": "^3.7.2",
-    "core-js": "2",
+    "core-js": "^3.6.5",
     "dompurify": "^2.0.11",
     "electrum-cash": "^1.0.1",
     "emoji-mart-vue-fast": "^7.0.2",
@@ -42,19 +40,17 @@
     "ws": "^7.3.0"
   },
   "devDependencies": {
-    "@quasar/app": "^1.6.2",
-    "@quasar/icongenie": "^2.2.0",
+    "@quasar/app": "^2.0.0",
     "@quasar/quasar-app-extension-testing": "^1.0.0",
-    "@quasar/quasar-app-extension-testing-unit-jest": "^1.0.0",
-    "@types/node": "12.12.21",
-    "@typescript-eslint/eslint-plugin": "^2.17.0",
-    "@typescript-eslint/parser": "^2.17.0",
+    "@quasar/quasar-app-extension-testing-unit-jest": "^1.0.1",
+    "@types/node": "^10.17.15",
+    "@typescript-eslint/eslint-plugin": "^3.3.0",
+    "@typescript-eslint/parser": "^3.3.0",
     "babel-eslint": "^10.0.1",
     "devtron": "^1.4.0",
-    "electron": "^8.0.1",
-    "electron-builder": "22.4.0",
+    "electron": "^9.0.0",
     "electron-debug": "^3.0.1",
-    "electron-devtools-installer": "^2.2.4",
+    "electron-devtools-installer": "^3.0.0",
     "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-loader": "^3.0.3",
@@ -73,7 +69,5 @@
   "browserslist": [
     "last 1 version, not dead, ie >= 11"
   ],
-  "resolutions": {
-    "@babel/parser": "7.7.5"
   }
 }
