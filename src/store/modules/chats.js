@@ -282,6 +282,7 @@ export default {
       state.messages[index] = message
       if (address in state.chats) {
         state.chats[address].messages.push(message)
+        state.chats[address].lastRead = Date.now()
         return
       }
       Vue.set(state.chats, address, { ...defaultContactObject, messages: [message], address })
