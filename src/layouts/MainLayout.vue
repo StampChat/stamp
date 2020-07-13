@@ -168,26 +168,62 @@ export default {
       console.error(err)
     }
 
-    // const lastReceived = this.lastReceived
-    const t0 = performance.now()
-    const refreshMessages = () => {
-      // Wait for a connected electrum client
-      if (!this.$electrum.connected) {
-        setTimeout(refreshMessages, 100)
-        return
+    // Start wallet initialization
+    // NOTE: By this point xPrivKey will be set either by boot or setup
+    const setupWallet = async () => {
+      while (true) {
+        // Wait for a connected electrum client
+        if (!this.$electrum.connected) {
+          await new Promise(resolve => {
+            setTimeout(resolve, 100)
+          })
+          continue
+        }
+
+        // Initialize wallet
+        try {
+          await this.$wallet.init()
+          break
+        } catch (err) {
+          console.error(err)
+          await new Promise(resolve => {
+            setTimeout(resolve, 100)
+          })
+        }
       }
-      this.$relayClient.refresh().then(() => {
-        const t1 = performance.now()
-        console.log(`Loading messages took ${t1 - t0}ms`)
-        this.$wallet.init()
-        console.log('Wallet initialized')
-        this.loaded = true
-      }).catch((err) => {
-        console.error(err)
-        setTimeout(refreshMessages, 100)
-      })
     }
-    refreshMessages()
+
+    // NOTE: Wallet does not need to initalized, but xPrivKey will be set
+    // Start message refresh
+    const refreshMessages = async () => {
+      const t0 = performance.now()
+      while (true) {
+        // Wait for a connected electrum client
+        if (!this.$electrum.connected) {
+          await new Promise(resolve => {
+            setTimeout(resolve, 100)
+          })
+          continue
+        }
+
+        try {
+          await this.$relayClient.refresh()
+          const t1 = performance.now()
+          console.log(`Loading messages took ${t1 - t0}ms`)
+          break
+        } catch (err) {
+          console.error(err)
+          await new Promise(resolve => {
+            setTimeout(resolve, 100)
+          })
+        }
+      }
+    }
+
+    Promise.all([refreshMessages(), setupWallet()]).then(() => {
+      console.log('Initalization complete')
+      this.loaded = true
+    })
   },
   mounted () {
     document.addEventListener('keydown', this.shortcutKeyListener)
