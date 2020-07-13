@@ -117,11 +117,11 @@ export default {
         })
     },
     nextAddress () {
+      // TODO: Remove this functionality and only show ID address
       // Increment address
       this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
       const privKey = this.$wallet.privKeys[this.paymentAddrCounter]
       this.currentAddress = privKey.toAddress('testnet').toString() // TODO: Make generic
-      console.log(this.currentAddress)
     },
     getBalance () {
       return this.$wallet.balance

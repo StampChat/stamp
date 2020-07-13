@@ -48,7 +48,6 @@ export default {
       return message || { items: [], senderAddress: 'undefined' }
     },
     name () {
-      console.log('IsSame', this.message.senderAddress === this.$wallet.myAddressStr)
       if (this.message.senderAddress === this.$wallet.myAddressStr) {
         return this.getProfile.name
       }
