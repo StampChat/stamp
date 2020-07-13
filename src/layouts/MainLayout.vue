@@ -174,6 +174,7 @@ export default {
       // Wait for a connected electrum client
       if (!this.$electrum.connected) {
         setTimeout(refreshMessages, 100)
+        return
       }
       this.$relayClient.refresh().then(() => {
         const t1 = performance.now()

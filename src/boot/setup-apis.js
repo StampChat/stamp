@@ -4,7 +4,19 @@ import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils
 import { Wallet } from '../wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
 
-function instrumentElectrumClient ({ client, observables, reconnector }) {
+function instrumentElectrumClient ({ Vue, wallet, client, observables, reconnector }) {
+  // We need a local variable that is unique to this client, so it doesn't fuck around
+  let connectionAlive = false
+  const notifyDisconnect = () => {
+    // Don't reset connected state if we've already
+    if (!connectionAlive) {
+      return
+    }
+    connectionAlive = false
+    console.log('electrum disconnected')
+    observables.connected = false
+  }
+
   const keepAlive = () => {
     setTimeout(() =>
       client.request('server_ping')
@@ -19,25 +31,28 @@ function instrumentElectrumClient ({ client, observables, reconnector }) {
           }
         ).catch(err => {
           console.error('Error pinging electrum server. Likely disconnected', err)
-          observables.connected = false
+          notifyDisconnect()
         })
     , electrumPingInterval)
   }
 
   client.connection.socket.on('connect', () => {
     console.log('electrum connected')
+    // (Re)set state on Vue prototype
+    Vue.prototype.$electrumClient = client
+    wallet.setElectrumClient(client)
+    connectionAlive = true
     observables.connected = true
     keepAlive()
   })
 
   client.connection.socket.on('close', () => {
-    console.log('electrum disconnected')
-    observables.connected = false
+    notifyDisconnect()
     reconnector()
   })
 
   client.connection.socket.on('end', (e) => {
-    observables.connected = false
+    notifyDisconnect()
     console.log(e)
   })
 
@@ -54,13 +69,12 @@ function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
   console.log('Using electrum server:', electrumURL, electrumPort)
   const client = new ElectrumClient('Stamp Wallet', '1.4.1', electrumURL, electrumPort)
   instrumentElectrumClient({
+    Vue,
     client,
     observables,
+    wallet,
     reconnector: () => createAndBindNewElectrumClient({ Vue, observables, wallet })
   })
-  // (Re)set state on Vue prototype
-  Vue.prototype.$electrumClient = client
-  wallet.setElectrumClient(client)
 }
 
 function getWalletClient ({ store }) {

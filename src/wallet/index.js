@@ -56,6 +56,8 @@ export class Wallet {
 
   setElectrumClient (client) {
     this.electrumClient = client
+    this.initAddresses()
+    this.startListeners()
   }
 
   setXPrivKey (xPrivKey) {
