@@ -14,41 +14,6 @@ const standardInputSize = 175 // A few extra bytes
 const minimumOutputAmount = 5120
 const feePerByte = 2
 
-export class MockWalletStorage {
-  constructor () {
-    this.utxos = {}
-    this.frozenUTXOs = {}
-  }
-
-  getFrozenUTXOs () {
-    return this.frozenUTXOs
-  }
-
-  removeUTXO (id) {
-    delete this.utxos[id]
-  }
-
-  removeFrozenUTXO (id) {
-    delete this.frozenUTXOs[id]
-  }
-
-  addUTXO (output) {
-    this.utxos[calcId(output)] = output
-  }
-
-  freezeUTXO (id) {
-    const frozenUTXO = this.utxos[id]
-    delete this.utxos[id]
-    this.frozenUTXOs[id] = frozenUTXO
-  }
-
-  unfreezeUTXO (id) {
-    const utxo = this.frozenUTXOs[id]
-    delete this.frozenUTXOs[id]
-    this.utxos[id] = utxo
-  }
-}
-
 export class Wallet {
   constructor (storage) {
     this.storage = storage
@@ -74,12 +39,9 @@ export class Wallet {
     const updateUTXOTime = performance.now()
     await this.startListeners()
     const startListenersTime = performance.now()
-    await this.fixFrozenUTXOs()
-    const fixFrozenUTXOsTime = performance.now()
     console.log(`initAddresses UTXOs took ${initAddressTime - t0} ms`)
     console.log(`updateUTXOTime UTXOs took ${updateUTXOTime - t0} ms`)
     console.log(`startListenersTime UTXOs took ${startListenersTime - t0} ms`)
-    console.log(`fixFrozenUTXOsTime UTXOs took ${fixFrozenUTXOsTime - t0} ms`)
   }
 
   get xPrivKey () {
@@ -137,29 +99,34 @@ export class Wallet {
     this.changeAddresses[address] = { privKey }
   }
 
-  refreshUTXOsByAddr ({ address, outputs }) {
-    // Delete all utxos by address
-    Object.entries(this.storage.getUTXOs()).forEach(([id, utxo]) => {
-      if (utxo.address === address) {
-        this.removeUTXO(id)
-      }
-    })
-    // Make a copy so this is not mutated
-    const frozenUTXOs = { ...this.storage.getFrozenUTXOs() }
-    // Remove all frozen utxos by address
-    Object.entries(frozenUTXOs).forEach(([id, utxo]) => {
-      if (utxo.address === address) {
-        this.storage.removeFrozenUTXO(id)
-      }
-    })
+  async refreshUTXOsByAddr ({ address, outputs }) {
+    const ids = outputs.map((output) => calcId(output))
+    const foundIds = []
 
-    outputs.forEach(output => {
-      const id = calcId(output)
-      this.addUTXO(output)
-      if (id in frozenUTXOs) {
-        this.storage.freezeUTXO(id)
+    // Remove missing utxos
+    const outpointIterator = await this.storage.getOutpointIterator()
+    for await (const outpoint of outpointIterator) {
+      if (outpoint.address !== address) {
+        continue
       }
-    })
+      const outpointId = calcId(outpoint)
+      const index = ids.indexOf(outpointId)
+      foundIds.push(outpointId)
+      if (index !== -1) {
+        continue
+      }
+      ids.splice(index, 1)
+      this.deleteOutpoint(outpointId)
+    }
+
+    // Add new unspent UTXO
+    for (const outpoint of outputs) {
+      const outpointId = calcId(outpoint)
+      if (foundIds.includes(outpointId)) {
+        continue
+      }
+      this.putOutpoint(outpoint)
+    }
   }
 
   async updateUTXOFromScriptHash (scriptHash) {
@@ -178,7 +145,7 @@ export class Wallet {
         }
         return output
       })
-      this.refreshUTXOsByAddr({ address, outputs })
+      await this.refreshUTXOsByAddr({ address, outputs })
     } catch (err) {
       console.error('error deserializing utxo address', err, scriptHash)
     }
@@ -187,14 +154,17 @@ export class Wallet {
   async updateHDUTXOs () {
     // Check HD Wallet
     const scriptHashes = Object.keys(this.electrumScriptHashes)
-    await P.map(scriptHashes, scriptHash => this.updateUTXOFromScriptHash(scriptHash), { concurrency: 20 })
+    await P.map(scriptHashes, scriptHash => this.updateUTXOFromScriptHash(scriptHash), { concurrency: 5 })
   }
 
-  async fixFrozenUTXO (utxoId) {
+  async fixOutpoint (utxoId) {
+    // TODO: This needs some thought to ensure we do not delete outpoints that
+    // are possibly just out of sync with the mempool.
+
     // Unfreeze UTXO if confirmed to be unspent else delete
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
     const client = this.electrumClient
-    const utxo = this.storage.getFrozenUTXOs()[utxoId]
+    const utxo = this.storage.getOutpoint(utxoId)
     if (!utxo) {
       console.log(`Missing UTXO for ${utxoId}`)
       return
@@ -206,52 +176,12 @@ export class Wallet {
         return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
       })) {
         // Found utxo
-        this.storage.unfreezeUTXO(utxoId)
-      } else {
-        this.storage.removeFrozenUTXO(utxoId)
+        return
       }
+      this.storage.deleteOutpoint(utxoId)
     } catch (err) {
       console.error('error deserializing utxo address', err, utxo)
     }
-  }
-
-  async fixFrozenUTXOs () {
-    // Unfreeze UTXO if confirmed to be unspent else delete, for all frozen UTXOs
-    // WARNING: This is not thread-safe, do not call when others hold the UTXO
-    const frozenUTXOs = this.storage.getFrozenUTXOs()
-    await P.map(Object.values(frozenUTXOs),
-      async (id) => {
-        await this.fixFrozenUTXO(id)
-      },
-      { concurrency: 10 })
-  }
-
-  async fixUTXOs () {
-    // Unfreeze UTXO if confirmed to be unspent else delete, for all (non-p2pkh) UTXOs
-    // WARNING: This is not thread-safe, do not call when others hold the UTXO
-    const client = this.electrumClient
-    const utxos = this.storage.getUTXOs()
-    const utxoIds = Object.keys(utxos)
-    console.log(`Refreshing state of ${utxoIds.length} utxos with electrum`)
-    await P.map(utxoIds,
-      async id => {
-        const utxo = utxos[id]
-        if (utxo.type !== 'p2pkh') {
-          try {
-            const scriptHash = toElectrumScriptHash(utxo.address)
-            const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-            if (!elOutputs.some(output => {
-              return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
-            })) {
-            // No such utxo
-              this.removeUTXO(id)
-            }
-          } catch (err) {
-            console.error('error deserializing utxo address', err, utxo)
-          }
-        }
-      },
-      { concurrency: 10 })
   }
 
   async startListeners () {
@@ -279,21 +209,22 @@ export class Wallet {
   async forwardUTXOsToAddress ({ utxos, address }) {
     let transaction = new cashlib.Transaction()
 
-    const ourUtxos = this.storage.getUTXOs()
-    const inputIds = utxos.map(utxo => calcId(utxo)).filter(id => id in ourUtxos)
-    const utxoSetToUse = inputIds.map((id) => ourUtxos[id])
-    let satoshis = 0
+    const outpointIterator = await this.storage.getOutpointIterator()
+    const outpointIds = utxos.map(utxo => calcId(utxo))
     const signingKeys = []
-    if (!utxoSetToUse.length) {
-      return
-    }
+    let satoshis = 0
 
-    for (const utxo of utxoSetToUse) {
-      const utxoAddress = utxo.address
-      utxo.script = cashlib.Script.buildPublicKeyHashOut(utxoAddress).toHex()
-      signingKeys.push(utxo.privKey)
-      transaction = transaction.from(utxo)
-      satoshis += utxo.satoshis
+    const usedIDs = []
+    for await (const outpoint of outpointIterator) {
+      const outpointId = calcId(outpoint)
+      if (!outpointIds.includes(outpointId)) {
+        continue
+      }
+      usedIDs.push(outpointId)
+      outpoint.script = cashlib.Script.buildPublicKeyHashOut(outpoint.address).toHex()
+      signingKeys.push(outpoint.privKey)
+      transaction = transaction.from(outpoint)
+      satoshis += outpoint.satoshis
     }
 
     const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
@@ -301,23 +232,22 @@ export class Wallet {
     const fees = txnSize * feePerByte
 
     transaction.to(address, satoshis - fees)
-    inputIds.map(id => this.storage.freezeUTXO(id))
     // Sign transaction
     transaction = transaction.sign(signingKeys)
 
-    console.log('broadcasting forwarding txn', transaction)
+    console.log('Broadcasting forwarding txn', transaction)
     const txHex = transaction.toString()
     try {
       await this.electrumClient.request('blockchain.transaction.broadcast', txHex)
     } catch (err) {
       console.error(err)
-      // Unfreeze UTXOs if stealth tx broadcast fails
-      inputIds.forEach(id => {
-        this.unfreezeUTXO(id)
+      // Fix UTXOs if tx broadcast fails
+      usedIDs.forEach(id => {
+        this.fixOutpoint(id)
       })
       throw new Error('Error broadcasting forwarding transaction')
     }
-    return { transaction, usedIDs: inputIds }
+    return { transaction, usedIDs }
   }
 
   finalizeTransaction ({ transaction, exactOutputs = true, signingKeys }) {
@@ -390,7 +320,7 @@ export class Wallet {
     console.log(transaction)
   }
 
-  constructTransactionSet ({ addressGenerator, amount }) {
+  async constructTransactionSet ({ addressGenerator, amount }) {
     const pickOne = function (arr) {
       if (arr.length === 0) {
         throw new RangeError('Chance: Cannot pickone() from an empty array')
@@ -407,7 +337,16 @@ export class Wallet {
       const transaction = new cashlib.Transaction()
       const usedUtxos = []
 
-      const utxos = Object.values(this.storage.getUTXOs())
+      const outpointIterator = await this.storage.getOutpointIterator()
+      const utxos = []
+
+      for await (const utxo of outpointIterator) {
+        if (utxo.frozen) {
+          continue
+        }
+        utxos.push(utxo)
+      }
+
       // Sort available UTXOs by total amount per transaction
       const sortedUtxos = R.pipe(
         R.groupBy(utxo => utxo.txId),
@@ -491,7 +430,7 @@ export class Wallet {
       amountLeft -= amountToUse
       usedUtxos.push(...stagedUtxos)
       stagedUtxos.map(
-        utxo => this.storage.freezeUTXO(calcId(utxo))
+        utxo => this.storage.freezeOutpoint(calcId(utxo))
       )
       this.finalizeTransaction({ transaction, signingKeys })
       transactionBundle.push({
@@ -505,7 +444,7 @@ export class Wallet {
     return transactionBundle
   }
 
-  constructTransaction ({ outputs, exactOutputs = false }) {
+  async constructTransaction ({ outputs, exactOutputs = false }) {
     let transaction = new cashlib.Transaction()
 
     // Add outputs
@@ -519,7 +458,13 @@ export class Wallet {
     const usedUtxos = []
 
     const amountRequired = transaction.outputAmount
-    const utxos = Object.values(this.storage.getUTXOs())
+    const outpointIterator = await this.storage.getOutpointIterator()
+    const utxos = []
+
+    for await (const utxo of outpointIterator) {
+      utxos.push(utxo)
+    }
+
     // Sort available UTXOs by total amount per transaction
     const sortedUtxos = R.pipe(
       R.groupBy(utxo => utxo.txId),
@@ -565,7 +510,7 @@ export class Wallet {
     }
 
     usedUtxos.map(
-      utxo => this.storage.freezeUTXO(calcId(utxo))
+      utxo => this.storage.freezeOutpoint(calcId(utxo))
     )
 
     // Add change outputs using our HD wallet.  We want multiple outputs following a
@@ -594,10 +539,6 @@ export class Wallet {
     return Object.keys(this.addresses)[seqNum]
   }
 
-  get balance () {
-    return Object.values(this.storage.getUTXOs()).reduce((acc, output) => acc + output.satoshis, 0)
-  }
-
   get myAddress () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
@@ -619,29 +560,31 @@ export class Wallet {
     return Object.freeze(Object.values(this.addresses).map(address => Object.freeze(address.privKey)))
   }
 
-  unfreezeUTXO (id) {
+  unfreezeOutpoint (id) {
     // TODO: Nobody should be calling this outside of the wallet
-    return this.storage.unfreezeUTXO(id)
+    return this.storage.unfreezeOutpoint(id)
   }
 
-  addUTXO (utxo) {
-    assert(utxo.type)
-    assert(utxo.privKey)
-    assert(utxo.address)
-    assert(utxo.satoshis)
+  putOutpoint (utxo) {
+    assert(utxo.type !== undefined)
+    assert(utxo.privKey !== undefined)
+    assert(utxo.address !== undefined)
+    assert(utxo.satoshis !== undefined)
+    assert(utxo.txId !== undefined)
+    assert(utxo.outputIndex !== undefined)
     console.log('adding utxo', calcId(utxo))
     // TODO: Nobody should be calling this outside of the wallet
-    return this.storage.addUTXO(utxo)
+    return this.storage.putOutpoint(utxo)
   }
 
-  removeUTXO (id) {
-    const utxos = this.storage.getUTXOs()
-    if (!(id in utxos)) {
+  deleteOutpoint (id) {
+    const outpoint = this.storage.getOutpoint(id)
+    if (!outpoint) {
       console.log(id, 'missing from UTXO set?')
       return
     }
     console.log('removing utxo', id)
     // TODO: Nobody should be calling this outside of the wallet
-    return this.storage.removeUTXO(id)
+    return this.storage.deleteOutpoint(id)
   }
 }

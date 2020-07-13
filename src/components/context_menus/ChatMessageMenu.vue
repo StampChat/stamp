@@ -88,18 +88,18 @@ export default {
       getStampAmount: 'chats/getStampAmount'
     }),
     sendMessage (...args) {
-      this.$relayClient.sendMessage(args)
+      return this.$relayClient.sendMessage(args)
     },
     sendStealthPayment (...args) {
-      this.$relayClient.sendStealthPayment(args)
+      return this.$relayClient.sendStealthPayment(args)
     },
     sendImage (...args) {
-      this.$relayClient.sendImage(args)
+      return this.$relayClient.sendImage(args)
     },
     resend () {
       this.deleteMessage({ address: this.address, payloadDigest: this.payloadDigest, index: this.index })
       const stampAmount = this.getStampAmount()(this.address)
-      this.$relayClient.sendMessageImpl({ address: this.address, items: this.message.items, stampAmount })
+      return this.$relayClient.sendMessageImpl({ address: this.address, items: this.message.items, stampAmount })
     },
     copyMessage () {
       const text = this.message.items.find(el => el.type === 'text').text

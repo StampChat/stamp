@@ -44,7 +44,7 @@
       <q-item v-show="!compact" clickable @click="walletOpen=true">
         <q-item-section>
           <q-item-label>Balance</q-item-label>
-          <q-item-label caption>{{ getBalance }}</q-item-label>
+          <q-item-label caption>{{ formattedBalance }}</q-item-label>
         </q-item-section>
         <q-item-section v-if="!walletConnected" side>
           <q-btn icon="account_balance_wallet" flat round color="red" />
@@ -103,7 +103,8 @@ export default {
   computed: {
     ...mapGetters({
       getSortedChatOrder: 'chats/getSortedChatOrder',
-      getNumUnread: 'chats/getNumUnread'
+      getNumUnread: 'chats/getNumUnread',
+      balance: 'wallet/balance'
     }),
     relayConnected () {
       return this.$relay.connected
@@ -111,8 +112,8 @@ export default {
     walletConnected () {
       return this.$electrum.connected
     },
-    getBalance () {
-      return formatBalance(this.$wallet.balance)
+    formattedBalance () {
+      return formatBalance(this.balance)
     }
   }
 }

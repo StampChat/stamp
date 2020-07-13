@@ -1,10 +1,11 @@
 import Vue from 'vue'
 
 import { calcId } from '../../wallet/helpers'
+import { store } from '../../adapters/level-outpoint-store'
 
 const cashlib = require('bitcore-lib-cash')
 
-export function rehydrateWallet (wallet) {
+export async function rehydrateWallet (wallet) {
   if (!wallet || !wallet.xPrivKey) {
     return
   }
@@ -12,25 +13,15 @@ export function rehydrateWallet (wallet) {
     wallet.feePerByte = 2
   }
   wallet.xPrivKey = cashlib.HDPrivateKey.fromObject(wallet.xPrivKey)
-
-  if (!wallet.utxos) {
-    return
-  }
-  for (const utxo of Object.values(wallet.utxos)) {
-    if (utxo.type === 'p2pkh') {
-      // Does not keep it's privKey with it because we like edge cases.
+  wallet.utxos = {}
+  // FIXME: This shouldn't be necessary, but the GUI needs real time
+  // balance updates. In the future, we should just aggregate a total over time here.
+  const outpointIterator = await store.getOutpointIterator()
+  for await (const outpoint of outpointIterator) {
+    if (!outpoint.address) {
       continue
     }
-    utxo.address = cashlib.Address.fromObject(utxo.address)
-    utxo.privKey = cashlib.PrivateKey.fromObject(utxo.privKey)
-  }
-  for (const utxo of Object.values(wallet.frozenUTXOs)) {
-    if (utxo.type === 'p2pkh') {
-      // Does not keep it's privKey with it because we like edge cases.
-      continue
-    }
-    utxo.address = cashlib.Address.fromObject(utxo.address)
-    utxo.privKey = cashlib.PrivateKey.fromObject(utxo.privKey)
+    wallet.utxos[calcId(outpoint)] = outpoint
   }
 }
 
@@ -39,7 +30,6 @@ export default {
   state: {
     xPrivKey: null,
     utxos: {},
-    frozenUTXOs: {},
     feePerByte: 2,
     seedPhrase: null
   },
@@ -50,10 +40,6 @@ export default {
     reset (state) {
       state.xPrivKey = null
       state.utxos = {}
-      state.frozenUTXOs = {}
-    },
-    setAddress (state, { address, privKey }) {
-      Vue.set(state.addresses, address, { privKey })
     },
     setXPrivKey (state, xPrivKey) {
       state.xPrivKey = xPrivKey
@@ -61,22 +47,9 @@ export default {
     removeUTXO (state, id) {
       Vue.delete(state.utxos, id)
     },
-    removeFrozenUTXO (state, id) {
-      Vue.delete(state.frozenUTXOs, id)
-    },
     addUTXO (state, output) {
       const utxoId = calcId(output)
       Vue.set(state.utxos, utxoId, output)
-    },
-    freezeUTXO (state, id) {
-      const frozenUTXO = state.utxos[id]
-      Vue.delete(state.utxos, id)
-      Vue.set(state.frozenUTXOs, id, frozenUTXO)
-    },
-    unfreezeUTXO (state, id) {
-      const utxo = state.frozenUTXOs[id]
-      Vue.delete(state.frozenUTXOs, id)
-      Vue.set(state.utxos, id, utxo)
     }
   },
   getters: {
@@ -89,14 +62,8 @@ export default {
     getUTXOs (state) {
       return state.utxos
     },
-    getFrozenUTXOs (state) {
-      return state.frozenUTXOs
-    },
-    getUTXO (state, id) {
-      return state.utxos[id]
-    },
-    getFrozenUTXO: (state) => (id) => {
-      return state.frozenUTXOs[id]
+    balance (state) {
+      return Object.values(state.utxos).reduce((acc, output) => acc + output.satoshis, 0) || 0
     }
   }
 }

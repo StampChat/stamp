@@ -91,6 +91,7 @@
 <script>
 import QrcodeVue from 'qrcode.vue'
 import { copyToClipboard } from 'quasar'
+import { mapGetters } from 'vuex'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
 import { formatBalance } from '../../utils/formatting'
@@ -123,9 +124,6 @@ export default {
       const privKey = this.$wallet.privKeys[this.paymentAddrCounter]
       this.currentAddress = privKey.toAddress('testnet').toString() // TODO: Make generic
     },
-    getBalance () {
-      return this.$wallet.balance
-    },
     openFaucet () {
       const shell = require('electron').shell
       event.preventDefault()
@@ -136,12 +134,13 @@ export default {
     }
   },
   computed: {
+    ...mapGetters({ balance: 'wallet/balance' }),
     percentageBalance () {
-      const percentage = 100 * Math.min(this.getBalance() / this.recomendedBalance, 1)
+      const percentage = 100 * Math.min(this.balance / this.recomendedBalance, 1)
       return percentage
     },
     formatBalance () {
-      return formatBalance(this.getBalance())
+      return formatBalance(this.balance)
     }
   }
 }
