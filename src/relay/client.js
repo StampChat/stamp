@@ -336,8 +336,7 @@ export class RelayClient {
       const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
       const client = this.wallet.electrumClient
       Promise.all(transactions.map(transaction => {
-        console.log('broadcasting txn')
-        console.log(transaction)
+        console.log('Broadcasting a transaction', transaction)
         return client.request('blockchain.transaction.broadcast', transaction.toString())
       }))
         .then(() => this.pushMessages(destAddr, messageSet))

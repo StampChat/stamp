@@ -152,7 +152,7 @@ export default {
   },
   created () {
     this.$q.dark.set(this.getDarkMode())
-    console.log('loading')
+    console.log('Loading')
 
     if (!this.activeChatAddr) {
       const contacts = this.getSortedChatOrder()

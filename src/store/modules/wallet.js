@@ -66,7 +66,6 @@ export default {
     },
     addUTXO (state, output) {
       const utxoId = calcId(output)
-      console.log('adding utxo', utxoId)
       Vue.set(state.utxos, utxoId, output)
     },
     freezeUTXO (state, id) {

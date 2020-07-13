@@ -500,10 +500,6 @@ export class Wallet {
         usedIds: usedUtxos.map(utxo => calcId(utxo))
       })
     }
-    console.log(`amountLeft: ${amountLeft} end ${amount}`)
-    console.log('Reduction:', transactionBundle.reduce((total, { transaction }) => {
-      return transaction.outputs[0].satoshis + total
-    }, 0))
 
     assert(retries < 5, 'Error building transactions')
     return transactionBundle
@@ -633,6 +629,7 @@ export class Wallet {
     assert(utxo.privKey)
     assert(utxo.address)
     assert(utxo.satoshis)
+    console.log('adding utxo', calcId(utxo))
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.addUTXO(utxo)
   }
