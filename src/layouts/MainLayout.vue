@@ -206,6 +206,7 @@ export default {
           continue
         }
 
+        // Refresh messages
         try {
           await this.$relayClient.refresh()
           const t1 = performance.now()
@@ -220,6 +221,7 @@ export default {
       }
     }
 
+    // Set loaded once both done
     Promise.all([refreshMessages(), setupWallet()]).then(() => {
       console.log('Initalization complete')
       this.loaded = true
