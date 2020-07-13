@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeImage, nativeTheme, Tray, Menu, shell } from 'electron'
+import { app, BrowserWindow, nativeTheme, Tray, Menu, shell, nativeImage } from 'electron'
 const path = require('path')
 
 // Enable single instance lock
@@ -35,6 +35,7 @@ function getNativeIconPath () {
 let mainWindow
 let tray
 const iconPath = getNativeIconPath()
+const nativeIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
 
 function createWindow () {
   const contextMenu = Menu.buildFromTemplate([
@@ -52,8 +53,10 @@ function createWindow () {
       }
     }
   ])
-  tray = new Tray(iconPath)
+
+  tray = new Tray(nativeIcon)
   tray.setContextMenu(contextMenu)
+
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
@@ -61,11 +64,9 @@ function createWindow () {
     icon: iconPath,
     webPreferences: {
       nodeIntegration: process.env.QUASAR_NODE_INTEGRATION,
-      nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION,
+      nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION
     }
   })
-
-
 
   mainWindow.loadURL(process.env.APP_URL)
 
