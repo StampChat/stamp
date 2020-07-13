@@ -92,6 +92,7 @@ function getWalletClient ({ store }) {
 }
 
 export default async ({ store, Vue }) => {
+  await store.restored
   // TODO: WE should probably rename this file to something more specific
   // as its instantiating the wallet now also.
   const wallet = getWalletClient({ store })
@@ -102,7 +103,7 @@ export default async ({ store, Vue }) => {
   if (xPrivKey) {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
-    await wallet.init()
+    // await wallet.init()
   }
   const { client: relayClient, observables: relayObservables } = getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumObservables, store })
   const relayToken = store.getters['relayClient/getToken']
