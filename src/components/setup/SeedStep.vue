@@ -146,7 +146,7 @@
 import { copyToClipboard } from 'quasar'
 import { seedCopiedNotify } from '../../utils/notifications'
 
-import bip39 from 'bip39'
+import { generateMnemonic, validateMnemonic } from 'bip39'
 
 export default {
   model: {
@@ -167,7 +167,7 @@ export default {
   },
   data () {
     return {
-      generatedSeed: bip39.generateMnemonic(),
+      generatedSeed: generateMnemonic(),
       importedSeed: this.seedData.importedSeed,
       tab: this.seedData.type
     }
@@ -182,7 +182,7 @@ export default {
         })
     },
     nextMnemonic () {
-      this.generatedSeed = bip39.generateMnemonic()
+      this.generatedSeed = generateMnemonic()
       this.$emit('input', this.computedValues)
     },
     pasteImported () {
@@ -196,11 +196,11 @@ export default {
   },
   computed: {
     isImportedValid () {
-      return bip39.validateMnemonic(this.importedSeed.trim())
+      return validateMnemonic(this.importedSeed.trim())
     },
     computedValues () {
       const importedSeed = this.importedSeed.trim()
-      const valid = bip39.validateMnemonic(importedSeed)
+      const valid = validateMnemonic(importedSeed)
       const values = {
         type: this.tab,
         valid,
