@@ -103,7 +103,7 @@ import { errorNotify } from '../utils/notifications'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 
 Vue.use(VueRouter)
 

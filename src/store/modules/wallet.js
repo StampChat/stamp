@@ -3,7 +3,7 @@ import Vue from 'vue'
 import { calcId } from '../../wallet/helpers'
 import { store } from '../../adapters/level-outpoint-store'
 
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 
 export async function rehydrateWallet (wallet) {
   if (!wallet || !wallet.xPrivKey) {

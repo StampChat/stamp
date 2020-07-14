@@ -45,7 +45,7 @@
 <script>
 import { sentTransactionNotify, errorNotify } from '../../utils/notifications'
 
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 
 export default {
   components: {

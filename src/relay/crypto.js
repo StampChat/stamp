@@ -1,17 +1,16 @@
-import { PrivateKey, PublicKey } from 'bitcore-lib-cash'
+import { PrivateKey, PublicKey, crypto, HDPublicKey, HDPrivateKey } from 'bitcore-lib-cash'
 
-const forge = require('node-forge')
-const cashlib = require('bitcore-lib-cash')
+import forge from 'node-forge'
 
 export const constructStealthPubKey = function (emphemeralPrivKey, destPubKey) {
   const dhKeyPoint = destPubKey.point.mul(emphemeralPrivKey.bn) // ebG
-  const dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
+  const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
 
-  const digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
+  const digest = crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
   const digestPublicKey = PrivateKey.fromBuffer(digest).toPublicKey() // H(ebG)G
 
   const stealthPublicKey = PublicKey(digestPublicKey.point.add(destPubKey.point)) // H(ebG)G + bG
-  return new cashlib.HDPublicKey({
+  return new HDPublicKey({
     publicKey: stealthPublicKey.toBuffer(),
     depth: 0,
     network: 'testnet',
@@ -23,14 +22,14 @@ export const constructStealthPubKey = function (emphemeralPrivKey, destPubKey) {
 
 export const constructStealthPrivKey = function (emphemeralPubKey, privKey) {
   const dhKeyPoint = emphemeralPubKey.point.mul(privKey.bn) // ebG
-  const dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
+  const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
 
-  const digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
-  const digestBn = cashlib.crypto.BN.fromBuffer(digest)
+  const digest = crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
+  const digestBn = crypto.BN.fromBuffer(digest)
 
-  const stealthPrivBn = digestBn.add(privKey.bn).mod(cashlib.crypto.Point.getN()) // H(ebG) + b
+  const stealthPrivBn = digestBn.add(privKey.bn).mod(crypto.Point.getN()) // H(ebG) + b
   const stealthPrivateKey = PrivateKey(stealthPrivBn)
-  return new cashlib.HDPrivateKey({
+  return new HDPrivateKey({
     privateKey: stealthPrivateKey.toBuffer(),
     depth: 0,
     network: 'testnet',
@@ -45,7 +44,7 @@ export const constructStampPubKey = function (outpointDigest, destPubKey) {
   const digestPublicKey = digestPrivateKey.toPublicKey()
   const stampPoint = digestPublicKey.point.add(destPubKey.point)
   const stampPublicKey = PublicKey.fromPoint(stampPoint)
-  return new cashlib.HDPublicKey({
+  return new HDPublicKey({
     publicKey: stampPublicKey.toBuffer(),
     depth: 0,
     network: 'testnet',
@@ -56,10 +55,10 @@ export const constructStampPubKey = function (outpointDigest, destPubKey) {
 }
 
 export const constructStampPrivKey = function (outpointDigest, privKey) {
-  const digestBn = cashlib.crypto.BN.fromBuffer(outpointDigest)
-  const stampPrivBn = privKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN())
+  const digestBn = crypto.BN.fromBuffer(outpointDigest)
+  const stampPrivBn = privKey.bn.add(digestBn).mod(crypto.Point.getN())
   const stampPrivKey = PrivateKey(stampPrivBn)
-  const key = new cashlib.HDPrivateKey({
+  const key = new HDPrivateKey({
     privateKey: stampPrivKey.toBuffer(),
     depth: 0,
     network: 'testnet',
@@ -71,8 +70,8 @@ export const constructStampPrivKey = function (outpointDigest, privKey) {
 }
 
 export const constructStampAddress = function (outpointDigest, privKey) {
-  const digestBn = cashlib.crypto.BN.fromBuffer(outpointDigest)
-  const stampPrivBn = privKey.bn.add(digestBn).mod(cashlib.crypto.Point.getN())
+  const digestBn = crypto.BN.fromBuffer(outpointDigest)
+  const stampPrivBn = privKey.bn.add(digestBn).mod(crypto.Point.getN())
   const stampAddress = PrivateKey(stampPrivBn).toAddress('testnet')
   return stampAddress
 }
@@ -83,10 +82,10 @@ export const constructDHKeyFromEphemPrivKey = function (ephemeralPrivKey, privKe
 
   // Construct DH key
   const dhKeyPoint = destPubKey.point.mul(emphemeralPrivKeyBn).add(privKey.toPublicKey().point)
-  const dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
+  const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
 
   // Extract encryption params from digest
-  const digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw)
+  const digest = crypto.Hash.sha256(dhKeyPointRaw)
   const iv = new forge.util.ByteBuffer(digest.slice(0, 16))
   const key = new forge.util.ByteBuffer(digest.slice(16))
 
@@ -97,10 +96,10 @@ export const constructDHKeyFromEphemPubKey = function (ephemeralPubKey, sourcePu
   // Construct DH key
   const destPrivKeyBn = destPrivKey.toBigNumber()
   const dhKeyPoint = ephemeralPubKey.point.mul(destPrivKeyBn).add(sourcePubkey.point)
-  const dhKeyPointRaw = cashlib.crypto.Point.pointToCompressed(dhKeyPoint)
+  const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
 
   // Extract encryption params from digest
-  const digest = cashlib.crypto.Hash.sha256(dhKeyPointRaw)
+  const digest = crypto.Hash.sha256(dhKeyPointRaw)
   const iv = new forge.util.ByteBuffer(digest.slice(0, 16))
   const key = new forge.util.ByteBuffer(digest.slice(16))
 
@@ -157,7 +156,7 @@ export const encryptEphemeralKey = function (ephemeralPrivKey, privKey, entriesD
   // Construct AES key
   const mergedKey = Buffer.concat([privKey.toBuffer(), entriesDigest]) // p || H(entries)
 
-  const mergedDigest = cashlib.crypto.Hash.sha256(mergedKey) // H(H(entries) . p))
+  const mergedDigest = crypto.Hash.sha256(mergedKey) // H(H(entries) . p))
   const iv = new forge.util.ByteBuffer(mergedDigest.slice(0, 16))
   const key = new forge.util.ByteBuffer(mergedDigest.slice(16))
 
@@ -176,7 +175,7 @@ export const decryptEphemeralKey = function (cipherText, privKey, entriesDigest)
   // Construct AES key
   const mergedKey = Buffer.concat([privKey.toBuffer(), entriesDigest]) // p || H(entries)
 
-  const mergedDigest = cashlib.crypto.Hash.sha256(mergedKey) // H(H(entries) . p))
+  const mergedDigest = crypto.Hash.sha256(mergedKey) // H(H(entries) . p))
   const iv = new forge.util.ByteBuffer(mergedDigest.slice(0, 16))
   const key = new forge.util.ByteBuffer(mergedDigest.slice(16))
 

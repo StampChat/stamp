@@ -2,8 +2,6 @@ import { RouteConfig, Route } from 'vue-router'
 import store from '../store/index'
 
 async function redirectIfNoProfile (to: Route, from: Route, next: (route?: string) => void) {
-  // eslint-disable-next-line dot-notation
-  await store['restored']
   const profile = store.getters['myProfile/getProfile']
   if (profile.name) {
     next()

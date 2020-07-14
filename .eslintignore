@@ -4,9 +4,11 @@
 /src-cordova
 /.quasar
 /node_modules
+
 /src/keyserver/addressmetadata_pb.js
 /src/relay/messaging_pb.js
 /src/relay/filters_pb.js
 /src/relay/stealth_pb.js
 /src/pop/paymentrequest_pb.js
 /src/pop/wrapper_pb.js
+/test/jest/utils

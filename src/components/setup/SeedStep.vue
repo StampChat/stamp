@@ -146,7 +146,7 @@
 import { copyToClipboard } from 'quasar'
 import { seedCopiedNotify } from '../../utils/notifications'
 
-const bip39 = require('bip39')
+import bip39 from 'bip39'
 
 export default {
   model: {

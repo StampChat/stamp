@@ -6,8 +6,8 @@ import VCard from 'vcf'
 import addressmetadata from '../keyserver/addressmetadata_pb'
 import wrapper from '../pop/wrapper_pb'
 
-const cashlib = require('bitcore-lib-cash')
-const assert = require('assert')
+import cashlib from 'bitcore-lib-cash'
+import assert from 'assert'
 
 export const constructStampTransactions = function (wallet, payloadDigest, destPubKey, amount) {
   assert(payloadDigest instanceof Buffer)

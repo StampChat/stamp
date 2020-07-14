@@ -1,7 +1,7 @@
 import axios from 'axios'
 import paymentrequest from './paymentrequest_pb'
 
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 
 export default {
   async getPaymentRequest (url, method) {

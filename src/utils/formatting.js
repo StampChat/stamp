@@ -1,4 +1,4 @@
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 import { colorSalt } from './constants'
 
 export const formatBalance = function (balance) {

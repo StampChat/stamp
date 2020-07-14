@@ -95,7 +95,7 @@
 import { mapActions } from 'vuex'
 import KeyserverHandler from '../../keyserver/handler'
 
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 
 export default {
   data () {

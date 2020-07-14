@@ -1,5 +1,6 @@
 import { app, BrowserWindow, nativeTheme, Tray, Menu, shell, nativeImage } from 'electron'
-const path = require('path')
+import path from 'path'
+import fs from 'fs'
 
 // Enable single instance lock
 const isSingleInstance = app.requestSingleInstanceLock()
@@ -9,8 +10,9 @@ if (!isSingleInstance) {
 
 try {
   if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
-    require('fs').unlinkSync(path.join(app.getPath('userData'), 'DevTools Extensions'))
+    fs.unlinkSync(path.join(app.getPath('userData'), 'DevTools Extensions'))
   }
+// eslint-disable-next-line no-empty
 } catch (_) { }
 
 /**

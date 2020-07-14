@@ -7,7 +7,7 @@ import { numAddresses, numChangeAddresses } from '../utils/constants'
 import { toElectrumScriptHash } from '../utils/formatting'
 import { calcId } from './helpers'
 
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 
 const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
 const standardInputSize = 175 // A few extra bytes

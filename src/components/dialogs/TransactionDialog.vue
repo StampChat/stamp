@@ -42,7 +42,7 @@
 </template>
 
 <script>
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 
 export default {
   props: ['title', 'outpoints'],

@@ -1,5 +1,5 @@
-const cashlib = require('bitcore-lib-cash')
-const bip39 = require('bip39')
+import cashlib from 'bitcore-lib-cash'
+import bip39 from 'bip39'
 
 self.addEventListener('message', function (event) {
   const hexSeed = bip39.mnemonicToSeedSync(event.data).toString('hex')

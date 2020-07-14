@@ -3,7 +3,7 @@ import addressmetadata from './addressmetadata_pb'
 import wrapper from '../pop/wrapper_pb'
 import pop from '../pop/index'
 
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 
 class KeyserverHandler {
   trustedServers = ['http://34.68.170.199:8533']

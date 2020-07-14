@@ -15,7 +15,7 @@ import { calcId } from '../wallet/helpers'
 import assert from 'assert'
 
 const WebSocket = window.require('ws')
-const cashlib = require('bitcore-lib-cash')
+import cashlib from 'bitcore-lib-cash'
 
 export class RelayClient {
   constructor (url, wallet, electrumClientPromise, { getPubKey, messageStore }) {
@@ -232,9 +232,7 @@ export class RelayClient {
         Authorization: this.token
       },
       params: {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         start_time: startTime,
-        // eslint-disable-next-line @typescript-eslint/camelcase
         end_time: endTime
       },
       responseType: 'arraybuffer'
