@@ -1,5 +1,8 @@
 <template>
-  <q-card>
+  <q-card
+    style="width: 500px"
+    class="q-px-sm q-pb-md"
+  >
     <q-card-section>
       <div class="text-h6">Settings</div>
     </q-card-section>
