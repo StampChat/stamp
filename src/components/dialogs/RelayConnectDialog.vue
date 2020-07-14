@@ -1,5 +1,5 @@
 <template>
-  <q-card>
+  <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section class="row items-center">
       <q-avatar
         icon="signal_wifi_off"
