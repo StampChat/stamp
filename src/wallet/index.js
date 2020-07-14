@@ -19,10 +19,9 @@ export class Wallet {
     this.storage = storage
   }
 
-  setElectrumClient (client) {
-    this.electrumClient = client
-    this.initAddresses()
-    this.startListeners()
+  setElectrumClient (electrumClientPromise) {
+    this.electrumClientPromise = electrumClientPromise
+    this.init()
   }
 
   setXPrivKey (xPrivKey) {
@@ -30,10 +29,14 @@ export class Wallet {
     this._identityPrivKey = xPrivKey.deriveChild(20102019)
       .deriveChild(0, true)
       .privateKey // TODO: Proper path for this
+    this.init()
   }
 
   async init () {
     console.log('initializing wallet')
+    if (!this.xPrivKey) {
+      return
+    }
     const t0 = performance.now()
     this.initAddresses()
     const initAddressTime = performance.now()
@@ -132,7 +135,7 @@ export class Wallet {
   }
 
   async updateUTXOFromScriptHash (scriptHash) {
-    const client = this.electrumClient
+    const client = await this.electrumClientPromise
     try {
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
       const { address, privKey } = this.getAddressByElectrumScriptHash(scriptHash)
@@ -165,7 +168,7 @@ export class Wallet {
 
     // Unfreeze UTXO if confirmed to be unspent else delete
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
-    const client = this.electrumClient
+    const client = await this.electrumClientPromise
     const utxo = this.storage.getOutpoint(utxoId)
     if (!utxo) {
       console.log(`Missing UTXO for ${utxoId}`)
@@ -187,7 +190,7 @@ export class Wallet {
   }
 
   async startListeners () {
-    const ecl = this.electrumClient
+    const ecl = await this.electrumClientPromise
     const addresses = Object.keys(this.allAddresses)
     await ecl.events.on(
       'blockchain.scripthash.subscribe',
@@ -240,7 +243,8 @@ export class Wallet {
     console.log('Broadcasting forwarding txn', transaction)
     const txHex = transaction.toString()
     try {
-      await this.electrumClient.request('blockchain.transaction.broadcast', txHex)
+      const electrumClient = await this.electrumClientPromise
+      await electrumClient.request('blockchain.transaction.broadcast', txHex)
     } catch (err) {
       console.error(err)
       // Fix UTXOs if tx broadcast fails

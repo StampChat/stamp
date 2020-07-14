@@ -128,8 +128,7 @@ export default {
     ...mapState('chats', ['chats', 'activeChatAddr']),
     ...mapGetters({
       getContact: 'contacts/getContact',
-      lastReceived: 'chats/getLastReceived',
-      totalUnread: 'chats/totalUnread'
+      lastReceived: 'chats/getLastReceived'
     }),
     splitterRatio: {
       get: function () {
@@ -180,8 +179,6 @@ export default {
       this.$relayClient.refresh().then(() => {
         const t1 = performance.now()
         console.log(`Loading messages took ${t1 - t0}ms`)
-        this.$wallet.init()
-        console.log('Wallet initialized')
         this.loaded = true
       }).catch((err) => {
         console.error(err)
@@ -195,12 +192,6 @@ export default {
   },
   beforeDestroy () {
     document.removeEventListener('keydown', this.shortcutKeyListener)
-  },
-  watch: {
-    totalUnread: function (unread) {
-      const { app } = window.require('electron').remote
-      app.setBadgeCount(unread)
-    }
   }
 }
 </script>

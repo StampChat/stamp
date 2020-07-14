@@ -200,14 +200,6 @@ export default {
           message: 'Watching wallet...'
         })
 
-        // Listen to addresses
-        try {
-          await this.$wallet.init()
-        } catch (err) {
-          errorNotify(err)
-          return
-        }
-
         // Check for existing metadata
         this.$q.loading.show({
           delay: 100,
@@ -296,7 +288,7 @@ export default {
       // Get profile from relay server
       // We do this first to prevent uploading broken URL to keyserver
       const idAddress = this.$wallet.myAddress
-      const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
+      const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, wallet: this.$wallet })
 
       try {
         this.relayData = await relayClient.getRelayData(idAddress)
@@ -359,7 +351,7 @@ export default {
       }
     },
     async setupRelay () {
-      const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClient, wallet: this.$wallet })
+      const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClientPromise: this.$electrumClientPromise, wallet: this.$wallet })
 
       // Set filter
       this.$q.loading.show({
@@ -465,7 +457,7 @@ export default {
         this.step = 5
       }
     },
-    '$electrumClient.connected' () {
+    '$electrum.connected' () {
       if (!this.$electrum.connected) {
         this.forwardDisabled = true
       }
