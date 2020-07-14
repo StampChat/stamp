@@ -128,7 +128,8 @@ export default {
     ...mapState('chats', ['chats', 'activeChatAddr']),
     ...mapGetters({
       getContact: 'contacts/getContact',
-      lastReceived: 'chats/getLastReceived'
+      lastReceived: 'chats/getLastReceived',
+      totalUnread: 'chats/totalUnread'
     }),
     splitterRatio: {
       get: function () {
@@ -194,6 +195,12 @@ export default {
   },
   beforeDestroy () {
     document.removeEventListener('keydown', this.shortcutKeyListener)
+  },
+  watch: {
+    totalUnread: function (unread) {
+      const { app } = window.require('electron').remote
+      app.setBadgeCount(unread)
+    }
   }
 }
 </script>

@@ -153,6 +153,11 @@ export default {
     getNumUnread: (state) => (address) => {
       return state.chats[address] ? state.chats[address].totalUnreadMessages : 0
     },
+    totalUnread (state) {
+      return Object.values(state.chats).map((chat) => {
+        return chat ? chat.totalUnreadMessages : 0
+      }).reduce((acc, val) => acc + val, 0)
+    },
     getSortedChatOrder (state) {
       const sortedOrder = Object.values(state.chats).sort(
         (contactA, contactB) => {
