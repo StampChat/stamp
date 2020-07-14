@@ -28,7 +28,7 @@ function getNativeIconPath () {
     case 'linux':
       return path.join(__dirname, '../icons/linux-512x512.png')
     case 'darwin':
-      return path.join(__dirname, '../stamp.icns')
+      return path.join(__dirname, '../icons/stamp.icns')
     case 'win32':
       return path.join(__dirname, '../icons/icon.ico')
   }
