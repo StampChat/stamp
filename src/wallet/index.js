@@ -169,7 +169,7 @@ export class Wallet {
     // Unfreeze UTXO if confirmed to be unspent else delete
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
     const client = await this.electrumClientPromise
-    const utxo = this.storage.getOutpoint(utxoId)
+    const utxo = await this.storage.getOutpoint(utxoId)
     if (!utxo) {
       console.log(`Missing UTXO for ${utxoId}`)
       return
