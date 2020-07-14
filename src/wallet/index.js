@@ -583,14 +583,14 @@ export class Wallet {
     return this.storage.putOutpoint(utxo)
   }
 
-  deleteOutpoint (id) {
-    const outpoint = this.storage.getOutpoint(id)
+  async deleteOutpoint (id) {
+    const outpoint = await this.storage.getOutpoint(id)
     if (!outpoint) {
       console.log(id, 'missing from UTXO set?')
       return
     }
     console.log('removing utxo', id)
     // TODO: Nobody should be calling this outside of the wallet
-    return this.storage.deleteOutpoint(id)
+    await this.storage.deleteOutpoint(id)
   }
 }
