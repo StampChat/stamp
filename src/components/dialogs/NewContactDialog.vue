@@ -95,7 +95,7 @@
 import { mapActions } from 'vuex'
 import KeyserverHandler from '../../keyserver/handler'
 
-import cashlib from 'bitcore-lib-cash'
+import { Address } from 'bitcore-lib-cash'
 
 export default {
   data () {
@@ -113,7 +113,7 @@ export default {
       this.contact = 'loading'
       try {
         // Validate address
-        const address = cashlib.Address.fromString(newAddress.trim(), 'testnet').toLegacyAddress().toString() // TODO: Make generic
+        const address = Address.fromString(newAddress.trim(), 'testnet').toLegacyAddress().toString() // TODO: Make generic
 
         // Pull information from keyserver then relay server
         const ksHandler = new KeyserverHandler()
@@ -133,7 +133,7 @@ export default {
     }),
 
     addContact () {
-      const cashAddress = cashlib.Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
+      const cashAddress = Address.fromString(this.address, 'testnet').toCashAddress() // TODO: Make generic
       this.addContactVuex({ address: cashAddress, contact: this.contact })
     }
   },

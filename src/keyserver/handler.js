@@ -3,7 +3,7 @@ import addressmetadata from './addressmetadata_pb'
 import wrapper from '../pop/wrapper_pb'
 import pop from '../pop/index'
 
-import cashlib from 'bitcore-lib-cash'
+import { crypto } from 'bitcore-lib-cash'
 
 class KeyserverHandler {
   trustedServers = ['http://34.68.170.199:8533']
@@ -25,8 +25,8 @@ class KeyserverHandler {
     payload.addEntries(relayUrlEntry)
 
     const serializedPayload = payload.serializeBinary()
-    const hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
-    const ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
+    const hashbuf = crypto.Hash.sha256(serializedPayload)
+    const ecdsa = crypto.ECDSA({ privkey: privKey, hashbuf })
     ecdsa.sign()
 
     const metadata = new wrapper.AuthWrapper()
