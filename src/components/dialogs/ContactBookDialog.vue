@@ -1,5 +1,5 @@
 <template>
-  <q-card style="width: 500px">
+  <q-card class="q-px-sm q-pb-md dialog-medium">
     <!-- New contact dialog -->
     <q-dialog v-model="newContactOpen">
       <new-contact-dialog />

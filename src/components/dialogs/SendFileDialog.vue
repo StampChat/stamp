@@ -1,7 +1,6 @@
 <template>
   <q-card
-    style="width: 500px"
-    class="q-px-sm q-pb-md"
+    class="q-px-sm q-pb-md dialog-medium"
   >
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6"> Send File </div>

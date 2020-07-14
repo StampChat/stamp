@@ -1,8 +1,5 @@
 <template>
-  <q-card
-    style="width: 500px"
-    class="q-px-sm q-pb-md"
-  >
+  <q-card class="q-px-sm q-pb-md dialog-medium">
     <!-- New contact dialog -->
     <q-dialog v-model="seedPhraseOpen">
       <seed-phrase-dialog />

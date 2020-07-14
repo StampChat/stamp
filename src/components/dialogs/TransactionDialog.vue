@@ -1,5 +1,5 @@
 <template>
-  <q-card style="min-width: 50%">
+  <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
       <div class="text-h6">{{title}}</div>
     </q-card-section>
