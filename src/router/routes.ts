@@ -1,7 +1,10 @@
 import { RouteConfig, Route } from 'vue-router'
-import store from '../store/index'
+import store from '../store'
 
 async function redirectIfNoProfile (to: Route, from: Route, next: (route?: string) => void) {
+  // TODO: Fix this
+  await ((store as unknown) as { restored: Promise<unknown> }).restored
+
   const profile = store.getters['myProfile/getProfile']
   if (profile.name) {
     next()
