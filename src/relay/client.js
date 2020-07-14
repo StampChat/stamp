@@ -18,13 +18,13 @@ const WebSocket = window.require('ws')
 const cashlib = require('bitcore-lib-cash')
 
 export class RelayClient {
-  constructor (url, wallet, electrumClient, { getPubKey, messageStore }) {
+  constructor (url, wallet, electrumClientPromise, { getPubKey, messageStore }) {
     this.url = url
     this.httpScheme = 'http'
     this.wsScheme = 'ws'
     this.events = new EventEmitter()
     this.wallet = wallet
-    this.electrumClient = electrumClient
+    this.electrumClientPromise = electrumClientPromise
     this.getPubKey = getPubKey
     this.messageStore = messageStore
   }
@@ -35,10 +35,6 @@ export class RelayClient {
 
   setWallet (wallet) {
     this.wallet = wallet
-  }
-
-  setElectrumClient (electrumClient) {
-    this.electrumClient = electrumClient
   }
 
   async profilePaymentRequest (address) {
@@ -334,10 +330,10 @@ export class RelayClient {
       const messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
       const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
-      const client = this.wallet.electrumClient
+      const electrumClient = await this.wallet.electrumClientPromise
       Promise.all(transactions.map(transaction => {
         console.log('Broadcasting a transaction', transaction)
-        return client.request('blockchain.transaction.broadcast', transaction.toString())
+        return electrumClient.request('blockchain.transaction.broadcast', transaction.toString())
       }))
         .then(() => this.pushMessages(destAddr, messageSet))
         .then(() => this.events.emit('messageSent', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions }))
