@@ -1,6 +1,11 @@
 <template>
   <div class="reply">
-    <div class='col text-weight-bold' :style="`color: ${nameColor};`"> {{ name }} </div>
+    <div
+      class="col text-weight-bold"
+      :style="`color: ${nameColor};`"
+    >
+      {{ name }}
+    </div>
     <chat-message
       class="row-auto"
       :address="address"

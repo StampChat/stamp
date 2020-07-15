@@ -10,9 +10,9 @@
       class="absolute-bottom all-pointer-events"
     >
       <q-btn
-        size='md'
-        class='float-right'
-        color='primary'
+        size="md"
+        class="float-right"
+        color="primary"
         label="Close"
         v-close-popup
       />

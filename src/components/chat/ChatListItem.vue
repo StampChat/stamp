@@ -24,7 +24,9 @@
         caption
         lines="2"
         v-if="loaded"
-      >{{ latestMessageBody }}</q-item-label>
+      >
+        {{ latestMessageBody }}
+      </q-item-label>
     </q-item-section>
     <q-item-section
       v-show="!compact"

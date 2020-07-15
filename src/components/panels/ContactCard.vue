@@ -1,5 +1,10 @@
 <template>
-  <q-card class="bg-secondary q-pa-sm full-width" style="height: 130px" flat square>
+  <q-card
+    class="bg-secondary q-pa-sm full-width"
+    style="height: 130px"
+    flat
+    square
+  >
     <q-list class="bg-transparent q-pa-none">
       <q-item>
         <q-item-section>
@@ -12,23 +17,45 @@
             style="text-align: right;"
             class="text-weight-bold text-white"
             lines="1"
-          >Minimum Stamp</q-item-label>
+          >
+            Minimum Stamp
+          </q-item-label>
           <q-item-label
             style="text-align: right;"
             class="text-white"
             caption
             lines="1"
-          >{{ acceptancePrice }}</q-item-label>
+          >
+            {{ acceptancePrice }}
+          </q-item-label>
         </q-item-section>
       </q-item>
 
       <q-item>
         <q-item-section>
-          <q-item-label class="text-weight-bold text-white" lines="1">{{ name }}</q-item-label>
-          <q-item-label class="text-white" caption lines="1">{{ address }}</q-item-label>
+          <q-item-label
+            class="text-weight-bold text-white"
+            lines="1"
+          >
+            {{ name }}
+          </q-item-label>
+          <q-item-label
+            class="text-white"
+            caption
+            lines="1"
+          >
+            {{ address }}
+          </q-item-label>
         </q-item-section>
         <q-item-section side>
-          <q-btn flat dense color="white" icon="file_copy" size="sm" @click="copyAddress()" />
+          <q-btn
+            flat
+            dense
+            color="white"
+            icon="file_copy"
+            size="sm"
+            @click="copyAddress()"
+          />
         </q-item-section>
       </q-item>
     </q-list>

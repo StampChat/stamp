@@ -1,5 +1,5 @@
 <template>
-  <div class='q-ml-sm'>
+  <div class="q-ml-sm">
     <q-dialog v-model="imageDialog">
       <image-dialog :image="image" />
     </q-dialog>

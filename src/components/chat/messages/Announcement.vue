@@ -2,14 +2,19 @@
   <div class="row">
     <div class="col">
       <div class="stack-header row">
-        <div class='q-px-md col text-weight-bold'> {{ name }} </div>
+        <div class="q-px-md col text-weight-bold">
+          {{ name }}
+        </div>
       </div>
-      <div class='q-py-sm q-px-lg'>
+      <div class="q-py-sm q-px-lg">
         <div>
           <chat-message-text :text="text" />
         </div>
         <div>
-          <q-img src="~assets/donation_qr_code.jpg" width="10vw" />
+          <q-img
+            src="~assets/donation_qr_code.jpg"
+            width="10vw"
+          />
         </div>
       </div>
     </div>

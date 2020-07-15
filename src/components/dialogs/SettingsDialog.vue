@@ -1,7 +1,9 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
-      <div class="text-h6">Settings</div>
+      <div class="text-h6">
+        Settings
+      </div>
     </q-card-section>
 
     <settings v-model="settings" />

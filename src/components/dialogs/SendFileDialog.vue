@@ -3,7 +3,9 @@
     class="q-px-sm q-pb-md dialog-medium"
   >
     <q-card-section class="row items-center q-pb-none">
-      <div class="text-h6"> Send File </div>
+      <div class="text-h6">
+        Send File
+      </div>
       <q-space />
       <q-btn
         flat

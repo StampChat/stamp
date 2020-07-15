@@ -32,7 +32,7 @@
         <q-item-section> Stamp Transaction </q-item-section>
       </q-item>
       <q-item
-        v-if='index && payloadDigest'
+        :v-if="index && payloadDigest"
         clickable
         v-close-popup
         @click="resend"

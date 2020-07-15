@@ -16,9 +16,22 @@
     </q-dialog>
 
     <q-toolbar>
-      <q-btn class="q-px-sm" flat dense @click="toggleMyDrawerOpen" icon="menu" />
+      <q-btn
+        class="q-px-sm"
+        flat
+        dense
+        @click="toggleMyDrawerOpen"
+        icon="menu"
+      />
       <q-space />
-      <q-btn v-if="!compact" class="q-px-sm" flat dense @click="newContactOpen = true" icon="add" />
+      <q-btn
+        v-if="!compact"
+        class="q-px-sm"
+        flat
+        dense
+        @click="newContactOpen = true"
+        icon="add"
+      />
     </q-toolbar>
     <q-scroll-area class="q-px-none col">
       <q-list>
@@ -41,16 +54,40 @@
     </q-scroll-area>
     <q-list>
       <q-separator />
-      <q-item v-show="!compact" clickable @click="walletOpen=true">
+      <q-item
+        v-show="!compact"
+        clickable
+        @click="walletOpen=true"
+      >
         <q-item-section>
           <q-item-label>Balance</q-item-label>
-          <q-item-label caption>{{ formattedBalance }}</q-item-label>
+          <q-item-label caption>
+            {{ formattedBalance }}
+          </q-item-label>
         </q-item-section>
-        <q-item-section v-if="!walletConnected" side>
-          <q-btn icon="account_balance_wallet" flat round color="red" />
+        <q-item-section
+          v-if="!walletConnected"
+          side
+        >
+          <q-btn
+            icon="account_balance_wallet"
+            flat
+            round
+            color="red"
+          />
         </q-item-section>
-        <q-item-section v-if="!relayConnected" side clickable @click="relayConnectOpen=true">
-          <q-btn icon="email" flat round color="red" />
+        <q-item-section
+          v-if="!relayConnected"
+          side
+          clickable
+          @click="relayConnectOpen=true"
+        >
+          <q-btn
+            icon="email"
+            flat
+            round
+            color="red"
+          />
         </q-item-section>
       </q-item>
     </q-list>

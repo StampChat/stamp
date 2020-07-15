@@ -2,7 +2,9 @@
   <div class="col q-gutter-y-md">
     <q-card>
       <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold"> What is a Profile? </div>
+        <div class="text-subtitle1 text-bold">
+          What is a Profile?
+        </div>
       </q-card-section>
       <q-card-section class="text-body2">
         Your profile is the public information attached to your <strong>identity address</strong>. When people search for your identity address this information will be presented to them. <br><br>
@@ -12,7 +14,9 @@
     </q-card>
     <q-card>
       <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold"> Identity Address </div>
+        <div class="text-subtitle1 text-bold">
+          Identity Address
+        </div>
       </q-card-section>
       <q-card-section>
         <q-input
@@ -26,7 +30,9 @@
     </q-card>
     <q-card>
       <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold"> Create a Profile </div>
+        <div class="text-subtitle1 text-bold">
+          Create a Profile
+        </div>
       </q-card-section>
       <q-card-section>
         <profile v-model="innerData" />

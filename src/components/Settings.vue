@@ -1,7 +1,7 @@
 <template>
   <div>
     <q-splitter
-      :value=110
+      :value="110"
       unit="px"
       disable
     >
@@ -43,7 +43,7 @@
                 style="width:100%"
                 ref="contactRefreshInterval"
               />
-          </div>
+            </div>
           </q-tab-panel>
           <q-tab-panel name="appearance">
             <div class="row">
@@ -51,7 +51,7 @@
                 :label="`Dark Mode`"
                 v-model="darkMode"
               />
-          </div>
+            </div>
           </q-tab-panel>
         </q-tab-panels>
       </template>

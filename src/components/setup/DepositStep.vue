@@ -13,57 +13,67 @@
         No Bitcoin Cash? Click the faucet below!
       </q-card-section>
       <q-card-actions>
-        <q-btn color="primary" flat @click="openFaucet">bitcoin.com faucet</q-btn>
+        <q-btn
+          color="primary"
+          flat
+          @click="openFaucet"
+        >
+          bitcoin.com faucet
+        </q-btn>
       </q-card-actions>
     </q-card>
     <div class="row q-gutter-x-md">
       <!-- Deposit card -->
       <q-card class="col">
-      <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold"> Deposit Addresses </div>
-      </q-card-section>
+        <q-card-section class="bg-primary text-white">
+          <div class="text-subtitle1 text-bold">
+            Deposit Addresses
+          </div>
+        </q-card-section>
         <q-card-section class="row">
           <qrcode-vue
             style="margin-left: auto; margin-right: auto;"
             :value="currentAddress"
             :size="qrHeight"
             level="H"
-          ></qrcode-vue>
+          />
         </q-card-section>
 
         <q-card-section class="row">
-            <q-input
-              class='fit q-px-lg'
-              filled
-              auto-grow
-              v-model="currentAddress"
-              readonly
-            >
-              <template v-slot:after>
-                <q-btn
-                  dense
-                  color="primary"
-                  flat
-                  icon="content_copy"
-                  @click="copyAddress"
-                />
-                <q-btn
-                  dense
-                  color="primary"
-                  flat
-                  icon="refresh"
-                  @click="nextAddress"
-                />
-              </template>
-            </q-input>
+          <q-input
+            class="fit q-px-lg"
+            filled
+            auto-grow
+            v-model="currentAddress"
+            readonly
+          >
+            <template v-slot:after>
+              <q-btn
+                dense
+                color="primary"
+                flat
+                icon="content_copy"
+                @click="copyAddress"
+              />
+              <q-btn
+                dense
+                color="primary"
+                flat
+                icon="refresh"
+                @click="nextAddress"
+              />
+            </template>
+          </q-input>
         </q-card-section>
       </q-card>
 
       <!-- Balance Card -->
       <q-card class="col">
-      <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold"> Current Balance </div>
-      </q-card-section>
+        <q-card-section class="bg-primary text-white">
+          <div class="text-subtitle1 text-bold">
+            Current Balance
+          </div>
+        </q-card-section>
         <q-card-section class="row">
           <q-circular-progress
             style="margin-left: auto; margin-right: auto;"
@@ -79,7 +89,10 @@
           </q-circular-progress>
         </q-card-section>
         <q-card-section class="row">
-          <span class="row text-subtitle1" style="margin-left: auto; margin-right: auto;">
+          <span
+            class="row text-subtitle1"
+            style="margin-left: auto; margin-right: auto;"
+          >
             Recommended {{ recomendedBalance }} satoshi
           </span>
         </q-card-section>

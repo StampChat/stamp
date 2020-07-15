@@ -23,7 +23,7 @@
           icon="vpn_key"
           :done="step > 2"
         >
-          <seed-step v-model='seedData' />
+          <seed-step v-model="seedData" />
         </q-step>
 
         <q-step

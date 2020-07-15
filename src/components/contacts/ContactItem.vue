@@ -1,5 +1,5 @@
 <template>
-  <div v-on:mouseover="$emit('mouseover-contact', address)">
+  <div :mouseover="$emit('mouseover-contact', address)">
     <q-item v-if="(contact === null)">
       <q-item-section avatar>
         <q-icon
@@ -43,12 +43,16 @@
         </q-avatar>
       </q-item-section>
       <q-item-section @click="contactClick(address, contact)">
-        <q-item-label>{{contact.profile.name}}</q-item-label>
+        <q-item-label> {{ contact.profile.name }} </q-item-label>
         <q-item-label
           lines="1"
           caption
-        ><span class="text-weight-bold">Address: </span>{{address}}</q-item-label>
-        <q-item-label caption><span class="text-weight-bold">Inbox Price: </span>{{contact.inbox.acceptancePrice}}</q-item-label>
+        >
+          <span class="text-weight-bold">Address: </span> {{ address }}
+        </q-item-label>
+        <q-item-label caption>
+          <span class="text-weight-bold"> Inbox Price: </span> {{ contact.inbox.acceptancePrice }}
+        </q-item-label>
       </q-item-section>
       <q-item-section
         side
@@ -69,7 +73,7 @@
 import { mapActions } from 'vuex'
 
 export default {
-  props: ['address', 'contact', 'method', 'contactClick'],
+  props: ['address', 'contact', 'method', 'contact-click'],
   methods: {
     ...mapActions({
       deleteContact: 'contacts/deleteContact'

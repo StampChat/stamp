@@ -19,9 +19,15 @@
         icon="insert_emoticon"
         @click="menuPicker=true"
       >
-      <q-menu>
-        <picker :data="emojiIndex" set="twitter" @select="addEmoji" title="Select an emoji" :showSkinTones="false" />
-      </q-menu>
+        <q-menu>
+          <picker
+            :data="emojiIndex"
+            set="twitter"
+            @select="addEmoji"
+            title="Select an emoji"
+            :showSkinTones="false"
+          />
+        </q-menu>
       </q-btn>
 
       <!-- <q-separator vertical /> -->
@@ -43,7 +49,16 @@
         icon="send"
         @click="sendMessage"
       />
-      <q-input dense outlined style="width: 125px" label="Stamp" suffix="sats" v-bind:value="stampAmount" @input="stampAmountChanged" input-class="text-right" />
+      <q-input
+        dense
+        outlined
+        style="width: 125px"
+        label="Stamp"
+        suffix="sats"
+        :value="stampAmount"
+        @input="stampAmountChanged"
+        input-class="text-right"
+      />
     </q-toolbar>
   </div>
 </template>

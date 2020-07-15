@@ -6,11 +6,11 @@
   >
     <contact-item
       v-for="(contact, address) in contacts"
-      v-bind:key="address"
-      v-on:mouseover-contact="navigateUsingMouse"
+      :key="address"
+      @mouseover-contact="navigateUsingMouse"
       :address="address"
       :contact="contact"
-      :contactClick="contactClick"
+      :contact-click="contactClick"
       :class="{ active: address === activeAddress}"
     />
   </q-list>
