@@ -23,21 +23,14 @@ if (process.env.PROD) {
   global.__statics = __dirname
 }
 
-function getNativeIconPath () {
-  switch (process.platform) {
-    case 'linux':
-      return path.join(__dirname, '../icons/linux-512x512.png')
-    case 'darwin':
-      return path.join(__dirname, '../icons/stamp.icns')
-    case 'win32':
-      return path.join(__dirname, '../icons/icon.ico')
-  }
+function getIconPNGPath () {
+  // NOTE: This use to be platform specific, and may need to be again in the future.
+  return path.join(__dirname, '../icons/linux-512x512.png')
 }
 
 let mainWindow
 let tray
-const iconPath = getNativeIconPath()
-const nativeIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
+const nativeIcon = nativeImage.createFromPath(getIconPNGPath()).resize({ width: 16, height: 16 })
 
 function createWindow () {
   const contextMenu = Menu.buildFromTemplate([
@@ -63,7 +56,6 @@ function createWindow () {
     width: 1000,
     height: 600,
     useContentSize: true,
-    icon: iconPath,
     webPreferences: {
       nodeIntegration: process.env.QUASAR_NODE_INTEGRATION,
       nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION
