@@ -108,7 +108,7 @@ import { mapGetters } from 'vuex'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
 import { formatBalance } from '../../utils/formatting'
-import shell from 'electron'
+import { shell } from 'electron'
 
 export default {
   components: {
