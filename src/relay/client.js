@@ -551,7 +551,7 @@ export class RelayClient {
         }
 
         const stampOutput = {
-          address,
+          address: address.toLegacyAddress(),
           privKey: outbound ? null : outputPrivKey, // This is okay, we don't add it to the wallet.
           satoshis,
           txId,
@@ -621,7 +621,7 @@ export class RelayClient {
             for (const input of stealthTx.inputs) {
               // Don't add these outputs to our wallet. They're the other persons
               const utxoId = calcId({ txId: input.prevTxId.toString('hex'), outputIndex: input.outputIndex })
-              wallet.deleteOutpoint(utxoId)
+              await wallet.deleteOutpoint(utxoId)
             }
           }
 
