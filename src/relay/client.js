@@ -621,7 +621,7 @@ export class RelayClient {
             for (const input of stealthTx.inputs) {
               // Don't add these outputs to our wallet. They're the other persons
               const utxoId = calcId({ txId: input.prevTxId.toString('hex'), outputIndex: input.outputIndex })
-              wallet.deleteOutpoint(utxoId)
+              await wallet.deleteOutpoint(utxoId)
             }
           }
 
