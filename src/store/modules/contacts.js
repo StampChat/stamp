@@ -109,7 +109,14 @@ export default {
         return
       }
       console.log('adding default contact', defaultContact.address)
-      const contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, name: defaultContact.name } }
+      const contact = {
+        ...pendingRelayData,
+        profile: {
+          ...pendingRelayData.profile,
+          name: defaultContact.name,
+          pubKey: defaultContact.pubKey
+        }
+      }
       commit('addContact', { address: defaultContact.address, contact })
       commit('chats/openChat', defaultContact.address, { root: true })
       dispatch('refresh', defaultContact.address)
