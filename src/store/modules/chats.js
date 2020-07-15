@@ -5,43 +5,14 @@ import { stampPrice } from '../../wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 
-const defaultContactObject = { inputMessage: '', lastRead: null, stampAmount: defaultStampAmount, totalUnreadMessages: 0, totalUnreadValue: 0, totalValue: 0 }
-
-const defaultChats = [
-  {
-    inputMessage: '',
-    lastRead: null,
-    stampAmount: 50000,
-    totalUnreadMessages: 0,
-    totalUnreadValue: 0,
-    totalValue: 0,
-    messages: {},
-    address: 'bchtest:qrugj9hv6lcar6hflk26yz8k9qq8wp9tvsmvvqqwgq',
-    lastReceived: null
-  },
-  {
-    inputMessage: '',
-    lastRead: null,
-    stampAmount: 5000,
-    totalUnreadMessages: 0,
-    totalUnreadValue: 0,
-    totalValue: 0,
-    messages: {},
-    address: 'bchtest:qq3q7kzdds2xuzug05tn7w3lp7kkfulqfsf85x8tty',
-    lastReceived: null
-  },
-  {
-    inputMessage: '',
-    lastRead: null,
-    stampAmount: 5000,
-    totalUnreadMessages: 0,
-    totalUnreadValue: 0,
-    totalValue: 0,
-    messages: {},
-    address: 'bchtest:qqu3vqt9hydcmhkydn9h68qzlyduypuwqgnc8vvjhc',
-    lastReceived: null
-  }
-]
+const defaultContactObject = {
+  inputMessage: '',
+  lastRead: null,
+  stampAmount: defaultStampAmount,
+  totalUnreadMessages: 0,
+  totalUnreadValue: 0,
+  totalValue: 0
+}
 
 function calculateUnreadAggregates (messages, lastReadTime) {
   const messageValues = messages
@@ -62,18 +33,6 @@ function calculateUnreadAggregates (messages, lastReadTime) {
   }
 }
 
-export function addDefaultChats (chatState) {
-  if (chatState.chats) {
-    for (const chat of defaultChats) {
-      if (!(chat.address in chatState.chats)) {
-        chatState.chats[chat.address] = chat
-      }
-    }
-
-    console.log('filled out default contacts')
-  }
-}
-
 export async function rehydateChat (chatState) {
   if (!chatState) {
     return
@@ -82,8 +41,6 @@ export async function rehydateChat (chatState) {
   chatState.messages = chatState.messages || {}
 
   if (chatState.chats) {
-    addDefaultChats(chatState)
-
     for (const contactAddress in chatState.chats) {
       const contact = chatState.chats[contactAddress]
       contact.address = contactAddress
@@ -165,7 +122,6 @@ export default {
       return Object.values(state.chats).map((chat) => chat.totalUnreadMessages).reduce((acc, val) => acc + val, 0)
     },
     getSortedChatOrder (state) {
-      addDefaultChats(state)
       const sortedOrder = Object.values(state.chats).sort(
         (contactA, contactB) => {
           if (contactB.totalUnreadValue - contactA.totalUnreadValue !== 0) {
@@ -257,6 +213,11 @@ export default {
       state.activeChatAddr = null
       state.chats = {}
       state.lastReceived = null
+    },
+    openChat (state, address) {
+      if (!(address in state.chats)) {
+        Vue.set(state.chats, address, { ...defaultContactObject, messages: [], address })
+      }
     },
     setActiveChat (state, address) {
       if (!(address in state.chats)) {
