@@ -1,7 +1,7 @@
 import axios from 'axios'
 import paymentrequest from './paymentrequest_pb'
 
-const cashlib = require('bitcore-lib-cash')
+import { Transaction } from 'bitcore-lib-cash'
 
 export default {
   async getPaymentRequest (url, method) {
@@ -45,7 +45,7 @@ export default {
     const outputs = requestOutputs.map(reqOutput => {
       const script = Buffer.from(reqOutput.getScript())
       const satoshis = reqOutput.getAmount()
-      const output = new cashlib.Transaction.Output({
+      const output = new Transaction.Output({
         script,
         satoshis
       })

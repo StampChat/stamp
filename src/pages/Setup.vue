@@ -103,7 +103,7 @@ import { errorNotify } from '../utils/notifications'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
-const cashlib = require('bitcore-lib-cash')
+import { HDPrivateKey } from 'bitcore-lib-cash'
 
 Vue.use(VueRouter)
 
@@ -190,7 +190,7 @@ export default {
 
         // Prepare wallet
         const xPrivKeyObj = event.data
-        this.xPrivKey = cashlib.HDPrivateKey.fromObject(xPrivKeyObj)
+        this.xPrivKey = HDPrivateKey.fromObject(xPrivKeyObj)
         // TODO: We should not have to update two places.
         this.setXPrivKey(this.xPrivKey)
         this.$wallet.setXPrivKey(this.xPrivKey)

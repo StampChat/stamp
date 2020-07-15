@@ -42,7 +42,7 @@
 </template>
 
 <script>
-const cashlib = require('bitcore-lib-cash')
+import { Script } from 'bitcore-lib-cash'
 
 export default {
   props: ['title', 'outpoints'],
@@ -54,7 +54,7 @@ export default {
   },
   methods: {
     extractAddress (output) {
-      const script = new cashlib.Script(output.script)
+      const script = new Script(output.script)
       if (script.isPublicKeyHashOut()) {
         return script.toAddress('testnet') // TODO: Make generic
       }

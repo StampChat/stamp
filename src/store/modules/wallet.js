@@ -3,7 +3,7 @@ import Vue from 'vue'
 import { calcId } from '../../wallet/helpers'
 import { store } from '../../adapters/level-outpoint-store'
 
-const cashlib = require('bitcore-lib-cash')
+import { HDPrivateKey } from 'bitcore-lib-cash'
 
 export async function rehydrateWallet (wallet) {
   if (!wallet || !wallet.xPrivKey) {
@@ -12,7 +12,7 @@ export async function rehydrateWallet (wallet) {
   if (!wallet.feePerByte) {
     wallet.feePerByte = 2
   }
-  wallet.xPrivKey = cashlib.HDPrivateKey.fromObject(wallet.xPrivKey)
+  wallet.xPrivKey = HDPrivateKey.fromObject(wallet.xPrivKey)
   wallet.utxos = {}
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.

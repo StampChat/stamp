@@ -50,6 +50,7 @@
 
 <script>
 import { defaultAcceptancePrice, relayUrlOptions } from '../../utils/constants'
+import { shell } from 'electron'
 
 export default {
   model: {
@@ -88,7 +89,6 @@ export default {
       })
     },
     openCashRelay () {
-      const shell = require('electron').shell
       event.preventDefault()
       shell.openExternal('https://github.com/cashweb/cash-relay')
     }

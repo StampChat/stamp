@@ -7,7 +7,6 @@
 // https://quasar.dev/quasar-cli/quasar-conf-js
 /* eslint-env node */
 /* eslint-disable @typescript-eslint/no-var-requires */
-/* eslint-disable @typescript-eslint/camelcase */
 const { configure } = require('quasar/wrappers')
 
 module.exports = configure(function (ctx) {
@@ -56,7 +55,7 @@ module.exports = configure(function (ctx) {
       //            (fastest compile time; minimum bundle size; most tedious)
       // * true   - Import everything from Quasar
       //            (not treeshaking Quasar; biggest bundle size; convenient)
-      all: 'auto',
+      importStrategy: 'auto',
 
       components: ['QSkeleton', 'QScrollObserver'],
       directives: [],
@@ -141,27 +140,27 @@ module.exports = configure(function (ctx) {
         theme_color: '#027be3',
         icons: [
           {
-            src: 'statics/icons/icon-128x128.png',
+            src: 'icons/icon-128x128.png',
             sizes: '128x128',
             type: 'image/png'
           },
           {
-            src: 'statics/icons/icon-192x192.png',
+            src: 'icons/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'statics/icons/icon-256x256.png',
+            src: 'icons/icon-256x256.png',
             sizes: '256x256',
             type: 'image/png'
           },
           {
-            src: 'statics/icons/icon-384x384.png',
+            src: 'icons/icon-384x384.png',
             sizes: '384x384',
             type: 'image/png'
           },
           {
-            src: 'statics/icons/icon-512x512.png',
+            src: 'icons/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           }
@@ -172,7 +171,6 @@ module.exports = configure(function (ctx) {
     // Full list of options: https://quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
     cordova: {
       // noIosLegacyBuildFlag: true, // uncomment only if you know what you are doing
-      id: 'org.cashweb.stamp'
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor

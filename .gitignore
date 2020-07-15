@@ -38,5 +38,4 @@ yarn-error.log*
 
 # Auto-generated icons
 src-electron/icons
-src/statics/icons/
-src/statics/app-logo-128x128.png
+public/*

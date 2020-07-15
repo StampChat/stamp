@@ -95,6 +95,7 @@ import { mapGetters } from 'vuex'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
 import { formatBalance } from '../../utils/formatting'
+import shell from 'electron'
 
 export default {
   components: {
@@ -125,7 +126,6 @@ export default {
       this.currentAddress = privKey.toAddress('testnet').toString() // TODO: Make generic
     },
     openFaucet () {
-      const shell = require('electron').shell
       event.preventDefault()
       shell.openExternal('https://developer.bitcoin.com/faucets/bch/')
     },

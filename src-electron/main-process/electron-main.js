@@ -1,5 +1,6 @@
-import { app, BrowserWindow, nativeImage, nativeTheme, Tray, Menu, shell } from 'electron'
-const path = require('path')
+import { app, BrowserWindow, nativeTheme, Tray, Menu, shell, nativeImage } from 'electron'
+import path from 'path'
+import fs from 'fs'
 
 // Enable single instance lock
 const isSingleInstance = app.requestSingleInstanceLock()
@@ -9,8 +10,9 @@ if (!isSingleInstance) {
 
 try {
   if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
-    require('fs').unlinkSync(require('path').join(app.getPath('userData'), 'DevTools Extensions'))
+    fs.unlinkSync(path.join(app.getPath('userData'), 'DevTools Extensions'))
   }
+// eslint-disable-next-line no-empty
 } catch (_) { }
 
 /**
@@ -18,34 +20,17 @@ try {
  * The reason we are setting it here is that the path needs to be evaluated at runtime
  */
 if (process.env.PROD) {
-  global.__statics = require('path').join(__dirname, 'statics').replace(/\\/g, '\\\\')
+  global.__statics = __dirname
 }
 
-function getNativeIconPath () {
-  switch (process.platform) {
-    case 'linux':
-      return path.join(__dirname, '../icons/icon.png')
-    case 'darwin':
-      return path.join(__dirname, '../stamp.icns')
-    case 'win32':
-      return path.join(__dirname, '../icons/icon.ico')
-  }
-}
-
-function getNativeTrayIcon (path) {
-  const fullsizeImage = nativeImage.createFromPath(path)
-  switch (process.platform) {
-    case 'linux':
-      return fullsizeImage.resize({ width: 18, height: 18 })
-    case 'darwin':
-      return fullsizeImage.resize({ width: 18, height: 18 })
-    case 'win32':
-      return fullsizeImage.resize({ width: 18, height: 18 })
-  }
+function getIconPNGPath () {
+  // NOTE: This use to be platform specific, and may need to be again in the future.
+  return path.join(__dirname, '../icons/linux-512x512.png')
 }
 
 let mainWindow
-let tray = null
+let tray
+const nativeIcon = nativeImage.createFromPath(getIconPNGPath()).resize({ width: 16, height: 16 })
 
 function createWindow () {
   const contextMenu = Menu.buildFromTemplate([
@@ -64,26 +49,18 @@ function createWindow () {
     }
   ])
 
+  tray = new Tray(nativeIcon)
+  tray.setContextMenu(contextMenu)
+
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
     useContentSize: true,
-    icon: getNativeIconPath(),
     webPreferences: {
-      // Change from /quasar.conf.js > electron > nodeIntegration;
-      // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
-      // eslint-disable-next-line no-undef
-      nodeIntegration: QUASAR_NODE_INTEGRATION,
-      // eslint-disable-next-line no-undef
-      nodeIntegrationInWorker: QUASAR_NODE_INTEGRATION
-
-      // More info: /quasar-cli/developing-electron-apps/electron-preload-script
-      // preload: path.resolve(__dirname, 'electron-preload.js')
+      nodeIntegration: process.env.QUASAR_NODE_INTEGRATION,
+      nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION
     }
   })
-
-  tray = new Tray(getNativeTrayIcon(path.join(__dirname, '../icons/icon.png')))
-  tray.setContextMenu(contextMenu)
 
   mainWindow.loadURL(process.env.APP_URL)
 
@@ -94,6 +71,8 @@ function createWindow () {
     })
   }
 
+  mainWindow.loadURL(process.env.APP_URL)
+
   mainWindow.on('close', function (event) {
     if (forceQuit) {
       return
@@ -102,7 +81,7 @@ function createWindow () {
     mainWindow.hide()
   })
 
-  mainWindow.on('closed', function () {
+  mainWindow.on('closed', () => {
     mainWindow = null
   })
 

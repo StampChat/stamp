@@ -45,7 +45,7 @@
 <script>
 import { sentTransactionNotify, errorNotify } from '../../utils/notifications'
 
-const cashlib = require('bitcore-lib-cash')
+import { Address, Transaction, Script } from 'bitcore-lib-cash'
 
 export default {
   components: {
@@ -62,7 +62,7 @@ export default {
         return false
       }
       try {
-        cashlib.Address(this.address, 'testnet') // TODO: Make this generic
+        Address(this.address, 'testnet') // TODO: Make this generic
         return true
       } catch {
         return false
@@ -72,8 +72,8 @@ export default {
   methods: {
     async send () {
       try {
-        const output = new cashlib.Transaction.Output({
-          script: cashlib.Script(new cashlib.Address(this.address)),
+        const output = new Transaction.Output({
+          script: Script(new Address(this.address)),
           satoshis: this.amount
         })
 

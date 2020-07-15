@@ -6,8 +6,8 @@ import VCard from 'vcf'
 import addressmetadata from '../keyserver/addressmetadata_pb'
 import wrapper from '../pop/wrapper_pb'
 
-const cashlib = require('bitcore-lib-cash')
-const assert = require('assert')
+import { crypto, PublicKey, PrivateKey } from 'bitcore-lib-cash'
+import assert from 'assert'
 
 export const constructStampTransactions = function (wallet, payloadDigest, destPubKey, amount) {
   assert(payloadDigest instanceof Buffer)
@@ -24,7 +24,7 @@ export const constructStampTransactions = function (wallet, payloadDigest, destP
       .deriveChild(transactionNumber)
       .deriveChild(outputNumber)
       .publicKey
-    const address = cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(outpointPubKey.point))
+    const address = PublicKey(crypto.Point.pointToCompressed(outpointPubKey.point))
     transactionNumber += 1
     return address
   }
@@ -48,7 +48,7 @@ export const constructStealthTransactions = function (wallet, ephemeralPrivKey, 
       .deriveChild(transactionNumber)
       .deriveChild(outputNumber)
       .publicKey
-    const stealthAddress = cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(stealthPubKey.point))
+    const stealthAddress = PublicKey(crypto.Point.pointToCompressed(stealthPubKey.point))
 
     transactionNumber += 1
     return stealthAddress
@@ -59,8 +59,8 @@ export const constructStealthTransactions = function (wallet, ephemeralPrivKey, 
 }
 
 export const constructMessage = async function (wallet, serializedPayload, privKey, destPubKey, stampAmount) {
-  const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
-  const ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
+  const payloadDigest = crypto.Hash.sha256(serializedPayload)
+  const ecdsa = crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
   ecdsa.sign()
 
   const message = new messaging.Message()
@@ -100,13 +100,13 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
   if (scheme === 0) {
     payload.setEntries(rawEntries)
     const serializedPayload = payload.serializeBinary()
-    const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
+    const payloadDigest = crypto.Hash.sha256(serializedPayload)
     return { serializedPayload, payloadDigest }
   } else if (scheme === 1) {
     const { cipherText, ephemeralPrivKey } = encrypt(rawEntries, privKey, destPubKey)
     const ephemeralPubKey = ephemeralPrivKey.toPublicKey()
     const ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
-    const entriesDigest = cashlib.crypto.Hash.sha256(cipherText)
+    const entriesDigest = crypto.Hash.sha256(cipherText)
     const encryptedEphemeralKey = encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
 
     payload.setEntries(cipherText)
@@ -115,7 +115,7 @@ export const constructPayload = function (entries, privKey, destPubKey, scheme, 
     payload.setScheme(messaging.Payload.EncryptionScheme.EPHEMERALDH)
 
     const serializedPayload = payload.serializeBinary()
-    const payloadDigest = cashlib.crypto.Hash.sha256(serializedPayload)
+    const payloadDigest = crypto.Hash.sha256(serializedPayload)
     return { serializedPayload, payloadDigest }
   }
 
@@ -148,7 +148,7 @@ export const constructStealthEntry = async function ({ wallet, amount, destPubKe
   paymentEntry.setKind('stealth-payment')
 
   const stealthPaymentEntry = new stealth.StealthPaymentEntry()
-  const ephemeralPrivKey = cashlib.PrivateKey()
+  const ephemeralPrivKey = PrivateKey()
 
   const transactionBundle = await constructStealthTransactions(wallet, ephemeralPrivKey, destPubKey, amount)
 
@@ -249,8 +249,8 @@ export const constructProfileMetadata = function (profile, priceFilter, privKey)
   payload.addEntries(filterEntry)
 
   const serializedPayload = payload.serializeBinary()
-  const hashbuf = cashlib.crypto.Hash.sha256(serializedPayload)
-  const ecdsa = cashlib.crypto.ECDSA({ privkey: privKey, hashbuf })
+  const hashbuf = crypto.Hash.sha256(serializedPayload)
+  const ecdsa = crypto.ECDSA({ privkey: privKey, hashbuf })
   ecdsa.sign()
 
   const metadata = new wrapper.AuthWrapper()

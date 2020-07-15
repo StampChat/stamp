@@ -15,7 +15,7 @@ import { calcId } from '../wallet/helpers'
 import assert from 'assert'
 
 const WebSocket = window.require('ws')
-const cashlib = require('bitcore-lib-cash')
+import { PublicKey, crypto, Transaction } from 'bitcore-lib-cash'
 
 export class RelayClient {
   constructor (url, wallet, electrumClientPromise, { getPubKey, messageStore }) {
@@ -232,9 +232,7 @@ export class RelayClient {
         Authorization: this.token
       },
       params: {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         start_time: startTime,
-        // eslint-disable-next-line @typescript-eslint/camelcase
         end_time: endTime
       },
       responseType: 'arraybuffer'
@@ -423,7 +421,7 @@ export class RelayClient {
 
   async receiveMessage ({ serverTime, receivedTime, message }) {
     const rawSenderPubKey = message.getSenderPubKey()
-    const senderPubKey = cashlib.PublicKey.fromBuffer(rawSenderPubKey)
+    const senderPubKey = PublicKey.fromBuffer(rawSenderPubKey)
     const senderAddr = senderPubKey.toAddress('testnet').toCashAddress() // TODO: Make generic
     const wallet = this.wallet
     const myAddress = wallet.myAddressStr
@@ -463,7 +461,7 @@ export class RelayClient {
     // Get payload if serialized payload is missing
     const rawPayload = await getPayload(payloadDigestFromServer, rawPayloadFromServer)
 
-    const payloadDigest = cashlib.crypto.Hash.sha256(rawPayload)
+    const payloadDigest = crypto.Hash.sha256(rawPayload)
     if (!payloadDigest.equals(payloadDigestFromServer)) {
       console.error('Payload received doesn\'t match digest. Refusing to process message', payloadDigest, payloadDigestFromServer)
       return
@@ -472,7 +470,7 @@ export class RelayClient {
     const payload = messaging.Payload.deserializeBinary(rawPayload)
     const payloadDigestHex = payloadDigest.toString('hex')
     const destinationRaw = payload.getDestination()
-    const destPubKey = cashlib.PublicKey.fromBuffer(destinationRaw)
+    const destPubKey = PublicKey.fromBuffer(destinationRaw)
     const destinationAddr = destPubKey.toAddress('testnet').toCashAddress()
     const identityPrivKey = wallet.identityPrivKey
     const copartyAddress = outbound ? destinationAddr : senderAddr
@@ -492,12 +490,12 @@ export class RelayClient {
       const entriesCipherText = payload.getEntries()
 
       const ephemeralPubKeyRaw = payload.getEphemeralPubKey()
-      const ephemeralPubKey = cashlib.PublicKey.fromBuffer(ephemeralPubKeyRaw)
+      const ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
       if (!outbound) {
         entriesRaw = decrypt(entriesCipherText, identityPrivKey, senderPubKey, ephemeralPubKey)
       } else {
         const ephemeralPrivKeyEncrypted = payload.getEphemeralPrivKey()
-        const entriesDigest = cashlib.crypto.Hash.sha256(entriesCipherText)
+        const entriesDigest = crypto.Hash.sha256(entriesCipherText)
         const ephemeralPrivKey = decryptEphemeralKey(ephemeralPrivKeyEncrypted, identityPrivKey, entriesDigest)
         entriesRaw = decryptWithEphemPrivKey(entriesCipherText, ephemeralPrivKey, identityPrivKey, destPubKey)
       }
@@ -517,7 +515,7 @@ export class RelayClient {
 
     for (const [i, stampOutpoint] of stampOutpoints.entries()) {
       const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
-      const stampTx = cashlib.Transaction(stampTxRaw)
+      const stampTx = Transaction(stampTxRaw)
       const txId = stampTx.hash
       const vouts = stampOutpoint.getVoutsList()
       const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
@@ -542,7 +540,7 @@ export class RelayClient {
         // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
         // HASH160(SHA256(point)) ourself
         // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
-        const computedAddress = new cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress('testnet')
+        const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress('testnet')
         if (!outbound && !address.toBuffer().equals(computedAddress.toBuffer())) {
           // Assume outbound addresses were valid.  Otherwise we need to calclate a different
           // derivation then based on our identity address.
@@ -609,11 +607,11 @@ export class RelayClient {
         // Add stealth outputs
         const outpointsList = stealthMessage.getOutpointsList()
         const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
-        const ephemeralPubKey = cashlib.PublicKey.fromBuffer(ephemeralPubKeyRaw)
+        const ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
         const stealthHDPrivKey = constructStealthPrivKey(ephemeralPubKey, identityPrivKey)
         for (const [i, outpoint] of outpointsList.entries()) {
           const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
-          const stealthTx = cashlib.Transaction(stealthTxRaw)
+          const stealthTx = Transaction(stealthTxRaw)
           const txId = stealthTx.hash
           const vouts = outpoint.getVoutsList()
 
@@ -639,7 +637,7 @@ export class RelayClient {
             // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
             // HASH160(SHA256(point)) ourself
             // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
-            const computedAddress = new cashlib.PublicKey(cashlib.crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress('testnet')
+            const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress('testnet')
             if (!outbound && !address.toBuffer().equals(computedAddress.toBuffer())) {
               console.error('invalid stealth address, ignoring')
               continue

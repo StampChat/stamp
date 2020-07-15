@@ -1,6 +1,6 @@
 import { Notify } from 'quasar'
 import { notificationTimeout } from './constants'
-const remote = require('electron').remote
+import { remote } from 'electron'
 
 // Error notifications
 

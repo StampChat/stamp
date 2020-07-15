@@ -7,7 +7,7 @@ import { numAddresses, numChangeAddresses } from '../utils/constants'
 import { toElectrumScriptHash } from '../utils/formatting'
 import { calcId } from './helpers'
 
-const cashlib = require('bitcore-lib-cash')
+import { Address, crypto, Script, Transaction } from 'bitcore-lib-cash'
 
 const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
 const standardInputSize = 175 // A few extra bytes
@@ -201,9 +201,9 @@ export class Wallet {
       })
 
     await P.map(addresses, address => {
-      const scriptHash = cashlib.Script.buildPublicKeyHashOut(address)
+      const scriptHash = Script.buildPublicKeyHashOut(address)
       const scriptHashRaw = scriptHash.toBuffer()
-      const digest = cashlib.crypto.Hash.sha256(scriptHashRaw)
+      const digest = crypto.Hash.sha256(scriptHashRaw)
       const digestHexReversed = digest.reverse().toString('hex')
 
       return ecl.request('blockchain.scripthash.subscribe', digestHexReversed)
@@ -212,7 +212,7 @@ export class Wallet {
   }
 
   async forwardUTXOsToAddress ({ utxos, address }) {
-    let transaction = new cashlib.Transaction()
+    let transaction = new Transaction()
 
     const outpointIterator = await this.storage.getOutpointIterator()
     const outpointIds = utxos.map(utxo => calcId(utxo))
@@ -226,7 +226,7 @@ export class Wallet {
         continue
       }
       usedIDs.push(outpointId)
-      outpoint.script = cashlib.Script.buildPublicKeyHashOut(outpoint.address).toHex()
+      outpoint.script = Script.buildPublicKeyHashOut(outpoint.address).toHex()
       signingKeys.push(outpoint.privKey)
       transaction = transaction.from(outpoint)
       satoshis += outpoint.satoshis
@@ -286,8 +286,8 @@ export class Wallet {
       // however, we will sweep it into the first output instead to generate some noise
       console.log('Generating a change UTXO for amount:', changeOutputAmount)
       // Create the output
-      const output = new cashlib.Transaction.Output({
-        script: cashlib.Script.buildPublicKeyHashOut(changeAddress).toHex(),
+      const output = new Transaction.Output({
+        script: Script.buildPublicKeyHashOut(changeAddress).toHex(),
         satoshis: changeOutputAmount
       })
       transaction = transaction.addOutput(output)
@@ -340,7 +340,7 @@ export class Wallet {
     let retries = 0
     while (amountLeft > 0 && retries < 5) {
       const signingKeys = []
-      const transaction = new cashlib.Transaction()
+      const transaction = new Transaction()
       const usedUtxos = []
 
       const outpointIterator = await this.storage.getOutpointIterator()
@@ -390,7 +390,7 @@ export class Wallet {
         const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
         const utxoToUse = pickOne(utxoSetToUse)
         stagedUtxos.push(utxoToUse)
-        utxoToUse.script = cashlib.Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
+        utxoToUse.script = Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
         transaction.from(utxoToUse)
         signingKeys.push(utxoToUse.privKey)
         const txnSize = transaction._estimateSize()
@@ -408,8 +408,8 @@ export class Wallet {
       // if amountLeft is the minimum, there will need to be change.  However, the delta may be less than the dust limit
       // in which case we may want to throw this iteration away.
       const amountToUse = Math.min(amountLeft, availableAmount)
-      transaction.addOutput(new cashlib.Transaction.Output({
-        script: cashlib.Script(new cashlib.Address(address)),
+      transaction.addOutput(new Transaction.Output({
+        script: Script(new Address(address)),
         satoshis: amountToUse
       }))
       const availableForFeesAndChange = satoshis - amountToUse
@@ -451,7 +451,7 @@ export class Wallet {
   }
 
   async constructTransaction ({ outputs, exactOutputs = false }) {
-    let transaction = new cashlib.Transaction()
+    let transaction = new Transaction()
 
     // Add outputs
     for (const i in outputs) {
@@ -504,7 +504,7 @@ export class Wallet {
       console.log(utxo)
 
       const address = utxo.address
-      utxo.script = cashlib.Script.buildPublicKeyHashOut(address).toHex()
+      utxo.script = Script.buildPublicKeyHashOut(address).toHex()
       // Grab private key
       signingKeys.push(utxo.privKey)
       transaction = transaction.from(utxo)
