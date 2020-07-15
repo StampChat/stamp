@@ -1,6 +1,7 @@
 import { app, BrowserWindow, nativeTheme, Tray, Menu, shell, nativeImage } from 'electron'
 import path from 'path'
 import fs from 'fs'
+import Badge from 'electron-windows-badge'
 
 // Enable single instance lock
 const isSingleInstance = app.requestSingleInstanceLock()
@@ -30,6 +31,7 @@ function getIconPNGPath () {
 
 let mainWindow
 let tray
+let windowsBadgeUpdater
 const nativeIcon = nativeImage.createFromPath(getIconPNGPath()).resize({ width: 16, height: 16 })
 
 function createWindow () {
@@ -61,6 +63,8 @@ function createWindow () {
       nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION
     }
   })
+
+  windowsBadgeUpdater = new Badge(mainWindow, {})
 
   mainWindow.loadURL(process.env.APP_URL)
 
