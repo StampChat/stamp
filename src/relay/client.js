@@ -551,7 +551,7 @@ export class RelayClient {
         }
 
         const stampOutput = {
-          address,
+          address: address.toLegacyAddress(),
           privKey: outbound ? null : outputPrivKey, // This is okay, we don't add it to the wallet.
           satoshis,
           txId,
