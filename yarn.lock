@@ -4602,6 +4602,11 @@ electron-to-chromium@^1.3.488:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.496.tgz#3f43d32930481d82ad3663d79658e7c59a58af0b"
   integrity sha512-TXY4mwoyowwi4Lsrq9vcTUYBThyc1b2hXaTZI13p8/FRhY2CTaq5lK+DVjhYkKiTLsKt569Xes+0J5JsVXFurQ==
 
+electron-windows-badge@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/electron-windows-badge/-/electron-windows-badge-1.0.5.tgz#22d8d9be626812f45918cce568665eb4928cb601"
+  integrity sha512-khEdgNmszS8+xZwQkTmcpqG3NCIuooryDF760T95zcC1CB5YeBBGhhmKGVcyQkWKTeZ4RXcyqqXbmjesTfeU5A==
+
 electron@^9.0.0:
   version "9.1.0"
   resolved "https://registry.yarnpkg.com/electron/-/electron-9.1.0.tgz#ca77600c9e4cd591298c340e013384114d3d8d05"

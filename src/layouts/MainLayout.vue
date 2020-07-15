@@ -69,6 +69,7 @@ import ContactPanel from '../components/panels/ContactPanel.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
+import { remote, ipcRenderer } from 'electron'
 
 const compactWidth = 70
 const compactCutoff = 325
@@ -196,8 +197,8 @@ export default {
   },
   watch: {
     totalUnread: function (unread) {
-      const { app } = window.require('electron').remote
-      app.setBadgeCount(unread)
+      ipcRenderer.sendSync('update-badge', 1)
+      remote.app.setBadgeCount(unread)
     }
   }
 }
