@@ -70,6 +70,7 @@ import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
 import { remote, ipcRenderer } from 'electron'
+import { defaultContacts } from '../utils/constants'
 
 const compactWidth = 70
 const compactCutoff = 325
@@ -96,7 +97,8 @@ export default {
   },
   methods: {
     ...mapActions({
-      setActiveChat: 'chats/setActiveChat'
+      setActiveChat: 'chats/setActiveChat',
+      addDefaultContact: 'contacts/addDefaultContact'
     }),
     ...mapGetters({
       getSortedChatOrder: 'chats/getSortedChatOrder',
@@ -168,6 +170,11 @@ export default {
       this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
     } catch (err) {
       console.error(err)
+    }
+
+    // Add default contacts
+    for (const defaultContact of defaultContacts) {
+      this.addDefaultContact(defaultContact)
     }
 
     // const lastReceived = this.lastReceived

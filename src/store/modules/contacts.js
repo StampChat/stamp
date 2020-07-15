@@ -17,146 +17,7 @@ export function rehydrateContacts (contactState) {
 export default {
   namespaced: true,
   state: {
-    contacts: {
-      'bchtest:qrugj9hv6lcar6hflk26yz8k9qq8wp9tvsmvvqqwgq': {
-        lastUpdate: null,
-        profile: {
-          name: 'Stamp Group Chat #1',
-          pubKey: new Uint8Array([
-            2,
-            111,
-            154,
-            97,
-            51,
-            91,
-            21,
-            201,
-            249,
-            21,
-            64,
-            33,
-            209,
-            44,
-            71,
-            187,
-            52,
-            83,
-            161,
-            168,
-            20,
-            173,
-            139,
-            235,
-            85,
-            155,
-            234,
-            247,
-            223,
-            107,
-            31,
-            88,
-            32
-          ])
-        },
-        inbox: {
-          acceptancePrice: 5000
-        },
-        notify: true,
-        relayURL: defaultRelayUrl
-      },
-      'bchtest:qq3q7kzdds2xuzug05tn7w3lp7kkfulqfsf85x8tty': {
-        lastUpdate: null,
-        profile: {
-          name: 'Harry',
-          pubKey: new Uint8Array([
-            3,
-            14,
-            10,
-            67,
-            80,
-            209,
-            189,
-            177,
-            180,
-            42,
-            144,
-            28,
-            56,
-            182,
-            94,
-            167,
-            89,
-            227,
-            104,
-            46,
-            174,
-            234,
-            241,
-            72,
-            197,
-            63,
-            184,
-            232,
-            181,
-            16,
-            198,
-            7,
-            191
-          ])
-        },
-        inbox: {
-          acceptancePrice: 5000
-        },
-        notify: true,
-        relayURL: defaultRelayUrl
-      },
-      'bchtest:qqu3vqt9hydcmhkydn9h68qzlyduypuwqgnc8vvjhc': {
-        lastUpdate: null,
-        profile: {
-          name: 'Shammah (Always Up)',
-          pubKey: new Uint8Array([
-            2,
-            102,
-            255,
-            22,
-            228,
-            132,
-            236,
-            1,
-            167,
-            197,
-            242,
-            26,
-            230,
-            200,
-            60,
-            103,
-            197,
-            225,
-            249,
-            140,
-            125,
-            104,
-            196,
-            130,
-            160,
-            242,
-            40,
-            178,
-            73,
-            218,
-            99,
-            238,
-            38
-          ])
-        },
-        inbox: {
-          acceptancePrice: 5000
-        },
-        notify: true,
-        relayURL: defaultRelayUrl
-      }
-    },
+    contacts: {},
     updateInterval: defaultUpdateInterval
   },
   getters: {
@@ -242,6 +103,23 @@ export default {
     addContact ({ commit }, { address, contact }) {
       commit('addContact', { address, contact })
       commit('chats/setActiveChat', address, { root: true })
+    },
+    addDefaultContact ({ commit, getters, dispatch }, defaultContact) {
+      if (getters.isContact(defaultContact.address)) {
+        return
+      }
+      console.log('adding default contact', defaultContact.address)
+      const contact = {
+        ...pendingRelayData,
+        profile: {
+          ...pendingRelayData.profile,
+          name: defaultContact.name,
+          pubKey: defaultContact.pubKey
+        }
+      }
+      commit('addContact', { address: defaultContact.address, contact })
+      commit('chats/openChat', defaultContact.address, { root: true })
+      dispatch('refresh', defaultContact.address)
     },
     deleteChat ({ commit }, address) {
       commit('chats/deleteChat', address, { root: true })
