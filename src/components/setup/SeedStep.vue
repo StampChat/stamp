@@ -2,7 +2,9 @@
   <div class="col q-gutter-y-md">
     <q-card>
       <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold"> What is a Wallet? </div>
+        <div class="text-subtitle1 text-bold">
+          What is a Wallet?
+        </div>
       </q-card-section>
       <q-card-section class="text-body2">
         A wallet is a way of storing Bitcoin addresses. The <strong>Stamp wallet</strong> will contain your <strong>identity address</strong>, which allows you to be contacted by your friends,
@@ -17,11 +19,13 @@
     </q-card>
     <q-card>
       <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold"> Select a Seed </div>
+        <div class="text-subtitle1 text-bold">
+          Select a Seed
+        </div>
       </q-card-section>
       <q-card-section>
         <q-splitter
-          :value=110
+          :value="110"
           unit="px"
           disable
         >

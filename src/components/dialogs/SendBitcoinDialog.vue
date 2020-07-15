@@ -1,7 +1,9 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
-      <div class="text-h6">Send Bitcoin to {{ contact.name }}</div>
+      <div class="text-h6">
+        Send Bitcoin to {{ contact.name }}
+      </div>
     </q-card-section>
     <q-card-section>
       <q-input

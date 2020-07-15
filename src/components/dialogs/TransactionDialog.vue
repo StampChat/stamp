@@ -1,7 +1,9 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
-      <div class="text-h6">{{title}}</div>
+      <div class="text-h6">
+        {{ title }}
+      </div>
     </q-card-section>
     <q-card-section>
       <q-tabs
@@ -9,22 +11,29 @@
         v-model="tab"
         class="text-primary"
       >
-        <q-tab v-for="n in outpoints.length"  :key="n" :name="n" :label="n"/>
+        <q-tab
+          v-for="n in outpoints.length"
+          :key="n"
+          :name="n"
+          :label="n"
+        />
       </q-tabs>
       <q-tab-panels
         v-model="tab"
         animated
       >
-        <q-tab-panel v-for="n in outpoints.length" :key="n" :name="n">
-          <q-item-section class='q-py-lg'>
-              <span class='text-bold'> Transaction ID </span>
-              <q-item-label>{{outpoints[n-1].txId}}</q-item-label>
-              <span class='text-bold'> Type </span>
-              <q-item-label>{{outpoints[n-1].type}}</q-item-label>
-              <span class='text-bold'> Address </span>
-              {{ outpoints[n-1].address}}
-              <span class='text-bold'> Amount </span>
-              {{ outpoints[n-1].satoshis }}
+        <q-tab-panel
+          v-for="n in outpoints.length"
+          :key="n"
+          :name="n"
+        >
+          <q-item-section class="q-py-lg">
+            <span class="text-bold"> Transaction ID </span>
+            <q-item-label>{{ outpoints[n-1].txId }}</q-item-label>
+            <span class="text-bold"> Type </span>
+            <q-item-label>{{ outpoints[n-1].type }}</q-item-label>
+            <span class="text-bold"> Address </span> {{ outpoints[n-1].address }}
+            <span class="text-bold"> Amount </span> {{ outpoints[n-1].satoshis }}
           </q-item-section>
         </q-tab-panel>
       </q-tab-panels>

@@ -1,7 +1,9 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-large">
     <q-card-section>
-      <div class="text-h6">Profile</div>
+      <div class="text-h6">
+        Profile
+      </div>
     </q-card-section>
     <profile v-model="relayData" />
     <q-card-actions align="right">

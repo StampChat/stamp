@@ -1,7 +1,9 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
-      <div class="text-h6">Send to Address</div>
+      <div class="text-h6">
+        Send to Address
+      </div>
     </q-card-section>
     <q-card-section>
       <q-input

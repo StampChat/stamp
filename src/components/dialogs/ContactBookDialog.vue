@@ -6,7 +6,9 @@
     </q-dialog>
 
     <q-card-section class="row items-center q-pb-none">
-      <div class="text-h6">Contacts</div>
+      <div class="text-h6">
+        Contacts
+      </div>
       <q-space />
       <q-btn
         flat
@@ -31,7 +33,7 @@
       <contact-list
         :contacts="searchContacts(search)"
         :contactClick="contactClick"
-        v-on:close-contact-search-dialog="closeContactSearchDialog"
+        @close-contact-search-dialog="closeContactSearchDialog"
       />
     </q-card-section>
     <q-card-actions align="right">

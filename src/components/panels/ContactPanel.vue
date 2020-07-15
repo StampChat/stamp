@@ -35,7 +35,9 @@
 
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
-      <contact-book-dialog :contactClick="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }" />
+      <contact-book-dialog
+        :contactClick="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }"
+      />
     </q-dialog>
 
     <!-- Contact card -->
@@ -47,7 +49,7 @@
     />
 
     <!-- Scroll area -->
-    <q-scroll-area class="col" >
+    <q-scroll-area class="col">
       <q-list padding>
         <q-item>
           <q-item-section avatar>

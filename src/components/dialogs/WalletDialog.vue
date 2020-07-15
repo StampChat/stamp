@@ -6,10 +6,14 @@
     </q-dialog>
 
     <q-card-section>
-      <div class="text-h6">Wallet Status</div>
+      <div class="text-h6">
+        Wallet Status
+      </div>
     </q-card-section>
     <q-card-section>
-      <div class="text-bold text-subtitle1 text-center"> {{formattedBalance}}</div>
+      <div class="text-bold text-subtitle1 text-center">
+        {{ formattedBalance }}
+      </div>
     </q-card-section>
     <q-separator />
     <q-card-section>
@@ -19,7 +23,7 @@
           :value="currentAddress"
           :size="300"
           level="H"
-        ></qrcode-vue>
+        />
       </div>
       <div class="row">
         <q-input
@@ -53,7 +57,9 @@
       <q-btn
         color="primary"
         @click="seedPhraseOpen = true"
-      > Show Seed </q-btn>
+      >
+        Show Seed
+      </q-btn>
     </q-item-section>
     <q-card-actions align="right">
       <q-btn

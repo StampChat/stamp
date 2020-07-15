@@ -2,16 +2,20 @@
   <div class="row">
     <div class="col">
       <div class="stack-header row">
-        <div class='q-px-md col text-weight-bold' :style="nameColor"> {{ contact.name }} </div>
-         <div class="flex-break"></div>
-        <div class='col-auto'>
+        <div
+          class="q-px-md col text-weight-bold"
+          :style="nameColor"
+        >
+          {{ contact.name }}
+        </div>
+        <div class="col-auto">
           {{ stampAmount }}
         </div>
-        <div class='q-px-sm col-auto'>
+        <div class="q-px-sm col-auto">
           {{ shortTimestamp }}
         </div>
       </div>
-      <q-list class='q-pt-sm'>
+      <q-list class="q-pt-sm">
         <chat-message
           v-for="(message, index) in messages"
           :key="index"

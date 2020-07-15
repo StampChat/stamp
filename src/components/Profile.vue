@@ -1,7 +1,7 @@
 <template>
   <div>
     <q-splitter
-      :value=110
+      :value="110"
       unit="px"
       disable
     >
@@ -84,11 +84,20 @@
                     ref="image"
                     :src="avatar"
                     spinner-color="white"
-                  >
-                  </q-img>
+                  />
                   <div class="text-center">
-                    <q-btn flat icon="navigate_before" color="black" @click="cycleAvatarLeft" />
-                    <q-btn flat icon="navigate_next" color="black" @click="cycleAvatarRight" />
+                    <q-btn
+                      flat
+                      icon="navigate_before"
+                      color="black"
+                      @click="cycleAvatarLeft"
+                    />
+                    <q-btn
+                      flat
+                      icon="navigate_next"
+                      color="black"
+                      @click="cycleAvatarRight"
+                    />
                   </div>
                 </div>
               </div>

@@ -8,12 +8,19 @@
     <!-- Transaction Dialog -->
     <q-dialog v-model="transactionDialog">
       <!-- Switch to outpoints -->
-      <transaction-dialog title="Backing Transactions" :outpoints="message.outpoints" />
+      <transaction-dialog
+        title="Backing Transactions"
+        :outpoints="message.outpoints"
+      />
     </q-dialog>
 
     <!-- Delete Dialog -->
     <q-dialog v-model="deleteDialog">
-      <delete-message-dialog :address="address" :payloadDigest="message.payloadDigest" :index="index" />
+      <delete-message-dialog
+        :address="address"
+        :payloadDigest="message.payloadDigest"
+        :index="index"
+      />
     </q-dialog>
 
     <chat-message-menu
@@ -27,27 +34,57 @@
       @replyClick="replyClicked({ address, payloadDigest: message.payloadDigest })"
     />
 
-    <div class='col' v-if="message.payloadDigest">
-      <div  class='q-px-lg' v-for="(item, index) in message.items" :key="index" >
-        <chat-message-reply v-if="item.type=='reply'" :payloadDigest="item.payloadDigest" :address="address" :mouseover="mouseover"/>
-        <chat-message-text v-else-if="item.type=='text'" :text="item.text" />
-        <chat-message-image v-else-if="item.type=='image'" :image="item.image" />
-        <chat-message-stealth v-else-if="item.type=='stealth'" :amount="item.amount" />
+    <div
+      class="col"
+      v-if="message.payloadDigest"
+    >
+      <div
+        class="q-px-lg"
+        v-for="(item, key) in message.items"
+        :key="key"
+      >
+        <chat-message-reply
+          v-if="item.type=='reply'"
+          :payloadDigest="item.payloadDigest"
+          :address="address"
+          :mouseover="mouseover"
+        />
+        <chat-message-text
+          v-else-if="item.type=='text'"
+          :text="item.text"
+        />
+        <chat-message-image
+          v-else-if="item.type=='image'"
+          :image="item.image"
+        />
+        <chat-message-stealth
+          v-else-if="item.type=='stealth'"
+          :amount="item.amount"
+        />
       </div>
     </div>
-    <div class='col' v-else-if="!message.payloadDigest">
-      unable to find message payload
+    <div
+      class="col"
+      v-else-if="!message.payloadDigest"
+    >
+      Unable to find message payload
     </div>
 
     <q-tooltip>
       {{ stampAmount }}
     </q-tooltip>
-    <div class='q-px-sm col-auto'>
+    <div class="q-px-sm col-auto">
       {{ shortTime }}
     </div>
 
-    <div v-if="message.status==='error'" class="col-auto">
-      <q-icon name="error" color="red" />
+    <div
+      v-if="message.status==='error'"
+      class="col-auto"
+    >
+      <q-icon
+        name="error"
+        color="red"
+      />
     </div>
   </q-item>
 </template>

@@ -2,7 +2,9 @@
   <div class="col q-gutter-y-md">
     <q-card>
       <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold"> Tweak Settings </div>
+        <div class="text-subtitle1 text-bold">
+          Tweak Settings
+        </div>
       </q-card-section>
       <q-card-section>
         <settings v-model="innerSettingsChanged" />

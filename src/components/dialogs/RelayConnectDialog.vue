@@ -21,7 +21,7 @@
         label="Retry"
         color="primary"
         v-close-popup
-        @click='connect'
+        @click="connect"
       />
     </q-card-actions>
   </q-card>

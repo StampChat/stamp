@@ -1,7 +1,9 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
-      <div class="text-h6">New Contact</div>
+      <div class="text-h6">
+        New Contact
+      </div>
     </q-card-section>
     <q-card-section>
       <q-input
@@ -51,7 +53,6 @@
             </q-item-label>
           </q-item-section>
         </q-item>
-
       </q-card-section>
       <q-card-section
         v-else-if="contact !== null"
@@ -67,8 +68,10 @@
             </q-avatar>
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{contact.profile.name}}</q-item-label>
-            <q-item-label caption>Minimum Stamp: {{contact.inbox.acceptancePrice}}</q-item-label>
+            <q-item-label>{{ contact.profile.name }}</q-item-label>
+            <q-item-label caption>
+              Minimum Stamp: {{ contact.inbox.acceptancePrice }}
+            </q-item-label>
           </q-item-section>
         </q-item>
       </q-card-section>

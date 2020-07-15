@@ -1,32 +1,58 @@
 <template>
-  <q-layout ref="chatLayout" view="lhh LpR lff" container class="hide-scrollbar absolute full-width">
+  <q-layout
+    ref="chatLayout"
+    view="lhh LpR lff"
+    container
+    class="hide-scrollbar absolute full-width"
+  >
     <!-- Send file dialog -->
     <!-- TODO: Move this up.  We don't need a copy of this dialog for each address (likely) -->
-    <q-dialog v-model="sendFileOpen" persistent>
+    <q-dialog
+      v-model="sendFileOpen"
+      persistent
+    >
       <send-file-dialog :address="address" />
     </q-dialog>
 
     <!-- Send money dialog -->
-    <q-dialog v-model="sendMoneyOpen" persistent>
-      <send-bitcoin-dialog :address="address" :contact="contactProfile" />
+    <q-dialog
+      v-model="sendMoneyOpen"
+      persistent
+    >
+      <send-bitcoin-dialog
+        :address="address"
+        :contact="contactProfile"
+      />
     </q-dialog>
 
     <q-header>
       <q-toolbar class="q-pl-sm">
         <q-avatar rounded>
-          <img :src="contactProfile.avatar" />
+          <img :src="contactProfile.avatar"/>
         </q-avatar>
-        <q-toolbar-title class="h6"> {{ contactProfile.name }} </q-toolbar-title>
+        <q-toolbar-title class="h6">
+          {{ contactProfile.name }}
+        </q-toolbar-title>
         <q-space />
-        <q-btn class="q-px-sm" flat dense @click="toggleContactDrawerOpen" icon="person" />
+        <q-btn
+          class="q-px-sm"
+          flat
+          dense
+          @click="toggleContactDrawerOpen"
+          icon="person"
+        />
       </q-toolbar>
     </q-header>
 
     <q-page-container>
       <q-page>
-        <q-scroll-area ref="chatScroll" @scroll=scrollHandler class="q-px-none absolute full-width full-height">
+        <q-scroll-area
+          ref="chatScroll"
+          @scroll="scrollHandler"
+          class="q-px-none absolute full-width full-height"
+        >
           <anouncement
-            class='q-pt-sm'
+            class="q-pt-sm"
             name="Stamp Developers"
             :text="donationMessage"
           />
@@ -45,8 +71,18 @@
             </template>
           </template>
         </q-scroll-area>
-        <q-page-sticky position="bottom-right" :offset="[18, 18]" v-show="!bottom">
-          <q-btn round size="md" icon="keyboard_arrow_down" color="accent" @click="scrollBottom" />
+        <q-page-sticky
+          position="bottom-right"
+          :offset="[18, 18]"
+          v-show="!bottom"
+        >
+          <q-btn
+            round
+            size="md"
+            icon="keyboard_arrow_down"
+            color="accent"
+            @click="scrollBottom"
+          />
         </q-page-sticky>
       </q-page>
     </q-page-container>
@@ -54,20 +90,37 @@
     <q-footer bordered>
       <div
         v-if="!!replyDigest"
-        class='reply col q-px-md q-pt-sm'
+        class="reply col q-px-md q-pt-sm"
         ref="replyBox"
       >
         <!-- Reply box -->
-        <div class='row'>
-          <div class='col text-weight-bold'> {{ replyName }} </div>
-            <div class='col-auto'>
-              <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
-            </div>
+        <div class="row">
+          <div class="col text-weight-bold">
+            {{ replyName }}
+          </div>
+          <div class="col-auto">
+            <q-btn
+              dense
+              flat
+              color="accent"
+              icon="close"
+              @click="setReply(null)"
+            />
+          </div>
         </div>
-        <div class='row q-px-sm q-pt-sm'>
-          <chat-message-text v-if="replyItem.type=='text'" :text="replyItem.text" />
-          <chat-message-image v-else-if="replyItem.type=='image'" :image="replyItem.image" />
-          <chat-message-stealth v-else-if="replyItem.type=='stealth'" :amount="replyItem.amount" />
+        <div class="row q-px-sm q-pt-sm">
+          <chat-message-text
+            v-if="replyItem.type=='text'"
+            :text="replyItem.text"
+          />
+          <chat-message-image
+            v-else-if="replyItem.type=='image'"
+            :image="replyItem.image"
+          />
+          <chat-message-stealth
+            v-else-if="replyItem.type=='stealth'"
+            :amount="replyItem.amount"
+          />
         </div>
       </div>
 
@@ -75,7 +128,7 @@
       <chat-input
         ref="chatInput"
         v-model="message"
-        v-bind:stampAmount="stampAmount"
+        :stampAmount="stampAmount"
         @sendMessage="sendMessage"
         @sendFileClicked="sendFileOpen = true"
         @sendMoneyClicked="sendMoneyOpen = true"

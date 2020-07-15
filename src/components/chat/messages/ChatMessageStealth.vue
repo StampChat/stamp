@@ -1,7 +1,11 @@
 <template>
   <div>
-    <q-icon name="attach_money" size="sm" dense />
-      {{ formatSats(amount) }}
+    <q-icon
+      name="attach_money"
+      size="sm"
+      dense
+    />
+    {{ formatSats(amount) }}
   </div>
 </template>
 
