@@ -435,9 +435,9 @@ export class Wallet {
       }
       amountLeft -= amountToUse
       usedUtxos.push(...stagedUtxos)
-      stagedUtxos.map(
+      await Promise.all(stagedUtxos.map(
         utxo => this.storage.freezeOutpoint(calcId(utxo))
-      )
+      ))
       this.finalizeTransaction({ transaction, signingKeys })
       transactionBundle.push({
         transaction,
@@ -468,6 +468,9 @@ export class Wallet {
     const utxos = []
 
     for await (const utxo of outpointIterator) {
+      if (utxo.frozen) {
+        continue
+      }
       utxos.push(utxo)
     }
 
@@ -515,9 +518,9 @@ export class Wallet {
       throw Error('insufficient funds')
     }
 
-    usedUtxos.map(
+    await Promise.all(usedUtxos.map(
       utxo => this.storage.freezeOutpoint(calcId(utxo))
-    )
+    ))
 
     // Add change outputs using our HD wallet.  We want multiple outputs following a
     // power distribution, so we don't have to combine lots of outputs at later times
