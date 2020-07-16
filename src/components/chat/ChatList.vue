@@ -55,11 +55,12 @@
     <q-list>
       <q-separator />
       <q-item
-        v-show="!compact"
         clickable
-        @click="walletOpen=true"
+        v-show="!compact"
       >
-        <q-item-section>
+        <q-item-section
+          @click="walletOpen=true"
+        >
           <q-item-label>Balance</q-item-label>
           <q-item-label caption>
             {{ formattedBalance }}
