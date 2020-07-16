@@ -36,6 +36,9 @@ export default {
     getContact: (state) => (address) => {
       return state.contacts[address] ? state.contacts[address] : { ...pendingRelayData, profile: { ...pendingRelayData.profile } }
     },
+    getContacts: (state) => {
+      return state.contacts
+    },
     getContactProfile: (state) => (address) => {
       return state.contacts[address] ? state.contacts[address].profile : { ...pendingRelayData.profile }
     },
@@ -48,18 +51,6 @@ export default {
       }
       const arr = Uint8Array.from(Object.values(state.contacts[address].profile.pubKey))
       return PublicKey.fromBuffer(arr)
-    },
-    searchContacts: (state) => (search) => {
-      const result = {}
-      const contacts = state.contacts
-      for (const key in contacts) {
-        const lowerSearch = search.toLowerCase()
-        if (contacts[key].profile.name.toLowerCase().includes(lowerSearch) || key.toLowerCase().includes(lowerSearch)) {
-          result[key] = contacts[key]
-        }
-      }
-
-      return result
     }
   },
   mutations: {
