@@ -14,7 +14,6 @@
         placeholder="Enter Bitcoin Cash address..."
         ref="address"
         @keydown.enter.prevent="addContact()"
-        v-close-popup
       />
     </q-card-section>
     <q-slide-transition>
@@ -89,6 +88,7 @@
         label="Add"
         color="primary"
         @click="addContact()"
+        v-close-popup
       />
     </q-card-actions>
   </q-card>
