@@ -1,10 +1,9 @@
-import messaging from './messaging_pb'
+import { Header, Message, PayloadEntry, Profile, ProfileEntry, Stamp, StampOutpoints } from './relay_pb'
 import stealth from './stealth_pb'
 import filters from './filters_pb'
-import { constructStampPubKey, constructStealthPubKey, encrypt, encryptEphemeralKey } from './crypto'
+import { constructSharedKey, constructStampHDPublicKey, constructHDStealthPublicKey, constructPayloadHmac, encrypt } from './crypto'
 import VCard from 'vcf'
-import addressmetadata from '../keyserver/addressmetadata_pb'
-import wrapper from '../pop/wrapper_pb'
+import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 
 import { crypto, PublicKey, PrivateKey } from 'bitcore-lib-cash'
 import assert from 'assert'
@@ -13,7 +12,7 @@ export const constructStampTransactions = function (wallet, payloadDigest, destP
   assert(payloadDigest instanceof Buffer)
 
   // Stamp output
-  const stampHDPubKey = constructStampPubKey(payloadDigest, destPubKey)
+  const stampHDPubKey = constructStampHDPublicKey(payloadDigest, destPubKey)
   // Assuming one txn and one output for now.
   let transactionNumber = 0// This should be the index of the transaction in the outpoint list
   const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
@@ -39,7 +38,7 @@ export const constructStealthTransactions = function (wallet, ephemeralPrivKey, 
   // But the spec should allow doing confidential amounts.
   let transactionNumber = 0// This should be the index of the transaction in the outpoint list
   const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
-  const stealthHDPubKey = constructStealthPubKey(ephemeralPrivKey, destPubKey)
+  const stealthHDPubKey = constructHDStealthPublicKey(ephemeralPrivKey, destPubKey)
 
   const stealthPubKeyGenerator = () => {
     const stealthPubKey = stealthHDPubKey
@@ -58,93 +57,81 @@ export const constructStealthTransactions = function (wallet, ephemeralPrivKey, 
   return wallet.constructTransactionSet({ addressGenerator: stealthPubKeyGenerator, amount })
 }
 
-export const constructMessage = async function (wallet, serializedPayload, privKey, destPubKey, stampAmount) {
-  const payloadDigest = crypto.Hash.sha256(serializedPayload)
-  const ecdsa = crypto.ECDSA({ privkey: privKey, hashbuf: payloadDigest })
-  ecdsa.sign()
+export const constructMessage = function (wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount) {
+  const plainPayloadDigest = crypto.Hash.sha256(plainTextPayload)
 
-  const message = new messaging.Message()
-  const sig = ecdsa.sig.toCompact(1).slice(1)
-  const rawPubkey = privKey.toPublicKey().toBuffer()
-  message.setSenderPubKey(rawPubkey)
-  message.setSignature(sig)
-  message.setSerializedPayload(serializedPayload)
+  // Construct salt
+  const rawSourcePrivateKey = sourcePrivateKey.toBuffer()
+  const salt = crypto.Hash.sha256hmac(plainPayloadDigest, rawSourcePrivateKey)
 
-  const transactionBundle = await constructStampTransactions(wallet, payloadDigest, destPubKey, stampAmount)
+  // Construct shared key
+  const sharedKey = constructSharedKey(sourcePrivateKey, destinationPublicKey, salt)
 
-  for (const { transaction: stampTx, vouts } of transactionBundle) {
-    const rawStampTx = stampTx.toBuffer()
-    const stampOutpoints = new messaging.StampOutpoints()
-    stampOutpoints.setStampTx(rawStampTx)
-    vouts.forEach((vout) => stampOutpoints.addVouts(vout))
-    message.addStampOutpoints(stampOutpoints)
+  // Encrypt payload
+  const payload = encrypt(sharedKey, plainTextPayload)
+
+  // Calculate payload hmac
+  const payloadDigest = crypto.Hash.sha256(payload)
+  const payloadHmac = constructPayloadHmac(sharedKey, payloadDigest)
+
+  // Get transaction bundle from wallet
+  try {
+    const transactionBundle = constructStampTransactions(wallet, payloadDigest, destinationPublicKey, stampAmount)
+    // Construct Stamp
+    const stamp = new Stamp()
+    stamp.setStampType(1)
+
+    for (const { transaction: stampTx, vouts } of transactionBundle) {
+      const rawStampTx = stampTx.toBuffer()
+      const stampOutpoints = new StampOutpoints()
+      stampOutpoints.setStampTx(rawStampTx)
+      vouts.forEach((vout) => stampOutpoints.addVouts(vout))
+
+      stamp.addStampOutpoints(stampOutpoints)
+    }
+
+    // Construct message
+    const message = new Message()
+    const rawSourcePublickey = sourcePrivateKey.toPublicKey().toBuffer()
+    const rawDestinationPublicKey = destinationPublicKey.toBuffer()
+    message.setScheme(1)
+    message.setDestinationPublicKey(rawDestinationPublicKey)
+    message.setSourcePublicKey(rawSourcePublickey)
+    message.setPayload(payload)
+    message.setPayloadHmac(payloadHmac)
+    message.setSalt(salt)
+    message.setStamp(stamp)
+    return { message, transactionBundle, payloadDigest }
+  } catch (err) {
+    throw Object({
+      payloadDigest,
+      err
+    })
   }
-
-  return { message, transactionBundle }
-}
-
-export const constructPayload = function (entries, privKey, destPubKey, scheme, timestamp = Date.now()) {
-  const entriesPb = new messaging.Entries()
-  const payload = new messaging.Payload()
-  payload.setTimestamp(timestamp)
-  const rawDestPubKey = destPubKey.toBuffer()
-  payload.setDestination(rawDestPubKey)
-
-  // Convert to PB
-  for (const entry of entries) {
-    entriesPb.addEntries(entry)
-  }
-
-  // Serialize and encrypt
-  const rawEntries = entriesPb.serializeBinary()
-  if (scheme === 0) {
-    payload.setEntries(rawEntries)
-    const serializedPayload = payload.serializeBinary()
-    const payloadDigest = crypto.Hash.sha256(serializedPayload)
-    return { serializedPayload, payloadDigest }
-  } else if (scheme === 1) {
-    const { cipherText, ephemeralPrivKey } = encrypt(rawEntries, privKey, destPubKey)
-    const ephemeralPubKey = ephemeralPrivKey.toPublicKey()
-    const ephemeralPubKeyRaw = ephemeralPubKey.toBuffer()
-    const entriesDigest = crypto.Hash.sha256(cipherText)
-    const encryptedEphemeralKey = encryptEphemeralKey(ephemeralPrivKey, privKey, entriesDigest)
-
-    payload.setEntries(cipherText)
-    payload.setEphemeralPubKey(ephemeralPubKeyRaw)
-    payload.setEphemeralPrivKey(encryptedEphemeralKey)
-    payload.setScheme(messaging.Payload.EncryptionScheme.EPHEMERALDH)
-
-    const serializedPayload = payload.serializeBinary()
-    const payloadDigest = crypto.Hash.sha256(serializedPayload)
-    return { serializedPayload, payloadDigest }
-  }
-
-  assert(false, 'Trying to create a payload with an unknown encryption scheme')
-  return {}
 }
 
 export const constructReplyEntry = function ({ payloadDigest }) {
   assert(typeof payloadDigest === 'string')
   const payloadDigestBuffer = Buffer.from(payloadDigest, 'hex')
 
-  const entry = new messaging.Entry()
+  const entry = new PayloadEntry()
   entry.setKind('reply')
-  entry.setEntryData(payloadDigestBuffer)
+  entry.setBody(payloadDigestBuffer)
   return entry
 }
 
 export const constructTextEntry = function ({ text }) {
   // Add text entry
-  const textEntry = new messaging.Entry()
+  const textEntry = new PayloadEntry()
   textEntry.setKind('text-utf8')
   const rawText = new TextEncoder('utf-8').encode(text)
-  textEntry.setEntryData(rawText)
+  textEntry.setBody(rawText)
   return textEntry
 }
 
 export const constructStealthEntry = async function ({ wallet, amount, destPubKey }) {
   // Construct payment entry
-  const paymentEntry = new messaging.Entry()
+  const paymentEntry = new PayloadEntry()
   paymentEntry.setKind('stealth-payment')
 
   const stealthPaymentEntry = new stealth.StealthPaymentEntry()
@@ -166,14 +153,14 @@ export const constructStealthEntry = async function ({ wallet, amount, destPubKe
   }
 
   const paymentEntryRaw = stealthPaymentEntry.serializeBinary()
-  paymentEntry.setEntryData(paymentEntryRaw)
+  paymentEntry.setBody(paymentEntryRaw)
 
   return { paymentEntry, transactionBundle }
 }
 
 export const constructImageEntry = function ({ image }) {
   // Construct text entry
-  const imgEntry = new messaging.Entry()
+  const imgEntry = new PayloadEntry()
   imgEntry.setKind('image')
 
   const arr = image.split(',')
@@ -185,10 +172,10 @@ export const constructImageEntry = function ({ image }) {
   while (n--) {
     rawAvatar[n] = bstr.charCodeAt(n)
   }
-  const imgHeader = new messaging.Header()
+  const imgHeader = new Header()
   imgHeader.setName('data')
   imgHeader.setValue(avatarType)
-  imgEntry.setEntryData(rawAvatar)
+  imgEntry.setBody(rawAvatar)
   imgEntry.addHeaders(imgHeader)
 
   return imgEntry
@@ -204,22 +191,22 @@ export const constructPriceFilter = function (isPublic, acceptancePrice, notific
   return priceFilter
 }
 
-export const constructProfileMetadata = function (profile, priceFilter, privKey) {
+export const constructProfileMetadata = function (profileObj, priceFilter, privKey) {
   // Construct vCard
   const vCard = new VCard()
-  vCard.set('fn', profile.name)
-  vCard.set('note', profile.bio)
+  vCard.set('fn', profileObj.name)
+  vCard.set('note', profileObj.bio)
   const rawCard = new TextEncoder().encode(vCard.toString())
 
-  const cardEntry = new addressmetadata.Entry()
+  const cardEntry = new ProfileEntry()
   cardEntry.setKind('vcard')
-  cardEntry.setEntryData(rawCard)
+  cardEntry.setBody(rawCard)
 
   // Construct avatar
-  const imgEntry = new addressmetadata.Entry()
+  const imgEntry = new ProfileEntry()
   imgEntry.setKind('avatar')
 
-  const arr = profile.avatar.split(',')
+  const arr = profileObj.avatar.split(',')
   const avatarType = arr[0].match(/:(.*?);/)[1]
   const bstr = atob(arr[1])
   let n = bstr.length
@@ -228,37 +215,37 @@ export const constructProfileMetadata = function (profile, priceFilter, privKey)
   while (n--) {
     rawAvatar[n] = bstr.charCodeAt(n)
   }
-  const imgHeader = new addressmetadata.Header()
+  const imgHeader = new Header()
   imgHeader.setName('data')
   imgHeader.setValue(avatarType)
-  imgEntry.setEntryData(rawAvatar)
+  imgEntry.setBody(rawAvatar)
   imgEntry.addHeaders(imgHeader)
 
   // Construct price filter
-  const filterEntry = new addressmetadata.Entry()
+  const filterEntry = new ProfileEntry()
   filterEntry.setKind('price-filter')
   const rawPriceFilter = priceFilter.serializeBinary()
-  filterEntry.setEntryData(rawPriceFilter)
+  filterEntry.setBody(rawPriceFilter)
 
   // Construct payload
-  const payload = new addressmetadata.Payload()
-  payload.setTimestamp(Math.floor(Date.now() / 1000))
-  payload.setTtl(31556952) // 1 year
-  payload.addEntries(cardEntry)
-  payload.addEntries(imgEntry)
-  payload.addEntries(filterEntry)
+  const profile = new Profile()
+  profile.setTimestamp(Math.floor(Date.now() / 1000))
+  profile.setTtl(31556952) // 1 year
+  profile.addEntries(cardEntry)
+  profile.addEntries(imgEntry)
+  profile.addEntries(filterEntry)
 
-  const serializedPayload = payload.serializeBinary()
-  const hashbuf = crypto.Hash.sha256(serializedPayload)
+  const rawProfile = profile.serializeBinary()
+  const hashbuf = crypto.Hash.sha256(rawProfile)
   const ecdsa = crypto.ECDSA({ privkey: privKey, hashbuf })
   ecdsa.sign()
 
-  const metadata = new wrapper.AuthWrapper()
+  const authWrapper = new AuthWrapper()
   const sig = ecdsa.sig.toCompact(1).slice(1)
-  metadata.setPubKey(privKey.toPublicKey().toBuffer())
-  metadata.setSignature(sig)
-  metadata.setScheme(1)
-  metadata.setSerializedPayload(serializedPayload)
+  authWrapper.setPublicKey(privKey.toPublicKey().toBuffer())
+  authWrapper.setSignature(sig)
+  authWrapper.setScheme(1)
+  authWrapper.setPayload(rawProfile)
 
-  return metadata
+  return authWrapper
 }

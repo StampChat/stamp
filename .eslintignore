@@ -5,10 +5,11 @@
 /.quasar
 /node_modules
 
-/src/keyserver/addressmetadata_pb.js
-/src/relay/messaging_pb.js
+
+/src/keyserver/keyserver_pb.js
+/src/relay/relay_pb.js
 /src/relay/filters_pb.js
 /src/relay/stealth_pb.js
-/src/pop/paymentrequest_pb.js
-/src/pop/wrapper_pb.js
+/src/bip70/paymentrequest_pb.js
+/src/auth_wrapper/wrapper_pb.js
 /test/jest/utils
