@@ -66,7 +66,7 @@
               @click="next()"
               color="primary"
               :label="forwardLabel"
-              :disable="forwardDisabled"
+              :disable="!forwardEnabled"
             />
             <q-btn
               v-if="step > 1"
@@ -121,7 +121,6 @@ export default {
   },
   data () {
     return {
-      forwardDisabled: false,
       step: 1,
       name: '',
       bio: '',
@@ -456,33 +455,36 @@ export default {
       } else if (newValue && this.step === 6) {
         this.step = 5
       }
-    },
-    '$electrum.connected' () {
+    }
+  },
+  computed: {
+    ...mapGetters({ balance: 'wallet/balance' }),
+    forwardEnabled () {
       if (!this.$electrum.connected) {
-        this.forwardDisabled = true
+        return false
       }
 
       switch (this.step) {
         case 2:
-          this.forwardDisabled = !this.isWalletValid
-          break
+          return this.isWalletValid
+        case 3:
+          return this.isWalletNonEmpty
         case 5:
-          this.forwardDisabled = !this.isRelayValid
-          break
+          return this.isRelayValid && this.isWalletNonEmpty
         case 6:
-          this.forwardDisabled = (this.settings === null)
-          break
+          return this.settings !== null
         default:
-          this.forwardDisabled = false
+          return true
       }
-    }
-  },
-  computed: {
+    },
     isWalletValid () {
       return ((this.seedData.type === 'new') || (this.seedData.type === 'import' && this.seedData.valid))
     },
     isRelayValid () {
       return !!(this.relayData.profile.name && this.relayData.profile.avatar && this.relayData.inbox.acceptancePrice)
+    },
+    isWalletNonEmpty () {
+      return !!this.balance
     },
     forwardLabel () {
       switch (this.step) {
