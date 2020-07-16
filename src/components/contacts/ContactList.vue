@@ -42,16 +42,22 @@ export default {
         this.activeAddress = addresses[this.nextAddressIndex({ direction: 1 })]
       }
       if (e.key === 'Enter') {
+        e.preventDefault()
         this.contactClick(this.activeAddress, this.contacts[this.activeAddress])
-        this.$emit('close-contact-search-dialog')
       }
     },
     nextAddressIndex ({ direction }) {
       const addresses = Object.keys(this.contacts)
+      // Add addresses.length so that not found (-1) is the last item
       return (addresses.indexOf(this.activeAddress) + direction + addresses.length) % addresses.length
     },
     navigateUsingMouse (addressToBecomeFocused) {
       this.activeAddress = addressToBecomeFocused
+    }
+  },
+  watch: {
+    contacts () {
+      this.activeAddress = Object.keys(this.contacts)[0]
     }
   }
 }
