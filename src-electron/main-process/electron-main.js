@@ -31,6 +31,7 @@ function getIconPNGPath () {
 
 let mainWindow
 let tray
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let windowsBadgeUpdater
 const nativeIcon = nativeImage.createFromPath(getIconPNGPath()).resize({ width: 16, height: 16 })
 
