@@ -55,8 +55,8 @@
     <q-list>
       <q-separator />
       <q-item
-        clickable
         v-show="!compact"
+        clickable
       >
         <q-item-section
           @click="walletOpen=true"
