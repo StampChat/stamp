@@ -7,18 +7,12 @@
   >
     <!-- Send file dialog -->
     <!-- TODO: Move this up.  We don't need a copy of this dialog for each address (likely) -->
-    <q-dialog
-      v-model="sendFileOpen"
-      persistent
-    >
+    <q-dialog v-model="sendFileOpen">
       <send-file-dialog :address="address" />
     </q-dialog>
 
     <!-- Send money dialog -->
-    <q-dialog
-      v-model="sendMoneyOpen"
-      persistent
-    >
+    <q-dialog v-model="sendMoneyOpen">
       <send-bitcoin-dialog
         :address="address"
         :contact="contactProfile"
