@@ -33,7 +33,8 @@ let mainWindow
 let tray
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let windowsBadgeUpdater
-const nativeIcon = nativeImage.createFromPath(getIconPNGPath()).resize({ width: 16, height: 16 })
+const nativeIconSmall = nativeImage.createFromPath(getIconPNGPath()).resize({ width: 16, height: 16 })
+const nativeIcon = nativeImage.createFromPath(getIconPNGPath())
 
 function createWindow () {
   const contextMenu = Menu.buildFromTemplate([
@@ -52,12 +53,13 @@ function createWindow () {
     }
   ])
 
-  tray = new Tray(nativeIcon)
+  tray = new Tray(nativeIconSmall)
   tray.setContextMenu(contextMenu)
 
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
+    icon: nativeIcon,
     useContentSize: true,
     webPreferences: {
       nodeIntegration: process.env.QUASAR_NODE_INTEGRATION,
