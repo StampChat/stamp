@@ -14,25 +14,6 @@ const defaultContactObject = {
   totalValue: 0
 }
 
-function calculateUnreadAggregates (messages, lastReadTime) {
-  const messageValues = messages
-    .filter(message => !message.outbound)
-    .map((message) => {
-      return {
-        read: lastReadTime < message.serverTime,
-        totalValue: (stampPrice(message.outpoints) || 0) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-      }
-    })
-  const unreadMessageValues = messageValues.filter((message) => !message.read)
-  const totalUnreadValue = unreadMessageValues.reduce((totalValue, message) => totalValue + message.totalValue, 0)
-  const totalValue = messageValues.reduce((totalValue, message) => totalValue + message.totalValue, 0)
-  return {
-    totalUnreadValue,
-    totalUnreadMessages: unreadMessageValues.length,
-    totalValue
-  }
-}
-
 export async function rehydateChat (chatState) {
   if (!chatState) {
     return
@@ -49,13 +30,9 @@ export async function rehydateChat (chatState) {
         delete contact.messsages
         contact.messages = []
       }
-      // This person has saved data, no need to migrate
-      if (contact.totalValue === undefined) {
-        const { totalUnreadMessages, totalUnreadValue, totalValue } = calculateUnreadAggregates(contact.messages, contact.lastRead)
-        contact.totalUnreadMessages = totalUnreadMessages
-        contact.totalUnreadValue = totalUnreadValue
-        contact.totalValue = totalValue
-      }
+      contact.totalUnreadMessages = 0
+      contact.totalUnreadValue = 0
+      contact.totalValue = 0
     }
   }
 
@@ -85,7 +62,7 @@ export async function rehydateChat (chatState) {
     chatState.chats[copartyAddress].messages.push(message)
     chatState.chats[copartyAddress].lastReceived = message.serverTime
     const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-    if (copartyAddress !== chatState.activeChatAddr && chatState.chats[copartyAddress].lastRead < message.serverTime) {
+    if (!newMsg.outbound && chatState.chats[copartyAddress].lastRead < message.serverTime) {
       chatState.chats[copartyAddress].totalUnreadValue += messageValue
       chatState.chats[copartyAddress].totalUnreadMessages += 1
     }
