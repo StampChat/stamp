@@ -1,10 +1,7 @@
 <template>
   <div class="column full-height">
     <!-- Send Bitcoin dialog -->
-    <q-dialog
-      v-model="sendBitcoinOpen"
-      persistent
-    >
+    <q-dialog v-model="sendBitcoinOpen">
       <send-bitcoin-dialog
         :address="address"
         :contact="contact.profile"
@@ -12,10 +9,7 @@
     </q-dialog>
 
     <!-- Clear history dialog -->
-    <q-dialog
-      v-model="confirmClearOpen"
-      persistent
-    >
+    <q-dialog v-model="confirmClearOpen">
       <clear-history-dialog
         :address="address"
         :name="contact.profile.name"
@@ -23,10 +17,7 @@
     </q-dialog>
 
     <!-- Delete chat dialog -->
-    <q-dialog
-      v-model="confirmDeleteOpen"
-      persistent
-    >
+    <q-dialog v-model="confirmDeleteOpen">
       <delete-chat-dialog
         :address="address"
         :name="contact.profile.name"
