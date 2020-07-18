@@ -373,10 +373,10 @@ export class RelayClient {
         payloadDigest: replyDigest
       })
     }
-    return this.sendMessageImpl({ address, items, stampAmount })
+    await this.sendMessageImpl({ address, items, stampAmount })
   }
 
-  sendStealthPayment ({ address, stampAmount, amount, memo }) {
+  async sendStealthPayment ({ address, stampAmount, amount, memo }) {
     // Send locally
     const items = [
       {
@@ -391,10 +391,10 @@ export class RelayClient {
           text: memo
         })
     }
-    return this.sendMessageImpl({ address, items, stampAmount })
+    await this.sendMessageImpl({ address, items, stampAmount })
   }
 
-  sendImage ({ address, image, caption, replyDigest, stampAmount }) {
+  async sendImage ({ address, image, caption, replyDigest, stampAmount }) {
     const items = [
       {
         type: 'image',
@@ -415,7 +415,7 @@ export class RelayClient {
       })
     }
 
-    return this.sendMessageImpl({ address, items, stampAmount })
+    await this.sendMessageImpl({ address, items, stampAmount })
   }
 
   async receiveMessage (message, receivedTime = Date.now()) {
@@ -427,7 +427,7 @@ export class RelayClient {
     const wallet = this.wallet
     const myAddress = wallet.myAddressStr
     const outbound = (senderAddress === myAddress)
-    const serverTime = message.received_time
+    const serverTime = parsedMessage.receivedTime
 
     // if this client sent the message, we already have the data and don't need to process it or get the payload again
     if (parsedMessage.payloadDigest.length !== 0) {
@@ -645,7 +645,7 @@ export class RelayClient {
     }
 
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
-    const copartyAddress = copartyPubKey.toAddress()
+    const copartyAddress = copartyPubKey.toAddress('testnet').toString() // TODO: Make generic
     const payloadDigestHex = payloadDigest.toString('hex')
     const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
     await this.messageStore.saveMessage(finalizedMessage)
