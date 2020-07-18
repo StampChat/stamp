@@ -8,7 +8,7 @@ import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import { crypto, PublicKey, PrivateKey } from 'bitcore-lib-cash'
 import assert from 'assert'
 
-export const constructStampTransactions = function (wallet, payloadDigest, destPubKey, amount) {
+export const constructStampTransactions = async function (wallet, payloadDigest, destPubKey, amount) {
   assert(payloadDigest instanceof Buffer)
 
   // Stamp output
@@ -29,7 +29,7 @@ export const constructStampTransactions = function (wallet, payloadDigest, destP
   }
 
   // Construct transaction
-  return wallet.constructTransactionSet({ addressGenerator: stampAddressGenerator, amount })
+  return await wallet.constructTransactionSet({ addressGenerator: stampAddressGenerator, amount })
 }
 
 export const constructStealthTransactions = function (wallet, ephemeralPrivKey, destPubKey, amount) {
@@ -57,7 +57,7 @@ export const constructStealthTransactions = function (wallet, ephemeralPrivKey, 
   return wallet.constructTransactionSet({ addressGenerator: stealthPubKeyGenerator, amount })
 }
 
-export const constructMessage = function (wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount) {
+export const constructMessage = async function (wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount) {
   const plainPayloadDigest = crypto.Hash.sha256(plainTextPayload)
 
   // Construct salt
@@ -76,7 +76,8 @@ export const constructMessage = function (wallet, plainTextPayload, sourcePrivat
 
   // Get transaction bundle from wallet
   try {
-    const transactionBundle = constructStampTransactions(wallet, payloadDigest, destinationPublicKey, stampAmount)
+    const transactionBundle = await constructStampTransactions(wallet, payloadDigest, destinationPublicKey, stampAmount)
+
     // Construct Stamp
     const stamp = new Stamp()
     stamp.setStampType(1)
@@ -103,6 +104,7 @@ export const constructMessage = function (wallet, plainTextPayload, sourcePrivat
     message.setStamp(stamp)
     return { message, transactionBundle, payloadDigest }
   } catch (err) {
+    console.error(err)
     throw Object({
       payloadDigest,
       err

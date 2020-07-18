@@ -304,7 +304,7 @@ export class RelayClient {
 
     // Construct message
     try {
-      const { message, transactionBundle, payloadDigest } = constructMessage(wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount)
+      const { message, transactionBundle, payloadDigest } = await constructMessage(wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount)
       const payloadDigestHex = payloadDigest.toString('hex')
 
       // Add localy
@@ -645,8 +645,9 @@ export class RelayClient {
     }
 
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
+    const copartyAddress = copartyPubKey.toAddress()
     const payloadDigestHex = payloadDigest.toString('hex')
-    const finalizedMessage = { outbound, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
+    const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
     await this.messageStore.saveMessage(finalizedMessage)
     this.events.emit('receivedMessage', finalizedMessage)
   }
