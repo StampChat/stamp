@@ -8,6 +8,7 @@ import { toElectrumScriptHash } from '../utils/formatting'
 import { calcId } from './helpers'
 
 import { Address, crypto, Script, Transaction } from 'bitcore-lib-cash'
+import { Lock } from './lock'
 
 const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
 const standardInputSize = 175 // A few extra bytes
@@ -17,6 +18,7 @@ const feePerByte = 2
 export class Wallet {
   constructor (storage) {
     this.storage = storage
+    this.constructionLock = new Lock()
   }
 
   setElectrumClient (electrumClientPromise) {
@@ -327,22 +329,151 @@ export class Wallet {
   }
 
   async constructTransactionSet ({ addressGenerator, amount }) {
-    const pickOne = function (arr) {
-      if (arr.length === 0) {
-        throw new RangeError('Chance: Cannot pickone() from an empty array')
-      }
-      return arr[Math.floor(Math.random() * Math.floor(arr.length))]
-    }
+    try {
+      await this.constructionLock.acquire()
 
-    // Coin selection
-    const transactionBundle = []
-    let amountLeft = amount
-    let retries = 0
-    while (amountLeft > 0 && retries < 5) {
+      const pickOne = function (arr) {
+        if (arr.length === 0) {
+          throw new RangeError('Chance: Cannot pickone() from an empty array')
+        }
+        return arr[Math.floor(Math.random() * Math.floor(arr.length))]
+      }
+
+      // Coin selection
+      const transactionBundle = []
+      let amountLeft = amount
+      let retries = 0
+      while (amountLeft > 0 && retries < 5) {
+        const signingKeys = []
+        const transaction = new Transaction()
+        const usedUtxos = []
+
+        const outpointIterator = await this.storage.getOutpointIterator()
+        const utxos = []
+
+        for await (const utxo of outpointIterator) {
+          if (utxo.frozen) {
+            continue
+          }
+          utxos.push(utxo)
+        }
+
+        // Sort available UTXOs by total amount per transaction
+        const sortedUtxos = R.pipe(
+          R.groupBy(utxo => utxo.txId),
+          R.map(
+            R.pipe(
+              R.sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis),
+              (utxoGroup) => R.reduce(
+                (group, utxo) => {
+                  group.satoshis += utxo.satoshis
+                  group.utxos.push(utxo)
+                  return group
+                }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
+            // We want a different one for each group
+            )
+          ),
+          txMap => Object.values(txMap),
+          R.sort((txA, txB) => txB.satoshis - txA.satoshis),
+          R.map(group => group.utxos),
+          R.flatten()
+        )(utxos)
+
+        // Case 1: UTXO is bigger than amountLeft + fees.  Done.
+        // Case 3: UTXO is bigger than amountLeft, but smaller than amountLeft + fees
+        //    Need to decide how to fragment.  Can we fragment without making dust?
+        //     If we would need to make dust, then don't use this UTXO (or, add another UTXO also)
+        //     Split UTXO by sending some amount to a new address, and some to change.
+        // Case 2: UTXO is smaller than amountLeft + fees.  Need to loop again
+        let satoshis = 0
+        const stagedUtxos = []
+        while (true) {
+        // Try to use a sufficiently large UTXO, otherwise pick one at random
+        // Big enough to handle the amount left, plus 1 change output
+          const requisiteSize = amountLeft + (transaction._estimateSize() + 2 * standardUtxoSize + standardInputSize + minimumOutputAmount) * feePerByte
+          const biggerUtxos = sortedUtxos.filter((a) => a.satoshis >= requisiteSize)
+          const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
+          const utxoToUse = pickOne(utxoSetToUse)
+          stagedUtxos.push(utxoToUse)
+          utxoToUse.script = Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
+          transaction.from(utxoToUse)
+          signingKeys.push(utxoToUse.privKey)
+          const txnSize = transaction._estimateSize()
+          // Grab private key
+          satoshis += utxoToUse.satoshis
+          // Make sure we don't generate dust
+          if (satoshis > minimumOutputAmount + (txnSize + standardUtxoSize) * feePerByte) {
+            break
+          }
+        }
+        const address = addressGenerator()
+        console.log(`transaction._estimateSize() + standardUtxoSize : ${transaction._estimateSize()} + ${standardUtxoSize}`)
+        const availableAmount = satoshis - (transaction._estimateSize() + standardUtxoSize) * feePerByte
+        // If availableAmount is the minimum, there will be no change output
+        // if amountLeft is the minimum, there will need to be change.  However, the delta may be less than the dust limit
+        // in which case we may want to throw this iteration away.
+        const amountToUse = Math.min(amountLeft, availableAmount)
+        transaction.addOutput(new Transaction.Output({
+          script: Script(new Address(address)),
+          satoshis: amountToUse
+        }))
+        const availableForFeesAndChange = satoshis - amountToUse
+        console.log(`availableForFeesAndChange ${availableForFeesAndChange}`)
+        const availableForChange = availableForFeesAndChange - transaction._estimateSize() * feePerByte
+
+        // We have a fairly large overage, but we don't have enough excess to create the output
+        if (availableForChange > standardUtxoSize && availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte) {
+          console.log('availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte')
+          console.log(`${availableForChange} < ${minimumOutputAmount} + ${standardUtxoSize} * ${feePerByte}`)
+          // Retry iteration
+          retries++
+          continue
+        }
+
+        // We can't generate another transaction
+        const overage = amountLeft - amountToUse
+        if (overage > 0 && overage < minimumOutputAmount) {
+          console.log(`Amount left < minimumOutputAmount: ${amountLeft - amountToUse} < ${minimumOutputAmount}`)
+          // Retry iteration
+          retries++
+          continue
+        }
+        amountLeft -= amountToUse
+        usedUtxos.push(...stagedUtxos)
+        await Promise.all(stagedUtxos.map(
+          utxo => this.storage.freezeOutpoint(calcId(utxo))
+        ))
+        this.finalizeTransaction({ transaction, signingKeys })
+        transactionBundle.push({
+          transaction,
+          vouts: [0],
+          usedIds: usedUtxos.map(utxo => calcId(utxo))
+        })
+      }
+
+      assert(retries < 5, 'Error building transactions')
+      return transactionBundle
+    } finally {
+      await this.constructionLock.release()
+    }
+  }
+
+  async constructTransaction ({ outputs, exactOutputs = false }) {
+    try {
+      await this.constructionLock.acquire()
+      let transaction = new Transaction()
+
+      // Add outputs
+      for (const i in outputs) {
+        const output = outputs[i]
+        transaction = transaction.addOutput(output)
+      }
+
+      // Coin selection
       const signingKeys = []
-      const transaction = new Transaction()
       const usedUtxos = []
 
+      const amountRequired = transaction.outputAmount
       const outpointIterator = await this.storage.getOutpointIterator()
       const utxos = []
 
@@ -365,7 +496,7 @@ export class Wallet {
                 group.utxos.push(utxo)
                 return group
               }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
-            // We want a different one for each group
+          // We want a different one for each group
           )
         ),
         txMap => Object.values(txMap),
@@ -373,167 +504,49 @@ export class Wallet {
         R.map(group => group.utxos),
         R.flatten()
       )(utxos)
+      const biggerUtxos = sortedUtxos.filter((a) => a.satoshis >= amountRequired + (transaction._estimateSize() + standardUtxoSize + standardInputSize) * feePerByte)
+      const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
 
-      // Case 1: UTXO is bigger than amountLeft + fees.  Done.
-      // Case 3: UTXO is bigger than amountLeft, but smaller than amountLeft + fees
-      //    Need to decide how to fragment.  Can we fragment without making dust?
-      //     If we would need to make dust, then don't use this UTXO (or, add another UTXO also)
-      //     Split UTXO by sending some amount to a new address, and some to change.
-      // Case 2: UTXO is smaller than amountLeft + fees.  Need to loop again
       let satoshis = 0
-      const stagedUtxos = []
-      while (true) {
-        // Try to use a sufficiently large UTXO, otherwise pick one at random
-        // Big enough to handle the amount left, plus 1 change output
-        const requisiteSize = amountLeft + (transaction._estimateSize() + 2 * standardUtxoSize + standardInputSize + minimumOutputAmount) * feePerByte
-        const biggerUtxos = sortedUtxos.filter((a) => a.satoshis >= requisiteSize)
-        const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
-        const utxoToUse = pickOne(utxoSetToUse)
-        stagedUtxos.push(utxoToUse)
-        utxoToUse.script = Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
-        transaction.from(utxoToUse)
-        signingKeys.push(utxoToUse.privKey)
+      for (const utxo of utxoSetToUse) {
         const txnSize = transaction._estimateSize()
-        // Grab private key
-        satoshis += utxoToUse.satoshis
-        // Make sure we don't generate dust
-        if (satoshis > minimumOutputAmount + (txnSize + standardUtxoSize) * feePerByte) {
+        if (satoshis > amountRequired + txnSize * feePerByte) {
           break
         }
-      }
-      const address = addressGenerator()
-      console.log(`transaction._estimateSize() + standardUtxoSize : ${transaction._estimateSize()} + ${standardUtxoSize}`)
-      const availableAmount = satoshis - (transaction._estimateSize() + standardUtxoSize) * feePerByte
-      // If availableAmount is the minimum, there will be no change output
-      // if amountLeft is the minimum, there will need to be change.  However, the delta may be less than the dust limit
-      // in which case we may want to throw this iteration away.
-      const amountToUse = Math.min(amountLeft, availableAmount)
-      transaction.addOutput(new Transaction.Output({
-        script: Script(new Address(address)),
-        satoshis: amountToUse
-      }))
-      const availableForFeesAndChange = satoshis - amountToUse
-      console.log(`availableForFeesAndChange ${availableForFeesAndChange}`)
-      const availableForChange = availableForFeesAndChange - transaction._estimateSize() * feePerByte
+        usedUtxos.push(utxo)
+        console.log(utxo)
 
-      // We have a fairly large overage, but we don't have enough excess to create the output
-      if (availableForChange > standardUtxoSize && availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte) {
-        console.log('availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte')
-        console.log(`${availableForChange} < ${minimumOutputAmount} + ${standardUtxoSize} * ${feePerByte}`)
-        // Retry iteration
-        retries++
-        continue
+        const address = utxo.address
+        utxo.script = Script.buildPublicKeyHashOut(address).toHex()
+        // Grab private key
+        signingKeys.push(utxo.privKey)
+        transaction = transaction.from(utxo)
+        satoshis += utxo.satoshis
       }
 
-      // We can't generate another transaction
-      const overage = amountLeft - amountToUse
-      if (overage > 0 && overage < minimumOutputAmount) {
-        console.log(`Amount left < minimumOutputAmount: ${amountLeft - amountToUse} < ${minimumOutputAmount}`)
-        // Retry iteration
-        retries++
-        continue
+      if (satoshis < amountRequired) {
+        throw Error('insufficient funds')
       }
-      amountLeft -= amountToUse
-      usedUtxos.push(...stagedUtxos)
-      await Promise.all(stagedUtxos.map(
+
+      await Promise.all(usedUtxos.map(
         utxo => this.storage.freezeOutpoint(calcId(utxo))
       ))
-      this.finalizeTransaction({ transaction, signingKeys })
-      transactionBundle.push({
-        transaction,
-        vouts: [0],
-        usedIds: usedUtxos.map(utxo => calcId(utxo))
-      })
+
+      // Add change outputs using our HD wallet.  We want multiple outputs following a
+      // power distribution, so we don't have to combine lots of outputs at later times
+      // in order to create specific amounts.
+
+      // A good round number greater than the current dustLimit.
+      // We may want to make it some computed value in the future.
+      this.finalizeTransaction({ transaction, signingKeys, exactOutputs })
+      const finalTxnSize = transaction._estimateSize()
+      // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
+      console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
+      console.log(transaction)
+      return { transaction, usedIDs: usedUtxos.map(utxo => calcId(utxo)) }
+    } finally {
+      await this.constructionLock.release()
     }
-
-    assert(retries < 5, 'Error building transactions')
-    return transactionBundle
-  }
-
-  async constructTransaction ({ outputs, exactOutputs = false }) {
-    let transaction = new Transaction()
-
-    // Add outputs
-    for (const i in outputs) {
-      const output = outputs[i]
-      transaction = transaction.addOutput(output)
-    }
-
-    // Coin selection
-    const signingKeys = []
-    const usedUtxos = []
-
-    const amountRequired = transaction.outputAmount
-    const outpointIterator = await this.storage.getOutpointIterator()
-    const utxos = []
-
-    for await (const utxo of outpointIterator) {
-      if (utxo.frozen) {
-        continue
-      }
-      utxos.push(utxo)
-    }
-
-    // Sort available UTXOs by total amount per transaction
-    const sortedUtxos = R.pipe(
-      R.groupBy(utxo => utxo.txId),
-      R.map(
-        R.pipe(
-          R.sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis),
-          (utxoGroup) => R.reduce(
-            (group, utxo) => {
-              group.satoshis += utxo.satoshis
-              group.utxos.push(utxo)
-              return group
-            }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
-          // We want a different one for each group
-        )
-      ),
-      txMap => Object.values(txMap),
-      R.sort((txA, txB) => txB.satoshis - txA.satoshis),
-      R.map(group => group.utxos),
-      R.flatten()
-    )(utxos)
-    const biggerUtxos = sortedUtxos.filter((a) => a.satoshis >= amountRequired + (transaction._estimateSize() + standardUtxoSize + standardInputSize) * feePerByte)
-    const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
-
-    let satoshis = 0
-    for (const utxo of utxoSetToUse) {
-      const txnSize = transaction._estimateSize()
-      if (satoshis > amountRequired + txnSize * feePerByte) {
-        break
-      }
-      usedUtxos.push(utxo)
-      console.log(utxo)
-
-      const address = utxo.address
-      utxo.script = Script.buildPublicKeyHashOut(address).toHex()
-      // Grab private key
-      signingKeys.push(utxo.privKey)
-      transaction = transaction.from(utxo)
-      satoshis += utxo.satoshis
-    }
-
-    if (satoshis < amountRequired) {
-      throw Error('insufficient funds')
-    }
-
-    await Promise.all(usedUtxos.map(
-      utxo => this.storage.freezeOutpoint(calcId(utxo))
-    ))
-
-    // Add change outputs using our HD wallet.  We want multiple outputs following a
-    // power distribution, so we don't have to combine lots of outputs at later times
-    // in order to create specific amounts.
-
-    // A good round number greater than the current dustLimit.
-    // We may want to make it some computed value in the future.
-    this.finalizeTransaction({ transaction, signingKeys, exactOutputs })
-    const finalTxnSize = transaction._estimateSize()
-    // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
-    console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
-    console.log(transaction)
-    return { transaction, usedIDs: usedUtxos.map(utxo => calcId(utxo)) }
   }
 
   get feePerByte () {
