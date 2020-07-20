@@ -646,7 +646,7 @@ export class RelayClient {
             stealthValue += satoshis
 
             const stampOutput = {
-              address,
+              address: address.toLegacyAddress(),
               satoshis,
               outputIndex,
               privKey: outpointPrivKey,
