@@ -29,8 +29,11 @@ export default {
       activeAddress: Object.keys(this.contacts)[0]
     }
   },
-  mounted () {
+  created () {
     document.addEventListener('keydown', this.navigateUsingArrowKeys)
+  },
+  beforeDestroy () {
+    document.removeEventListener('keydown', this.navigateUsingArrowKeys)
   },
   methods: {
     navigateUsingArrowKeys (e) {
