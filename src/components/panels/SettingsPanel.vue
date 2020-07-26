@@ -28,7 +28,7 @@
 
     <!-- Wallet dialog -->
     <q-dialog v-model="walletOpen">
-      <wallet-dialog />
+      <receive-bitcoin-dialog />
     </q-dialog>
 
     <!-- Profile dialog -->
@@ -78,7 +78,7 @@
             <q-icon name="send" />
           </q-item-section>
 
-          <q-item-section>Send to Address</q-item-section>
+          <q-item-section>Send Bitcoin Cash</q-item-section>
         </q-item>
 
         <q-item
@@ -90,7 +90,7 @@
             <q-icon name="account_balance_wallet" />
           </q-item-section>
 
-          <q-item-section>Wallet</q-item-section>
+          <q-item-section>Receive Bitcoin Cash</q-item-section>
         </q-item>
 
         <q-separator />
@@ -128,7 +128,7 @@ import { mapActions, mapGetters } from 'vuex'
 import ContactCard from './ContactCard.vue'
 import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
-import WalletDialog from '../dialogs/WalletDialog.vue'
+import ReceiveBitcoinDialog from '../dialogs/ReceiveBitcoinDialog.vue'
 import ProfileDialog from '../dialogs/ProfileDialog.vue'
 import SendAddressDialog from '../dialogs/SendAddressDialog.vue'
 import SettingsDialog from '../dialogs/SettingsDialog.vue'
@@ -138,7 +138,7 @@ export default {
     ContactCard,
     NewContactDialog,
     ContactBookDialog,
-    WalletDialog,
+    ReceiveBitcoinDialog,
     ProfileDialog,
     SendAddressDialog,
     SettingsDialog
