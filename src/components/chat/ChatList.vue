@@ -2,7 +2,7 @@
   <div class="column full-height">
     <!-- Wallet dialog -->
     <q-dialog v-model="walletOpen">
-      <wallet-dialog />
+      <receive-bitcoin-dialog />
     </q-dialog>
 
     <!-- Relay reconnect dialog -->
@@ -99,7 +99,7 @@
 import ChatListItem from './ChatListItem.vue'
 import { mapGetters } from 'vuex'
 import { formatBalance } from '../../utils/formatting'
-import WalletDialog from '../dialogs/WalletDialog.vue'
+import ReceiveBitcoinDialog from '../dialogs/ReceiveBitcoinDialog.vue'
 import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 
@@ -116,7 +116,7 @@ export default {
   },
   components: {
     ChatListItem,
-    WalletDialog,
+    ReceiveBitcoinDialog,
     RelayConnectDialog,
     NewContactDialog
   },
