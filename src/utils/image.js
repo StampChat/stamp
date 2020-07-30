@@ -9,7 +9,7 @@ export const arrayBufferToBase64 = function (buffer) {
 }
 
 export const entryToImage = function (entry) {
-  const rawAvatar = entry.getEntryData()
+  const rawAvatar = entry.getBody()
 
   const value = entry.getHeadersList()[0].getValue()
   const avatarDataURL = 'data:' + value + ';base64,' + arrayBufferToBase64(rawAvatar)

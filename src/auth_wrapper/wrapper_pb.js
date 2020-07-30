@@ -67,10 +67,11 @@ proto.wrapper.AuthWrapper.prototype.toObject = function(opt_includeInstance) {
  */
 proto.wrapper.AuthWrapper.toObject = function(includeInstance, msg) {
   var f, obj = {
-    pubKey: msg.getPubKey_asB64(),
+    publicKey: msg.getPublicKey_asB64(),
     signature: msg.getSignature_asB64(),
     scheme: jspb.Message.getFieldWithDefault(msg, 3, 0),
-    serializedPayload: msg.getSerializedPayload_asB64()
+    payload: msg.getPayload_asB64(),
+    payloadDigest: msg.getPayloadDigest_asB64()
   };
 
   if (includeInstance) {
@@ -109,7 +110,7 @@ proto.wrapper.AuthWrapper.deserializeBinaryFromReader = function(msg, reader) {
     switch (field) {
     case 1:
       var value = /** @type {!Uint8Array} */ (reader.readBytes());
-      msg.setPubKey(value);
+      msg.setPublicKey(value);
       break;
     case 2:
       var value = /** @type {!Uint8Array} */ (reader.readBytes());
@@ -121,7 +122,11 @@ proto.wrapper.AuthWrapper.deserializeBinaryFromReader = function(msg, reader) {
       break;
     case 4:
       var value = /** @type {!Uint8Array} */ (reader.readBytes());
-      msg.setSerializedPayload(value);
+      msg.setPayload(value);
+      break;
+    case 5:
+      var value = /** @type {!Uint8Array} */ (reader.readBytes());
+      msg.setPayloadDigest(value);
       break;
     default:
       reader.skipField();
@@ -152,7 +157,7 @@ proto.wrapper.AuthWrapper.prototype.serializeBinary = function() {
  */
 proto.wrapper.AuthWrapper.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getPubKey_asU8();
+  f = message.getPublicKey_asU8();
   if (f.length > 0) {
     writer.writeBytes(
       1,
@@ -173,10 +178,17 @@ proto.wrapper.AuthWrapper.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-  f = message.getSerializedPayload_asU8();
+  f = message.getPayload_asU8();
   if (f.length > 0) {
     writer.writeBytes(
       4,
+      f
+    );
+  }
+  f = message.getPayloadDigest_asU8();
+  if (f.length > 0) {
+    writer.writeBytes(
+      5,
       f
     );
   }
@@ -192,35 +204,35 @@ proto.wrapper.AuthWrapper.SignatureScheme = {
 };
 
 /**
- * optional bytes pub_key = 1;
+ * optional bytes public_key = 1;
  * @return {!(string|Uint8Array)}
  */
-proto.wrapper.AuthWrapper.prototype.getPubKey = function() {
+proto.wrapper.AuthWrapper.prototype.getPublicKey = function() {
   return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
 
 /**
- * optional bytes pub_key = 1;
- * This is a type-conversion wrapper around `getPubKey()`
+ * optional bytes public_key = 1;
+ * This is a type-conversion wrapper around `getPublicKey()`
  * @return {string}
  */
-proto.wrapper.AuthWrapper.prototype.getPubKey_asB64 = function() {
+proto.wrapper.AuthWrapper.prototype.getPublicKey_asB64 = function() {
   return /** @type {string} */ (jspb.Message.bytesAsB64(
-      this.getPubKey()));
+      this.getPublicKey()));
 };
 
 
 /**
- * optional bytes pub_key = 1;
+ * optional bytes public_key = 1;
  * Note that Uint8Array is not supported on all browsers.
  * @see http://caniuse.com/Uint8Array
- * This is a type-conversion wrapper around `getPubKey()`
+ * This is a type-conversion wrapper around `getPublicKey()`
  * @return {!Uint8Array}
  */
-proto.wrapper.AuthWrapper.prototype.getPubKey_asU8 = function() {
+proto.wrapper.AuthWrapper.prototype.getPublicKey_asU8 = function() {
   return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
-      this.getPubKey()));
+      this.getPublicKey()));
 };
 
 
@@ -228,7 +240,7 @@ proto.wrapper.AuthWrapper.prototype.getPubKey_asU8 = function() {
  * @param {!(string|Uint8Array)} value
  * @return {!proto.wrapper.AuthWrapper} returns this
  */
-proto.wrapper.AuthWrapper.prototype.setPubKey = function(value) {
+proto.wrapper.AuthWrapper.prototype.setPublicKey = function(value) {
   return jspb.Message.setProto3BytesField(this, 1, value);
 };
 
@@ -294,35 +306,35 @@ proto.wrapper.AuthWrapper.prototype.setScheme = function(value) {
 
 
 /**
- * optional bytes serialized_payload = 4;
+ * optional bytes payload = 4;
  * @return {!(string|Uint8Array)}
  */
-proto.wrapper.AuthWrapper.prototype.getSerializedPayload = function() {
+proto.wrapper.AuthWrapper.prototype.getPayload = function() {
   return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
 };
 
 
 /**
- * optional bytes serialized_payload = 4;
- * This is a type-conversion wrapper around `getSerializedPayload()`
+ * optional bytes payload = 4;
+ * This is a type-conversion wrapper around `getPayload()`
  * @return {string}
  */
-proto.wrapper.AuthWrapper.prototype.getSerializedPayload_asB64 = function() {
+proto.wrapper.AuthWrapper.prototype.getPayload_asB64 = function() {
   return /** @type {string} */ (jspb.Message.bytesAsB64(
-      this.getSerializedPayload()));
+      this.getPayload()));
 };
 
 
 /**
- * optional bytes serialized_payload = 4;
+ * optional bytes payload = 4;
  * Note that Uint8Array is not supported on all browsers.
  * @see http://caniuse.com/Uint8Array
- * This is a type-conversion wrapper around `getSerializedPayload()`
+ * This is a type-conversion wrapper around `getPayload()`
  * @return {!Uint8Array}
  */
-proto.wrapper.AuthWrapper.prototype.getSerializedPayload_asU8 = function() {
+proto.wrapper.AuthWrapper.prototype.getPayload_asU8 = function() {
   return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
-      this.getSerializedPayload()));
+      this.getPayload()));
 };
 
 
@@ -330,8 +342,50 @@ proto.wrapper.AuthWrapper.prototype.getSerializedPayload_asU8 = function() {
  * @param {!(string|Uint8Array)} value
  * @return {!proto.wrapper.AuthWrapper} returns this
  */
-proto.wrapper.AuthWrapper.prototype.setSerializedPayload = function(value) {
+proto.wrapper.AuthWrapper.prototype.setPayload = function(value) {
   return jspb.Message.setProto3BytesField(this, 4, value);
+};
+
+
+/**
+ * optional bytes payload_digest = 5;
+ * @return {!(string|Uint8Array)}
+ */
+proto.wrapper.AuthWrapper.prototype.getPayloadDigest = function() {
+  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * optional bytes payload_digest = 5;
+ * This is a type-conversion wrapper around `getPayloadDigest()`
+ * @return {string}
+ */
+proto.wrapper.AuthWrapper.prototype.getPayloadDigest_asB64 = function() {
+  return /** @type {string} */ (jspb.Message.bytesAsB64(
+      this.getPayloadDigest()));
+};
+
+
+/**
+ * optional bytes payload_digest = 5;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getPayloadDigest()`
+ * @return {!Uint8Array}
+ */
+proto.wrapper.AuthWrapper.prototype.getPayloadDigest_asU8 = function() {
+  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
+      this.getPayloadDigest()));
+};
+
+
+/**
+ * @param {!(string|Uint8Array)} value
+ * @return {!proto.wrapper.AuthWrapper} returns this
+ */
+proto.wrapper.AuthWrapper.prototype.setPayloadDigest = function(value) {
+  return jspb.Message.setProto3BytesField(this, 5, value);
 };
 
 

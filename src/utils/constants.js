@@ -35,12 +35,15 @@ export const nUtxoGoal = 10
 export const feeUpdateTimerMilliseconds = 60_000
 export const defaultFeePerByte = 2
 
+// Keyserver constants
+export const trustedKeyservers = ['https://keyserver.cashweb.io']
+
 // Relay constants
 export const pingTimeout = 20_000
 export const relayReconnectInterval = 10_000
 export const defaultAcceptancePrice = 100
-export const defaultRelayUrl = '34.68.170.199:8531'
-export const relayUrlOptions = ['34.68.170.199:8531']
+export const defaultRelayUrl = 'https://relay.cashweb.io'
+export const relayUrlOptions = ['https://relay.cashweb.io']
 export const defaultRelayData = {
   profile: {
     name: '',

@@ -1,0 +1,24 @@
+syntax = "proto3";
+package wrapper;
+
+// AuthWrapper provides integrity, authentication, and non-repuditation by
+// providing a standard structure for covering blobs with signatures.
+message AuthWrapper {
+  // The public key associated with the signature.
+  bytes public_key = 1;
+  // The signature by public key covering the payload.
+  bytes signature = 2;
+  // Supported signature schemes. Default is Schnorr, but can be ECDSA.
+  enum SignatureScheme {
+    // Schnorr signature scheme
+    SCHNORR = 0;
+    // Elliptic curve digital signature scheme
+    ECDSA = 1;
+  }
+  // The signature scheme used for signing.
+  SignatureScheme scheme = 3;
+  // The payload covered by the signature.
+  bytes payload = 4;
+  // The SHA256 digest of the payload.
+  bytes payload_digest = 5;
+}

@@ -1,42 +1,41 @@
 import axios from 'axios'
-import addressmetadata from './addressmetadata_pb'
-import wrapper from '../pop/wrapper_pb'
-import pop from '../pop/index'
-
+import { Entry, AddressMetadata } from './keyserver_pb'
+import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
+import pop from '../pop'
+import { trustedKeyservers } from '../utils/constants'
 import { crypto } from 'bitcore-lib-cash'
 
 class KeyserverHandler {
-  trustedServers = ['http://34.68.170.199:8533']
   constructor (defaultSampleSize, keyservers) {
-    this.keyservers = keyservers || this.trustedServers
+    this.keyservers = keyservers || trustedKeyservers
     this.defaultSampleSize = defaultSampleSize || 3
   }
 
   static constructRelayUrlMetadata (relayUrl, privKey) {
-    const relayUrlEntry = new addressmetadata.Entry()
+    const relayUrlEntry = new Entry()
     relayUrlEntry.setKind('relay-server')
     const rawRelayUrl = new TextEncoder().encode(relayUrl)
-    relayUrlEntry.setEntryData(rawRelayUrl)
+    relayUrlEntry.setBody(rawRelayUrl)
 
     // Construct payload
-    const payload = new addressmetadata.Payload()
-    payload.setTimestamp(Math.floor(Date.now() / 1000))
-    payload.setTtl(31556952) // 1 year
-    payload.addEntries(relayUrlEntry)
+    const metadata = new AddressMetadata()
+    metadata.setTimestamp(Math.floor(Date.now() / 1000))
+    metadata.setTtl(31556952) // 1 year
+    metadata.addEntries(relayUrlEntry)
 
-    const serializedPayload = payload.serializeBinary()
+    const serializedPayload = metadata.serializeBinary()
     const hashbuf = crypto.Hash.sha256(serializedPayload)
     const ecdsa = crypto.ECDSA({ privkey: privKey, hashbuf })
     ecdsa.sign()
 
-    const metadata = new wrapper.AuthWrapper()
+    const authWrapper = new AuthWrapper()
     const sig = ecdsa.sig.toCompact(1).slice(1)
-    metadata.setPubKey(privKey.toPublicKey().toBuffer())
-    metadata.setSignature(sig)
-    metadata.setScheme(1)
-    metadata.setSerializedPayload(serializedPayload)
+    authWrapper.setPublicKey(privKey.toPublicKey().toBuffer())
+    authWrapper.setSignature(sig)
+    authWrapper.setScheme(1)
+    authWrapper.setPayload(serializedPayload)
 
-    return metadata
+    return authWrapper
   }
 
   static async fetchMetadata (keyserver, address) {
@@ -49,7 +48,7 @@ class KeyserverHandler {
       }
     )
     if (response.status === 200) {
-      const metadata = wrapper.AuthWrapper.deserializeBinary(response.data)
+      const metadata = AuthWrapper.deserializeBinary(response.data)
       return metadata
     }
   }
@@ -59,9 +58,10 @@ class KeyserverHandler {
     return this.keyservers[0]
   }
 
-  static async paymentRequest (serverUrl, address) {
+  static async paymentRequest (serverUrl, address, truncatedAuthWrapper) {
+    const rawAuthWrapper = truncatedAuthWrapper.serializeBinary()
     const url = `${serverUrl}/keys/${address.toLegacyAddress()}`
-    return pop.getPaymentRequest(url, 'put')
+    return pop.getPaymentRequest(url, 'put', rawAuthWrapper)
   }
 
   async uniformSample (address) {
@@ -73,7 +73,7 @@ class KeyserverHandler {
   async getRelayUrl (address) {
     // Get metadata
     const metadata = await this.uniformSample(address)
-    const payload = addressmetadata.Payload.deserializeBinary(metadata.getSerializedPayload())
+    const payload = AddressMetadata.deserializeBinary(metadata.getPayload())
 
     // Find vCard
     function isRelay (entry) {
@@ -84,7 +84,7 @@ class KeyserverHandler {
     if (!entry) {
       return null
     }
-    const entryData = entry.getEntryData()
+    const entryData = entry.getBody()
     const relayUrl = new TextDecoder().decode(entryData)
     return relayUrl
   }

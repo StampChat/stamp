@@ -88,7 +88,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 import KeyserverHandler from '../keyserver/handler'
-import pop from '../pop/index'
+import pop from '../pop'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
 import { constructProfileMetadata, constructPriceFilter } from '../relay/constructors'
 import IntroductionStep from '../components/setup/IntroductionStep.vue'
@@ -99,11 +99,12 @@ import ProfileStep from '../components/setup/ProfileStep'
 import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultRelayData, defaultRelayUrl } from '../utils/constants'
 import { errorNotify } from '../utils/notifications'
+import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
-import { HDPrivateKey } from 'bitcore-lib-cash'
+import { HDPrivateKey, crypto } from 'bitcore-lib-cash'
 
 Vue.use(VueRouter)
 
@@ -307,7 +308,19 @@ export default {
       })
 
       try {
-        const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress)
+        // Construct metadata
+        const idPrivKey = this.$wallet.identityPrivKey
+        const authWrapper = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
+
+        // Truncate metadata
+        const payload = Buffer.from(authWrapper.getPayload())
+        const payloadDigest = crypto.Hash.sha256(payload)
+        const truncatedAuthWrapper = new AuthWrapper()
+        const publicKey = authWrapper.getPublicKey()
+        truncatedAuthWrapper.setPublicKey(publicKey)
+        truncatedAuthWrapper.setPayloadDigest(payloadDigest)
+
+        const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper)
 
         this.$q.loading.show({
           delay: 100,
@@ -316,18 +329,16 @@ export default {
 
         // Construct payment
         const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, paymentDetails)
-        const { token } = await pop.sendPayment(paymentUrl, payment)
-
-        // Construct metadata
-        const idPrivKey = this.$wallet.identityPrivKey
-        const metadata = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
+        const paymentUrlFull = new URL(paymentUrl, serverUrl)
+        console.log('Sending payment to', paymentUrlFull.href)
+        const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
 
         this.$q.loading.show({
           delay: 100,
           message: 'Uploading Metadata...'
         })
 
-        await KeyserverHandler.putMetadata(idAddress, serverUrl, metadata, token)
+        await KeyserverHandler.putMetadata(idAddress, serverUrl, authWrapper, token)
       } catch (err) {
         errorNotify(err)
         throw err
@@ -369,7 +380,9 @@ export default {
 
         // Get token from relay server
         const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
-        const { token } = await relayClient.sendPayment(paymentUrl, payment)
+        const paymentUrlFull = new URL(paymentUrl, this.relayUrl)
+        console.log('Sending payment to', paymentUrlFull.href)
+        const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
         relayClient.setToken(token)
         this.setRelayToken(token)
         this.$relayClient.setToken(token)

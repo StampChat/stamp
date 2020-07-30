@@ -2,71 +2,104 @@ import { PrivateKey, PublicKey, crypto, HDPublicKey, HDPrivateKey } from 'bitcor
 
 import forge from 'node-forge'
 
-export const constructStealthPubKey = function (emphemeralPrivKey, destPubKey) {
-  const dhKeyPoint = destPubKey.point.mul(emphemeralPrivKey.bn) // ebG
+export const constructPayloadHmac = function (sharedKey, payloadDigest) {
+  return crypto.Hash.sha256hmac(sharedKey, payloadDigest)
+}
+
+export const constructMergedKey = function (privateKey, publicKey) {
+  return PublicKey.fromPoint(publicKey.point.mul(privateKey.toBigNumber()))
+}
+
+export const constructSharedKey = function (privateKey, publicKey, salt) {
+  const mergedKey = constructMergedKey(privateKey, publicKey)
+  const rawMergedKey = mergedKey.toBuffer()
+  return crypto.Hash.sha256hmac(salt, rawMergedKey)
+}
+
+export const constructStealthPublicKey = function (emphemeralPrivKey, destinationPublicKey) {
+  const dhKeyPoint = destinationPublicKey.point.mul(emphemeralPrivKey.bn) // ebG
   const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
 
   const digest = crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
   const digestPublicKey = PrivateKey.fromBuffer(digest).toPublicKey() // H(ebG)G
 
-  const stealthPublicKey = PublicKey(digestPublicKey.point.add(destPubKey.point)) // H(ebG)G + bG
+  const stealthPublicKey = PublicKey(digestPublicKey.point.add(destinationPublicKey.point)) // H(ebG)G + bG
+  return { stealthPublicKey, digest }
+}
+
+export const constructHDStealthPublicKey = function (emphemeralPrivKey, destinationPublicKey) {
+  const { stealthPublicKey, digest } = constructStealthPublicKey(emphemeralPrivKey, destinationPublicKey)
   return new HDPublicKey({
     publicKey: stealthPublicKey.toBuffer(),
     depth: 0,
     network: 'testnet',
     childIndex: 0,
-    chainCode: digest.slice(0, 32),
+    chainCode: digest,
     parentFingerPrint: 0
   })
 }
 
-export const constructStealthPrivKey = function (emphemeralPubKey, privKey) {
-  const dhKeyPoint = emphemeralPubKey.point.mul(privKey.bn) // ebG
+export const constructStealthPrivateKey = function (emphemeralPubKey, destinationPrivateKey) {
+  const dhKeyPoint = emphemeralPubKey.point.mul(destinationPrivateKey.bn) // ebG
   const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
 
   const digest = crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
   const digestBn = crypto.BN.fromBuffer(digest)
 
-  const stealthPrivBn = digestBn.add(privKey.bn).mod(crypto.Point.getN()) // H(ebG) + b
+  const stealthPrivBn = digestBn.add(destinationPrivateKey.bn).mod(crypto.Point.getN()) // H(ebG) + b
   const stealthPrivateKey = PrivateKey(stealthPrivBn)
+  return { stealthPrivateKey, digest }
+}
+
+export const constructHDStealthPrivateKey = function (emphemeralPubKey, destinationPrivateKey) {
+  const { stealthPrivateKey, digest } = constructStealthPrivateKey(emphemeralPubKey, destinationPrivateKey)
   return new HDPrivateKey({
     privateKey: stealthPrivateKey.toBuffer(),
     depth: 0,
     network: 'testnet',
     childIndex: 0,
-    chainCode: digest.slice(0, 32),
+    chainCode: digest,
     parentFingerPrint: 0
   })
 }
 
-export const constructStampPubKey = function (outpointDigest, destPubKey) {
-  const digestPrivateKey = PrivateKey.fromBuffer(outpointDigest)
+export const constructStampPublicKey = function (payloadDigest, destinationPublicKey) {
+  const digestPrivateKey = PrivateKey.fromBuffer(payloadDigest)
   const digestPublicKey = digestPrivateKey.toPublicKey()
-  const stampPoint = digestPublicKey.point.add(destPubKey.point)
+  const stampPoint = digestPublicKey.point.add(destinationPublicKey.point)
   const stampPublicKey = PublicKey.fromPoint(stampPoint)
+  return stampPublicKey
+}
+
+export const constructStampHDPublicKey = function (payloadDigest, destinationPublicKey) {
+  const stampPublicKey = constructStampPublicKey(payloadDigest, destinationPublicKey)
   return new HDPublicKey({
     publicKey: stampPublicKey.toBuffer(),
     depth: 0,
     network: 'testnet',
     childIndex: 0,
-    chainCode: outpointDigest.slice(0, 32),
+    chainCode: payloadDigest,
     parentFingerPrint: 0
   })
 }
 
-export const constructStampPrivKey = function (outpointDigest, privKey) {
-  const digestBn = crypto.BN.fromBuffer(outpointDigest)
-  const stampPrivBn = privKey.bn.add(digestBn).mod(crypto.Point.getN())
+export const constructStampPrivateKey = function (payloadDigest, destinationPrivateKey) {
+  const digestBn = crypto.BN.fromBuffer(payloadDigest)
+  const stampPrivBn = digestBn.add(destinationPrivateKey.bn).mod(crypto.Point.getN())
   const stampPrivKey = PrivateKey(stampPrivBn)
-  const key = new HDPrivateKey({
-    privateKey: stampPrivKey.toBuffer(),
+  return stampPrivKey
+}
+
+export const constructStampHDPrivateKey = function (payloadDigest, destinationPrivateKey) {
+  const stampPrivateKey = constructStampPrivateKey(payloadDigest, destinationPrivateKey)
+  return new HDPrivateKey({
+    privateKey: stampPrivateKey.toBuffer(),
     depth: 0,
     network: 'testnet',
     childIndex: 0,
-    chainCode: outpointDigest.slice(0, 32),
+    chainCode: payloadDigest,
     parentFingerPrint: 0
   })
-  return key
 }
 
 export const constructStampAddress = function (outpointDigest, privKey) {
@@ -76,42 +109,10 @@ export const constructStampAddress = function (outpointDigest, privKey) {
   return stampAddress
 }
 
-export const constructDHKeyFromEphemPrivKey = function (ephemeralPrivKey, privKey, destPubKey) {
-  // Generate new (random) emphemeral key
-  const emphemeralPrivKeyBn = ephemeralPrivKey.toBigNumber()
-
-  // Construct DH key
-  const dhKeyPoint = destPubKey.point.mul(emphemeralPrivKeyBn).add(privKey.toPublicKey().point)
-  const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
-
-  // Extract encryption params from digest
-  const digest = crypto.Hash.sha256(dhKeyPointRaw)
-  const iv = new forge.util.ByteBuffer(digest.slice(0, 16))
-  const key = new forge.util.ByteBuffer(digest.slice(16))
-
-  return { key, iv }
-}
-
-export const constructDHKeyFromEphemPubKey = function (ephemeralPubKey, sourcePubkey, destPrivKey) {
-  // Construct DH key
-  const destPrivKeyBn = destPrivKey.toBigNumber()
-  const dhKeyPoint = ephemeralPubKey.point.mul(destPrivKeyBn).add(sourcePubkey.point)
-  const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
-
-  // Extract encryption params from digest
-  const digest = crypto.Hash.sha256(dhKeyPointRaw)
-  const iv = new forge.util.ByteBuffer(digest.slice(0, 16))
-  const key = new forge.util.ByteBuffer(digest.slice(16))
-
-  return { key, iv }
-}
-
-export const encrypt = function (plainText, privKey, destPubKey) {
-  // Generate new (random) emphemeral key
-  const ephemeralPrivKey = PrivateKey()
-
-  // Construct DH key
-  const { key, iv } = constructDHKeyFromEphemPrivKey(ephemeralPrivKey, privKey, destPubKey)
+export const encrypt = function (sharedKey, plainText) {
+  // Split shared key
+  const iv = new forge.util.ByteBuffer(sharedKey.slice(0, 16))
+  const key = new forge.util.ByteBuffer(sharedKey.slice(16))
 
   // Encrypt entries
   const cipher = forge.aes.createEncryptionCipher(key, 'CBC')
@@ -121,71 +122,20 @@ export const encrypt = function (plainText, privKey, destPubKey) {
   cipher.finish()
   const cipherText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
 
-  return { cipherText, ephemeralPrivKey }
-}
-
-export const decrypt = function (cipherText, destPrivKey, sourcePubkey, ephemeralPubKey) {
-  // Construct DH key
-  const { key, iv } = constructDHKeyFromEphemPubKey(ephemeralPubKey, sourcePubkey, destPrivKey)
-
-  // Encrypt entries
-  const cipher = forge.aes.createDecryptionCipher(key, 'CBC')
-  cipher.start(iv)
-  const rawBuffer = new forge.util.ByteBuffer(cipherText)
-  cipher.update(rawBuffer)
-  cipher.finish()
-  const plainText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
-  return plainText
-}
-
-export const decryptWithEphemPrivKey = function (cipherText, ephemeralPrivKey, privKey, destPubKey) {
-  // Construct DH key
-  const { key, iv } = constructDHKeyFromEphemPrivKey(ephemeralPrivKey, privKey, destPubKey)
-
-  // Encrypt entries
-  const cipher = forge.aes.createDecryptionCipher(key, 'CBC')
-  cipher.start(iv)
-  const rawBuffer = new forge.util.ByteBuffer(cipherText)
-  cipher.update(rawBuffer)
-  cipher.finish()
-  const plainText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
-  return plainText
-}
-
-export const encryptEphemeralKey = function (ephemeralPrivKey, privKey, entriesDigest) {
-  // Construct AES key
-  const mergedKey = Buffer.concat([privKey.toBuffer(), entriesDigest]) // p || H(entries)
-
-  const mergedDigest = crypto.Hash.sha256(mergedKey) // H(H(entries) . p))
-  const iv = new forge.util.ByteBuffer(mergedDigest.slice(0, 16))
-  const key = new forge.util.ByteBuffer(mergedDigest.slice(16))
-
-  // Encrypt ephemeral key
-  const ephemeralKeyRaw = ephemeralPrivKey.toBuffer()
-  const cipher = forge.aes.createEncryptionCipher(key, 'CBC')
-  cipher.start(iv)
-  const rawBuffer = new forge.util.ByteBuffer(ephemeralKeyRaw)
-  cipher.update(rawBuffer)
-  cipher.finish()
-  const cipherText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
   return cipherText
 }
 
-export const decryptEphemeralKey = function (cipherText, privKey, entriesDigest) {
-  // Construct AES key
-  const mergedKey = Buffer.concat([privKey.toBuffer(), entriesDigest]) // p || H(entries)
+export const decrypt = function (sharedKey, cipherText) {
+  // Split shared key
+  const iv = new forge.util.ByteBuffer(sharedKey.slice(0, 16))
+  const key = new forge.util.ByteBuffer(sharedKey.slice(16))
 
-  const mergedDigest = crypto.Hash.sha256(mergedKey) // H(H(entries) . p))
-  const iv = new forge.util.ByteBuffer(mergedDigest.slice(0, 16))
-  const key = new forge.util.ByteBuffer(mergedDigest.slice(16))
-
-  // Encrypt ephemeral key
+  // Encrypt entries
   const cipher = forge.aes.createDecryptionCipher(key, 'CBC')
   cipher.start(iv)
   const rawBuffer = new forge.util.ByteBuffer(cipherText)
   cipher.update(rawBuffer)
   cipher.finish()
-  const plainText = Buffer.from(cipher.output.toHex(), 'hex') // TODO: Faster
-
-  return PrivateKey.fromBuffer(plainText)
+  const plainText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
+  return plainText
 }
