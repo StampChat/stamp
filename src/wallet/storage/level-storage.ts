@@ -12,10 +12,10 @@ const metadataKeys = {
 
 class OutpointIterator implements AsyncIterator<Outpoint> {
   iterator: any;
-  db: any;
+  db: ReturnType<typeof level>;
   onlyFrozen: boolean
 
-  constructor (db: any, onlyFrozen = false) {
+  constructor (db: ReturnType<typeof level>, onlyFrozen = false) {
     this.db = db
     this.onlyFrozen = onlyFrozen
   }
@@ -62,7 +62,7 @@ class OutpointIterator implements AsyncIterator<Outpoint> {
   }
 
   [Symbol.asyncIterator] () {
-    this.iterator = this.db.iterator()
+    this.iterator = this.db.iterator({})
     return this
   }
 }
@@ -155,8 +155,8 @@ export class LevelOutpointStore implements OutpointStore {
 
     const db = await this.getMetadataDatabase()
     try {
-      const value: number = await db.get(metadataKeys.schemaVersion)
-      return value
+      const valueString: string = await db.get(metadataKeys.schemaVersion)
+      return JSON.parse(valueString)
     } catch (err) {
       if (err.type === 'NotFoundError') {
         return 0
@@ -170,7 +170,7 @@ export class LevelOutpointStore implements OutpointStore {
   private async setSchemaVersion (schemaVersion: number) {
     const db = await this.getMetadataDatabase()
     try {
-      await db.put(metadataKeys.schemaVersion, schemaVersion)
+      await db.put(metadataKeys.schemaVersion, JSON.stringify(schemaVersion))
       // Update cache
       this.schemaVersion = schemaVersion
     } finally {

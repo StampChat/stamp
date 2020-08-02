@@ -126,22 +126,24 @@ export class LevelMessageStore implements MessageStore {
 
   async mostRecentMessageTime (newLastServerTime: number): Promise<number> {
     const db = await this.getMetadataDatabase()
+    const jsonNewLastServerTime = JSON.stringify(newLastServerTime || 0)
     try {
-      const lastServerTime: number = await db.get(metadataKeys.lastServerTime)
+      const lastServerTimeString: string = await db.get(metadataKeys.lastServerTime)
+      const lastServerTime = JSON.parse(lastServerTimeString)
       if (!lastServerTime) {
-        await db.put(metadataKeys.lastServerTime, newLastServerTime || 0)
+        await db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
       }
       if (!newLastServerTime) {
-        return lastServerTime
+        return JSON.parse(lastServerTime)
       }
       if (lastServerTime < newLastServerTime) {
-        await db.put(metadataKeys.lastServerTime, newLastServerTime)
+        await db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
       }
       return Math.max(newLastServerTime, lastServerTime)
     } catch (err) {
       if (err.type === 'NotFoundError') {
         if (newLastServerTime) {
-          await db.put(metadataKeys.lastServerTime, newLastServerTime)
+          await db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
           return newLastServerTime
         }
         return 0
@@ -159,8 +161,8 @@ export class LevelMessageStore implements MessageStore {
 
     const db = await this.getMetadataDatabase()
     try {
-      const value: number = await db.get(metadataKeys.schemaVersion)
-      return value
+      const value: string = await db.get(metadataKeys.schemaVersion)
+      return JSON.parse(value)
     } catch (err) {
       if (err.type === 'NotFoundError') {
         return 0
@@ -174,7 +176,7 @@ export class LevelMessageStore implements MessageStore {
   private async setSchemaVersion (schemaVersion: number) {
     const db = await this.getMetadataDatabase()
     try {
-      await db.put(metadataKeys.schemaVersion, schemaVersion)
+      await db.put(metadataKeys.schemaVersion, JSON.stringify(schemaVersion))
       // Update cache
       this.schemaVersion = schemaVersion
     } finally {
