@@ -66,14 +66,18 @@ export class LevelMessageStore implements MessageStore {
   private messageDbLocation: string
   private metadataDbLocation: string
   private schemaVersion?: number
+  private openedDb?: ReturnType<typeof level>
+  private openedMetadataDb?: ReturnType<typeof level>
 
   constructor (location: string) {
     this.messageDbLocation = join(location, 'messages')
     this.metadataDbLocation = join(location, 'metadata')
   }
 
-  private async getMessageDatabase () {
-    const db = level(this.messageDbLocation)
+  async Open () {
+    this.openedDb = level(this.messageDbLocation)
+    this.openedMetadataDb = level(this.metadataDbLocation)
+
     const dbSchemaVersion = await this.getSchemaVersion()
     if (!dbSchemaVersion) {
       await this.setSchemaVersion(currentSchemaVersion)
@@ -82,7 +86,24 @@ export class LevelMessageStore implements MessageStore {
     } else if (dbSchemaVersion > currentSchemaVersion) {
       console.warn('Newer DB found. Client downgraded?')
     }
-    return db
+  }
+
+  async Close () {
+    this.db.close()
+  }
+
+  get db () {
+    if (!this.openedDb) {
+      throw new Error('No db opened')
+    }
+    return this.openedDb
+  }
+
+  get metadataDb () {
+    if (!this.openedMetadataDb) {
+      throw new Error('No db opened')
+    }
+    return this.openedMetadataDb
   }
 
   private getMetadataDatabase () {
@@ -90,67 +111,51 @@ export class LevelMessageStore implements MessageStore {
   }
 
   async getMessage (payloadDigest: string): Promise<MessageWrapper | undefined> {
-    const db = await this.getMessageDatabase()
     try {
-      const value = await db.get(payloadDigest)
+      const value = await this.db.get(payloadDigest)
       return JSON.parse(value)
     } catch (err) {
       if (err.type === 'NotFoundError') {
         return
       }
       throw err
-    } finally {
-      db.close()
     }
   }
 
   async deleteMessage (payloadDigest: string) {
-    const db = await this.getMessageDatabase()
-    try {
-      await db.del(payloadDigest)
-    } finally {
-      db.close()
-    }
+    await this.db.del(payloadDigest)
   }
 
   async saveMessage (message: MessageWrapper) {
     const index = message.index
-    const db = await this.getMessageDatabase()
-    try {
-      await this.mostRecentMessageTime(message.newMsg.serverTime)
-      await db.put(index, JSON.stringify(message))
-    } finally {
-      db.close()
-    }
+    await this.mostRecentMessageTime(message.newMsg.serverTime)
+    await this.db.put(index, JSON.stringify(message))
   }
 
   async mostRecentMessageTime (newLastServerTime: number): Promise<number> {
-    const db = await this.getMetadataDatabase()
     const jsonNewLastServerTime = JSON.stringify(newLastServerTime || 0)
     try {
-      const lastServerTimeString: string = await db.get(metadataKeys.lastServerTime)
+      const lastServerTimeString: string = await this.db.get(metadataKeys.lastServerTime)
       const lastServerTime = JSON.parse(lastServerTimeString)
       if (!lastServerTime) {
-        await db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
+        await this.db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
       }
       if (!newLastServerTime) {
         return JSON.parse(lastServerTime)
       }
       if (lastServerTime < newLastServerTime) {
-        await db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
+        await this.db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
       }
       return Math.max(newLastServerTime, lastServerTime)
     } catch (err) {
       if (err.type === 'NotFoundError') {
         if (newLastServerTime) {
-          await db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
+          await this.db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
           return newLastServerTime
         }
         return 0
       }
       throw err
-    } finally {
-      db.close()
     }
   }
 
@@ -159,33 +164,24 @@ export class LevelMessageStore implements MessageStore {
       return this.schemaVersion
     }
 
-    const db = await this.getMetadataDatabase()
     try {
-      const value: string = await db.get(metadataKeys.schemaVersion)
+      const value: string = await this.metadataDb.get(metadataKeys.schemaVersion)
       return JSON.parse(value)
     } catch (err) {
       if (err.type === 'NotFoundError') {
         return 0
       }
       throw err
-    } finally {
-      db.close()
     }
   }
 
   private async setSchemaVersion (schemaVersion: number) {
-    const db = await this.getMetadataDatabase()
-    try {
-      await db.put(metadataKeys.schemaVersion, JSON.stringify(schemaVersion))
-      // Update cache
-      this.schemaVersion = schemaVersion
-    } finally {
-      db.close()
-    }
+    await this.metadataDb.put(metadataKeys.schemaVersion, JSON.stringify(schemaVersion))
+    // Update cache
+    this.schemaVersion = schemaVersion
   }
 
   async getIterator (): Promise<AsyncIterator<MessageWrapper>> {
-    const db = await this.getMessageDatabase()
-    return new MessageIterator(db)
+    return new MessageIterator(this.db)
   }
 }
