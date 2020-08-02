@@ -4,3 +4,8 @@ const app = remote.app
 
 const appData = app.getPath('appData')
 export const store = new LevelMessageStore(appData)
+
+store.Open()
+process.on('exit', (/* code */) => {
+  store.Close()
+})
