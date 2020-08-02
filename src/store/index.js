@@ -70,7 +70,6 @@ const vuexLocal = new VuexPersistence({
       chats: {
         activeChatAddr: pathOr(null, ['chats', 'activeChatAddr'], state),
         chats: mapObjIndexed((addressData, address) => {
-          console.log(`Saving lastRead time ${addressData.lastRead} for address ${address}`)
           return ({
             ...addressData,
             // Overwrite messages because storing them would be prohibitive.
