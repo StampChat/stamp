@@ -339,6 +339,37 @@ export class Wallet {
         return arr[Math.floor(Math.random() * Math.floor(arr.length))]
       }
 
+      const outpointIterator = await this.storage.getOutpointIterator()
+      const utxos = []
+
+      for await (const utxo of outpointIterator) {
+        if (utxo.frozen) {
+          continue
+        }
+        utxos.push(utxo)
+      }
+
+      // Sort available UTXOs by total amount per transaction
+      const sortedUtxos = R.pipe(
+        R.groupBy(utxo => utxo.txId),
+        R.map(
+          R.pipe(
+            R.sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis),
+            (utxoGroup) => R.reduce(
+              (group, utxo) => {
+                group.satoshis += utxo.satoshis
+                group.utxos.push(utxo)
+                return group
+              }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
+            // We want a different one for each group
+          )
+        ),
+        txMap => Object.values(txMap),
+        R.sort((txA, txB) => txB.satoshis - txA.satoshis),
+        R.map(group => group.utxos),
+        R.flatten()
+      )(utxos)
+
       // Coin selection
       const transactionBundle = []
       let amountLeft = amount
@@ -346,38 +377,6 @@ export class Wallet {
       while (amountLeft > 0 && retries < 5) {
         const signingKeys = []
         const transaction = new Transaction()
-        const usedUtxos = []
-
-        const outpointIterator = await this.storage.getOutpointIterator()
-        const utxos = []
-
-        for await (const utxo of outpointIterator) {
-          if (utxo.frozen) {
-            continue
-          }
-          utxos.push(utxo)
-        }
-
-        // Sort available UTXOs by total amount per transaction
-        const sortedUtxos = R.pipe(
-          R.groupBy(utxo => utxo.txId),
-          R.map(
-            R.pipe(
-              R.sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis),
-              (utxoGroup) => R.reduce(
-                (group, utxo) => {
-                  group.satoshis += utxo.satoshis
-                  group.utxos.push(utxo)
-                  return group
-                }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
-            // We want a different one for each group
-            )
-          ),
-          txMap => Object.values(txMap),
-          R.sort((txA, txB) => txB.satoshis - txA.satoshis),
-          R.map(group => group.utxos),
-          R.flatten()
-        )(utxos)
 
         // Case 1: UTXO is bigger than amountLeft + fees.  Done.
         // Case 3: UTXO is bigger than amountLeft, but smaller than amountLeft + fees
@@ -439,7 +438,6 @@ export class Wallet {
           continue
         }
         amountLeft -= amountToUse
-        usedUtxos.push(...stagedUtxos)
         await Promise.all(stagedUtxos.map(
           utxo => this.storage.freezeOutpoint(calcId(utxo))
         ))
@@ -447,8 +445,18 @@ export class Wallet {
         transactionBundle.push({
           transaction,
           vouts: [0],
-          usedIds: usedUtxos.map(utxo => calcId(utxo))
+          usedIds: stagedUtxos.map(utxo => calcId(utxo))
         })
+        // Remove used UTXOs
+        for (const utxo in stagedUtxos) {
+          const index = sortedUtxos.find((availableUtxo) => {
+            return calcId(utxo) !== calcId(availableUtxo)
+          })
+          if (index === -1) {
+            continue
+          }
+          sortedUtxos.splice(index, 1)
+        }
       }
 
       assert(retries < 5, 'Error building transactions')
