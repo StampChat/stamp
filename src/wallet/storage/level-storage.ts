@@ -73,14 +73,22 @@ export class LevelOutpointStore implements OutpointStore {
   private outpointDbLocation: string
   private metadataDbLocation: string
   private schemaVersion?: number
+  private openedDb?: ReturnType<typeof level>
 
   constructor (location: string) {
     this.outpointDbLocation = join(location, 'outpoints')
     this.metadataDbLocation = join(location, 'metadata')
   }
 
-  private async getOutpointDatabase () {
-    const db = level(this.outpointDbLocation)
+  get db () {
+    if (!this.openedDb) {
+      throw new Error('No db opened')
+    }
+    return this.openedDb
+  }
+
+  async Open () {
+    this.openedDb = level(this.outpointDbLocation)
     const dbSchemaVersion = await this.getSchemaVersion()
     if (!dbSchemaVersion) {
       await this.setSchemaVersion(currentSchemaVersion)
@@ -89,7 +97,10 @@ export class LevelOutpointStore implements OutpointStore {
     } else if (dbSchemaVersion > currentSchemaVersion) {
       console.warn('Newer DB found. Client downgraded?')
     }
-    return db
+  }
+
+  async Close () {
+    this.db.close()
   }
 
   private getMetadataDatabase () {
@@ -97,37 +108,24 @@ export class LevelOutpointStore implements OutpointStore {
   }
 
   async getOutpoint (id: OutpointId): Promise<Outpoint | undefined> {
-    const db = await this.getOutpointDatabase()
     try {
-      const value = await db.get(id)
+      const value = await this.db.get(id)
       return JSON.parse(value)
     } catch (err) {
       if (err.type === 'NotFoundError') {
         return
       }
       throw err
-    } finally {
-      db.close()
     }
   }
 
   async deleteOutpoint (id: OutpointId) {
-    const db = await this.getOutpointDatabase()
-    try {
-      await db.del(id)
-    } finally {
-      db.close()
-    }
+    await this.db.del(id)
   }
 
   async putOutpoint (outpoint: Outpoint) {
     const index = calcId(outpoint)
-    const db = await this.getOutpointDatabase()
-    try {
-      await db.put(index, JSON.stringify(outpoint))
-    } finally {
-      db.close()
-    }
+    await this.db.put(index, JSON.stringify(outpoint))
   }
 
   async freezeOutpoint (outpointId: OutpointId) {
@@ -153,7 +151,7 @@ export class LevelOutpointStore implements OutpointStore {
       return this.schemaVersion
     }
 
-    const db = await this.getMetadataDatabase()
+    const db = this.getMetadataDatabase()
     try {
       const valueString: string = await db.get(metadataKeys.schemaVersion)
       return JSON.parse(valueString)
@@ -168,7 +166,7 @@ export class LevelOutpointStore implements OutpointStore {
   }
 
   private async setSchemaVersion (schemaVersion: number) {
-    const db = await this.getMetadataDatabase()
+    const db = this.getMetadataDatabase()
     try {
       await db.put(metadataKeys.schemaVersion, JSON.stringify(schemaVersion))
       // Update cache
@@ -179,12 +177,10 @@ export class LevelOutpointStore implements OutpointStore {
   }
 
   async getOutpointIterator (): Promise<AsyncIterator<Outpoint>> {
-    const db = await this.getOutpointDatabase()
-    return new OutpointIterator(db)
+    return new OutpointIterator(this.db)
   }
 
   async getFrozenOutpointIterator (): Promise<AsyncIterator<Outpoint>> {
-    const db = await this.getOutpointDatabase()
-    return new OutpointIterator(db, true)
+    return new OutpointIterator(this.db, true)
   }
 }
