@@ -437,15 +437,14 @@ export class Wallet {
           retries++
           continue
         }
+        const stagedIds = stagedUtxos.map(utxo => calcId(utxo))
         amountLeft -= amountToUse
-        await Promise.all(stagedUtxos.map(
-          utxo => this.storage.freezeOutpoint(calcId(utxo))
-        ))
+        await Promise.all(stagedIds.map(utxoId => this.storage.freezeOutpoint(utxoId)))
         this.finalizeTransaction({ transaction, signingKeys })
         transactionBundle.push({
           transaction,
           vouts: [0],
-          usedIds: stagedUtxos.map(utxo => calcId(utxo))
+          usedIds: stagedIds.map(utxoId => utxoId)
         })
         // Remove used UTXOs
         for (const utxo of stagedUtxos) {
