@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MessageStore, MessageResult, MessageWrapper, MessageReturnResult } from './storage'
-import level from 'level'
+import level, { LevelDB } from 'level'
 import { join } from 'path'
 
 const metadataKeys = {
@@ -10,9 +10,9 @@ const metadataKeys = {
 
 class MessageIterator implements AsyncIterator<MessageWrapper> {
   iterator: any;
-  db: any;
+  db: LevelDB;
 
-  constructor (db: any) {
+  constructor (db: LevelDB) {
     this.db = db
   }
 
@@ -55,7 +55,7 @@ class MessageIterator implements AsyncIterator<MessageWrapper> {
   }
 
   [Symbol.asyncIterator] () {
-    this.iterator = this.db.iterator()
+    this.iterator = this.db.iterator({})
     return this
   }
 }
@@ -66,8 +66,8 @@ export class LevelMessageStore implements MessageStore {
   private messageDbLocation: string
   private metadataDbLocation: string
   private schemaVersion?: number
-  private openedDb?: ReturnType<typeof level>
-  private openedMetadataDb?: ReturnType<typeof level>
+  private openedDb?: LevelDB
+  private openedMetadataDb?: LevelDB
 
   constructor (location: string) {
     this.messageDbLocation = join(location, 'messages')

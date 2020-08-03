@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import level from 'level'
+import level, { LevelDB } from 'level'
 import { join } from 'path'
 
 import { OutpointStore, OutpointResult, Outpoint, OutpointReturnResult, OutpointId } from './storage'
@@ -12,10 +12,10 @@ const metadataKeys = {
 
 class OutpointIterator implements AsyncIterator<Outpoint> {
   iterator: any;
-  db: ReturnType<typeof level>;
+  db: LevelDB;
   onlyFrozen: boolean
 
-  constructor (db: ReturnType<typeof level>, onlyFrozen = false) {
+  constructor (db: LevelDB, onlyFrozen = false) {
     this.db = db
     this.onlyFrozen = onlyFrozen
   }
@@ -77,7 +77,7 @@ export class LevelOutpointStore implements OutpointStore {
   private outpointDbLocation: string
   private metadataDbLocation: string
   private schemaVersion?: number
-  private openedDb?: ReturnType<typeof level>
+  private openedDb?: LevelDB
 
   constructor (location: string) {
     this.outpointDbLocation = join(location, 'outpoints')
