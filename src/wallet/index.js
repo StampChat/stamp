@@ -352,27 +352,6 @@ export class Wallet {
         utxos.push(utxo)
       }
 
-      // Sort available UTXOs by total amount per transaction
-      const sortedUtxos = R.pipe(
-        R.groupBy(utxo => utxo.txId),
-        R.map(
-          R.pipe(
-            R.sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis),
-            (utxoGroup) => R.reduce(
-              (group, utxo) => {
-                group.satoshis += utxo.satoshis
-                group.utxos.push(utxo)
-                return group
-              }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
-            // We want a different one for each group
-          )
-        ),
-        txMap => Object.values(txMap),
-        R.sort((txA, txB) => txB.satoshis - txA.satoshis),
-        R.map(group => group.utxos),
-        R.flatten()
-      )(utxos)
-
       // Coin selection
       const transactionBundle = []
       let amountLeft = amount
@@ -390,12 +369,7 @@ export class Wallet {
         let satoshis = 0
         const stagedUtxos = []
         while (true) {
-        // Try to use a sufficiently large UTXO, otherwise pick one at random
-        // Big enough to handle the amount left, plus 1 change output
-          const requisiteSize = amountLeft + (transaction._estimateSize() + 2 * standardUtxoSize + standardInputSize + minimumOutputAmount) * feePerByte
-          const biggerUtxos = sortedUtxos.filter((a) => a.satoshis >= requisiteSize)
-          const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
-          const utxoToUse = pickOne(utxoSetToUse)
+          const utxoToUse = pickOne(utxos)
           stagedUtxos.push(utxoToUse)
           utxoToUse.script = Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
           transaction.from(utxoToUse)
@@ -451,13 +425,13 @@ export class Wallet {
         console.log(stagedIds)
         // Remove used UTXOs
         for (const utxo of stagedUtxos) {
-          const index = sortedUtxos.findIndex((availableUtxo) => {
+          const index = utxos.findIndex((availableUtxo) => {
             return calcId(utxo) !== calcId(availableUtxo)
           })
           if (index === -1) {
             continue
           }
-          sortedUtxos.splice(index, 1)
+          utxos.splice(index, 1)
         }
       }
       assert(retries < 5, 'Error building transactions')
