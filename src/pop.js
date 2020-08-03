@@ -54,7 +54,7 @@ export default {
     })
 
     // Construct tx
-    const { transaction, usedIDs } = await wallet.constructTransaction({ outputs, exactOutputs: true })
+    const { transaction, usedIDs } = await wallet.constructTransaction({ outputs })
     const rawTransaction = transaction.toBuffer()
 
     // Send payment and receive token
