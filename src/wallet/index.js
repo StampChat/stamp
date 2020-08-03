@@ -448,8 +448,8 @@ export class Wallet {
           usedIds: stagedUtxos.map(utxo => calcId(utxo))
         })
         // Remove used UTXOs
-        for (const utxo in stagedUtxos) {
-          const index = sortedUtxos.find((availableUtxo) => {
+        for (const utxo of stagedUtxos) {
+          const index = sortedUtxos.findIndex((availableUtxo) => {
             return calcId(utxo) !== calcId(availableUtxo)
           })
           if (index === -1) {
