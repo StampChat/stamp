@@ -327,14 +327,18 @@ export class RelayClient {
 
       const messageSet = new messaging.MessageSet()
       messageSet.addMessages(message)
-      const destAddr = destPubKey.toAddress('testnet').toLegacyAddress()
+      const destinationAddress = destPubKey.toAddress('testnet').toLegacyAddress()
       const electrumClient = await this.wallet.electrumClientPromise
       Promise.all(transactions.map(transaction => {
         console.log('Broadcasting a transaction', transaction)
         return electrumClient.request('blockchain.transaction.broadcast', transaction.toString())
       }))
-        .then(() => this.pushMessages(destAddr, messageSet))
-        .then(() => this.events.emit('messageSent', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions }))
+        .then(() => this.pushMessages(destinationAddress, messageSet))
+        .then(async () => {
+          this.events.emit('messageSent', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
+          // TODO: we shouldn't be dealing with this here. Leaky abstraction
+          await Promise.all(usedIDs.map(id => wallet.storage.deleteOutpoint(id)))
+        })
         .catch(async (err) => {
           console.error(err)
           if (err.response) {

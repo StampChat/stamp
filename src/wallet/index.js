@@ -182,6 +182,7 @@ export class Wallet {
       if (elOutputs.some(output => {
         return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
       })) {
+        this.storage.unfreezeOutpoint(utxoId)
         // Found utxo
         return
       }
@@ -247,6 +248,8 @@ export class Wallet {
     try {
       const electrumClient = await this.electrumClientPromise
       await electrumClient.request('blockchain.transaction.broadcast', txHex)
+      // TODO: we shouldn't be dealing with this here. Leaky abstraction
+      await Promise.forEach(usedIDs.map(id => this.storage.deleteOutpoint(id)))
     } catch (err) {
       console.error(err)
       // Fix UTXOs if tx broadcast fails
@@ -343,9 +346,6 @@ export class Wallet {
       const utxos = []
 
       for await (const utxo of outpointIterator) {
-        if (utxo.frozen) {
-          continue
-        }
         utxos.push(utxo)
       }
 
@@ -486,9 +486,6 @@ export class Wallet {
       const utxos = []
 
       for await (const utxo of outpointIterator) {
-        if (utxo.frozen) {
-          continue
-        }
         utxos.push(utxo)
       }
 
