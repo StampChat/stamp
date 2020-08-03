@@ -326,7 +326,10 @@ export class Wallet {
       let satoshis = 0
       const stagedUtxos = []
       while (true) {
-        const utxoToUse = pickOne(utxos)
+        const requisiteSize = amountLeft + (transaction._estimateSize() + 2 * standardUtxoSize + standardInputSize + minimumOutputAmount) * feePerByte
+        const biggerUtxos = utxos.filter((a) => a.satoshis >= requisiteSize)
+        const utxoSetToUse = biggerUtxos.length !== 0 ? biggerUtxos : utxos
+        const utxoToUse = pickOne(utxoSetToUse)
         stagedUtxos.push(utxoToUse)
         utxoToUse.script = Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
         transaction.from(utxoToUse)
