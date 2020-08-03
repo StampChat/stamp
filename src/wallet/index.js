@@ -176,16 +176,19 @@ export class Wallet {
       console.log(`Missing UTXO for ${utxoId}`)
       return
     }
+    console.log(`Fixing UTXO ${utxoId}`)
     try {
       const scriptHash = toElectrumScriptHash(utxo.address)
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
       if (elOutputs.some(output => {
         return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
       })) {
+        console.log(`Unfreezing UTXO ${utxoId}`)
         this.storage.unfreezeOutpoint(utxoId)
         // Found utxo
         return
       }
+      console.log(`Deleting UTXO ${utxoId}`)
       this.storage.deleteOutpoint(utxoId)
     } catch (err) {
       console.error('error deserializing utxo address', err, utxo)
@@ -439,13 +442,13 @@ export class Wallet {
         }
         const stagedIds = stagedUtxos.map(utxo => calcId(utxo))
         amountLeft -= amountToUse
-        await Promise.all(stagedIds.map(utxoId => this.storage.freezeOutpoint(utxoId)))
         this.finalizeTransaction({ transaction, signingKeys })
         transactionBundle.push({
           transaction,
           vouts: [0],
-          usedIds: stagedIds.map(utxoId => utxoId)
+          usedIds: stagedIds
         })
+        console.log(stagedIds)
         // Remove used UTXOs
         for (const utxo of stagedUtxos) {
           const index = sortedUtxos.findIndex((availableUtxo) => {
@@ -457,8 +460,11 @@ export class Wallet {
           sortedUtxos.splice(index, 1)
         }
       }
-
       assert(retries < 5, 'Error building transactions')
+
+      for (const transaction of transactionBundle) {
+        await Promise.all(transaction.usedIds.map(utxoId => this.storage.freezeOutpoint(utxoId)))
+      }
       return transactionBundle
     } finally {
       await this.constructionLock.release()
