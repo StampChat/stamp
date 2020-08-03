@@ -16,10 +16,10 @@ export const electrumServers = [
     electrumURL: 'tbch.loping.net',
     electrumPort: 60_002
   },
-  {
-    electrumURL: 'testnet.bitcoincash.network',
-    electrumPort: 60_002
-  },
+  // {
+  //   electrumURL: 'testnet.bitcoincash.network',
+  //   electrumPort: 60_002
+  // },
   {
     electrumURL: 'testnet.imaginary.cash',
     electrumPort: 50_002
