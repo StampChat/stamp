@@ -34,8 +34,11 @@ export class OutpointReturnResult implements IteratorReturnResult<Outpoint | und
 
 export interface OutpointStore {
   getOutpoint(id: OutpointId): Promise<Outpoint | undefined>;
-  deleteOutpoint(id: OutpointId): void;
-  putOutpoint(outpoint: Outpoint): void;
+  deleteOutpoint(id: OutpointId): Promise<void>;
+  putOutpoint(outpoint: Outpoint): Promise<void>;
+  freezeOutpoint (outpointId: OutpointId): Promise<void>
+  unfreezeOutpoint (outpointId: OutpointId): Promise<void>
+
   getOutpointIterator(): Promise<AsyncIterator<Outpoint>>;
   getFrozenOutpointIterator(): Promise<AsyncIterator<Outpoint>>;
 }
