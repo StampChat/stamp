@@ -277,27 +277,33 @@ export class Wallet {
     // in order to create specific amounts.
     const changeAddresses = Object.keys(this.changeAddresses)
 
-    for (const changeAddress of changeAddresses) {
-      const delta = transaction.inputAmount - transaction.outputAmount
-      const size = transaction._estimateSize() + transaction.outputs.length
-      const overallChangeUtxoCost = minimumOutputAmount + standardUtxoSize * feePerByte + size * feePerByte
-      if (delta < overallChangeUtxoCost) {
-        console.log('Can\'t make another output given currently available funds', delta, overallChangeUtxoCost)
-        // We can't make more outputs without going over the fee.
-        break
-      }
-      const upperBound = delta - (overallChangeUtxoCost)
-      const changeOutputAmount = upperBound
-      // NOTE: This may generate a relatively large amount for the fee. We *could*
-      // change the output amount to be equal to the (delta - estimatedSize * feePerByte)
-      // however, we will sweep it into the first output instead to generate some noise
-      console.log('Generating a change UTXO for amount:', changeOutputAmount)
-      // Create the output
-      const output = new Transaction.Output({
-        script: Script.buildPublicKeyHashOut(changeAddress).toHex(),
-        satoshis: changeOutputAmount
-      })
-      transaction = transaction.addOutput(output)
+    const changeAddress = pickOne(changeAddresses)
+    const delta = transaction.inputAmount - transaction.outputAmount
+    const size = transaction._estimateSize() + transaction.outputs.length
+    const overallChangeUtxoCost = minimumOutputAmount + standardUtxoSize * feePerByte + size * feePerByte
+    if (delta < overallChangeUtxoCost) {
+      console.log('Can\'t make another output given currently available funds', delta, overallChangeUtxoCost)
+      // We can't make more outputs without going over the fee.
+      transaction = transaction.sign(signingKeys)
+      return 0
+    }
+    const upperBound = delta - (overallChangeUtxoCost)
+    const changeOutputAmount = upperBound
+    // NOTE: This may generate a relatively large amount for the fee. We *could*
+    // change the output amount to be equal to the (delta - estimatedSize * feePerByte)
+    // however, we will sweep it into the first output instead to generate some noise
+    console.log('Generating a change UTXO for amount:', changeOutputAmount)
+    // Create the output
+    const output = new Transaction.Output({
+      script: Script.buildPublicKeyHashOut(changeAddress).toHex(),
+      satoshis: changeOutputAmount
+    })
+    transaction = transaction.addOutput(output)
+    const swapChange = Math.round(Math.random()) === 1.0
+    if (swapChange) {
+      const tmpOutput = transaction.outputs[0]
+      transaction.outputs[0] = transaction.outputs[1]
+      transaction.outputs[1] = tmpOutput
     }
     // NOTE: We are not using Bitcore to set change
 
@@ -307,6 +313,8 @@ export class Wallet {
     // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
     console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
     console.log(transaction)
+    // Return output location
+    return swapChange ? 1 : 0
   }
 
   _buildTransactionSetForExplicitAmount ({ addressGenerator, amount, utxos }) {
@@ -376,12 +384,13 @@ export class Wallet {
       }
       const stagedIds = stagedUtxos.map(utxo => calcId(utxo))
       amountLeft -= amountToUse
-      this.finalizeTransaction({ transaction, signingKeys })
+      const outputIndex = this.finalizeTransaction({ transaction, signingKeys })
       transactionBundle.push({
         transaction,
-        vouts: [0],
+        vouts: [outputIndex],
         usedIds: stagedIds
       })
+      // TODO: Need to be able to use unconfirmed outputs here that this function is generating.
       console.log(stagedIds)
       // Remove used UTXOs
       for (const utxo of stagedUtxos) {
@@ -447,7 +456,7 @@ export class Wallet {
     }
   }
 
-  async constructTransaction ({ outputs, exactOutputs = false }) {
+  async constructTransaction ({ outputs }) {
     try {
       await this.constructionLock.acquire()
       let transaction = new Transaction()
@@ -524,7 +533,7 @@ export class Wallet {
 
       // A good round number greater than the current dustLimit.
       // We may want to make it some computed value in the future.
-      this.finalizeTransaction({ transaction, signingKeys, exactOutputs })
+      this.finalizeTransaction({ transaction, signingKeys })
       const finalTxnSize = transaction._estimateSize()
       // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
       console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
