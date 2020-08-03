@@ -87,6 +87,8 @@ export default {
           await electrumHandler.request('blockchain.transaction.broadcast', txHex)
           sentTransactionNotify()
           console.log('Sent transaction', txHex)
+          // TODO: we shouldn't be dealing with this here. Leaky abstraction
+          await Promise.all(usedIDs.map(id => this.$wallet.storage.deleteOutpoint(id)))
         } catch (err) {
           usedIDs.forEach(id => {
             this.$wallet.unfreezeUTXO(id)

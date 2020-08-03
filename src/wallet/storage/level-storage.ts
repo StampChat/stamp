@@ -40,12 +40,16 @@ class OutpointIterator implements AsyncIterator<Outpoint> {
         resolve(parsedOutpoint)
       })
     })
-    if (this.onlyFrozen && value.frozen) {
-      return this.next()
-    }
     if (!value) {
       return new OutpointReturnResult()
     }
+    if (!this.onlyFrozen && value.frozen) {
+      return this.next()
+    }
+    if (this.onlyFrozen && !value.frozen) {
+      return this.next()
+    }
+
     return new OutpointResult(value)
   }
 
@@ -177,7 +181,7 @@ export class LevelOutpointStore implements OutpointStore {
   }
 
   async getOutpointIterator (): Promise<AsyncIterator<Outpoint>> {
-    return new OutpointIterator(this.db)
+    return new OutpointIterator(this.db, false)
   }
 
   async getFrozenOutpointIterator (): Promise<AsyncIterator<Outpoint>> {
