@@ -53,7 +53,10 @@ export default {
     event: 'input'
   },
   props: {
-    relayData: Object
+    relayData: {
+      type: Object,
+      default: () => ({})
+    }
   },
   computed: {
     innerData: {

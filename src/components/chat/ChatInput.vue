@@ -25,7 +25,7 @@
             set="twitter"
             @select="addEmoji"
             :title="$t('chatInput.emojiPickerTitle')"
-            :showSkinTones="false"
+            :show-skin-tones="false"
           />
         </q-menu>
       </q-btn>
@@ -52,8 +52,8 @@
       <q-input
         dense
         outlined
-        style="width: 125px"
-        label="Stamp"
+        style="width: 150px"
+        label="Stamp Price"
         suffix="sats"
         :value="stampAmount"
         @input="stampAmountChanged"
@@ -84,8 +84,14 @@ export default {
     }
   },
   props: {
-    message: String,
-    stampAmount: Number
+    message: {
+      type: String,
+      default: () => ''
+    },
+    stampAmount: {
+      type: Number,
+      default: () => 5000
+    }
   },
   methods: {
     focus () {

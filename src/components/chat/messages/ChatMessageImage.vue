@@ -17,7 +17,12 @@
 import ImageDialog from '../../../components/dialogs/ImageDialog'
 
 export default {
-  props: ['image'],
+  props: {
+    image: {
+      type: String,
+      default: () => ''
+    }
+  },
   components: {
     ImageDialog
   },

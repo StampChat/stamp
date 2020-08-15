@@ -32,7 +32,12 @@ import { constructProfileMetadata, constructPriceFilter } from '../../relay/cons
 import { errorNotify } from '../../utils/notifications'
 
 export default {
-  props: ['currentProfile'],
+  props: {
+    currentProfile: {
+      type: Object,
+      default: () => ({})
+    }
+  },
   data () {
     return {
       relayData: this.getRelayData()

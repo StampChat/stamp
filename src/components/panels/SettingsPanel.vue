@@ -5,7 +5,7 @@
       :name="getProfile.name"
       :bio="getProfile.bio"
       :avatar="getProfile.avatar"
-      :acceptancePrice="getInbox.acceptancePrice"
+      :acceptance-price="getInbox.acceptancePrice"
     />
 
     <!-- New contact dialog -->
@@ -16,7 +16,7 @@
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
       <contact-book-dialog
-        :contactClick="function (address, contact) { return setActiveChat(address) }"
+        :contact-click="function (address, contact) { return setActiveChat(address) }"
         @close-contact-search-dialog="closeContactSearchDialog"
       />
     </q-dialog>
@@ -33,7 +33,7 @@
 
     <!-- Profile dialog -->
     <q-dialog v-model="profileOpen">
-      <profile-dialog :currentProfile="getProfile" />
+      <profile-dialog :current-profile="getProfile" />
     </q-dialog>
 
     <!-- Settings dialog -->
@@ -153,7 +153,12 @@ export default {
       settingsOpen: false
     }
   },
-  props: ['drawerOpen'],
+  props: {
+    drawerOpen: {
+      type: Boolean,
+      default: () => false
+    }
+  },
   model: {
     prop: 'drawerOpen',
     event: 'update:drawerOpen'

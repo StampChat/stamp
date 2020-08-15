@@ -73,7 +73,20 @@
 import { mapActions } from 'vuex'
 
 export default {
-  props: ['address', 'contact', 'method', 'contact-click'],
+  props: {
+    address: {
+      type: String,
+      default: () => ''
+    },
+    contact: {
+      type: Object,
+      default: () => ({})
+    },
+    contactClick: {
+      type: Function,
+      default: () => ''
+    }
+  },
   methods: {
     ...mapActions({
       deleteContact: 'contacts/deleteContact'

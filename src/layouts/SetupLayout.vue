@@ -1,7 +1,7 @@
 <template>
   <q-layout view="hHh Lpr fFf">
     <q-page-container>
-      <router-view :isBasic="isBasic" />
+      <router-view :is-basic="isBasic" />
     </q-page-container>
 
     <status-footer v-model="isBasic" />

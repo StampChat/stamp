@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
 import { app, BrowserWindow, nativeTheme, Tray, Menu, shell, nativeImage } from 'electron'
 import path from 'path'
 import fs from 'fs'
@@ -31,7 +33,6 @@ function getIconPNGPath () {
 
 let mainWindow
 let tray
-// eslint-disable-next-line no-unused-vars
 let windowsBadgeUpdater
 const nativeIconSmall = nativeImage.createFromPath(getIconPNGPath()).resize({ width: 16, height: 16 })
 const nativeIcon = nativeImage.createFromPath(getIconPNGPath())

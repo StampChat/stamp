@@ -2,15 +2,18 @@
   <div class="col q-gutter-y-md">
     <q-card>
       <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold"> How to deposit? </div>
+        <div class="text-subtitle1 text-bold">
+          How to deposit?
+        </div>
       </q-card-section>
       <q-card-section class="text-body2">
-        The Stamp protocol requires that you attach a small payment to every message. <br><br>
-
-        The wallet will handle this automatically, but first you must deposit some Bitcoin into the wallet.
-        Do this by sending Bitcoin Cash to the <strong>deposit address</strong> below. <br><br>
-
-        No Bitcoin Cash? Click the faucet below!
+        The Stamp protocol requires that you attach a small payment to every message.
+        <br>
+        <br>The wallet will handle this automatically, but first you must deposit some Bitcoin into the wallet.
+        Do this by sending Bitcoin Cash to the
+        <strong>deposit address</strong> below.
+        <br>
+        <br>No Bitcoin Cash? Click the faucet below!
       </q-card-section>
       <q-card-actions>
         <q-btn
@@ -92,9 +95,7 @@
           <span
             class="row text-subtitle1"
             style="margin-left: auto; margin-right: auto;"
-          >
-            Recommended {{ recomendedBalance }} satoshi
-          </span>
+          >Recommended {{ recomendedBalance }} satoshi</span>
         </q-card-section>
       </q-card>
     </div>
@@ -124,9 +125,10 @@ export default {
   },
   methods: {
     copyAddress () {
-      copyToClipboard(this.currentAddress).then(() => {
-        addressCopiedNotify()
-      })
+      copyToClipboard(this.currentAddress)
+        .then(() => {
+          addressCopiedNotify()
+        })
         .catch(() => {
           // fail
         })
@@ -149,7 +151,8 @@ export default {
   computed: {
     ...mapGetters({ balance: 'wallet/balance' }),
     percentageBalance () {
-      const percentage = 100 * Math.min(this.balance / this.recomendedBalance, 1)
+      const percentage =
+        100 * Math.min(this.balance / this.recomendedBalance, 1)
       return percentage
     },
     formatBalance () {

@@ -22,7 +22,12 @@
 
 <script>
 export default {
-  props: ['image'],
+  props: {
+    image: {
+      type: String,
+      default: () => ''
+    }
+  },
   data () {
     return {
       showBtn: false

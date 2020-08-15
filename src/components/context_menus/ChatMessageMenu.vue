@@ -77,7 +77,8 @@ export default {
     },
     index: {
       type: Number,
-      required: false
+      required: false,
+      default: () => 0
     }
   },
   methods: {

@@ -23,7 +23,17 @@ export default {
   components: {
     ContactItem
   },
-  props: ['contacts', 'contactClick'],
+  props: {
+    contacts: {
+      type: Object,
+      default: () => ({})
+    },
+    contactClick: {
+      type: Function,
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      default: () => () => {}
+    }
+  },
   data () {
     return {
       activeAddress: Object.keys(this.contacts)[0]
