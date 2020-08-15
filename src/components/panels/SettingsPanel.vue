@@ -53,7 +53,7 @@
             <q-icon name="add_comment" />
           </q-item-section>
 
-          <q-item-section>New Contact</q-item-section>
+          <q-item-section>{{ $t('SettingPanel.newContact') }}</q-item-section>
         </q-item>
         <q-item
           clickable
@@ -64,7 +64,7 @@
             <q-icon name="contacts" />
           </q-item-section>
 
-          <q-item-section>Contacts</q-item-section>
+          <q-item-section>{{ $t('SettingPanel.contacts') }}</q-item-section>
         </q-item>
 
         <q-separator />
@@ -78,7 +78,7 @@
             <q-icon name="send" />
           </q-item-section>
 
-          <q-item-section>Send Bitcoin Cash</q-item-section>
+          <q-item-section>{{ $t('SettingPanel.sendBitcoinCash') }}</q-item-section>
         </q-item>
 
         <q-item
@@ -90,7 +90,7 @@
             <q-icon name="account_balance_wallet" />
           </q-item-section>
 
-          <q-item-section>Receive Bitcoin Cash</q-item-section>
+          <q-item-section>{{ $t('SettingPanel.recieveBitcoinCash') }}</q-item-section>
         </q-item>
 
         <q-separator />
@@ -104,7 +104,7 @@
             <q-icon name="face" />
           </q-item-section>
 
-          <q-item-section>Profile</q-item-section>
+          <q-item-section>{{ $t('SettingPanel.profile') }}</q-item-section>
         </q-item>
 
         <q-item
@@ -116,7 +116,7 @@
             <q-icon name="tune" />
           </q-item-section>
 
-          <q-item-section>Settings</q-item-section>
+          <q-item-section>{{ $t('SettingPanel.settings') }}</q-item-section>
         </q-item>
       </q-list>
     </q-scroll-area>

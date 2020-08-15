@@ -9,7 +9,7 @@
         />
       </q-item-section>
       <q-item-section>
-        <q-item-label>Not found</q-item-label>
+        <q-item-label>{{ $t('contactItem.notFound') }}</q-item-label>
         <!-- TODO: Error information here -->
       </q-item-section>
     </q-item>
@@ -48,10 +48,10 @@
           lines="1"
           caption
         >
-          <span class="text-weight-bold">Address: </span> {{ address }}
+          <span class="text-weight-bold">{{ $t('contactItem.address') }}: </span> {{ address }}
         </q-item-label>
         <q-item-label caption>
-          <span class="text-weight-bold"> Inbox Price: </span> {{ contact.inbox.acceptancePrice }}
+          <span class="text-weight-bold">{{ $t('contactItem.inboxPrice') }}: </span> {{ contact.inbox.acceptancePrice }}
         </q-item-label>
       </q-item-section>
       <q-item-section

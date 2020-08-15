@@ -2,7 +2,7 @@
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
       <div class="text-h6">
-        Send to Address
+        {{ $t('sendAddressDialog.sendToAddress') }}
       </div>
     </q-card-section>
     <q-card-section>
@@ -11,7 +11,7 @@
         v-model="address"
         filled
         dense
-        placeholder="Enter Bitcoin Cash address..."
+        :placeholder="$t('sendAddressDialog.enterBitcoinCashAddress')"
         ref="address"
       />
     </q-card-section>
@@ -22,20 +22,20 @@
         type="number"
         filled
         dense
-        placeholder="Enter amount..."
+        :placeholder="$t('sendAddressDialog.enterAmount')"
       />
     </q-card-section>
     <q-card-actions align="right">
       <q-btn
         flat
-        label="Cancel"
+        :label="$t('sendAddressDialog.cancel')"
         color="primary"
         v-close-popup
       />
       <q-btn
         flat
         :disable="!isValid"
-        label="Send"
+        :label="$t('sendAddressDialog.send')"
         color="primary"
         @click="send()"
         v-close-popup

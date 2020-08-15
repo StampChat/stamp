@@ -7,7 +7,7 @@
 
     <q-card-section>
       <div class="text-h6">
-        Wallet Status
+        {{ $t('receiveBitcoinDialog.walletStatus') }}
       </div>
     </q-card-section>
     <q-card-section>
@@ -58,13 +58,13 @@
         color="primary"
         @click="seedPhraseOpen = true"
       >
-        Show Seed
+        {{ $t('receiveBitcoinDialog.showSeed') }}
       </q-btn>
     </q-item-section>
     <q-card-actions align="right">
       <q-btn
         flat
-        label="Close"
+        :label="$t('receiveBitcoinDialog.close')"
         color="primary"
         v-close-popup
       />
@@ -104,7 +104,7 @@ export default {
     copyAddress () {
       copyToClipboard(this.currentAddress).then(() => {
         this.$q.notify({
-          message: '<div class="text-center"> Address copied to clipboard </div>',
+          message: `<div class="text-center">${this.$t('receiveBitcoinDialog.addressCopied')}</div>`,
           html: true,
           color: 'purple'
         })

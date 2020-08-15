@@ -24,7 +24,7 @@
             :data="emojiIndex"
             set="twitter"
             @select="addEmoji"
-            title="Select an emoji"
+            :title="$t('chatInput.emojiPickerTitle')"
             :show-skin-tones="false"
           />
         </q-menu>
@@ -40,7 +40,7 @@
         @keydown.enter.exact.prevent
         @keydown.enter.exact="sendMessage"
         v-model="innerMessage"
-        placeholder="Write a message..."
+        :placeholder="$t('chatInput.placeHolder')"
       />
       <q-space />
       <q-btn

@@ -37,18 +37,18 @@
                   <q-input
                     outlined
                     v-model="name"
-                    label="Name *"
-                    hint="Name displayed to others"
+                    :label="$t('profile.name')"
+                    :hint="$t('profile.nameHint')"
                     lazy-rules
                     style="width:100%"
-                    :rules="[ val => val && val.length > 0 || 'Please type something']"
+                    :rules="[ val => val && val.length > 0 || $t('profile.pleaseType')]"
                   />
                 </div>
                 <div class="row q-pa-md">
                   <q-input
                     v-model="bio"
-                    label="Bio"
-                    hint="Short biolography displayed to others"
+                    :label="$t('profile.bio')"
+                    :hint="$t('profile.bioHint')"
                     outlined
                     style="width:100%"
                     autogrow
@@ -60,7 +60,7 @@
                   class="bg-primary text-white shadow-2"
                   style="border-radius: 10px 10px 0px 0px"
                 >
-                  <q-toolbar-title>Upload Avatar</q-toolbar-title>
+                  <q-toolbar-title>{{ $t('profile.uploadAvatar') }}</q-toolbar-title>
 
                   <q-input
                     @input="val => { avatarPath = val[0] }"
@@ -110,11 +110,11 @@
                   <q-input
                     outlined
                     v-model="acceptancePrice"
-                    label="Minimum Stamp *"
-                    hint="The minimum fee required for strangers to message you"
+                    :label="$t('profile.minimumStamp')"
+                    :hint="$t('profile.minimumStampHint')"
                     style="width:100%"
                     type="number"
-                    :rules="[ val => val && val.length > 0 || 'Please input an inbox fee']"
+                    :rules="[ val => val && val.length > 0 || $t('profile.minimumStampRule')]"
                   />
                 </div>
               </div>

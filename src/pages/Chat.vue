@@ -47,8 +47,8 @@
         >
           <anouncement
             class="q-pt-sm"
-            name="Stamp Developers"
-            :text="donationMessage"
+            :name="$t('chat.announcementName')"
+            :text="$t('chat.donationMessage')"
           />
           <template v-if="loaded || active">
             <template v-for="({ chunk, globalIndex }, index) in chunkedMessages">
@@ -144,7 +144,6 @@ import ChatMessageText from '../components/chat/messages/ChatMessageText.vue'
 import ChatMessageImage from '../components/chat/messages/ChatMessageImage.vue'
 import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.vue'
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
-import { donationMessage } from '../utils/constants'
 import { insufficientStampNotify } from '../utils/notifications'
 import { addressColorFromStr } from '../utils/formatting'
 
@@ -187,8 +186,7 @@ export default {
       sendMoneyOpen: false,
       bottom: true,
       message: '',
-      replyDigest: null,
-      donationMessage
+      replyDigest: null
     }
   },
   created () {
