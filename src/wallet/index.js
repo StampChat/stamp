@@ -22,6 +22,20 @@ const pickOne = function (arr) {
   return arr[Math.floor(Math.random() * Math.floor(arr.length))]
 }
 
+const shuffleArray = function (arr) {
+  const swaps = [...arr.keys()]
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * i)
+    const temp = arr[i]
+    const tempIndex = arr[i]
+    arr[i] = arr[j]
+    swaps[i] = swaps[j]
+    arr[j] = temp
+    swaps[j] = tempIndex
+  }
+  return swaps
+}
+
 export class Wallet {
   constructor (storage) {
     this.storage = storage
@@ -276,36 +290,66 @@ export class Wallet {
     // power distribution, so we don't have to combine lots of outputs at later times
     // in order to create specific amounts.
     const changeAddresses = Object.keys(this.changeAddresses)
-
-    const changeAddress = pickOne(changeAddresses)
-    const delta = transaction.inputAmount - transaction.outputAmount
-    const size = transaction._estimateSize() + transaction.outputs.length
-    const overallChangeUtxoCost = minimumOutputAmount + standardUtxoSize * feePerByte + size * feePerByte
-    if (delta < overallChangeUtxoCost) {
-      console.log('Can\'t make another output given currently available funds', delta, overallChangeUtxoCost)
-      // We can't make more outputs without going over the fee.
-      transaction = transaction.sign(signingKeys)
-      return 0
-    }
-    const upperBound = delta - (overallChangeUtxoCost)
-    const changeOutputAmount = upperBound
-    // NOTE: This may generate a relatively large amount for the fee. We *could*
-    // change the output amount to be equal to the (delta - estimatedSize * feePerByte)
-    // however, we will sweep it into the first output instead to generate some noise
-    console.log('Generating a change UTXO for amount:', changeOutputAmount)
-    // Create the output
-    const output = new Transaction.Output({
-      script: Script.buildPublicKeyHashOut(changeAddress).toHex(),
-      satoshis: changeOutputAmount
-    })
-    transaction = transaction.addOutput(output)
-    const swapChange = Math.round(Math.random()) === 1.0
-    if (swapChange) {
-      const tmpOutput = transaction.outputs[0]
-      transaction.outputs[0] = transaction.outputs[1]
-      transaction.outputs[1] = tmpOutput
-    }
+    shuffleArray(changeAddresses)
+    const OOM = (amount) => Math.floor(Math.log2(amount))
+    const amountOOM = OOM(transaction.outputs[0].satoshis)
+    // Amount to skip
+    // TODO: Still probably leaks some information about which outputs are non-change
     // NOTE: We are not using Bitcore to set change
+    let skipAmount = 0
+    // Create change outputs randomly in decreasing orders of magnitude
+    for (const changeAddress of changeAddresses) {
+      const size = transaction._estimateSize() + transaction.outputs.length
+      const delta = transaction.inputAmount - transaction.outputAmount - skipAmount
+      const overallChangeUtxoCost = minimumOutputAmount + standardUtxoSize * feePerByte + size * feePerByte
+      if (delta + skipAmount < overallChangeUtxoCost) {
+        console.log('Can\'t make another output given currently available funds', delta, overallChangeUtxoCost)
+        // We can't make more outputs without going over the fee.
+        break
+      }
+
+      const upperBound = delta - (overallChangeUtxoCost)
+      const splitPosition = Math.ceil(Math.random() * upperBound) + skipAmount
+      const largerAmount = (splitPosition >= upperBound - splitPosition ? splitPosition : upperBound - splitPosition)
+      // Use the amount which gives us a fee larger than the fee per byte, but minimally so
+      const changeOutputAmount = largerAmount + minimumOutputAmount
+      if (amountOOM === OOM(changeOutputAmount)) {
+        skipAmount += changeOutputAmount
+        continue
+      }
+      skipAmount = 0
+
+      // NOTE: This may generate a relatively large amount for the fee. We *could*
+      // change the output amount to be equal to the (delta - estimatedSize * feePerByte)
+      // however, we will sweep it into the first output instead to generate some noise
+      console.log('Generating a change UTXO for amount:', changeOutputAmount)
+      // Create the output
+      const output = new Transaction.Output({
+        script: Script.buildPublicKeyHashOut(changeAddress).toHex(),
+        satoshis: changeOutputAmount
+      })
+      transaction = transaction.addOutput(output)
+    }
+
+    transaction = transaction.sign(signingKeys)
+    // Shift any remainder to other outputs randomly
+    // NOTE: we don't change the number of outputs here, but we also don't want to execute anythign if there are no outputs
+    // eslint-disable-next-line no-unmodified-loop-condition
+    const outputIndex = 1
+    // Add any excess money back to the first (largest) change output before shuffling.
+    // If there's no change output, we'll have to just eat the loss
+    if (transaction.outputs.length > 1) {
+      const delta = transaction.inputAmount - transaction.outputAmount
+      const finalSize = transaction._estimateSize() + transaction.outputs.length // Numbers are variable length in bitcoin, changing the output amount could add a byte to any given txn.
+      const properFee = Math.ceil(finalSize * feePerByte)
+      const amountToAdd = delta - properFee
+      // Add a small amount to the current output
+      console.log('Amount available', delta, 'Fee required', properFee, 'Will add', amountToAdd, 'To output #', outputIndex)
+      transaction.outputs[outputIndex].satoshis += amountToAdd
+      transaction._outputAmount += amountToAdd
+    }
+
+    const newIndex = shuffleArray(transaction.outputs).findIndex((v) => v === 0)
 
     // Sign transaction
     transaction = transaction.sign(signingKeys)
@@ -314,7 +358,7 @@ export class Wallet {
     console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
     console.log(transaction)
     // Return output location
-    return swapChange ? 1 : 0
+    return newIndex
   }
 
   _buildTransactionSetForExplicitAmount ({ addressGenerator, amount, utxos }) {
