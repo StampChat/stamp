@@ -52,8 +52,8 @@
       <q-input
         dense
         outlined
-        style="width: 125px"
-        label="Stamp"
+        style="width: 150px"
+        label="Stamp Price"
         suffix="sats"
         :value="stampAmount"
         @input="stampAmountChanged"
