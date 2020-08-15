@@ -10,7 +10,7 @@
       >
         <q-step
           :name="1"
-          title="Welcome"
+          :title="$t('setup.welcome')"
           icon="settings"
           :done="step > 1"
         >
@@ -19,7 +19,7 @@
 
         <q-step
           :name="2"
-          title="Setup Wallet"
+          :title="$t('setup.setupWallet')"
           icon="vpn_key"
           :done="step > 2"
         >
@@ -28,7 +28,7 @@
 
         <q-step
           :name="3"
-          title="Deposit Bitcoin Cash"
+          :title="$t('setup.deposit')"
           icon="attach_money"
           :done="step > 3"
         >
@@ -38,7 +38,7 @@
         <q-step
           v-if="!isBasic"
           :name="4"
-          title="Choose a relay server"
+          :title="$t('setup.chooseRelay')"
           icon="email"
           :done="step > 4"
         >
@@ -46,7 +46,7 @@
         </q-step>
         <q-step
           :name="5"
-          title="Setup Profile"
+          :title="$t('setup.setupProfile')"
           icon="person"
           :done="step > 5"
         >
@@ -55,7 +55,7 @@
         <q-step
           v-if="!isBasic"
           :name="6"
-          title="Settings"
+          :title="$t('setup.settings')"
           icon="build"
         >
           <settings-step v-model="settings" />
@@ -73,7 +73,7 @@
               flat
               color="primary"
               @click="previous()"
-              label="Back"
+              :label="$t('setup.back')"
               class="q-ml-sm"
             />
           </q-stepper-navigation>
@@ -177,7 +177,7 @@ export default {
 
       this.$q.loading.show({
         delay: 100,
-        message: 'Generating wallet...'
+        message: this.$t('setup.generatingWallet')
       })
 
       // Setup worker
@@ -185,7 +185,7 @@ export default {
       worker.onmessage = async (event) => {
         this.$q.loading.show({
           delay: 100,
-          message: 'Gathering balances...'
+          message: this.$t('setup.gatheringBalances')
         })
 
         // Prepare wallet
@@ -197,13 +197,13 @@ export default {
 
         this.$q.loading.show({
           delay: 100,
-          message: 'Watching wallet...'
+          message: this.$t('setup.watchingWallet')
         })
 
         // Check for existing metadata
         this.$q.loading.show({
           delay: 100,
-          message: 'Searching for existing keyserver metadata...'
+          message: this.$t('setup.searchingExistingMetaData')
         })
 
         const ksHandler = new KeyserverHandler()
@@ -229,7 +229,7 @@ export default {
             this.$q.loading.hide()
           } else {
             this.$q.loading.hide()
-            const keyserverErr = new Error('Unable to contact keyserver')
+            const keyserverErr = new Error(this.$t('setup.errorContactKeyServer'))
             errorNotify(keyserverErr)
           }
         }
@@ -282,7 +282,7 @@ export default {
       // Check for existing metadata
       this.$q.loading.show({
         delay: 100,
-        message: 'Searching for existing relay data...'
+        message: this.$t('setup.searchingRelay')
       })
 
       // Get profile from relay server
@@ -296,7 +296,7 @@ export default {
         this.relayData = defaultRelayData
         if (!err.response) {
           // Relay URL malformed
-          errorNotify(new Error('Network Error: Relay server connection died. '))
+          errorNotify(new Error(this.$t('setup.networkErrorRelayDied')))
           throw err
         }
       }
@@ -304,7 +304,7 @@ export default {
       // Request Payment
       this.$q.loading.show({
         delay: 100,
-        message: 'Requesting Payment...'
+        message: this.$t('setup.requestingPayment')
       })
 
       try {
@@ -324,7 +324,7 @@ export default {
 
         this.$q.loading.show({
           delay: 100,
-          message: 'Sending Payment...'
+          message: this.$t('setup.sendingPayment')
         })
 
         // Construct payment
@@ -335,7 +335,7 @@ export default {
 
         this.$q.loading.show({
           delay: 100,
-          message: 'Uploading Metadata...'
+          message: this.$t('setup.uploadingMetaData')
         })
 
         await KeyserverHandler.putMetadata(idAddress, serverUrl, authWrapper, token)
@@ -366,7 +366,7 @@ export default {
       // Set filter
       this.$q.loading.show({
         delay: 100,
-        message: 'Requesting Payment...'
+        message: this.$t('setup.requestingPayment')
       })
 
       const idAddress = this.$wallet.myAddress
@@ -375,7 +375,7 @@ export default {
         // Send payment
         this.$q.loading.show({
           delay: 100,
-          message: 'Sending Payment...'
+          message: this.$t('setup.sendingPayment')
         })
 
         // Get token from relay server
@@ -387,7 +387,7 @@ export default {
         this.setRelayToken(token)
         this.$relayClient.setToken(token)
       } catch (err) {
-        errorNotify(new Error('Network error: Relay disconnnected unexpectedly.'))
+        errorNotify(new Error(this.$t('setup.networkErrorRelayUnexpected')))
         throw err
       }
 
@@ -400,7 +400,7 @@ export default {
 
       this.$q.loading.show({
         delay: 100,
-        message: 'Opening Inbox...'
+        message: this.$t('setup.openingInbox')
       })
 
       // Apply remotely
@@ -409,10 +409,10 @@ export default {
       } catch (err) {
         // TODO: move specialization down to errorNotify
         if (err.response.status === 413) {
-          errorNotify(new Error('Profile image is too large, select a smaller image.'))
+          errorNotify(new Error(this.$t('setup.profileImageLargeError')))
           throw err
         }
-        errorNotify(new Error('Network error: Relay disconnnected unexpectedly.'))
+        errorNotify(new Error(this.$t('setup.networkErrorRelayUnexpected')))
         throw err
       }
 
@@ -502,19 +502,19 @@ export default {
     forwardLabel () {
       switch (this.step) {
         case 1:
-          return 'Continue'
+          return this.$t('setup.continue')
         case 2:
-          return (this.seedData.type === 'new') ? 'New Wallet' : 'Import Wallet'
+          return (this.seedData.type === 'new') ? this.$t('setup.newWallet') : this.$t('setup.importWallet')
         case 3:
-          return 'Continue'
+          return this.$t('setup.continue')
         case 4:
-          return 'Continue'
+          return this.$t('setup.continue')
         case 5:
-          return this.isBasic ? 'Finish' : 'Continue'
+          return this.isBasic ? this.$t('setup.finish') : this.$t('setup.continue')
         case 6:
-          return 'Finish'
+          return this.$t('setup.finish')
       }
-      return 'Unknown'
+      return this.$t('setup.unkown')
     }
   },
   created () {

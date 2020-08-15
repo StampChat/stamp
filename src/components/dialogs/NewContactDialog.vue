@@ -2,7 +2,7 @@
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
       <div class="text-h6">
-        New Contact
+        {{ $t('newContactDialog.newContact') }}
       </div>
     </q-card-section>
     <q-card-section>
@@ -11,7 +11,7 @@
         v-model="address"
         filled
         dense
-        placeholder="Enter Bitcoin Cash address..."
+        :placeholder="$t('newContactDialog.enterBitcoinCashAddress')"
         ref="address"
         @keydown.enter.prevent="addContact()"
       />
@@ -30,7 +30,7 @@
             />
           </q-item-section>
           <q-item-section>
-            <q-item-label>Not found</q-item-label>
+            <q-item-label>{{ $t('newContactDialog.notFound') }}</q-item-label>
             <!-- TODO: Error information here -->
           </q-item-section>
         </q-item>
@@ -69,7 +69,7 @@
           <q-item-section>
             <q-item-label>{{ contact.profile.name }}</q-item-label>
             <q-item-label caption>
-              Minimum Stamp: {{ contact.inbox.acceptancePrice }}
+              {{ $t('newContactDialog.minimumStamp') }}: {{ contact.inbox.acceptancePrice }}
             </q-item-label>
           </q-item-section>
         </q-item>
