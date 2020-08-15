@@ -25,7 +25,7 @@
             set="twitter"
             @select="addEmoji"
             title="Select an emoji"
-            :showSkinTones="false"
+            :show-skin-tones="false"
           />
         </q-menu>
       </q-btn>
@@ -84,8 +84,14 @@ export default {
     }
   },
   props: {
-    message: String,
-    stampAmount: Number
+    message: {
+      type: String,
+      default: () => ''
+    },
+    stampAmount: {
+      type: Number,
+      default: () => 5000
+    }
   },
   methods: {
     focus () {

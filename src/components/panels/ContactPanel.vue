@@ -27,7 +27,7 @@
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
       <contact-book-dialog
-        :contactClick="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }"
+        :contact-click="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }"
       />
     </q-dialog>
 
@@ -36,7 +36,7 @@
       :address="address"
       :name="contact.profile.name"
       :avatar="contact.profile.avatar"
-      :acceptancePrice="contact.inbox.acceptancePrice"
+      :acceptance-price="contact.inbox.acceptancePrice"
     />
 
     <!-- Scroll area -->
@@ -177,7 +177,16 @@ export default {
     ContactBookDialog,
     SendBitcoinDialog
   },
-  props: ['address', 'contact'],
+  props: {
+    address: {
+      type: String,
+      default: () => ''
+    },
+    contact: {
+      type: Object,
+      default: () => ({})
+    }
+  },
   methods: {
     ...mapActions({
       shareContact: 'chats/shareContact',

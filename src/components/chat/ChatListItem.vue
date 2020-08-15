@@ -88,12 +88,14 @@ export default {
     numUnread: {
       type: Number,
       // Not passed when all read
-      required: false
+      required: false,
+      default: () => 0
     },
     valueUnread: {
-      type: String,
+      type: Number,
       // Not passed when all read
-      required: false
+      required: false,
+      default: () => 0
     },
     loaded: {
       type: Boolean,

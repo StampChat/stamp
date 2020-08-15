@@ -141,7 +141,10 @@ export default {
     //     avatar: ...
     //   }
     // }
-    value: Object
+    value: {
+      type: Object,
+      default: () => ({})
+    }
   },
   data () {
     return {

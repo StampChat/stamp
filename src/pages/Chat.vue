@@ -22,7 +22,7 @@
     <q-header>
       <q-toolbar class="q-pl-sm">
         <q-avatar rounded>
-          <img :src="contactProfile.avatar"/>
+          <img :src="contactProfile.avatar">
         </q-avatar>
         <q-toolbar-title class="h6">
           {{ contactProfile.name }}
@@ -57,9 +57,9 @@
                 :key="index"
                 :address="address"
                 :messages="chunk"
-                :globalIndex="globalIndex"
+                :global-index="globalIndex"
                 :contact="getContact(chunk[0].outbound)"
-                :nameColor="chunk[0].outbound ? '': `color: ${nameColor};`"
+                :name-color="chunk[0].outbound ? '': `color: ${nameColor};`"
                 @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
               />
             </template>
@@ -122,7 +122,7 @@
       <chat-input
         ref="chatInput"
         v-model="message"
-        :stampAmount="stampAmount"
+        :stamp-amount="stampAmount"
         @sendMessage="sendMessage"
         @sendFileClicked="sendFileOpen = true"
         @sendMoneyClicked="sendMoneyOpen = true"
@@ -152,7 +152,10 @@ const scrollDuration = 0
 
 export default {
   props: {
-    address: String,
+    address: {
+      type: String,
+      default: () => ''
+    },
     messages: {
       type: Array,
       default: () => []

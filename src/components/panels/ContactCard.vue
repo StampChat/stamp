@@ -9,7 +9,7 @@
       <q-item>
         <q-item-section>
           <q-avatar rounded>
-            <img :src="avatar" />
+            <img :src="avatar">
           </q-avatar>
         </q-item-section>
         <q-item-section>
@@ -67,7 +67,28 @@ import { copyToClipboard } from 'quasar'
 import { addressCopiedNotify } from '../../utils/notifications'
 
 export default {
-  props: ['avatar', 'name', 'bio', 'address', 'acceptancePrice'],
+  props: {
+    name: {
+      type: String,
+      default: () => ''
+    },
+    address: {
+      type: String,
+      default: () => ''
+    },
+    bio: {
+      type: String,
+      default: () => ''
+    },
+    acceptancePrice: {
+      type: Number,
+      default: () => 5000
+    },
+    avatar: {
+      type: String,
+      default: () => ''
+    }
+  },
   methods: {
     copyAddress () {
       copyToClipboard(this.address)

@@ -56,8 +56,16 @@ export default {
       memo: ''
     }
   },
-  props: ['address', 'contact'],
-
+  props: {
+    address: {
+      type: String,
+      default: () => ''
+    },
+    contact: {
+      type: String,
+      default: () => ''
+    }
+  },
   methods: {
     ...mapGetters({
       getStampAmount: 'chats/getStampAmount'
