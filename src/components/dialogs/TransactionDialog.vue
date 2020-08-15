@@ -54,7 +54,16 @@
 import { Script } from 'bitcore-lib-cash'
 
 export default {
-  props: ['title', 'outpoints'],
+  props: {
+    title: {
+      type: String,
+      default: () => ''
+    },
+    outpoints: {
+      type: Array,
+      default: () => []
+    }
+  },
   data () {
     return {
       outpoint: 1,

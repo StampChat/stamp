@@ -5,7 +5,7 @@ import { Wallet } from '../wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
 import { store as levelDbOutpointStore } from '../adapters/level-outpoint-store'
 
-function instrumentElectrumClient ({ resolve, reject, Vue, client, observables, reconnector }) {
+function instrumentElectrumClient ({ resolve, reject, client, observables, reconnector }) {
   // We need a local variable that is unique to this client, so it doesn't fuck around
   let connectionAlive = false
   const resolved = false

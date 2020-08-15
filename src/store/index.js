@@ -69,6 +69,7 @@ const vuexLocal = new VuexPersistence({
       },
       chats: {
         activeChatAddr: pathOr(null, ['chats', 'activeChatAddr'], state),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         chats: mapObjIndexed((addressData, address) => {
           return ({
             ...addressData,

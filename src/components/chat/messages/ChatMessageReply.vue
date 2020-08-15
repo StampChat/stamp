@@ -10,7 +10,7 @@
       class="row-auto"
       :address="address"
       :message="message"
-      :nameColor="nameColor"
+      :name-color="nameColor"
     />
   </div>
 </template>
@@ -20,7 +20,7 @@ import { mapGetters } from 'vuex'
 import { addressColorFromStr } from '../../../utils/formatting'
 
 export default {
-  name: 'chat-message-reply',
+  name: 'ChatMessageReply',
   components: {
     ChatMessage: () => import('./ChatMessage.vue')
   },

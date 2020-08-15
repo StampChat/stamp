@@ -31,7 +31,16 @@
 import { mapMutations } from 'vuex'
 
 export default {
-  props: ['address', 'name'],
+  props: {
+    address: {
+      type: String,
+      default: () => ''
+    },
+    name: {
+      type: String,
+      default: () => ''
+    }
+  },
   methods: {
     ...mapMutations({
       deleteChat: 'chats/deleteChat'

@@ -18,7 +18,7 @@
     <q-dialog v-model="deleteDialog">
       <delete-message-dialog
         :address="address"
-        :payloadDigest="message.payloadDigest"
+        :payload-digest="message.payloadDigest"
         :index="index"
       />
     </q-dialog>
@@ -27,7 +27,7 @@
       v-if="message.payloadDigest"
       :address="address"
       :message="message"
-      :payloadDigest="message.payloadDigest"
+      :payload-digest="message.payloadDigest"
       :index="index"
       @txClick="transactionDialog = true"
       @deleteClick="deleteDialog = true"
@@ -45,7 +45,7 @@
       >
         <chat-message-reply
           v-if="item.type=='reply'"
-          :payloadDigest="item.payloadDigest"
+          :payload-digest="item.payloadDigest"
           :address="address"
           :mouseover="mouseover"
         />
@@ -101,7 +101,7 @@ import TransactionDialog from '../../dialogs/TransactionDialog.vue'
 import { stampPrice } from '../../../wallet/helpers'
 
 export default {
-  name: 'chat-message',
+  name: 'ChatMessage',
   components: {
     ChatMessageMenu,
     ChatMessageReply,
@@ -134,11 +134,13 @@ export default {
     // Payload digest and index are not passed when nested in a reply
     payloadDigest: {
       type: String,
-      required: false
+      required: false,
+      default: () => ''
     },
     index: {
       type: Number,
-      required: false
+      required: false,
+      default: () => 0
     }
   },
   methods: {

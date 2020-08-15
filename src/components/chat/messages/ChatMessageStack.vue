@@ -23,7 +23,7 @@
           :index="index + globalIndex"
           :items="message.items"
           :address="address"
-          :nameColor="nameColor"
+          :name-color="nameColor"
           :name="contact.name"
           @replyClicked="replyClicked"
         />

@@ -31,7 +31,16 @@
 import { mapGetters } from 'vuex'
 
 export default {
-  props: ['address', 'name'],
+  props: {
+    address: {
+      type: String,
+      default: () => ''
+    },
+    name: {
+      type: String,
+      default: () => ''
+    }
+  },
   computed: {
     ...mapGetters({
       getSeedPhrase: 'wallet/getSeedPhrase'

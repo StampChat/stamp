@@ -7,7 +7,7 @@ import marked from 'marked'
 import DOMPurify from 'dompurify'
 
 export default {
-  name: 'chat-message-section',
+  name: 'ChatMessageSection',
   props: {
     text: {
       type: String,

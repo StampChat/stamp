@@ -62,7 +62,12 @@
 import { mapGetters } from 'vuex'
 
 export default {
-  props: ['address'],
+  props: {
+    address: {
+      type: String,
+      default: () => ''
+    }
+  },
   data () {
     return {
       caption: '',
