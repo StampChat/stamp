@@ -14,12 +14,12 @@
           <q-tab
             name="networking"
             icon="cloud"
-            label="Networking"
+            :label="$t('settings.networking')"
           />
           <q-tab
             name="appearance"
             icon="color_lens"
-            label="Appearance"
+            :label="$t('settings.appearance')"
           />
         </q-tabs>
       </template>
@@ -37,9 +37,9 @@
               <q-input
                 outlined
                 v-model="updateInterval"
-                label="Contact Refresh Interval *"
+                :label="$t('settings.contactRefreshInterval')"
                 type="number"
-                hint="Interval between contact updates"
+                :hint="$t('settings.contactRefreshIntervalHint')"
                 style="width:100%"
                 ref="contactRefreshInterval"
               />
@@ -48,7 +48,7 @@
           <q-tab-panel name="appearance">
             <div class="row">
               <q-toggle
-                :label="`Dark Mode`"
+                :label="$t('settings.darkMode')"
                 v-model="darkMode"
               />
             </div>

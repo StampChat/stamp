@@ -47,7 +47,7 @@
         />
         <q-item v-if="getSortedChatOrder.length === 0">
           <q-item-section>
-            <q-item-label>Add contacts from the drawer above...</q-item-label>
+            <q-item-label>{{ $t('chatList.noContactMessage') }}</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>
@@ -61,7 +61,7 @@
         <q-item-section
           @click="walletOpen=true"
         >
-          <q-item-label>Balance</q-item-label>
+          <q-item-label>{{ $t('chatList.balance') }}</q-item-label>
           <q-item-label caption>
             {{ formattedBalance }}
           </q-item-label>

@@ -7,7 +7,7 @@
 
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6">
-        Contacts
+        {{ $t('contactBookDialog.contacts') }}
       </div>
       <q-space />
       <q-btn
@@ -25,7 +25,7 @@
         v-model="search"
         filled
         dense
-        placeholder="Search..."
+        :placeholder="$t('contactBookDialog.search')"
         ref="contactSearch"
       />
     </q-card-section>
@@ -38,7 +38,7 @@
     <q-card-actions align="right">
       <q-btn
         flat
-        label="Close"
+        :label="$t('contactBookDialog.close')"
         color="primary"
         v-close-popup
       />
