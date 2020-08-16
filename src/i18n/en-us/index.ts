@@ -123,6 +123,6 @@ export default {
   },
   seedPhraseDialog: {
     seedPhrase: 'Seed Phrase',
-    close: 'Close',
+    close: 'Close'
   }
 }
