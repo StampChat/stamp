@@ -16,12 +16,13 @@ export async function rehydrateWallet (wallet) {
   wallet.utxos = {}
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.
-  const outpointIterator = await store.getOutpointIterator()
-  for await (const outpoint of outpointIterator) {
+  await store.loadData()
+  const outpoints = store.getOutpoints()
+  for (const [id, outpoint] of outpoints) {
     if (!outpoint.address) {
       continue
     }
-    wallet.utxos[calcId(outpoint)] = outpoint
+    wallet.utxos[id] = outpoint
   }
 }
 
