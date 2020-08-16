@@ -13,6 +13,7 @@ import { constructStampHDPrivateKey, constructHDStealthPrivateKey } from './cryp
 import { messageMixin } from './extension'
 import { calcId } from '../wallet/helpers'
 import assert from 'assert'
+import paymentrequest from '../bip70/paymentrequest_pb'
 
 const WebSocket = window.require('ws')
 import { PublicKey, crypto, Transaction } from 'bitcore-lib-cash'
@@ -214,24 +215,47 @@ export class RelayClient {
     })
   }
 
-  async getMessages (address, startTime, endTime) {
+  async getMessages (address, startTime, endTime, retries = 3) {
     const url = `${this.url}/messages/${address}`
-    const response = await axios({
-      method: 'get',
-      url: url,
-      headers: {
-        Authorization: this.token
-      },
-      params: {
-        start_time: startTime,
-        end_time: endTime
-      },
-      responseType: 'arraybuffer'
-    })
-
-    if (response.status === 200) {
+    try {
+      const response = await axios({
+        method: 'get',
+        url: url,
+        headers: {
+          Authorization: this.token
+        },
+        params: {
+          start_time: startTime,
+          end_time: endTime
+        },
+        responseType: 'arraybuffer'
+      })
+      assert(response.status === 200, 'We should not be here')
       const messagePage = MessagePage.deserializeBinary(response.data)
       return messagePage
+    } catch (err) {
+      const response = err.response
+      if (response.status !== 402) {
+        throw err
+      }
+
+      if (retries === 0) {
+        throw err
+      }
+
+      // TODO: We need to ensure this payment is reasonable to the user, otherwise the relay server
+      // could request amounts of money that are ridiculous.
+
+      const paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
+      const serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
+      const paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
+
+      const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
+      const paymentUrlFull = new URL(paymentUrl, this.url)
+      console.log('Sending payment to', paymentUrlFull.href)
+      const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+      this.setToken(token)
+      return this.getMessages(address, startTime, endTime, retries--)
     }
   }
 
