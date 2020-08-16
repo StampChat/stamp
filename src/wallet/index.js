@@ -132,12 +132,11 @@ export class Wallet {
     const foundIds = []
 
     // Remove missing utxos
-    const outpointIterator = await this.storage.getOutpointIterator()
-    for await (const outpoint of outpointIterator) {
+    const outpoints = await this.storage.getOutpoints()
+    for (const [outpointId, outpoint] of outpoints) {
       if (outpoint.address !== address) {
         continue
       }
-      const outpointId = calcId(outpoint)
       const index = ids.indexOf(outpointId)
       foundIds.push(outpointId)
       if (index !== -1) {
@@ -241,14 +240,13 @@ export class Wallet {
   async forwardUTXOsToAddress ({ utxos, address }) {
     let transaction = new Transaction()
 
-    const outpointIterator = await this.storage.getOutpointIterator()
+    const outpoints = await this.storage.getOutpoints()
     const outpointIds = utxos.map(utxo => calcId(utxo))
     const signingKeys = []
     let satoshis = 0
 
     const usedIDs = []
-    for await (const outpoint of outpointIterator) {
-      const outpointId = calcId(outpoint)
+    for (const [outpointId, outpoint] of outpoints) {
       if (!outpointIds.includes(outpointId)) {
         continue
       }
@@ -452,140 +450,118 @@ export class Wallet {
   }
 
   async constructTransactionSet ({ addressGenerator, amount }) {
-    try {
-      await this.constructionLock.acquire()
-
-      const outpointIterator = await this.storage.getOutpointIterator()
-      const utxos = []
-
-      for await (const utxo of outpointIterator) {
-        utxos.push(utxo)
-      }
-
-      // Coin selection
-      const transactionBundle = []
+    const utxos = [...this.storage.getOutpoints().values()]
+    // Coin selection
+    const transactionBundle = []
+    let amountLeft = amount
+    const calcAmounts = (splits, amount) => {
+      const splitPoints = []
       let amountLeft = amount
-      const calcAmounts = (splits, amount) => {
-        const splitPoints = []
-        let amountLeft = amount
-        assert(splits > 0)
-        while (splitPoints.length < splits - 1) {
-          const splitPoint = Math.floor(Math.random() * (amountLeft - 2 * minimumOutputAmount)) + minimumOutputAmount
-          if (splitPoint < minimumOutputAmount) {
-            break
-          }
-          splitPoints.push(splitPoint)
-          amountLeft -= splitPoint
+      assert(splits > 0)
+      while (splitPoints.length < splits - 1) {
+        const splitPoint = Math.floor(Math.random() * (amountLeft - 2 * minimumOutputAmount)) + minimumOutputAmount
+        if (splitPoint < minimumOutputAmount) {
+          break
         }
-        splitPoints.push(amountLeft)
-        return splitPoints
+        splitPoints.push(splitPoint)
+        amountLeft -= splitPoint
       }
-
-      const amounts = calcAmounts(2, amountLeft)
-      const totalSegments = amounts.reduce((total, amount) => total + amount, 0)
-      assert(totalSegments === amount, `${totalSegments} != ${amount}`)
-
-      // We re-wrap the transaction set builder so we can ensure the amount is split, in addition to each amount operating independently.
-      for (const amountToBuild of amounts) {
-        console.log('amountToBuild?', amountToBuild)
-        transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ addressGenerator, amount: amountToBuild, utxos }))
-        amountLeft -= amountToBuild
-      }
-      for (const transaction of transactionBundle) {
-        await Promise.all(transaction.usedIds.map(utxoId => this.storage.freezeOutpoint(utxoId)))
-      }
-      return transactionBundle
-    } finally {
-      await this.constructionLock.release()
+      splitPoints.push(amountLeft)
+      return splitPoints
     }
+
+    const amounts = calcAmounts(2, amountLeft)
+    const totalSegments = amounts.reduce((total, amount) => total + amount, 0)
+    assert(totalSegments === amount, `${totalSegments} != ${amount}`)
+
+    // We re-wrap the transaction set builder so we can ensure the amount is split, in addition to each amount operating independently.
+    for (const amountToBuild of amounts) {
+      console.log('amountToBuild?', amountToBuild)
+      transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ addressGenerator, amount: amountToBuild, utxos }))
+      amountLeft -= amountToBuild
+    }
+    for (const transaction of transactionBundle) {
+      await Promise.all(transaction.usedIds.map(utxoId => this.storage.freezeOutpoint(utxoId)))
+    }
+    return transactionBundle
   }
 
   async constructTransaction ({ outputs }) {
-    try {
-      await this.constructionLock.acquire()
-      let transaction = new Transaction()
+    let transaction = new Transaction()
 
-      // Add outputs
-      for (const i in outputs) {
-        const output = outputs[i]
-        transaction = transaction.addOutput(output)
-      }
-
-      // Coin selection
-      const signingKeys = []
-      const usedUtxos = []
-
-      const amountRequired = transaction.outputAmount
-      const outpointIterator = await this.storage.getOutpointIterator()
-      const utxos = []
-
-      for await (const utxo of outpointIterator) {
-        utxos.push(utxo)
-      }
-
-      // Sort available UTXOs by total amount per transaction
-      const sortedUtxos = R.pipe(
-        R.groupBy(utxo => utxo.txId),
-        R.map(
-          R.pipe(
-            R.sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis),
-            (utxoGroup) => R.reduce(
-              (group, utxo) => {
-                group.satoshis += utxo.satoshis
-                group.utxos.push(utxo)
-                return group
-              }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
-          // We want a different one for each group
-          )
-        ),
-        txMap => Object.values(txMap),
-        R.sort((txA, txB) => txB.satoshis - txA.satoshis),
-        R.map(group => group.utxos),
-        R.flatten()
-      )(utxos)
-      const biggerUtxos = sortedUtxos.filter((a) => a.satoshis >= amountRequired + (transaction._estimateSize() + standardUtxoSize + standardInputSize) * feePerByte)
-      const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
-
-      let satoshis = 0
-      for (const utxo of utxoSetToUse) {
-        const txnSize = transaction._estimateSize()
-        if (satoshis > amountRequired + txnSize * feePerByte) {
-          break
-        }
-        usedUtxos.push(utxo)
-        console.log(utxo)
-
-        const address = utxo.address
-        utxo.script = Script.buildPublicKeyHashOut(address).toHex()
-        // Grab private key
-        signingKeys.push(utxo.privKey)
-        transaction = transaction.from(utxo)
-        satoshis += utxo.satoshis
-      }
-
-      if (satoshis < amountRequired) {
-        throw Error('insufficient funds')
-      }
-
-      await Promise.all(usedUtxos.map(
-        utxo => this.storage.freezeOutpoint(calcId(utxo))
-      ))
-
-      // Add change outputs using our HD wallet.  We want multiple outputs following a
-      // power distribution, so we don't have to combine lots of outputs at later times
-      // in order to create specific amounts.
-
-      // A good round number greater than the current dustLimit.
-      // We may want to make it some computed value in the future.
-      this.finalizeTransaction({ transaction, signingKeys })
-      const finalTxnSize = transaction._estimateSize()
-      // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
-      console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
-      console.log(transaction)
-      return { transaction, usedIDs: usedUtxos.map(utxo => calcId(utxo)) }
-    } finally {
-      await this.constructionLock.release()
+    // Add outputs
+    for (const i in outputs) {
+      const output = outputs[i]
+      transaction = transaction.addOutput(output)
     }
+
+    // Coin selection
+    const signingKeys = []
+    const usedUtxos = []
+
+    const amountRequired = transaction.outputAmount
+    const utxos = [...this.storage.getOutpoints().values()]
+
+    // Sort available UTXOs by total amount per transaction
+    const sortedUtxos = R.pipe(
+      R.groupBy(utxo => utxo.txId),
+      R.map(
+        R.pipe(
+          R.sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis),
+          (utxoGroup) => R.reduce(
+            (group, utxo) => {
+              group.satoshis += utxo.satoshis
+              group.utxos.push(utxo)
+              return group
+            }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
+          // We want a different one for each group
+        )
+      ),
+      txMap => Object.values(txMap),
+      R.sort((txA, txB) => txB.satoshis - txA.satoshis),
+      R.map(group => group.utxos),
+      R.flatten()
+    )(utxos)
+    const biggerUtxos = sortedUtxos.filter((a) => a.satoshis >= amountRequired + (transaction._estimateSize() + standardUtxoSize + standardInputSize) * feePerByte)
+    const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
+
+    let satoshis = 0
+    for (const utxo of utxoSetToUse) {
+      const txnSize = transaction._estimateSize()
+      if (satoshis > amountRequired + txnSize * feePerByte) {
+        break
+      }
+      usedUtxos.push(utxo)
+      console.log(utxo)
+
+      const address = utxo.address
+      utxo.script = Script.buildPublicKeyHashOut(address).toHex()
+      // Grab private key
+      signingKeys.push(utxo.privKey)
+      transaction = transaction.from(utxo)
+      satoshis += utxo.satoshis
+    }
+
+    if (satoshis < amountRequired) {
+      throw Error('insufficient funds')
+    }
+
+    await Promise.all(usedUtxos.map(
+      utxo => this.storage.freezeOutpoint(calcId(utxo))
+    ))
+
+    // Add change outputs using our HD wallet.  We want multiple outputs following a
+    // power distribution, so we don't have to combine lots of outputs at later times
+    // in order to create specific amounts.
+
+    // A good round number greater than the current dustLimit.
+    // We may want to make it some computed value in the future.
+    this.finalizeTransaction({ transaction, signingKeys })
+    const finalTxnSize = transaction._estimateSize()
+    // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
+    console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
+    console.log(transaction)
+    return { transaction, usedIDs: usedUtxos.map(utxo => calcId(utxo)) }
   }
 
   get feePerByte () {

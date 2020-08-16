@@ -10,7 +10,7 @@ const metadataKeys = {
   lastServerTime: 'lastServerTime'
 }
 
-class OutpointIterator implements AsyncIterator<Outpoint> {
+class OutpointIterator implements AsyncIterableIterator<Outpoint> {
   iterator: any;
   db: LevelDB;
   onlyFrozen: boolean
@@ -65,7 +65,7 @@ class OutpointIterator implements AsyncIterator<Outpoint> {
     })
   }
 
-  [Symbol.asyncIterator] () {
+  [Symbol.asyncIterator] () : AsyncIterableIterator<Outpoint> {
     this.iterator = this.db.iterator({})
     return this
   }
@@ -78,10 +78,12 @@ export class LevelOutpointStore implements OutpointStore {
   private metadataDbLocation: string
   private schemaVersion?: number
   private openedDb?: LevelDB
+  private cache: Map<OutpointId, Outpoint>
 
   constructor (location: string) {
     this.outpointDbLocation = join(location, 'outpoints')
     this.metadataDbLocation = join(location, 'metadata')
+    this.cache = new Map<OutpointId, Outpoint>()
   }
 
   get db () {
@@ -111,43 +113,38 @@ export class LevelOutpointStore implements OutpointStore {
     return level(this.metadataDbLocation)
   }
 
-  async getOutpoint (id: OutpointId): Promise<Outpoint | undefined> {
-    try {
-      const value = await this.db.get(id)
-      return JSON.parse(value)
-    } catch (err) {
-      if (err.type === 'NotFoundError') {
-        return
-      }
-      throw err
-    }
+  getOutpoint (id: OutpointId): (Outpoint | undefined) {
+    return this.cache.get(id)
   }
 
-  async deleteOutpoint (id: OutpointId) {
-    await this.db.del(id)
+  deleteOutpoint (id: OutpointId) {
+    this.cache.delete(id)
+    // TODO: Handle errors here.
+    this.db.del(id)
   }
 
-  async putOutpoint (outpoint: Outpoint) {
+  putOutpoint (outpoint: Outpoint) {
     const index = calcId(outpoint)
-    await this.db.put(index, JSON.stringify(outpoint))
+    this.cache.set(index, outpoint)
+    this.db.put(index, JSON.stringify(outpoint))
   }
 
   async freezeOutpoint (outpointId: OutpointId) {
-    const outpoint = await this.getOutpoint(outpointId)
+    const outpoint = this.getOutpoint(outpointId)
     if (outpoint === undefined) {
       throw Error('missing key')
     }
     outpoint.frozen = true
-    await this.putOutpoint(outpoint)
+    this.putOutpoint(outpoint)
   }
 
   async unfreezeOutpoint (outpointId: OutpointId) {
-    const outpoint = await this.getOutpoint(outpointId)
+    const outpoint = this.getOutpoint(outpointId)
     if (outpoint === undefined) {
       throw Error('missing key')
     }
     outpoint.frozen = false
-    await this.putOutpoint(outpoint)
+    this.putOutpoint(outpoint)
   }
 
   private async getSchemaVersion (): Promise<number> {
@@ -180,11 +177,22 @@ export class LevelOutpointStore implements OutpointStore {
     }
   }
 
-  async getOutpointIterator (): Promise<AsyncIterator<Outpoint>> {
+  getOutpoints () : Map<string, Outpoint> {
+    return this.cache
+  }
+
+  async getOutpointIterator (): Promise<AsyncIterableIterator<Outpoint>> {
     return new OutpointIterator(this.db, false)
   }
 
-  async getFrozenOutpointIterator (): Promise<AsyncIterator<Outpoint>> {
+  async getFrozenOutpointIterator (): Promise<AsyncIterableIterator<Outpoint>> {
     return new OutpointIterator(this.db, true)
+  }
+
+  async loadData (): Promise<void> {
+    const outpointIterator = await this.getOutpointIterator()
+    for await (const outpoint of outpointIterator) {
+      this.cache.set(calcId(outpoint), outpoint)
+    }
   }
 }

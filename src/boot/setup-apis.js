@@ -108,6 +108,9 @@ function getWalletClient ({ store }) {
     unfreezeOutpoint (id) {
       return levelDbOutpointStore.unfreezeOutpoint(id)
     },
+    getOutpoints () {
+      return levelDbOutpointStore.getOutpoints()
+    },
     getOutpointIterator () {
       return levelDbOutpointStore.getOutpointIterator()
     },
