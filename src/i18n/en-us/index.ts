@@ -95,5 +95,34 @@ export default {
     minimumStampHint: 'The minimum fee required for strangers to message you',
     minimumStampRule: 'Please input an inbox fee',
     uploadAvatar: 'Upload Avatar'
+  },
+  clearHistoryDialog: {
+    cancel: 'Cancel',
+    clear: 'Clear',
+    message: 'Are you sure you want to clear all chat history with'
+  },
+  deleteChatDialog: {
+    cancel: 'Cancel',
+    delete: 'Delete',
+    message: 'Are you sure you want to delete all chat history with'
+  },
+  deleteMessageDialog: {
+    cancel: 'Cancel',
+    delete: 'Delete',
+    message: 'Are you sure you want to delete this message?'
+  },
+  imageDialog: {
+    close: 'Close'
+  },
+  profileDialog: {
+    cancel: 'Cancel',
+    update: 'Update',
+    avatarTooLarge: 'Profile avatar is too large, select a smaller image.',
+    unableContactRelay: 'Unable to contact relay server.',
+    pushingProfile: 'Pushing new Profile...'
+  },
+  seedPhraseDialog: {
+    seedPhrase: 'Seed Phrase',
+    close: 'Close',
   }
 }

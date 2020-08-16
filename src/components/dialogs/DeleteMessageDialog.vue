@@ -6,19 +6,19 @@
         color="red"
         text-color="white"
       />
-      <span class="q-ml-sm">Are you sure you want to delete this message?</span>
+      <span class="q-ml-sm">{{ $t('deleteMessageDialog.message') }}</span>
     </q-card-section>
 
     <q-card-actions align="right">
       <q-btn
         flat
-        label="Cancel"
+        :label="$t('deleteMessageDialog.cancel')"
         color="primary"
         v-close-popup
       />
       <q-btn
         flat
-        label="Delete"
+        :label="$t('deleteMessageDialog.delete')"
         color="primary"
         v-close-popup
         @click="deleteMessageBoth()"
