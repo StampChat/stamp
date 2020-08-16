@@ -92,10 +92,10 @@ export default {
       default: () => 0
     },
     valueUnread: {
-      type: Number,
+      type: String,
       // Not passed when all read
       required: false,
-      default: () => 0
+      default: () => ''
     },
     loaded: {
       type: Boolean,
