@@ -2,7 +2,7 @@
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
       <div class="text-h6">
-        Seed Phrase
+        {{ $t('seedPhraseDialog.seedPhrase') }}
       </div>
     </q-card-section>
 
@@ -19,7 +19,7 @@
     <q-card-actions align="right">
       <q-btn
         flat
-        label="Close"
+        :label="$t('seedPhraseDialog.close')"
         color="primary"
         v-close-popup
       />

@@ -13,7 +13,7 @@
         size="md"
         class="float-right"
         color="primary"
-        label="Close"
+        :label="$t('imageDialog.close')"
         v-close-popup
       />
     </div>

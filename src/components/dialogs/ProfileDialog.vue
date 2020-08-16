@@ -9,14 +9,14 @@
     <q-card-actions align="right">
       <q-btn
         flat
-        label="Cancel"
+        :label="$t('profileDialog.cancel')"
         color="primary"
         v-close-popup
       />
       <q-btn
         flat
         :disable="identical"
-        label="Update"
+        :label="$t('profileDialog.update')"
         color="primary"
         v-close-popup
         @click="updateRelayData()"
@@ -64,7 +64,7 @@ export default {
 
       this.$q.loading.show({
         delay: 100,
-        message: 'Pushing new Profile...'
+        message: this.$t('profileDialog.pushingProfile')
       })
 
       // Apply remotely
@@ -75,11 +75,11 @@ export default {
         console.error(err)
         // TODO: Move specialization down error displayer
         if (err.response.status === 413) {
-          errorNotify(new Error('Profile avatar is too large, select a smaller image.'))
+          errorNotify(new Error(this.$t('profileDialog.avatarTooLarge')))
           this.$q.loading.hide()
           throw err
         }
-        errorNotify(new Error('Unable to contact relay server.'))
+        errorNotify(new Error(this.$t('profileDialog.unableContactRelay')))
         throw err
       }
 

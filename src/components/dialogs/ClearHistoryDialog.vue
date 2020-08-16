@@ -6,19 +6,19 @@
         color="red"
         text-color="white"
       />
-      <span class="q-ml-sm">Are you sure you want to clear all chat history with {{ name }}?</span>
+      <span class="q-ml-sm">{{ $t('clearHistoryDialog.message') }} {{ name }}?</span>
     </q-card-section>
 
     <q-card-actions align="right">
       <q-btn
         flat
-        label="Cancel"
+        :label="$t('clearHistoryDialog.cancel')"
         color="primary"
         v-close-popup
       />
       <q-btn
         flat
-        label="Clear"
+        :label="$t('clearHistoryDialog.clear')"
         color="primary"
         v-close-popup
         @click="clearChat(address)"
