@@ -90,7 +90,6 @@ import { mapActions, mapGetters, mapMutations } from 'vuex'
 import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
-import { constructProfileMetadata, constructPriceFilter } from '../relay/constructors'
 import IntroductionStep from '../components/setup/IntroductionStep.vue'
 import SeedStep from '../components/setup/SeedStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
@@ -99,12 +98,11 @@ import ProfileStep from '../components/setup/ProfileStep'
 import SettingsStep from '../components/setup/SettingsStep.vue'
 import { defaultRelayData, defaultRelayUrl } from '../utils/constants'
 import { errorNotify } from '../utils/notifications'
-import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
-import { HDPrivateKey, crypto } from 'bitcore-lib-cash'
+import { HDPrivateKey } from 'bitcore-lib-cash'
 
 Vue.use(VueRouter)
 
@@ -206,7 +204,7 @@ export default {
           message: this.$t('setup.searchingExistingMetaData')
         })
 
-        const ksHandler = new KeyserverHandler()
+        const ksHandler = new KeyserverHandler({ wallet: this.$wallet })
         const idAddress = this.$wallet.myAddress
 
         // Try find relay URL on keyserver
@@ -276,8 +274,7 @@ export default {
     },
     async setUpKeyserver () {
       // Set profile
-      const ksHandler = new KeyserverHandler()
-      const serverUrl = ksHandler.chooseServer()
+      const ksHandler = new KeyserverHandler({ wallet: this.$wallet })
 
       // Check for existing metadata
       this.$q.loading.show({
@@ -290,6 +287,11 @@ export default {
       const idAddress = this.$wallet.myAddress
       const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, wallet: this.$wallet })
 
+      this.$q.loading.show({
+        delay: 100,
+        message: this.$t('setup.sendingPayment')
+      })
+
       try {
         this.relayData = await relayClient.getRelayData(idAddress)
       } catch (err) {
@@ -300,45 +302,13 @@ export default {
           throw err
         }
       }
-
-      // Request Payment
-      this.$q.loading.show({
-        delay: 100,
-        message: this.$t('setup.requestingPayment')
-      })
-
       try {
-        // Construct metadata
-        const idPrivKey = this.$wallet.identityPrivKey
-        const authWrapper = KeyserverHandler.constructRelayUrlMetadata(this.relayUrl, idPrivKey)
-
-        // Truncate metadata
-        const payload = Buffer.from(authWrapper.getPayload())
-        const payloadDigest = crypto.Hash.sha256(payload)
-        const truncatedAuthWrapper = new AuthWrapper()
-        const publicKey = authWrapper.getPublicKey()
-        truncatedAuthWrapper.setPublicKey(publicKey)
-        truncatedAuthWrapper.setPayloadDigest(payloadDigest)
-
-        const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper)
-
-        this.$q.loading.show({
-          delay: 100,
-          message: this.$t('setup.sendingPayment')
-        })
-
-        // Construct payment
-        const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, paymentDetails)
-        const paymentUrlFull = new URL(paymentUrl, serverUrl)
-        console.log('Sending payment to', paymentUrlFull.href)
-        const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
-
         this.$q.loading.show({
           delay: 100,
           message: this.$t('setup.uploadingMetaData')
         })
-
-        await KeyserverHandler.putMetadata(idAddress, serverUrl, authWrapper, token)
+        const idPrivKey = this.$wallet.identityPrivKey
+        await ksHandler.updateKeyMetadata(this.relayUrl, idPrivKey)
       } catch (err) {
         errorNotify(err)
         throw err
@@ -371,7 +341,7 @@ export default {
 
       const idAddress = this.$wallet.myAddress
       try {
-        const relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress())
+        const relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress().toString())
         // Send payment
         this.$q.loading.show({
           delay: 100,
@@ -395,18 +365,17 @@ export default {
       const idPrivKey = this.$wallet.identityPrivKey
 
       const acceptancePrice = this.relayData.inbox.acceptancePrice
-      const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
-      const metadata = constructProfileMetadata(this.relayData.profile, priceFilter, idPrivKey)
 
       this.$q.loading.show({
         delay: 100,
         message: this.$t('setup.openingInbox')
       })
 
-      // Apply remotely
       try {
-        await relayClient.putProfile(idAddress.toLegacyAddress(), metadata)
+        await this.$relayClient.updateProfile(idPrivKey, this.relayData.profile, acceptancePrice)
       } catch (err) {
+        console.error(err)
+        // TODO: ProfileDialog uses different localization for no particular reason.
         // TODO: move specialization down to errorNotify
         if (err.response.status === 413) {
           errorNotify(new Error(this.$t('setup.profileImageLargeError')))

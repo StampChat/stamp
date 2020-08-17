@@ -7,7 +7,7 @@ import pop from '../pop'
 import { pingTimeout, relayReconnectInterval } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
-import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage } from './constructors'
+import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage, constructProfileMetadata, constructPriceFilter } from './constructors'
 import { entryToImage, arrayBufferToBase64 } from '../utils/image'
 import { constructStampHDPrivateKey, constructHDStealthPrivateKey } from './crypto'
 import { messageMixin } from './extension'
@@ -705,6 +705,12 @@ export class RelayClient {
         }, 0)
       })
     }
+  }
+
+  async updateProfile (idPrivKey, profile, acceptancePrice) {
+    const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
+    const metadata = constructProfileMetadata(profile, priceFilter, idPrivKey)
+    await this.putProfile(idPrivKey.toAddress('testnet').toLegacyAddress().toString(), metadata)
   }
 }
 

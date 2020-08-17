@@ -6,9 +6,10 @@ import { trustedKeyservers } from '../utils/constants'
 import { crypto } from 'bitcore-lib-cash'
 
 class KeyserverHandler {
-  constructor (defaultSampleSize, keyservers) {
-    this.keyservers = keyservers || trustedKeyservers
-    this.defaultSampleSize = defaultSampleSize || 3
+  constructor ({ wallet, defaultSampleSize = 3, keyservers = trustedKeyservers } = {}) {
+    this.keyservers = keyservers
+    this.defaultSampleSize = defaultSampleSize
+    this.wallet = wallet
   }
 
   static constructRelayUrlMetadata (relayUrl, privKey) {
@@ -60,7 +61,7 @@ class KeyserverHandler {
 
   static async paymentRequest (serverUrl, address, truncatedAuthWrapper) {
     const rawAuthWrapper = truncatedAuthWrapper.serializeBinary()
-    const url = `${serverUrl}/keys/${address.toLegacyAddress()}`
+    const url = `${serverUrl}/keys/${address}`
     return pop.getPaymentRequest(url, 'put', rawAuthWrapper)
   }
 
@@ -91,7 +92,7 @@ class KeyserverHandler {
 
   static async putMetadata (address, server, metadata, token) {
     const rawMetadata = metadata.serializeBinary()
-    const url = `${server}/keys/${address.toLegacyAddress()}`
+    const url = `${server}/keys/${address}`
     await axios({
       method: 'put',
       url: url,
@@ -100,6 +101,31 @@ class KeyserverHandler {
       },
       data: rawMetadata
     })
+  }
+
+  async updateKeyMetadata (relayUrl, idPrivKey) {
+    const idAddress = idPrivKey.toAddress('testnet').toLegacyAddress().toString()
+    // Construct metadata
+    const authWrapper = KeyserverHandler.constructRelayUrlMetadata(relayUrl, idPrivKey)
+
+    const serverUrl = this.chooseServer()
+    // Truncate metadata
+    const payload = Buffer.from(authWrapper.getPayload())
+    const payloadDigest = crypto.Hash.sha256(payload)
+    const truncatedAuthWrapper = new AuthWrapper()
+    const publicKey = authWrapper.getPublicKey()
+    truncatedAuthWrapper.setPublicKey(publicKey)
+    truncatedAuthWrapper.setPayloadDigest(payloadDigest)
+
+    const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper)
+
+    // Construct payment
+    const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
+    const paymentUrlFull = new URL(paymentUrl, serverUrl)
+    console.log('Sending payment to', paymentUrlFull.href)
+    const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+
+    await KeyserverHandler.putMetadata(idAddress, serverUrl, authWrapper, token)
   }
 }
 

@@ -28,7 +28,6 @@
 <script>
 import { mapMutations, mapGetters } from 'vuex'
 import Profile from '../Profile'
-import { constructProfileMetadata, constructPriceFilter } from '../../relay/constructors'
 import { errorNotify } from '../../utils/notifications'
 
 export default {
@@ -57,20 +56,16 @@ export default {
 
       // Create metadata
       const idPrivKey = this.$wallet.identityPrivKey
-
       const acceptancePrice = this.relayData.inbox.acceptancePrice
-      const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
-      const metadata = constructProfileMetadata(this.relayData.profile, priceFilter, idPrivKey)
 
       this.$q.loading.show({
         delay: 100,
         message: this.$t('profileDialog.pushingProfile')
       })
 
-      // Apply remotely
-      const idAddress = this.$wallet.myAddress
       try {
-        await client.putProfile(idAddress.toLegacyAddress(), metadata)
+        await client.updateProfile(idPrivKey, this.relayData.profile, acceptancePrice)
+        this.setRelayData(this.relayData)
       } catch (err) {
         console.error(err)
         // TODO: Move specialization down error displayer
@@ -82,10 +77,6 @@ export default {
         errorNotify(new Error(this.$t('profileDialog.unableContactRelay')))
         throw err
       }
-
-      // Apply
-      this.setRelayData(this.relayData)
-
       this.$q.loading.hide()
     }
   },

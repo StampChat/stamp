@@ -71,6 +71,8 @@ import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
 import { remote, ipcRenderer } from 'electron'
 import { defaultContacts } from '../utils/constants'
+import KeyserverHandler from '../keyserver/handler'
+import { errorNotify } from '../utils/notifications'
 
 const compactWidth = 70
 const compactCutoff = 325
@@ -137,7 +139,8 @@ export default {
     ...mapGetters({
       getContact: 'contacts/getContact',
       lastReceived: 'chats/getLastReceived',
-      totalUnread: 'chats/totalUnread'
+      totalUnread: 'chats/totalUnread',
+      getRelayData: 'myProfile/getRelayData'
     }),
     splitterRatio: {
       get: function () {
@@ -200,6 +203,30 @@ export default {
       })
     }
     refreshMessages()
+
+    const handler = new KeyserverHandler({ wallet: this.$wallet })
+    // Update keyserver data if it doesn't exist.
+    handler.getRelayUrl(this.$wallet.myAddressStr).catch(() => {
+      handler.updateKeyMetadata(this.$relayClient.url, this.$wallet.identityPrivKey)
+    })
+
+    // Update profile if it doesn't exist.
+    this.$relayClient.getRelayData(this.$wallet.myAddressStr).catch(() => {
+      const relayData = this.getRelayData()
+      this.$relayClient.updateProfile(this.$wallet.identityPrivKey, relayData.profile, relayData.inbox.acceptancePrice).catch(err => {
+        console.error(err)
+        // TODO: Move specialization down error displayer
+        if (err.response.status === 413) {
+          errorNotify(new Error(this.$t('profileDialog.avatarTooLarge')))
+          this.$q.loading.hide()
+          throw err
+        }
+        errorNotify(new Error(this.$t('profileDialog.unableContactRelay')))
+        throw err
+      })
+    })
+
+    this.$q.loading.hide()
   },
   mounted () {
     document.addEventListener('keydown', this.shortcutKeyListener)
