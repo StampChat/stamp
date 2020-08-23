@@ -11,7 +11,8 @@
     "build": "quasar build -m electron -b builder",
     "test": "quasar test --unit jest",
     "generate:protobuffers": "/bin/sh ./generate_protobufs.sh",
-    "clean:protobuffers": "git clean -di && git pull"
+    "clean:protobuffers": "git clean -di && git pull",
+    "build-ios": "quasar build -m capacitor -T ios"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
