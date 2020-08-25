@@ -12,6 +12,7 @@
     "test": "quasar test --unit jest",
     "generate:protobuffers": "/bin/sh ./generate_protobufs.sh",
     "clean:protobuffers": "git clean -di && git pull",
+    "dev-ios": "quasar dev -m capacitor -T ios",
     "build-ios": "quasar build -m capacitor -T ios"
   },
   "dependencies": {
