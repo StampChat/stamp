@@ -33,7 +33,7 @@
           v-model="currentAddress"
           readonly
         >
-          <template v-slot:after>
+          <template #after>
             <q-btn
               dense
               color="primary"

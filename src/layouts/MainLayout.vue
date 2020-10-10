@@ -33,7 +33,7 @@
           emit-immediately
           :limits="[compactWidth, 1000]"
         >
-          <template v-slot:before>
+          <template #before>
             <chat-list
               class="full-height"
               :loaded="loaded"
@@ -42,7 +42,7 @@
             />
           </template>
 
-          <template v-slot:after>
+          <template #after>
             <chat
               v-for="(item, index) in chats"
               v-show="activeChatAddr === index"

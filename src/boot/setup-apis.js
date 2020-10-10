@@ -1,5 +1,5 @@
 
-import { Client as ElectrumClient } from 'electrum-cash'
+import { ElectrumClient } from 'electrum-cash'
 import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils/constants'
 import { Wallet } from '../wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'

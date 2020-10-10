@@ -60,7 +60,7 @@
         >
           <settings-step v-model="settings" />
         </q-step>
-        <template v-slot:navigation>
+        <template #navigation>
           <q-stepper-navigation>
             <q-btn
               @click="next()"

@@ -44,7 +44,7 @@
           @filter="filterRelayFn"
           style="width:100%"
         >
-          <template v-slot:no-option>
+          <template #no-option>
             <q-item>
               <q-item-section class="text-grey">
                 No results
