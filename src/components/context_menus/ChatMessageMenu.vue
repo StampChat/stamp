@@ -11,7 +11,7 @@
         v-if="message.outpoints != null"
         clickable
         v-close-popup
-        @click="$emit('replyClick')"
+        @click="$emit('reply-clicked')"
       >
         <q-item-section> Reply </q-item-section>
       </q-item>
@@ -27,7 +27,7 @@
         v-if="message.outpoints != null"
         clickable
         v-close-popup
-        @click="$emit('txClick')"
+        @click="$emit('tx-clicked')"
       >
         <q-item-section> Stamp Transaction </q-item-section>
       </q-item>
@@ -50,7 +50,7 @@
       <q-item
         clickable
         v-close-popup
-        @click="$emit('deleteClick')"
+        @click="$emit('delete-clicked')"
       >
         <q-item-section>Delete</q-item-section>
       </q-item>

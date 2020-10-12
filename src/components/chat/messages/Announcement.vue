@@ -40,11 +40,6 @@ export default {
       required: true
     }
   },
-  methods: {
-    replyClicked (args) {
-      this.$emit('replyClicked', args)
-    }
-  },
   computed: {
     lastMessage () {
       const nMessages = this.messages.length

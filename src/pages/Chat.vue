@@ -60,7 +60,7 @@
                 :global-index="globalIndex"
                 :contact="getContact(chunk[0].outbound)"
                 :name-color="chunk[0].outbound ? '': `color: ${nameColor};`"
-                @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
+                @reply-clicked="({ address, payloadDigest }) => setReply(payloadDigest)"
               />
             </template>
           </template>
@@ -123,10 +123,10 @@
         ref="chatInput"
         v-model="message"
         :stamp-amount="stampAmount"
-        @sendMessage="sendMessage"
-        @sendFileClicked="sendFileOpen = true"
-        @sendMoneyClicked="sendMoneyOpen = true"
-        @stampAmountChanged="stampAmountChanged"
+        @send-message="sendMessage"
+        @send-file-clicked="sendFileOpen = true"
+        @send-money-clicked="sendMoneyOpen = true"
+        @stamp-amount-changed="stampAmountChanged"
       />
     </q-footer>
   </q-layout>
@@ -269,7 +269,7 @@ export default {
       return previousMessage.senderAddress !== message.senderAddress
     },
     toggleContactDrawerOpen () {
-      this.$emit('toggleContactDrawerOpen')
+      this.$emit('toggle-contact-drawer-open')
     }
   },
   computed: {

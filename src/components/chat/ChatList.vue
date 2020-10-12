@@ -135,7 +135,7 @@ export default {
       return formatBalance(balance)
     },
     toggleMyDrawerOpen () {
-      this.$emit('toggleMyDrawerOpen')
+      this.$emit('toggle-my-drawer-open')
     }
   },
   computed: {

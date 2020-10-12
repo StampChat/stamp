@@ -29,9 +29,9 @@
       :message="message"
       :payload-digest="message.payloadDigest"
       :index="index"
-      @txClick="transactionDialog = true"
-      @deleteClick="deleteDialog = true"
-      @replyClick="replyClicked({ address, payloadDigest: message.payloadDigest })"
+      @tx-clicked="transactionDialog = true"
+      @delete-clicked="deleteDialog = true"
+      @reply-clicked="replyClicked({ address, payloadDigest: message.payloadDigest })"
     />
 
     <div
@@ -145,7 +145,7 @@ export default {
   },
   methods: {
     replyClicked (args) {
-      this.$emit('replyClicked', args)
+      this.$emit('reply-clicked', args)
     }
   },
   computed: {

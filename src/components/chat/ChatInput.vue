@@ -101,16 +101,16 @@ export default {
       if (this.message === '') {
         return
       }
-      this.$emit('sendMessage', this.message)
+      this.$emit('send-message', this.message)
     },
     sendMoneyClicked () {
-      this.$emit('sendMoneyClicked')
+      this.$emit('send-money-clicked')
     },
     sendFileClicked () {
-      this.$emit('sendFileClicked')
+      this.$emit('send-file-clicked')
     },
     stampAmountChanged (value) {
-      this.$emit('stampAmountChanged', value)
+      this.$emit('stamp-amount-changed', value)
     },
     addEmoji (value) {
       this.innerMessage += `:${value.id}:`

@@ -37,7 +37,7 @@
             <chat-list
               class="full-height"
               :loaded="loaded"
-              @toggleMyDrawerOpen="toggleMyDrawerOpen"
+              @toggle-my-drawer-open="toggleMyDrawerOpen"
               :compact="compact"
             />
           </template>
@@ -52,7 +52,7 @@
               :active="activeChatAddr === index"
               :style="`height: inherit; min-height: inherit;`"
               :loaded="loaded"
-              @toggleContactDrawerOpen="toggleContactDrawerOpen"
+              @toggle-contact-drawer-open="toggleContactDrawerOpen"
             />
           </template>
         </q-splitter>

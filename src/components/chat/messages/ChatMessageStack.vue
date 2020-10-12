@@ -25,7 +25,7 @@
           :address="address"
           :name-color="nameColor"
           :name="contact.name"
-          @replyClicked="replyClicked"
+          @reply-clicked="replyClicked"
         />
       </q-list>
     </div>
@@ -65,7 +65,7 @@ export default {
   },
   methods: {
     replyClicked (args) {
-      this.$emit('replyClicked', args)
+      this.$emit('reply-clicked', args)
     }
   },
   computed: {
