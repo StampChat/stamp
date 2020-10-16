@@ -62,7 +62,7 @@ export default {
       default: () => ''
     },
     contact: {
-      type: String,
+      type: Object,
       default: () => ''
     }
   },
