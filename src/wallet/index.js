@@ -218,13 +218,13 @@ export class Wallet {
   async startListeners () {
     const ecl = await this.electrumClientPromise
     const addresses = Object.keys(this.allAddresses)
-    await ecl.events.on(
-      'blockchain.scripthash.subscribe',
+    await ecl.subscribe(
       async (result) => {
         const scriptHash = result[0]
         console.log('Subscription hit', result)
         await this.updateUTXOFromScriptHash(scriptHash)
-      })
+      },
+      'blockchain.scripthash.subscribe')
 
     await P.map(addresses, address => {
       const scriptHash = Script.buildPublicKeyHashOut(address)
