@@ -15,7 +15,7 @@ try {
   if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
     fs.unlinkSync(path.join(app.getPath('userData'), 'DevTools Extensions'))
   }
-// eslint-disable-next-line no-empty
+  // eslint-disable-next-line no-empty
 } catch (_) { }
 
 /**
@@ -63,6 +63,8 @@ function createWindow () {
     icon: nativeIcon,
     useContentSize: true,
     webPreferences: {
+      enableRemoteModule: true,
+      webSecurity: false, // Disable CORS checks
       nodeIntegration: process.env.QUASAR_NODE_INTEGRATION,
       nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION
     }
