@@ -4703,13 +4703,16 @@ electron@^11.0.3:
     "@types/node" "^12.0.12"
     extract-zip "^1.0.3"
 
-electrum-cash@^1.0.1:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/electrum-cash/-/electrum-cash-1.2.0.tgz#dc4049e25369ee87cc5eea50b9e23f73b426195e"
-  integrity sha512-NZarCF2U+6uXYd697GYAuP3qdDaFUx+6zWcO8SzyeNyRCNZaUm/rscUAm7+QCgNpUnj8tEGdLj5LG2mchaZRSQ==
+electrum-cash@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/electrum-cash/-/electrum-cash-2.0.5.tgz#e402bd767d0593611106e030bfd4ec92d5c8fe9c"
+  integrity sha512-3EoeJMgo2rHXvQqjdzwAemXWdFCO6ssmuaY2b9/AdVh4j7GFiJkgzLFptnjtjgWDZyaiP/miEuFYIbIq7ladGQ==
   dependencies:
+    "@types/ws" "^7.2.6"
     async-mutex "^0.2.4"
     debug "^4.1.1"
+    isomorphic-ws "^4.0.1"
+    ws "^7.3.1"
 
 elementtree@0.1.7:
   version "0.1.7"
