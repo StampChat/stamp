@@ -35,21 +35,22 @@ export async function rehydateChat (chatState) {
       contact.totalValue = 0
     }
   }
+  const localStore = await store
 
-  const messageIterator = await store.getIterator()
+  const messageIterator = await localStore.getIterator()
   // Todo, this rehydrate stuff is common to receiveMessage
   for await (const messageWrapper of messageIterator) {
     if (!messageWrapper.newMsg) {
       continue
     }
     const { index, newMsg, copartyAddress } = messageWrapper
-    assert(newMsg.outbound !== undefined)
-    assert(newMsg.status !== undefined)
-    assert(newMsg.receivedTime !== undefined)
-    assert(newMsg.serverTime !== undefined)
-    assert(newMsg.items !== undefined)
-    assert(newMsg.outpoints !== undefined)
-    assert(newMsg.senderAddress !== undefined)
+    assert(newMsg.outbound !== undefined, 'outbound is not defined')
+    assert(newMsg.status !== undefined, 'status is not defined')
+    assert(newMsg.receivedTime !== undefined, 'receivedTime is not defined')
+    assert(newMsg.serverTime !== undefined, 'serverTime is not defined')
+    assert(newMsg.items !== undefined, 'items is not defined')
+    assert(newMsg.outpoints !== undefined, 'outpoints is not defined')
+    assert(newMsg.senderAddress !== undefined, 'senderAddress is not defined')
 
     const message = { payloadDigest: index, ...newMsg }
     if (!chatState.messages) {
@@ -214,13 +215,13 @@ export default {
         retryData,
         senderAddress
       }
-      assert(newMsg.outbound !== undefined)
-      assert(newMsg.status !== undefined)
-      assert(newMsg.receivedTime !== undefined)
-      assert(newMsg.serverTime !== undefined)
-      assert(newMsg.items !== undefined)
-      assert(newMsg.outpoints !== undefined)
-      assert(newMsg.senderAddress !== undefined, 'missing sender address')
+      assert(newMsg.outbound !== undefined, 'outbound is not defined')
+      assert(newMsg.status !== undefined, 'status is not defined')
+      assert(newMsg.receivedTime !== undefined, 'receivedTime is not defined')
+      assert(newMsg.serverTime !== undefined, 'serverTime is not defined')
+      assert(newMsg.items !== undefined, 'items is not defined')
+      assert(newMsg.outpoints !== undefined, 'outpoints is not defined')
+      assert(newMsg.senderAddress !== undefined, 'senderAddress is not defined')
 
       const message = { payloadDigest: index, ...newMsg }
       if (index in state.messages) {
@@ -249,15 +250,15 @@ export default {
       Vue.delete(state.chats, address)
     },
     receiveMessage (state, { address, index, newMsg }) {
-      assert(newMsg.outbound !== undefined)
-      assert(newMsg.status !== undefined)
-      assert(newMsg.receivedTime !== undefined)
-      assert(newMsg.serverTime !== undefined)
-      assert(newMsg.items !== undefined)
-      assert(newMsg.outpoints !== undefined)
-      assert(newMsg.senderAddress !== undefined)
-      assert(address !== undefined)
-      assert(index !== undefined)
+      assert(newMsg.outbound !== undefined, 'outbound is not defined')
+      assert(newMsg.status !== undefined, 'status is not defined')
+      assert(newMsg.receivedTime !== undefined, 'receivedTime is not defined')
+      assert(newMsg.serverTime !== undefined, 'serverTime is not defined')
+      assert(newMsg.items !== undefined, 'items is not defined')
+      assert(newMsg.outpoints !== undefined, 'outpoints is not defined')
+      assert(newMsg.senderAddress !== undefined, 'senderAddress is not defined')
+      assert(address !== undefined, 'address is not defined')
+      assert(index !== undefined, 'index is not defined')
 
       const message = { payloadDigest: index, ...newMsg }
       if (index in state.messages) {
@@ -317,7 +318,7 @@ export default {
       setInterval(() => { dispatch('refresh') }, 1_000)
     },
     setStampAmount ({ commit }, { address, stampAmount }) {
-      assert(typeof stampAmount === 'number')
+      assert(typeof stampAmount === 'number', 'stampAmount wrong type')
       commit('setStampAmount', { address, stampAmount })
     },
     receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {

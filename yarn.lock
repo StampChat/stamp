@@ -911,6 +911,13 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@capacitor/core@^2.4.3":
+  version "2.4.3"
+  resolved "https://registry.yarnpkg.com/@capacitor/core/-/core-2.4.3.tgz#256cdc931953c9f3c687f86c5310787cfd69f13f"
+  integrity sha512-AaLhXryFK65OvfS9zuw3qw6gVbNjeHoIAzvhrzcI0OWJo6Qi8gOIz4rraD35UKSETkRm+H7auhSTAj6Avy5lHQ==
+  dependencies:
+    tslib "^1.9.0"
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.4.tgz#f864ae85004d0fcab6f50be9141c4da368d1656a"
@@ -2740,7 +2747,7 @@ bip39@^3.0.2:
     pbkdf2 "^3.0.9"
     randombytes "^2.0.1"
 
-bitcore-lib-cash@^8.20.1:
+bitcore-lib-cash@^8.23.0:
   version "8.23.1"
   resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-8.23.1.tgz#188be56f15f4b4d49aa85777cb998252be67cf60"
   integrity sha512-QenfM9v5L4UdicRbmMYQbxeNqJjzifBT7DQbK0ambqkxiaUi7k5qY62Gx0N2GIdY5B+edmMib+xCbadaHRTN+w==
@@ -8339,11 +8346,6 @@ node-emoji@^1.10.0:
   integrity sha512-Yt3384If5H6BYGVHiHwTL+99OzJKHhgp82S8/dktEK73T26BazdgZ4JZh92xSVtGNJvz9UbXdNAc5hcrXV42vw==
   dependencies:
     lodash.toarray "^4.4.0"
-
-node-forge@^0.10.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/node-forge/-/node-forge-0.10.0.tgz#32dea2afb3e9926f02ee5ce8794902691a676bf3"
-  integrity sha512-PPmu8eEeG9saEUvI97fm4OYxXVB6bFvyNTyiUOBichBpFG8A1Ljw3bY62+5oOjDEMHRnd0Y7HQ+x7uzxOzC6JA==
 
 node-forge@^0.10.0:
   version "0.10.0"

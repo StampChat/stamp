@@ -1,7 +1,7 @@
 import Vue from 'vue'
 
 import { calcId } from '../../wallet/helpers'
-import { store } from '../../adapters/level-outpoint-store'
+import { store as levelOutpointStore } from '../../adapters/level-outpoint-store'
 
 import { HDPrivateKey } from 'bitcore-lib-cash'
 
@@ -16,6 +16,7 @@ export async function rehydrateWallet (wallet) {
   wallet.utxos = {}
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.
+  const store = await levelOutpointStore
   await store.loadData()
   const outpoints = store.getOutpoints()
   for (const [id, outpoint] of outpoints) {

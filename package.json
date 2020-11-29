@@ -18,11 +18,12 @@
     "build-android": "quasar build  -m capacitor -T android"
   },
   "dependencies": {
+    "@capacitor/core": "^2.4.3",
     "@quasar/extras": "^1.9.10",
     "@vue/composition-api": "^0.6.4",
     "axios": "^0.18.1",
     "bip39": "^3.0.2",
-    "bitcore-lib-cash": "^8.20.1",
+    "bitcore-lib-cash": "^8.23.0",
     "bluebird": "^3.7.2",
     "core-js": "^3.6.5",
     "dompurify": "^2.0.11",

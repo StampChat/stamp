@@ -218,7 +218,7 @@ export class Wallet {
       console.log(`Deleting UTXO ${utxoId}`)
       this.storage.deleteOutpoint(utxoId)
     } catch (err) {
-      console.error('error deserializing utxo address', err, utxo)
+      console.error('error deserializing utxo address xx', err, utxo)
     }
   }
 
@@ -467,7 +467,7 @@ export class Wallet {
     const calcAmounts = (splits, amount) => {
       const splitPoints = []
       let amountLeft = amount
-      assert(splits > 0)
+      assert(splits > 0, 'transaction set split number invalid')
       while (splitPoints.length < splits - 1) {
         const splitPoint = Math.floor(Math.random() * (amountLeft - 2 * minimumOutputAmount)) + minimumOutputAmount
         if (splitPoint < minimumOutputAmount) {
@@ -486,7 +486,6 @@ export class Wallet {
 
     // We re-wrap the transaction set builder so we can ensure the amount is split, in addition to each amount operating independently.
     for (const amountToBuild of amounts) {
-      console.log('amountToBuild?', amountToBuild)
       transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ addressGenerator, amount: amountToBuild, utxos }))
       amountLeft -= amountToBuild
     }
@@ -613,12 +612,12 @@ export class Wallet {
   }
 
   putOutpoint (utxo) {
-    assert(utxo.type !== undefined)
-    assert(utxo.privKey !== undefined)
-    assert(utxo.address !== undefined)
-    assert(utxo.satoshis !== undefined)
-    assert(utxo.txId !== undefined)
-    assert(utxo.outputIndex !== undefined)
+    assert(utxo.type !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.privKey !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.address !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.satoshis !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.txId !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.outputIndex !== undefined, 'putOupoint utxo wrong format')
     console.log('adding utxo', calcId(utxo))
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.putOutpoint(utxo)

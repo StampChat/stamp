@@ -1,6 +1,7 @@
 {
   "extends": "@quasar/app/tsconfig-preset",
   "compilerOptions": {
+    "target": "es2017",
     "baseUrl": "."
   }
 }

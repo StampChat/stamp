@@ -6,7 +6,7 @@ import { trustedKeyservers } from '../utils/constants'
 import { crypto } from 'bitcore-lib-cash'
 
 class KeyserverHandler {
-  constructor ({ wallet, defaultSampleSize = 3, keyservers = trustedKeyservers } = {}) {
+  constructor({ wallet, defaultSampleSize = 3, keyservers = trustedKeyservers } = {}) {
     this.keyservers = keyservers
     this.defaultSampleSize = defaultSampleSize
     this.wallet = wallet
@@ -30,8 +30,12 @@ class KeyserverHandler {
     ecdsa.sign()
 
     const authWrapper = new AuthWrapper()
-    const sig = ecdsa.sig.toCompact(1).slice(1)
-    authWrapper.setPublicKey(privKey.toPublicKey().toBuffer())
+
+    const normalSig = ecdsa.sig
+    const compactSig = normalSig.toCompact(1)
+    const sig = compactSig.slice(1)
+    const pubKeyBuffer = privKey.toPublicKey().toBuffer()
+    authWrapper.setPublicKey(pubKeyBuffer)
     authWrapper.setSignature(sig)
     authWrapper.setScheme(1)
     authWrapper.setPayload(serializedPayload)
@@ -106,9 +110,11 @@ class KeyserverHandler {
   async updateKeyMetadata (relayUrl, idPrivKey) {
     const idAddress = idPrivKey.toAddress('testnet').toLegacyAddress().toString()
     // Construct metadata
+
     const authWrapper = KeyserverHandler.constructRelayUrlMetadata(relayUrl, idPrivKey)
 
     const serverUrl = this.chooseServer()
+
     // Truncate metadata
     const payload = Buffer.from(authWrapper.getPayload())
     const payloadDigest = crypto.Hash.sha256(payload)
@@ -121,8 +127,8 @@ class KeyserverHandler {
 
     // Construct payment
     const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
+
     const paymentUrlFull = new URL(paymentUrl, serverUrl)
-    console.log('Sending payment to', paymentUrlFull.href)
     const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
 
     await KeyserverHandler.putMetadata(idAddress, serverUrl, authWrapper, token)

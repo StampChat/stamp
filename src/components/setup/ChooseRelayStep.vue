@@ -59,7 +59,6 @@
 
 <script>
 import { defaultAcceptancePrice, relayUrlOptions } from '../../utils/constants'
-import { shell } from 'electron'
 
 export default {
   model: {
@@ -99,7 +98,7 @@ export default {
     },
     openCashRelay () {
       event.preventDefault()
-      shell.openExternal('https://github.com/cashweb/cash-relay')
+      this.openURL('https://github.com/cashweb/cash-relay');
     }
   },
   computed: {

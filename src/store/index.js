@@ -26,7 +26,6 @@ const vuexLocal = new VuexPersistence({
   restoreState: async (key, storage) => {
     const value = storage.getItem(key)
     let newState = parseState(value)
-    console.log('Restoring state', newState)
     if (newState.version !== STORE_SCHEMA_VERSION) {
       // Import everything else from the server again
       newState = {
@@ -51,14 +50,12 @@ const vuexLocal = new VuexPersistence({
         myProfile: newState.myProfile
       }
     }
-    console.log('new new state', newState)
     rehydrateContacts(newState.contacts)
     await rehydateChat(newState.chats, newState.contacts)
     await rehydrateWallet(newState.wallet)
     return newState
   },
   reducer (state) {
-    console.log('reducing state', state)
     return {
       wallet: {
         xPrivKey: path(['wallet', 'xPrivKey'], state),
@@ -76,8 +73,7 @@ const vuexLocal = new VuexPersistence({
             // Overwrite messages because storing them would be prohibitive.
             messages: {}
           })
-        },
-        pathOr({}, ['chats', 'chats'], state))
+        }, pathOr({}, ['chats', 'chats'], state))
       },
       contacts: state.contacts,
       myProfile: state.myProfile,
@@ -85,7 +81,6 @@ const vuexLocal = new VuexPersistence({
     }
   },
   saveState (key, state, storage) {
-    console.log('saving state', state)
     storage.setItem(key, JSON.stringify(state))
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

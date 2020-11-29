@@ -19,7 +19,7 @@ import WebSocket from 'isomorphic-ws'
 import { PublicKey, crypto, Transaction } from 'bitcore-lib-cash'
 
 export class RelayClient {
-  constructor (url, wallet, electrumClientPromise, { getPubKey, messageStore }) {
+  constructor(url, wallet, electrumClientPromise, { getPubKey, messageStore }) {
     this.url = url
     this.events = new EventEmitter()
     this.wallet = wallet
@@ -59,6 +59,7 @@ export class RelayClient {
     function isVCard (entry) {
       return entry.getKind() === 'vcard'
     }
+
     const entryList = payload.getEntriesList()
     const rawCard = entryList.find(isVCard).getBody() // TODO: Cancel if not found
     const strCard = new TextDecoder().decode(rawCard)
@@ -482,7 +483,7 @@ export class RelayClient {
 
     if (outbound && myAddress === destinationAddress) {
       // TODO: Process self sends
-      console.log('self send')
+      console.log('Self sent message. Need to process differently.')
       return
     }
 

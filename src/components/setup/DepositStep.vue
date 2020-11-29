@@ -109,7 +109,6 @@ import { mapGetters } from 'vuex'
 import { numAddresses, recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
 import { formatBalance } from '../../utils/formatting'
-import { shell } from 'electron'
 
 export default {
   components: {
@@ -142,7 +141,7 @@ export default {
     },
     openFaucet () {
       event.preventDefault()
-      shell.openExternal('https://developer.bitcoin.com/faucets/bch/')
+      this.openURL('https://developer.bitcoin.com/faucets/bch/');
     },
     setQrHeight (size) {
       this.qrHeight = size.height

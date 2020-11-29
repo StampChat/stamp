@@ -69,7 +69,6 @@ import ContactPanel from '../components/panels/ContactPanel.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
-import { remote, ipcRenderer } from 'electron'
 import { defaultContacts } from '../utils/constants'
 import KeyserverHandler from '../keyserver/handler'
 import { errorNotify } from '../utils/notifications'
@@ -236,8 +235,7 @@ export default {
   },
   watch: {
     totalUnread: function (unread) {
-      ipcRenderer.sendSync('update-badge', 1)
-      remote.app.setBadgeCount(unread)
+      this.updateBadge(unread)
     }
   }
 }
