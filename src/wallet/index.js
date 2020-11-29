@@ -215,26 +215,29 @@ export class Wallet {
     }
   }
 
+  async scriptHashUpdated (params) {
+    if (params === null) {
+      // ignore initial calls. These are not subscription hits but rather the
+      // library calling the subscription handler with the initial subscribe
+      // response because it is poorly written.
+      return
+    }
+    const scriptHash = params[0]
+    console.log('Subscription hit', params)
+    await this.updateUTXOFromScriptHash(scriptHash)
+  }
+
   async startListeners () {
     const ecl = await this.electrumClientPromise
     const addresses = Object.keys(this.allAddresses)
-    await ecl.on(
-      'blockchain.scripthash.subscribe',
-      async (result) => {
-        const scriptHash = result[0]
-        console.log('Subscription hit', result)
-        await this.updateUTXOFromScriptHash(scriptHash)
-      })
 
     await P.map(addresses, address => {
       const scriptHash = Script.buildPublicKeyHashOut(address)
       const scriptHashRaw = scriptHash.toBuffer()
       const digest = crypto.Hash.sha256(scriptHashRaw)
       const digestHexReversed = digest.reverse().toString('hex')
-
-      return ecl.request('blockchain.scripthash.subscribe', digestHexReversed)
-    },
-      { concurrency: 20 })
+      return ecl.subscribe(this.scriptHashUpdated.bind(this), 'blockchain.scripthash.subscribe', digestHexReversed)
+    }, { concurrency: 20 })
   }
 
   async forwardUTXOsToAddress ({ utxos, address }) {
