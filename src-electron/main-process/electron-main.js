@@ -64,7 +64,6 @@ function createWindow () {
     useContentSize: true,
     webPreferences: {
       enableRemoteModule: true,
-      webSecurity: false, // Disable CORS checks
       nodeIntegration: process.env.QUASAR_NODE_INTEGRATION,
       nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION
     }
