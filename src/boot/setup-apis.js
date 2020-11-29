@@ -41,7 +41,7 @@ function instrumentElectrumClient ({ resolve, reject, client, observables, recon
     , electrumPingInterval)
   }
 
-  client.connection.socket.on('connect', () => {
+  client.connection.on('connect', () => {
     console.log('electrum connected')
     // (Re)set state on Vue prototype
     resolve(client)
@@ -50,17 +50,17 @@ function instrumentElectrumClient ({ resolve, reject, client, observables, recon
     keepAlive()
   })
 
-  client.connection.socket.on('close', () => {
+  client.connection.on('close', () => {
     notifyDisconnect()
     reconnector()
   })
 
-  client.connection.socket.on('end', (e) => {
+  client.connection.on('end', (e) => {
     notifyDisconnect()
     console.log(e)
   })
 
-  client.connection.socket.on('error', (err) => {
+  client.connection.on('error', (err) => {
     console.error(err)
   })
 
