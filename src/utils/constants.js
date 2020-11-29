@@ -1,29 +1,29 @@
+
+import { ElectrumTransport } from 'electrum-cash'
+
 // Electrum constants
 export const electrumServers = [
+  // Our mainnet server, we need to setup a testnet server as well.
   {
-    electrumURL: 'bch0.kister.net',
-    electrumPort: 51_002
-  },
-  {
-    electrumURL: 'blackie.c3-soft.com',
-    electrumPort: 60_002
-  },
-  {
-    electrumURL: 'electroncash.de',
-    electrumPort: 50_004
-  },
-  {
-    electrumURL: 'tbch.loping.net',
-    electrumPort: 60_002
-  },
-  // {
-  //   electrumURL: 'testnet.bitcoincash.network',
-  //   electrumPort: 60_002
-  // },
-  {
-    electrumURL: 'testnet.imaginary.cash',
-    electrumPort: 50_002
+    url: 'fulcrum.cashweb.io',
+    port: 443,
+    scheme: ElectrumTransport.WSS.Scheme
   }
+  // {
+  //   url: 'electrum.bitcoinabc.org',
+  //   port: 50004,
+  //   scheme: 'wss'
+  // },
+  // {
+  //   url: 'bchabc.fmarcosh.xyz',
+  //   port: 50003,
+  //   scheme: ElectrumTransport.WS.Scheme
+  // },
+  //   {
+  //     url: 'telectrum.bitcoinabc.org',
+  //     port: 60004,
+  //     scheme: ElectrumTransport.WSS.Scheme
+  //   }
 ]
 export const electrumPingInterval = 10_000
 

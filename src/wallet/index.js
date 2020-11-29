@@ -37,7 +37,7 @@ const shuffleArray = function (arr) {
 }
 
 export class Wallet {
-  constructor (storage) {
+  constructor(storage) {
     this.storage = storage
     this.constructionLock = new Lock()
   }
@@ -234,7 +234,7 @@ export class Wallet {
 
       return ecl.request('blockchain.scripthash.subscribe', digestHexReversed)
     },
-    { concurrency: 20 })
+      { concurrency: 20 })
   }
 
   async forwardUTXOsToAddress ({ utxos, address }) {
