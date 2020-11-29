@@ -103,6 +103,7 @@ import { errorNotify } from '../utils/notifications'
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
 import { HDPrivateKey } from 'bitcore-lib-cash'
+import { generateMnemonic } from 'bip39'
 
 Vue.use(VueRouter)
 
@@ -125,8 +126,8 @@ export default {
       bio: '',
       seedData: {
         type: 'new',
-        generatedSeed: '',
-        importedSeed: '',
+        generatedSeed: this.getSeedPhrase() || generateMnemonic(),
+        importedSeed: this.getSeedPhrase() || '',
         valid: false
       },
       seed: null,
@@ -155,7 +156,8 @@ export default {
     }),
     ...mapGetters({
       getUpdateInterval: 'contacts/getUpdateInterval',
-      getDarkMode: 'appearance/getDarkMode'
+      getDarkMode: 'appearance/getDarkMode',
+      getSeedPhrase: 'wallet/getSeedPhrase'
     }),
     ...mapMutations({
       setRelayData: 'myProfile/setRelayData',
@@ -239,6 +241,7 @@ export default {
       } else {
         this.seed = this.seedData.importedSeed
       }
+      this.setSeedPhrase(this.seed)
       worker.postMessage(this.seed)
     },
     async nextDeposit () {

@@ -135,7 +135,11 @@ export default async ({ store, Vue }) => {
   createAndBindNewElectrumClient({ Vue, observables: electrumObservables, wallet })
   const xPrivKey = store.getters['wallet/getXPrivKey']
   console.log('xpriv', xPrivKey)
-  if (xPrivKey) {
+
+  // Check if setup was finished.
+  // TODO: There should be a better way to do this.
+  const profile = store.getters['myProfile/getProfile']
+  if (xPrivKey && profile.name) {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
   }

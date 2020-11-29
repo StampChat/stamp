@@ -171,7 +171,7 @@ export default {
   },
   data () {
     return {
-      generatedSeed: generateMnemonic(),
+      generatedSeed: this.seedData.generatedSeed,
       importedSeed: this.seedData.importedSeed,
       tab: this.seedData.type
     }
