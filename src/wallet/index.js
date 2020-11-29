@@ -218,7 +218,7 @@ export class Wallet {
   async startListeners () {
     const ecl = await this.electrumClientPromise
     const addresses = Object.keys(this.allAddresses)
-    await ecl.events.on(
+    await ecl.on(
       'blockchain.scripthash.subscribe',
       async (result) => {
         const scriptHash = result[0]
