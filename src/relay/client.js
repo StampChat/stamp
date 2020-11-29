@@ -15,7 +15,7 @@ import { calcId } from '../wallet/helpers'
 import assert from 'assert'
 import paymentrequest from '../bip70/paymentrequest_pb'
 
-const WebSocket = window.require('ws')
+import WebSocket from 'isomorphic-ws'
 import { PublicKey, crypto, Transaction } from 'bitcore-lib-cash'
 
 export class RelayClient {
@@ -96,9 +96,10 @@ export class RelayClient {
   }
 
   setUpWebsocket (address) {
-    const url = `${this.url}/ws/${address}`
-    const opts = { headers: { Authorization: this.token } }
-    const socket = new WebSocket(url, opts)
+    const url = new URL(`/ws/${address}`, this.url)
+    url.protocol = 'wss'
+    url.searchParams.set('access_token', this.token)
+    const socket = new WebSocket(url.toString())
 
     socket.onmessage = event => {
       const buffer = event.data
@@ -122,18 +123,6 @@ export class RelayClient {
     socket.onopen = () => {
       this.events.emit('opened')
     }
-
-    // Setup ping timeout
-    this.pingTimeout = setTimeout(() => {
-      socket.terminate()
-    }, pingTimeout)
-
-    socket.on('ping', () => {
-      clearTimeout(this.pingTimeout)
-      this.pingTimeout = setTimeout(() => {
-        socket.terminate()
-      }, pingTimeout)
-    })
   }
 
   async getAcceptancePrice (address) {
