@@ -160,7 +160,8 @@ export class Wallet {
     const client = await this.electrumClientPromise
     try {
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-      const { address, privKey } = this.getAddressByElectrumScriptHash(scriptHash)
+      const addressMap = this.getAddressByElectrumScriptHash(scriptHash)
+      const { address, privKey } = addressMap
       const outputs = elOutputs.map(elOutput => {
         const output = {
           txId: elOutput.tx_hash,
@@ -216,14 +217,14 @@ export class Wallet {
   }
 
   async scriptHashUpdated (params) {
-    if (params === null) {
-      // ignore initial calls. These are not subscription hits but rather the
-      // library calling the subscription handler with the initial subscribe
-      // response because it is poorly written.
+    if (typeof params !== 'array') {
+      // Electrum-cash client is dumb and sends the initial subscription call response to our
+      // callback handler. The data is not the same, and is actually a string with the
+      // status of the particular scriptHash
       return
     }
-    const scriptHash = params[0]
-    console.log('Subscription hit', params)
+    const [scriptHash, status] = params
+    console.log('Subscription hit', scriptHash, status)
     await this.updateUTXOFromScriptHash(scriptHash)
   }
 
