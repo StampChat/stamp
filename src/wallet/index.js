@@ -40,6 +40,12 @@ export class Wallet {
   constructor(storage) {
     this.storage = storage
     this.constructionLock = new Lock()
+    // Workaround for the way electrum-cash ensures a subscription isn't handled
+    // twice.
+    // Fixes: "MaxListenersExceededWarning: Possible EventEmitter memory leak
+    // detected. 11 blockchain.scripthash.subscribe listeners added to
+    // [ElectrumClient]. Use emitter.setMaxListeners() to increase limit"
+    this.scriptHashSubscriber = this.scriptHashUpdated.bind(this)
   }
 
   setElectrumClient (electrumClientPromise) {
@@ -160,7 +166,8 @@ export class Wallet {
     const client = await this.electrumClientPromise
     try {
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-      const { address, privKey } = this.getAddressByElectrumScriptHash(scriptHash)
+      const addressMap = this.getAddressByElectrumScriptHash(scriptHash)
+      const { address, privKey } = addressMap
       const outputs = elOutputs.map(elOutput => {
         const output = {
           txId: elOutput.tx_hash,
@@ -216,14 +223,14 @@ export class Wallet {
   }
 
   async scriptHashUpdated (params) {
-    if (params === null) {
-      // ignore initial calls. These are not subscription hits but rather the
-      // library calling the subscription handler with the initial subscribe
-      // response because it is poorly written.
+    if (!(params instanceof Array)) {
+      // Electrum-cash client is dumb and sends the initial subscription call response to our
+      // callback handler. The data is not the same, and is actually a string with the
+      // status of the particular scriptHash
       return
     }
-    const scriptHash = params[0]
-    console.log('Subscription hit', params)
+    const [scriptHash, status] = params
+    console.log('Subscription hit', scriptHash, status)
     await this.updateUTXOFromScriptHash(scriptHash)
   }
 
@@ -236,7 +243,7 @@ export class Wallet {
       const scriptHashRaw = scriptHash.toBuffer()
       const digest = crypto.Hash.sha256(scriptHashRaw)
       const digestHexReversed = digest.reverse().toString('hex')
-      return ecl.subscribe(this.scriptHashUpdated.bind(this), 'blockchain.scripthash.subscribe', digestHexReversed)
+      return ecl.subscribe(this.scriptHashSubscriber, 'blockchain.scripthash.subscribe', digestHexReversed)
     }, { concurrency: 20 })
   }
 
