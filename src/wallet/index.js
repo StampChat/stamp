@@ -634,4 +634,15 @@ export class Wallet {
     // TODO: Nobody should be calling this outside of the wallet
     await this.storage.deleteOutpoint(id)
   }
+
+  // Warning, this should only be used during initial setup to ensure the
+  // levelDB database has been cleared.
+  // This needs to happen when the seed has potentially changed after
+  // the UTXOs have been refreshed.
+  async clearUtxos () {
+    const outpoints = await this.storage.getOutpoints()
+    for (const [outpointId] of outpoints) {
+      this.deleteOutpoint(outpointId)
+    }
+  }
 }

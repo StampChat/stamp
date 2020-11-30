@@ -174,6 +174,7 @@ export default {
       // TODO: This should not be done "behind the back" of the wallet object
       // (e.g. we should not be fiddling with the store directly here)
       this.resetWallet()
+      this.$wallet.clearUtxos()
 
       this.$q.loading.show({
         delay: 100,
