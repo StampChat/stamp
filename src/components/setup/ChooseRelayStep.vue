@@ -98,7 +98,7 @@ export default {
     },
     openCashRelay () {
       event.preventDefault()
-      this.openURL('https://github.com/cashweb/cash-relay');
+      this.openURL('https://github.com/cashweb/cash-relay')
     }
   },
   computed: {

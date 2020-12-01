@@ -4,7 +4,7 @@ import { Payload, Message, MessagePage, MessageSet, Profile } from './relay_pb'
 import stealth from './stealth_pb'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
-import { pingTimeout, relayReconnectInterval } from '../utils/constants'
+import { relayReconnectInterval } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
 import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage, constructProfileMetadata, constructPriceFilter } from './constructors'
@@ -101,6 +101,7 @@ export class RelayClient {
     url.protocol = 'wss'
     url.searchParams.set('access_token', this.token)
     const socket = new WebSocket(url.toString())
+    socket.binaryType = 'arraybuffer'
 
     socket.onmessage = event => {
       const buffer = event.data
@@ -440,13 +441,16 @@ export class RelayClient {
   async receiveMessage (message, receivedTime = Date.now()) {
     // Parse message
     Object.assign(Message.prototype, messageMixin)
+    console.log('message')
     const parsedMessage = message.parse()
+    console.log('parsedMessage')
 
     const senderAddress = parsedMessage.sourcePublicKey.toAddress('testnet').toCashAddress() // TODO: Make generic
     const wallet = this.wallet
     const myAddress = wallet.myAddressStr
     const outbound = (senderAddress === myAddress)
     const serverTime = parsedMessage.receivedTime
+    console.log('serverTime')
 
     // if this client sent the message, we already have the data and don't need to process it or get the payload again
     if (parsedMessage.payloadDigest.length !== 0) {
@@ -679,7 +683,7 @@ export class RelayClient {
     const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
     const messageList = messagePage.getMessagesList()
     console.log('processing messages')
-    const messageChunks = splitEvery(5, messageList)
+    const messageChunks = splitEvery(1, messageList)
     for (const messageChunk of messageChunks) {
       await new Promise((resolve) => {
         setTimeout(() => {
@@ -688,7 +692,7 @@ export class RelayClient {
             // Here we are ensuring that their are yields between messages to the event loop.
             // Ideally, we move this to a webworker in the future.
             this.receiveMessage(message).then(resolve).catch((err) => {
-              console.error('Unable to deserialize message:', err)
+              console.error('Unable to deserialize message:', err.message)
               resolve()
             })
           }

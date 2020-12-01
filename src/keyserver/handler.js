@@ -6,7 +6,7 @@ import { trustedKeyservers } from '../utils/constants'
 import { crypto } from 'bitcore-lib-cash'
 
 class KeyserverHandler {
-  constructor({ wallet, defaultSampleSize = 3, keyservers = trustedKeyservers } = {}) {
+  constructor ({ wallet, defaultSampleSize = 3, keyservers = trustedKeyservers } = {}) {
     this.keyservers = keyservers
     this.defaultSampleSize = defaultSampleSize
     this.wallet = wallet

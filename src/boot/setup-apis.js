@@ -64,14 +64,14 @@ function instrumentElectrumClient ({ resolve, reject, client, observables, recon
   })
 
   // No await here... May cause issues down the road
-  client.connect()
+  client.connect().then(() => console.log('connected')).catch(err => console.error('unablet to connect to electrum host', err.message))
 }
 
 function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
   const { url, port, scheme } = electrumServers[Math.floor(Math.random() * electrumServers.length)]
   console.log('Using electrum server:', url, port)
   try {
-    const client = new ElectrumClient('Stamp Wallet', '1.4.1', url, port, scheme)
+    const client = new ElectrumClient('Stamp Wallet', '1.4.1', url, port, scheme, 10000)
 
     const electrumPromise = new Promise((resolve, reject) => {
       instrumentElectrumClient({
@@ -84,6 +84,7 @@ function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
     })
     // (Re)set state on Vue prototype
     Vue.prototype.$electrumClientPromise = electrumPromise
+    console.log('setting electrum client')
     wallet.setElectrumClient(electrumPromise)
   } catch (err) {
     console.log(err.message)
@@ -134,16 +135,18 @@ export default async ({ store, Vue }) => {
   const electrumObservables = Vue.observable({ connected: false })
   createAndBindNewElectrumClient({ Vue, observables: electrumObservables, wallet })
   const xPrivKey = store.getters['wallet/getXPrivKey']
-
+  console.log('xPrivKey', xPrivKey)
   // Check if setup was finished.
   // TODO: There should be a better way to do this.
   const profile = store.getters['myProfile/getProfile']
+  console.log('profile.name', profile.name)
   if (xPrivKey && profile.name) {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
   }
   const { client: relayClient, observables: relayObservables } = await getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumObservables, store })
   const relayToken = store.getters['relayClient/getToken']
+  console.log('relayToken', relayToken)
   relayClient.setToken(relayToken)
 
   Vue.prototype.$wallet = wallet

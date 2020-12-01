@@ -37,7 +37,7 @@ const shuffleArray = function (arr) {
 }
 
 export class Wallet {
-  constructor(storage) {
+  constructor (storage) {
     this.storage = storage
     this.constructionLock = new Lock()
     // Workaround for the way electrum-cash ensures a subscription isn't handled
@@ -67,11 +67,19 @@ export class Wallet {
       return
     }
     const t0 = performance.now()
+    console.log('addresses')
+
     this.initAddresses()
+    console.log('initdone')
     const initAddressTime = performance.now()
+    console.log('updateHDUTXOs ')
     await this.updateHDUTXOs()
+    console.log('updateHDUTXOs done')
+
     const updateUTXOTime = performance.now()
+    console.log('startListeners')
     await this.startListeners()
+    console.log('startListeners done')
     const startListenersTime = performance.now()
     console.log(`initAddresses UTXOs took ${initAddressTime - t0} ms`)
     console.log(`updateUTXOTime UTXOs took ${updateUTXOTime - t0} ms`)
@@ -163,7 +171,10 @@ export class Wallet {
   }
 
   async updateUTXOFromScriptHash (scriptHash) {
+    console.log('updating scripthash: ', scriptHash)
+    console.log('this.electrumClientPromise', this.electrumClientPromise.toString())
     const client = await this.electrumClientPromise
+    console.log('updating scripthash: ', scriptHash)
     try {
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
       const addressMap = this.getAddressByElectrumScriptHash(scriptHash)
@@ -188,7 +199,11 @@ export class Wallet {
   async updateHDUTXOs () {
     // Check HD Wallet
     const scriptHashes = Object.keys(this.electrumScriptHashes)
-    await P.map(scriptHashes, scriptHash => this.updateUTXOFromScriptHash(scriptHash), { concurrency: 5 })
+    console.log(scriptHashes)
+    await P.map(scriptHashes, scriptHash => {
+      console.log(scriptHash)
+      return this.updateUTXOFromScriptHash(scriptHash)
+    }, { concurrency: 5 })
   }
 
   async fixOutpoint (utxoId) {

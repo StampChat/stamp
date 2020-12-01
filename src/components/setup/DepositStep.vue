@@ -141,7 +141,7 @@ export default {
     },
     openFaucet () {
       event.preventDefault()
-      this.openURL('https://developer.bitcoin.com/faucets/bch/');
+      this.openURL('https://developer.bitcoin.com/faucets/bch/')
     },
     setQrHeight (size) {
       this.qrHeight = size.height
