@@ -3,7 +3,7 @@ import { PrivateKey, PublicKey, crypto, HDPublicKey, HDPrivateKey } from 'bitcor
 import forge from 'node-forge'
 
 export const constructPayloadHmac = function (sharedKey, payloadDigest) {
-  return crypto.Hash.sha256hmac(sharedKey, payloadDigest)
+  return crypto.Hash.sha256hmac(sharedKey, Buffer.from(payloadDigest))
 }
 
 export const constructMergedKey = function (privateKey, publicKey) {
@@ -13,7 +13,8 @@ export const constructMergedKey = function (privateKey, publicKey) {
 export const constructSharedKey = function (privateKey, publicKey, salt) {
   const mergedKey = constructMergedKey(privateKey, publicKey)
   const rawMergedKey = mergedKey.toBuffer()
-  return crypto.Hash.sha256hmac(salt, rawMergedKey)
+  const sharedKey = crypto.Hash.sha256hmac(Buffer.from(salt), rawMergedKey)
+  return sharedKey
 }
 
 export const constructStealthPublicKey = function (emphemeralPrivKey, destinationPublicKey) {
