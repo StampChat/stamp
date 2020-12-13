@@ -100,6 +100,7 @@ export class RelayClient {
     url.protocol = 'wss'
     url.searchParams.set('access_token', this.token)
     const socket = new WebSocket(url.toString())
+    socket.binaryType = 'arraybuffer'
 
     socket.onmessage = event => {
       const buffer = event.data
