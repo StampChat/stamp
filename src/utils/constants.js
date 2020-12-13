@@ -4,11 +4,11 @@ import { ElectrumTransport } from 'electrum-cash'
 // Electrum constants
 export const electrumServers = [
   // Our mainnet server, we need to setup a testnet server as well.
-  {
-    url: 'fulcrum.cashweb.io',
-    port: 443,
-    scheme: ElectrumTransport.WSS.Scheme
-  }
+  // {
+  //   url: 'fulcrum.cashweb.io',
+  //   port: 443,
+  //   scheme: ElectrumTransport.WSS.Scheme
+  // }
   // {
   //   url: 'electrum.bitcoinabc.org',
   //   port: 50004,
@@ -19,11 +19,16 @@ export const electrumServers = [
   //   port: 50003,
   //   scheme: ElectrumTransport.WS.Scheme
   // },
-  //   {
-  //     url: 'telectrum.bitcoinabc.org',
-  //     port: 60004,
-  //     scheme: ElectrumTransport.WSS.Scheme
-  //   }
+  // {
+  //   url: 'telectrum.bitcoinabc.org',
+  //   port: 60004,
+  //   scheme: ElectrumTransport.WSS.Scheme
+  // },
+  {
+    url: 'telectrum.bitcoinabc.org',
+    port: 60006,
+    scheme: ElectrumTransport.WS.Scheme
+  }
 ]
 export const electrumPingInterval = 10_000
 
