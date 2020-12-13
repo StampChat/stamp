@@ -85,41 +85,43 @@ function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
     })
     // (Re)set state on Vue prototype
     Vue.prototype.$electrumClientPromise = electrumPromise
+    console.log('setting electrum client')
     wallet.setElectrumClient(electrumPromise)
   } catch (err) {
     console.log(err.message)
   }
 }
 
-function getWalletClient ({ store }) {
+async function getWalletClient ({ store }) {
+  const outpointStore = await levelDbOutpointStore
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.
   const storageAdapter = {
     getOutpoint (id) {
-      return levelDbOutpointStore.getOutpoint(id)
+      return outpointStore.getOutpoint(id)
     },
     deleteOutpoint (id) {
       store.commit('wallet/removeUTXO', id)
-      return levelDbOutpointStore.deleteOutpoint(id)
+      return outpointStore.deleteOutpoint(id)
     },
     putOutpoint (outpoint) {
       store.commit('wallet/addUTXO', outpoint)
-      return levelDbOutpointStore.putOutpoint(outpoint)
+      return outpointStore.putOutpoint(outpoint)
     },
     freezeOutpoint (id) {
-      return levelDbOutpointStore.freezeOutpoint(id)
+      return outpointStore.freezeOutpoint(id)
     },
     unfreezeOutpoint (id) {
-      return levelDbOutpointStore.unfreezeOutpoint(id)
+      return outpointStore.unfreezeOutpoint(id)
     },
     getOutpoints () {
-      return levelDbOutpointStore.getOutpoints()
+      return outpointStore.getOutpoints()
     },
     getOutpointIterator () {
-      return levelDbOutpointStore.getOutpointIterator()
+      return outpointStore.getOutpointIterator()
     },
     getFrozenOutpointIterator () {
-      return levelDbOutpointStore.getFrozenOutpointIterator()
+      return outpointStore.getFrozenOutpointIterator()
     }
   }
 
@@ -130,7 +132,7 @@ export default async ({ store, Vue }) => {
   await store.restored
   // TODO: WE should probably rename this file to something more specific
   // as its instantiating the wallet now also.
-  const wallet = getWalletClient({ store })
+  const wallet = await getWalletClient({ store })
   const electrumObservables = Vue.observable({ connected: false })
   createAndBindNewElectrumClient({ Vue, observables: electrumObservables, wallet })
   const xPrivKey = store.getters['wallet/getXPrivKey']
@@ -143,7 +145,7 @@ export default async ({ store, Vue }) => {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
   }
-  const { client: relayClient, observables: relayObservables } = getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumObservables, store })
+  const { client: relayClient, observables: relayObservables } = await getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumObservables, store })
   const relayToken = store.getters['relayClient/getToken']
   relayClient.setToken(relayToken)
 

@@ -2,14 +2,14 @@ import { RelayClient } from '../relay/client'
 import { defaultRelayUrl } from '../utils/constants'
 import { store as levelDbStore } from '../adapters/level-message-store'
 
-export function getRelayClient ({ wallet, electrumClient, store, relayUrl = defaultRelayUrl }) {
+export async function getRelayClient ({ wallet, electrumClient, store, relayUrl = defaultRelayUrl }) {
   const observables = { connected: false }
   const client = new RelayClient(relayUrl, wallet, electrumClient, {
     getPubKey: (address) => {
       const destPubKey = store.getters['contacts/getPubKey'](address)
       return destPubKey
     },
-    messageStore: levelDbStore
+    messageStore: await levelDbStore
   })
   client.events.on('disconnected', () => {
     observables.connected = false

@@ -133,7 +133,7 @@ export default {
         const handler = new KeyserverHandler()
         const relayURL = await handler.getRelayUrl(address)
 
-        const { client: relayClient } = getRelayClient({ relayURL })
+        const { client: relayClient } = await getRelayClient({ relayURL })
         const relayData = await relayClient.getRelayData(address)
         commit('updateContact', { address, profile: relayData.profile, inbox: relayData.inbox })
       } catch (err) {

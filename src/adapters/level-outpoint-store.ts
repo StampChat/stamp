@@ -1,14 +1,28 @@
 import { LevelOutpointStore } from '../wallet/storage/level-storage'
-import { remote } from 'electron'
-import process from 'process'
+import { Platform } from 'quasar'
 
-const app = remote.app
-const appData = app.getPath('appData')
+async function createStore (): Promise<LevelOutpointStore> {
+  if (Platform.is.electron) {
+    const process = await import('process')
+    const electron = await import('electron')
+    const app = electron.remote.app
+    const appData = app.getPath('appData')
 
-export const store = new LevelOutpointStore(appData)
+    const store = new LevelOutpointStore(appData)
 
-store.Open()
+    process.on('exit', (/* code */) => {
+      store.Close()
+    })
 
-process.on('exit', (/* code */) => {
-  store.Close()
-})
+    store.Open()
+
+    return store
+  }
+  const store = new LevelOutpointStore('LevelOutpointStore')
+  store.Open()
+
+  // Path doesn't matter. We're using indexdb
+  return store
+}
+
+export const store = createStore()
