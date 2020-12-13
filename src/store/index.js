@@ -73,8 +73,7 @@ const vuexLocal = new VuexPersistence({
             // Overwrite messages because storing them would be prohibitive.
             messages: {}
           })
-        },
-        pathOr({}, ['chats', 'chats'], state))
+        }, pathOr({}, ['chats', 'chats'], state))
       },
       contacts: state.contacts,
       myProfile: state.myProfile,
