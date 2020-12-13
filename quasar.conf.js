@@ -7,6 +7,7 @@
 // https://quasar.dev/quasar-cli/quasar-conf-js
 /* eslint-env node */
 /* eslint-disable @typescript-eslint/no-var-requires */
+const path = require('path')
 const { configure } = require('quasar/wrappers')
 
 module.exports = configure(function (ctx) {
@@ -90,6 +91,7 @@ module.exports = configure(function (ctx) {
 
       // https://quasar.dev/quasar-cli/cli-documentation/handling-webpack
       extendWebpack (cfg) {
+        cfg.resolve.modules = [path.resolve(__dirname, 'local_modules'), ...cfg.resolve.modules]
         // linting is slow in TS projects, we execute it only for production builds
         if (ctx.prod) {
           cfg.module.rules.push({

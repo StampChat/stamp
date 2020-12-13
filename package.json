@@ -24,6 +24,7 @@
     "bip39": "^3.0.2",
     "bitcore-lib-cash": "^8.20.1",
     "bluebird": "^3.7.2",
+    "bn.js": "file:./local_modules/bn.js",
     "core-js": "^3.6.5",
     "dompurify": "^2.0.11",
     "electron-windows-badge": "^1.0.5",
