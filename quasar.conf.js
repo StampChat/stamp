@@ -216,7 +216,7 @@ module.exports = configure(function (ctx) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'stamp',
+        appId: 'org.cashweb.stamp',
         extraFiles: [
           { from: 'src-electron/icons', to: 'resources/icons' }
         ],

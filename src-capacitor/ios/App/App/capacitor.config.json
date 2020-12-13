@@ -3,8 +3,5 @@
   "appName": "Stamp",
   "bundledWebRuntime": false,
   "npmClient": "yarn",
-  "webDir": "www",
-  "server": {
-    "url": "http://192.168.50.197:8080"
-  }
+  "webDir": "www"
 }
