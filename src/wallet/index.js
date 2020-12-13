@@ -37,7 +37,7 @@ const shuffleArray = function (arr) {
 }
 
 export class Wallet {
-  constructor(storage) {
+  constructor (storage) {
     this.storage = storage
     this.constructionLock = new Lock()
     // Workaround for the way electrum-cash ensures a subscription isn't handled
