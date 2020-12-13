@@ -6,6 +6,7 @@ import { getRelayClient } from '../adapters/vuex-relay-adapter'
 import { store as levelDbOutpointStore } from '../adapters/level-outpoint-store'
 
 function instrumentElectrumClient ({ resolve, reject, client, observables, reconnector }) {
+  console.log('instrumentElectrumclient?')
   // We need a local variable that is unique to this client, so it doesn't fuck around
   let connectionAlive = false
   const resolved = false
@@ -37,8 +38,7 @@ function instrumentElectrumClient ({ resolve, reject, client, observables, recon
         ).catch(err => {
           console.error('Error pinging electrum server. Likely disconnected', err)
           notifyDisconnect()
-        })
-    , electrumPingInterval)
+        }), electrumPingInterval)
   }
 
   client.connection.on('connect', () => {
@@ -64,15 +64,17 @@ function instrumentElectrumClient ({ resolve, reject, client, observables, recon
     console.error(err)
   })
 
+  console.log('attempting to connect')
+
   // No await here... May cause issues down the road
-  client.connect()
+  client.connect().then(() => console.log('connected')).catch(err => console.error('unablet to connect to electrum host', err.message))
 }
 
 function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
   const { url, port, scheme } = electrumServers[Math.floor(Math.random() * electrumServers.length)]
-  console.log('Using electrum server:', url, port)
+  console.log('Using electrum server:', url, port, scheme)
   try {
-    const client = new ElectrumClient('Stamp Wallet', '1.4.1', url, port, scheme)
+    const client = new ElectrumClient('Stamp Wallet', '1.4.1', url, port, scheme, 10000)
 
     const electrumPromise = new Promise((resolve, reject) => {
       instrumentElectrumClient({
@@ -136,17 +138,18 @@ export default async ({ store, Vue }) => {
   const electrumObservables = Vue.observable({ connected: false })
   createAndBindNewElectrumClient({ Vue, observables: electrumObservables, wallet })
   const xPrivKey = store.getters['wallet/getXPrivKey']
-  console.log('xpriv', xPrivKey)
-
+  console.log('xPrivKey', xPrivKey)
   // Check if setup was finished.
   // TODO: There should be a better way to do this.
   const profile = store.getters['myProfile/getProfile']
+  console.log('profile.name', profile.name)
   if (xPrivKey && profile.name) {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
   }
   const { client: relayClient, observables: relayObservables } = await getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumObservables, store })
   const relayToken = store.getters['relayClient/getToken']
+  console.log('relayToken', relayToken)
   relayClient.setToken(relayToken)
 
   Vue.prototype.$wallet = wallet

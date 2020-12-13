@@ -19,7 +19,8 @@ module.exports = configure(function (ctx) {
       'composition-api',
       'i18n',
       'axios',
-      'setup-apis'
+      'setup-apis',
+      ctx.mode.electron || !ctx.mode.capacitor ? 'electron' : 'capacitor'
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
