@@ -486,7 +486,6 @@ export class Wallet {
 
     // We re-wrap the transaction set builder so we can ensure the amount is split, in addition to each amount operating independently.
     for (const amountToBuild of amounts) {
-      console.log('amountToBuild?', amountToBuild)
       transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ addressGenerator, amount: amountToBuild, utxos }))
       amountLeft -= amountToBuild
     }

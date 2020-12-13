@@ -483,7 +483,7 @@ export class RelayClient {
 
     if (outbound && myAddress === destinationAddress) {
       // TODO: Process self sends
-      console.log('self send')
+      console.log('Self sent message. Need to process differently.')
       return
     }
 
@@ -688,7 +688,7 @@ export class RelayClient {
             // Here we are ensuring that their are yields between messages to the event loop.
             // Ideally, we move this to a webworker in the future.
             this.receiveMessage(message).then(resolve).catch((err) => {
-              console.error('Unable to deserialize message:', err)
+              console.error('Unable to deserialize message:', err.message)
               resolve()
             })
           }
