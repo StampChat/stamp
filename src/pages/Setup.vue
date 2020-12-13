@@ -289,7 +289,7 @@ export default {
       // Get profile from relay server
       // We do this first to prevent uploading broken URL to keyserver
       const idAddress = this.$wallet.myAddress
-      const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, wallet: this.$wallet })
+      const { client: relayClient } = await getRelayClient({ relayUrl: this.relayUrl, store: this.$store, wallet: this.$wallet })
 
       this.$q.loading.show({
         delay: 100,
@@ -335,7 +335,7 @@ export default {
       }
     },
     async setupRelay () {
-      const { client: relayClient } = getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClientPromise: this.$electrumClientPromise, wallet: this.$wallet })
+      const { client: relayClient } = await getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClientPromise: this.$electrumClientPromise, wallet: this.$wallet })
 
       // Set filter
       this.$q.loading.show({

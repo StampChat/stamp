@@ -1,11 +1,28 @@
 import { LevelMessageStore } from '../relay/storage/level-storage'
-import { remote } from 'electron'
-const app = remote.app
+import { Platform } from 'quasar'
 
-const appData = app.getPath('appData')
-export const store = new LevelMessageStore(appData)
+async function createStore (): Promise<LevelMessageStore> {
+  if (Platform.is.electron) {
+    const process = await import('process')
+    const electron = await import('electron')
+    const app = electron.remote.app
+    const appData = app.getPath('appData')
 
-store.Open()
-process.on('exit', (/* code */) => {
-  store.Close()
-})
+    const store = new LevelMessageStore(appData)
+
+    process.on('exit', (/* code */) => {
+      store.Close()
+    })
+
+    store.Open()
+
+    return store
+  }
+  const store = new LevelMessageStore('MessageStore')
+  store.Open()
+
+  // Path doesn't matter. We're using indexdb
+  return store
+}
+
+export const store = createStore()
