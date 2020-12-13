@@ -467,7 +467,7 @@ export class Wallet {
     const calcAmounts = (splits, amount) => {
       const splitPoints = []
       let amountLeft = amount
-      assert(splits > 0)
+      assert(splits > 0, 'transaction set split number invalid')
       while (splitPoints.length < splits - 1) {
         const splitPoint = Math.floor(Math.random() * (amountLeft - 2 * minimumOutputAmount)) + minimumOutputAmount
         if (splitPoint < minimumOutputAmount) {
@@ -613,12 +613,12 @@ export class Wallet {
   }
 
   putOutpoint (utxo) {
-    assert(utxo.type !== undefined)
-    assert(utxo.privKey !== undefined)
-    assert(utxo.address !== undefined)
-    assert(utxo.satoshis !== undefined)
-    assert(utxo.txId !== undefined)
-    assert(utxo.outputIndex !== undefined)
+    assert(utxo.type !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.privKey !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.address !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.satoshis !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.txId !== undefined, 'putOupoint utxo wrong format')
+    assert(utxo.outputIndex !== undefined, 'putOupoint utxo wrong format')
     console.log('adding utxo', calcId(utxo))
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.putOutpoint(utxo)
