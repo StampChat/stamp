@@ -121,8 +121,8 @@ class KeyserverHandler {
 
     // Construct payment
     const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
+
     const paymentUrlFull = new URL(paymentUrl, serverUrl)
-    console.log('Sending payment to', paymentUrlFull.href)
     const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
 
     await KeyserverHandler.putMetadata(idAddress, serverUrl, authWrapper, token)
