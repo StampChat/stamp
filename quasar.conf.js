@@ -95,6 +95,20 @@ module.exports = configure(function (ctx) {
         cfg.resolve.modules = [path.resolve(__dirname, 'local_modules'), ...cfg.resolve.modules]
         // linting is slow in TS projects, we execute it only for production builds
         if (ctx.prod) {
+          // Ensure we are copying our local_modules folder into place
+          // before yarn install --production runs. Otherwise, we
+          // will have issues.
+          const CopyWebpackPlugin = require('copy-webpack-plugin')
+          cfg.plugins.push(
+            new CopyWebpackPlugin({
+              patterns: [
+                {
+                  from: 'local_modules',
+                  to: path.join(cfg.output.path, 'local_modules')
+                }
+              ]
+            })
+          )
           cfg.module.rules.push({
             enforce: 'pre',
             test: /\.(js|vue)$/,
