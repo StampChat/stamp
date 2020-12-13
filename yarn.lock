@@ -2740,7 +2740,7 @@ bip39@^3.0.2:
     pbkdf2 "^3.0.9"
     randombytes "^2.0.1"
 
-bitcore-lib-cash@^8.20.1:
+bitcore-lib-cash@^8.23.0:
   version "8.23.1"
   resolved "https://registry.yarnpkg.com/bitcore-lib-cash/-/bitcore-lib-cash-8.23.1.tgz#188be56f15f4b4d49aa85777cb998252be67cf60"
   integrity sha512-QenfM9v5L4UdicRbmMYQbxeNqJjzifBT7DQbK0ambqkxiaUi7k5qY62Gx0N2GIdY5B+edmMib+xCbadaHRTN+w==

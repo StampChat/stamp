@@ -9,7 +9,7 @@ import { crypto, PublicKey, PrivateKey } from 'bitcore-lib-cash'
 import assert from 'assert'
 
 export const constructStampTransactions = async function (wallet, payloadDigest, destPubKey, amount) {
-  assert(payloadDigest instanceof Buffer)
+  assert(payloadDigest instanceof Buffer, 'digestPayload is wrong type')
 
   // Stamp output
   const stampHDPubKey = constructStampHDPublicKey(payloadDigest, destPubKey)
@@ -113,7 +113,7 @@ export const constructMessage = async function (wallet, plainTextPayload, source
 }
 
 export const constructReplyEntry = function ({ payloadDigest }) {
-  assert(typeof payloadDigest === 'string')
+  assert(typeof payloadDigest === 'string', 'digestPayload is wrong type')
   const payloadDigestBuffer = Buffer.from(payloadDigest, 'hex')
 
   const entry = new PayloadEntry()
