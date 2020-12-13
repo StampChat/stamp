@@ -18,6 +18,7 @@
     "build-android": "quasar build  -m capacitor -T android"
   },
   "dependencies": {
+    "@capacitor/core": "^2.4.3",
     "@quasar/extras": "^1.9.10",
     "@vue/composition-api": "^0.6.4",
     "axios": "^0.18.1",
