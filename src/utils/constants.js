@@ -19,11 +19,11 @@ export const electrumServers = [
   //   port: 50003,
   //   scheme: ElectrumTransport.WS.Scheme
   // },
-  // {
-  //   url: 'telectrum.bitcoinabc.org',
-  //   port: 60004,
-  //   scheme: ElectrumTransport.WSS.Scheme
-  // },
+  {
+    url: 'telectrum.bitcoinabc.org',
+    port: 60004,
+    scheme: ElectrumTransport.WSS.Scheme
+  },
   {
     url: 'telectrum.bitcoinabc.org',
     port: 60006,
