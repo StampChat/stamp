@@ -73,32 +73,20 @@
 </template>
 
 <script>
-import Chat from '../../pages/Chat.vue'
 import ChatList from '../chat/ChatList.vue'
 import SettingsPanel from '../panels/SettingsPanel.vue'
-import ContactPanel from '../panels/ContactPanel.vue'
-import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
-import { debounce } from 'quasar'
-import { defaultContacts } from '../../utils/constants'
-import KeyserverHandler from '../../keyserver/handler'
-import { errorNotify } from '../../utils/notifications'
 import ReceiveBitcoinDialog from '../dialogs/ReceiveBitcoinDialog.vue'
 import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 import { formatBalance } from '../../utils/formatting'
 
-const compactWidth = 70
 const compactCutoff = 325
-const compactMidpoint = (compactCutoff + compactWidth) / 2
 
 export default {
   components: {
-    Chat,
     ChatList,
-    ContactPanel,
     SettingsPanel,
-    ContactBookDialog,
     ReceiveBitcoinDialog,
     RelayConnectDialog,
     NewContactDialog
@@ -107,17 +95,17 @@ export default {
     loaded: {
       type: Boolean,
       required: true
-    },
+    }
   },
   data () {
     return {
-      tab: "contacts",
+      tab: 'contacts',
       // My Drawer
       walletOpen: false,
       relayConnectOpen: false,
       newContactOpen: false,
       //
-      trueSplitterRatio: compactCutoff,
+      trueSplitterRatio: compactCutoff
     }
   },
   methods: {
@@ -160,7 +148,7 @@ export default {
         return
       }
       return formatBalance(balance)
-    },
+    }
   },
   computed: {
     ...mapState('chats', ['chats', 'activeChatAddr']),

@@ -43,8 +43,6 @@
 
 <script>
 import Chat from '../pages/Chat.vue'
-import ChatList from '../components/chat/ChatList.vue'
-import SettingsPanel from '../components/panels/SettingsPanel.vue'
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import ContactPanel from '../components/panels/ContactPanel.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
@@ -61,11 +59,9 @@ const compactMidpoint = (compactCutoff + compactWidth) / 2
 export default {
   components: {
     Chat,
-    ChatList,
     ContactPanel,
-    SettingsPanel,
     LeftDrawer,
-    ContactBookDialog,
+    ContactBookDialog
   },
   data () {
     return {
@@ -133,7 +129,10 @@ export default {
           if (inputRatio < compactMidpoint) {
             this.trueSplitterRatio = compactWidth
             this.compact = true
-          } else if (inputRatio > compactMidpoint && inputRatio < compactCutoff) {
+          } else if (
+            inputRatio > compactMidpoint &&
+            inputRatio < compactCutoff
+          ) {
             this.compact = false
             this.trueSplitterRatio = compactCutoff
           } else {
@@ -174,37 +173,49 @@ export default {
         setTimeout(refreshMessages, 100)
         return
       }
-      this.$relayClient.refresh().then(() => {
-        const t1 = performance.now()
-        console.log(`Loading messages took ${t1 - t0}ms`)
-        this.loaded = true
-      }).catch((err) => {
-        console.error(err)
-        setTimeout(refreshMessages, 100)
-      })
+      this.$relayClient
+        .refresh()
+        .then(() => {
+          const t1 = performance.now()
+          console.log(`Loading messages took ${t1 - t0}ms`)
+          this.loaded = true
+        })
+        .catch((err) => {
+          console.error(err)
+          setTimeout(refreshMessages, 100)
+        })
     }
     refreshMessages()
 
     const handler = new KeyserverHandler({ wallet: this.$wallet })
     // Update keyserver data if it doesn't exist.
     handler.getRelayUrl(this.$wallet.myAddressStr).catch(() => {
-      handler.updateKeyMetadata(this.$relayClient.url, this.$wallet.identityPrivKey)
+      handler.updateKeyMetadata(
+        this.$relayClient.url,
+        this.$wallet.identityPrivKey
+      )
     })
 
     // Update profile if it doesn't exist.
     this.$relayClient.getRelayData(this.$wallet.myAddressStr).catch(() => {
       const relayData = this.getRelayData()
-      this.$relayClient.updateProfile(this.$wallet.identityPrivKey, relayData.profile, relayData.inbox.acceptancePrice).catch(err => {
-        console.error(err)
-        // TODO: Move specialization down error displayer
-        if (err.response.status === 413) {
-          errorNotify(new Error(this.$t('profileDialog.avatarTooLarge')))
-          this.$q.loading.hide()
+      this.$relayClient
+        .updateProfile(
+          this.$wallet.identityPrivKey,
+          relayData.profile,
+          relayData.inbox.acceptancePrice
+        )
+        .catch((err) => {
+          console.error(err)
+          // TODO: Move specialization down error displayer
+          if (err.response.status === 413) {
+            errorNotify(new Error(this.$t('profileDialog.avatarTooLarge')))
+            this.$q.loading.hide()
+            throw err
+          }
+          errorNotify(new Error(this.$t('profileDialog.unableContactRelay')))
           throw err
-        }
-        errorNotify(new Error(this.$t('profileDialog.unableContactRelay')))
-        throw err
-      })
+        })
     })
 
     this.$q.loading.hide()
