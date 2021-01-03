@@ -1,5 +1,5 @@
 <template>
-  <div class='full-width column col'>
+  <div class="full-width column col">
     <contact-card
       :address="getMyAddressStr"
       :name="getProfile.name"

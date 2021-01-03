@@ -17,7 +17,12 @@ module.exports = {
     project: resolve(__dirname, './tsconfig.json'),
     tsconfigRootDir: __dirname,
     ecmaVersion: 2018, // Allows for the parsing of modern ECMAScript features
-    sourceType: 'module' // Allows for the use of imports
+    sourceType: 'module', // Allows for the use of imports
+
+    projectFolderIgnoreList: [
+      "/node_modules/",
+      "/local_modules/",
+    ]
   },
 
   env: {

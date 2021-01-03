@@ -3,5 +3,12 @@
   "compilerOptions": {
     "target": "es2017",
     "baseUrl": "."
-  }
+  },
+  "include": [
+    "src",
+    "local_modules/bn.js/lib/bn.js"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
