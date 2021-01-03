@@ -1,5 +1,5 @@
 <template>
-  <div class='full-width column col'>
+  <div class="full-width column col">
     <q-scroll-area class="q-px-none col">
       <q-list>
         <q-separator />
@@ -54,14 +54,14 @@ export default {
         return
       }
       return formatBalance(balance)
-    },
+    }
   },
   computed: {
     ...mapGetters({
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getNumUnread: 'chats/getNumUnread',
       balance: 'wallet/balance'
-    }),
+    })
   }
 }
 </script>
