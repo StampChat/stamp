@@ -2,17 +2,15 @@
   <q-layout view="hHr LpR lff">
     <q-drawer
       v-model="myDrawerOpen"
-      overlay
-      behavior="mobile"
       :width="splitterRatio"
       :breakpoint="400"
     >
-      <settings-panel />
+      <left-drawer :loaded="loaded" />
     </q-drawer>
     <q-drawer
       v-model="contactDrawerOpen"
       side="right"
-      :width="300"
+      :width="splitterRatio"
       :breakpoint="400"
     >
       <contact-panel
@@ -26,36 +24,18 @@
     </q-dialog>
     <q-page-container>
       <q-page :style-fn="tweak">
-        <q-splitter
-          v-model="splitterRatio"
-          class="full-height"
-          unit="px"
-          emit-immediately
-          :limits="[compactWidth, 1000]"
-        >
-          <template v-slot:before>
-            <chat-list
-              class="full-height"
-              :loaded="loaded"
-              @toggleMyDrawerOpen="toggleMyDrawerOpen"
-              :compact="compact"
-            />
-          </template>
-
-          <template v-slot:after>
-            <chat
-              v-for="(item, index) in chats"
-              v-show="activeChatAddr === index"
-              :key="index"
-              :address="index"
-              :messages="item.messages"
-              :active="activeChatAddr === index"
-              :style="`height: inherit; min-height: inherit;`"
-              :loaded="loaded"
-              @toggleContactDrawerOpen="toggleContactDrawerOpen"
-            />
-          </template>
-        </q-splitter>
+        <chat
+          v-for="(item, index) in chats"
+          v-show="activeChatAddr === index"
+          :key="index"
+          :address="index"
+          :messages="item.messages"
+          :active="activeChatAddr === index"
+          :style="`height: inherit; min-height: inherit;`"
+          :loaded="loaded"
+          @toggleContactDrawerOpen="toggleContactDrawerOpen"
+          @toggleMyDrawerOpen="toggleMyDrawerOpen"
+        />
       </q-page>
     </q-page-container>
   </q-layout>
@@ -65,6 +45,7 @@
 import Chat from '../pages/Chat.vue'
 import ChatList from '../components/chat/ChatList.vue'
 import SettingsPanel from '../components/panels/SettingsPanel.vue'
+import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import ContactPanel from '../components/panels/ContactPanel.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
@@ -83,7 +64,8 @@ export default {
     ChatList,
     ContactPanel,
     SettingsPanel,
-    ContactBookDialog
+    LeftDrawer,
+    ContactBookDialog,
   },
   data () {
     return {
