@@ -1,5 +1,5 @@
 <template>
-  <div class="column full-height">
+  <div class='full-width column col'>
     <contact-card
       :address="getMyAddressStr"
       :name="getProfile.name"
@@ -43,7 +43,7 @@
     <div class="flex-break" />
     <!-- Drawer -->
     <q-scroll-area class="col">
-      <q-list padding>
+      <q-list>
         <q-item
           clickable
           v-ripple

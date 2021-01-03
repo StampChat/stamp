@@ -21,6 +21,13 @@
 
     <q-header>
       <q-toolbar class="q-pl-sm">
+        <q-btn
+          class="q-px-sm"
+          flat
+          dense
+          @click="toggleSettingsDrawerOpen"
+          icon="menu"
+        />
         <q-avatar rounded>
           <img :src="contactProfile.avatar">
         </q-avatar>
@@ -267,6 +274,9 @@ export default {
         return true
       }
       return previousMessage.senderAddress !== message.senderAddress
+    },
+    toggleSettingsDrawerOpen () {
+      this.$emit('toggleMyDrawerOpen')
     },
     toggleContactDrawerOpen () {
       this.$emit('toggleContactDrawerOpen')

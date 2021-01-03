@@ -1,38 +1,5 @@
 <template>
-  <div class="column full-height">
-    <!-- Wallet dialog -->
-    <q-dialog v-model="walletOpen">
-      <receive-bitcoin-dialog />
-    </q-dialog>
-
-    <!-- Relay reconnect dialog -->
-    <q-dialog v-model="relayConnectOpen">
-      <relay-connect-dialog />
-    </q-dialog>
-
-    <!-- New contact dialog -->
-    <q-dialog v-model="newContactOpen">
-      <new-contact-dialog />
-    </q-dialog>
-
-    <q-toolbar>
-      <q-btn
-        class="q-px-sm"
-        flat
-        dense
-        @click="toggleMyDrawerOpen"
-        icon="menu"
-      />
-      <q-space />
-      <q-btn
-        v-if="!compact"
-        class="q-px-sm"
-        flat
-        dense
-        @click="newContactOpen = true"
-        icon="add"
-      />
-    </q-toolbar>
+  <div class='full-width column col'>
     <q-scroll-area class="q-px-none col">
       <q-list>
         <q-separator />
@@ -52,46 +19,6 @@
         </q-item>
       </q-list>
     </q-scroll-area>
-    <q-list>
-      <q-separator />
-      <q-item
-        v-show="!compact"
-        clickable
-      >
-        <q-item-section
-          @click="walletOpen=true"
-        >
-          <q-item-label>{{ $t('chatList.balance') }}</q-item-label>
-          <q-item-label caption>
-            {{ formattedBalance }}
-          </q-item-label>
-        </q-item-section>
-        <q-item-section
-          v-if="!walletConnected"
-          side
-        >
-          <q-btn
-            icon="account_balance_wallet"
-            flat
-            round
-            color="red"
-          />
-        </q-item-section>
-        <q-item-section
-          v-if="!relayConnected"
-          side
-          clickable
-          @click="relayConnectOpen=true"
-        >
-          <q-btn
-            icon="email"
-            flat
-            round
-            color="red"
-          />
-        </q-item-section>
-      </q-item>
-    </q-list>
   </div>
 </template>
 
@@ -99,9 +26,6 @@
 import ChatListItem from './ChatListItem.vue'
 import { mapGetters } from 'vuex'
 import { formatBalance } from '../../utils/formatting'
-import ReceiveBitcoinDialog from '../dialogs/ReceiveBitcoinDialog.vue'
-import NewContactDialog from '../dialogs/NewContactDialog.vue'
-import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 
 export default {
   props: {
@@ -115,28 +39,22 @@ export default {
     }
   },
   components: {
-    ChatListItem,
-    ReceiveBitcoinDialog,
-    RelayConnectDialog,
-    NewContactDialog
+    ChatListItem
   },
   data () {
     return {
-      walletOpen: false,
-      relayConnectOpen: false,
-      newContactOpen: false
     }
   },
   methods: {
+    toggleMyDrawerOpen () {
+      this.$emit('toggleMyDrawerOpen')
+    },
     formatBalance (balance) {
       if (!balance) {
         return
       }
       return formatBalance(balance)
     },
-    toggleMyDrawerOpen () {
-      this.$emit('toggleMyDrawerOpen')
-    }
   },
   computed: {
     ...mapGetters({
@@ -144,15 +62,6 @@ export default {
       getNumUnread: 'chats/getNumUnread',
       balance: 'wallet/balance'
     }),
-    relayConnected () {
-      return this.$relay.connected
-    },
-    walletConnected () {
-      return this.$electrum.connected
-    },
-    formattedBalance () {
-      return formatBalance(this.balance)
-    }
   }
 }
 </script>
