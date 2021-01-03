@@ -1,5 +1,5 @@
 import { boot } from 'quasar/wrappers'
-import messages from 'src/i18n'
+import messages from '../i18n'
 import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 
