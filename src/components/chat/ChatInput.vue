@@ -4,29 +4,69 @@
       <q-btn
         dense
         flat
-        icon="attach_money"
-        @click="sendMoneyClicked"
-      />
-      <q-btn
-        dense
-        flat
-        icon="attach_file"
-        @click="sendFileClicked"
-      />
-      <q-btn
-        dense
-        flat
-        icon="insert_emoticon"
-        @click="menuPicker=true"
+        icon="unfold_more"
       >
         <q-menu>
-          <picker
-            :data="emojiIndex"
-            set="twitter"
-            @select="addEmoji"
-            :title="$t('chatInput.emojiPickerTitle')"
-            :show-skin-tones="false"
-          />
+          <q-list style="min-width: 100px">
+            <q-item
+              clickable
+              v-close-popup
+              @click="sendMoneyClicked"
+            >
+              <q-item-section avatar>
+                <q-icon name="attach_money" />
+              </q-item-section>
+              <q-item-section>
+                Attach Stealth Funds
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              v-close-popup
+              @click="sendFileClicked"
+            >
+              <q-item-section avatar>
+                <q-icon name="attach_file" />
+              </q-item-section>
+              <q-item-section>
+                Attach File
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable>
+              <q-item-section avatar>
+                <q-icon name="insert_emoticon" />
+              </q-item-section>
+              <q-item-section>
+                Insert Emoji
+              </q-item-section>
+              <q-menu self="center middle">
+                <picker
+                  v-close-popup
+                  :data="emojiIndex"
+                  set="twitter"
+                  @select="addEmoji"
+                  :title="$t('chatInput.emojiPickerTitle')"
+                  :show-skin-tones="false"
+                />
+              </q-menu>
+            </q-item>
+            <q-item>
+              <q-item-section>
+                <q-input
+                  dense
+                  outlined
+                  style="width: 150px"
+                  label="Stamp Price"
+                  suffix="sats"
+                  :value="stampAmount"
+                  @input="stampAmountChanged"
+                  input-class="text-right"
+                />
+              </q-item-section>
+            </q-item>
+          </q-list>
         </q-menu>
       </q-btn>
 
@@ -48,16 +88,6 @@
         flat
         icon="send"
         @click="sendMessage"
-      />
-      <q-input
-        dense
-        outlined
-        style="width: 150px"
-        label="Stamp Price"
-        suffix="sats"
-        :value="stampAmount"
-        @input="stampAmountChanged"
-        input-class="text-right"
       />
     </q-toolbar>
   </div>
@@ -113,6 +143,7 @@ export default {
       this.$emit('stampAmountChanged', value)
     },
     addEmoji (value) {
+      // TODO: This needs to be cursor position aware
       this.innerMessage += `:${value.id}:`
     }
   },
