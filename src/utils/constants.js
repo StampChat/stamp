@@ -21,13 +21,13 @@ export const electrumServers = [
   // },
   {
     url: 'telectrum.bitcoinabc.org',
-    port: 60004,
-    scheme: ElectrumTransport.WSS.Scheme
-  },
-  {
-    url: 'telectrum.bitcoinabc.org',
     port: 60006,
     scheme: ElectrumTransport.WS.Scheme
+  },
+  {
+    url: 'tfulcrum.cashweb.io',
+    port: 443,
+    scheme: ElectrumTransport.WSS.Scheme
   }
 ]
 export const electrumPingInterval = 10_000

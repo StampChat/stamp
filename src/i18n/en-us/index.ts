@@ -16,8 +16,8 @@ export default {
   },
   setup: {
     welcome: 'Welcome',
-    setupWallet: 'Setup Wallet',
-    deposit: 'Deposit Bitcoin Cash',
+    setupWallet: 'Setup Account',
+    deposit: 'Deposit Funds',
     chooseRelay: 'Choose a relay server',
     setupProfile: 'Setup Profile',
     settings: 'Settings',
@@ -86,8 +86,11 @@ export default {
     darkMode: 'Dark Mode'
   },
   profile: {
-    name: 'Name *',
+    name: 'Enter your display name...',
+    seedEntry: 'Your password (Seed)...',
+    invalidSeed: 'Invalid seed phrase...',
     nameHint: 'Name displayed to others',
+    enterSeed: 'Enter a seed phrase...',
     pleaseType: 'Please type something',
     bio: 'Bio',
     bioHint: 'Short biolography displayed to others',

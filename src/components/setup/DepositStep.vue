@@ -1,104 +1,41 @@
 <template>
   <div class="col q-gutter-y-md">
-    <q-card>
-      <q-card-section class="bg-primary text-white">
-        <div class="text-subtitle1 text-bold">
-          How to deposit?
-        </div>
-      </q-card-section>
-      <q-card-section class="text-body2">
-        The Stamp protocol requires that you attach a small payment to every message.
-        <br>
-        <br>The wallet will handle this automatically, but first you must deposit some Bitcoin into the wallet.
-        Do this by sending Bitcoin Cash to the
-        <strong>deposit address</strong> below.
-        <br>
-        <br>No Bitcoin Cash? Click the faucet below!
-      </q-card-section>
-      <q-card-actions>
+    <q-resize-observer @resize="setQRSize" />
+    <qrcode-vue
+      style="row"
+      :value="identityAddress"
+      level="H"
+      size="300"
+    />
+
+    <q-input
+      class="fit q-px-lg"
+      filled
+      auto-grow
+      v-model="identityAddress"
+      readonly
+    >
+      <template v-slot:after>
         <q-btn
+          dense
           color="primary"
           flat
-          @click="openFaucet"
-        >
-          bitcoin.com faucet
-        </q-btn>
-      </q-card-actions>
-    </q-card>
-    <div class="row q-gutter-x-md">
-      <!-- Deposit card -->
-      <q-card class="col">
-        <q-card-section class="bg-primary text-white">
-          <div class="text-subtitle1 text-bold">
-            Deposit Addresses
-          </div>
-        </q-card-section>
-        <q-card-section class="row">
-          <qrcode-vue
-            style="margin-left: auto; margin-right: auto;"
-            :value="currentAddress"
-            :size="qrHeight"
-            level="H"
-          />
-        </q-card-section>
+          icon="content_copy"
+          @click="copyAddress"
+        />
+      </template>
+    </q-input>
 
-        <q-card-section class="row">
-          <q-input
-            class="fit q-px-lg"
-            filled
-            auto-grow
-            v-model="currentAddress"
-            readonly
-          >
-            <template v-slot:after>
-              <q-btn
-                dense
-                color="primary"
-                flat
-                icon="content_copy"
-                @click="copyAddress"
-              />
-              <q-btn
-                dense
-                color="primary"
-                flat
-                icon="refresh"
-                @click="nextAddress"
-              />
-            </template>
-          </q-input>
-        </q-card-section>
-      </q-card>
-
-      <!-- Balance Card -->
-      <q-card class="col">
-        <q-card-section class="bg-primary text-white">
-          <div class="text-subtitle1 text-bold">
-            Current Balance
-          </div>
-        </q-card-section>
-        <q-card-section class="row">
-          <q-circular-progress
-            style="margin-left: auto; margin-right: auto;"
-            show-value
-            :value="percentageBalance"
-            size="18.5vw"
-            :thickness="0.25"
-            color="green"
-            track-color="grey"
-          >
-            <q-resize-observer @resize="setQrHeight" />
-            <span class="text-h5">{{ formatBalance }}</span>
-          </q-circular-progress>
-        </q-card-section>
-        <q-card-section class="row">
-          <span
-            class="row text-subtitle1"
-            style="margin-left: auto; margin-right: auto;"
-          >Recommended {{ recomendedBalance }} satoshi</span>
-        </q-card-section>
-      </q-card>
-    </div>
+    <q-linear-progress
+      show-value
+      stripe
+      rounded
+      size="20px"
+      :value="percentageBalance"
+      color="warning"
+      class="q-mt-sm"
+    />
+    <span class="text-h5">{{ formatBalance }}</span>
   </div>
 </template>
 
@@ -106,7 +43,7 @@
 import QrcodeVue from 'qrcode.vue'
 import { copyToClipboard } from 'quasar'
 import { mapGetters } from 'vuex'
-import { numAddresses, recomendedBalance } from '../../utils/constants'
+import { recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
 import { formatBalance } from '../../utils/formatting'
 
@@ -116,15 +53,14 @@ export default {
   },
   data () {
     return {
-      currentAddress: this.$wallet.privKeys[0].toAddress('testnet').toString(), // TODO: Generic over network
       paymentAddrCounter: 0,
       recomendedBalance,
-      qrHeight: 300
+      qrSize: 300
     }
   },
   methods: {
     copyAddress () {
-      copyToClipboard(this.currentAddress)
+      copyToClipboard(this.identityAddress)
         .then(() => {
           addressCopiedNotify()
         })
@@ -132,26 +68,21 @@ export default {
           // fail
         })
     },
-    nextAddress () {
-      // TODO: Remove this functionality and only show ID address
-      // Increment address
-      this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
-      const privKey = this.$wallet.privKeys[this.paymentAddrCounter]
-      this.currentAddress = privKey.toAddress('testnet').toString() // TODO: Make generic
-    },
     openFaucet () {
       event.preventDefault()
       this.openURL('https://developer.bitcoin.com/faucets/bch/')
     },
-    setQrHeight (size) {
-      this.qrHeight = size.height
+    setQRSize (size) {
+      this.qrSize = size.height
     }
   },
   computed: {
     ...mapGetters({ balance: 'wallet/balance' }),
+    identityAddress () {
+      return this.$wallet.myAddress.toString()
+    },
     percentageBalance () {
-      const percentage =
-        100 * Math.min(this.balance / this.recomendedBalance, 1)
+      const percentage = this.balance / this.recomendedBalance
       return percentage
     },
     formatBalance () {
