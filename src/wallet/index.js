@@ -7,7 +7,7 @@ import { numAddresses, numChangeAddresses } from '../utils/constants'
 import { toElectrumScriptHash } from '../utils/formatting'
 import { calcId } from './helpers'
 
-import { Address, crypto, Script, Transaction } from 'bitcore-lib-cash'
+import { Address, Script, Transaction } from 'bitcore-lib-cash'
 import { Lock } from './lock'
 
 const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
@@ -58,6 +58,7 @@ export class Wallet {
     this._identityPrivKey = xPrivKey.deriveChild(20102019)
       .deriveChild(0, true)
       .privateKey // TODO: Proper path for this
+
     this.init()
   }
 
@@ -91,6 +92,16 @@ export class Wallet {
     this.addresses = {}
     this.changeAddresses = {}
     this.electrumScriptHashes = {}
+    // Init setup for the identity script hash
+    const myLegacyAddress = this.myAddress.toLegacyAddress()
+    this.addElectrumScriptHash({
+      scriptHash: toElectrumScriptHash(myLegacyAddress),
+      address: myLegacyAddress,
+      change: false,
+      privKey: this.identityPrivKey
+    })
+    this.setAddress({ address: myLegacyAddress, privKey: this.identityPrivKey })
+
     for (let i = 0; i < numAddresses; i++) {
       const privKey = xPrivKey.deriveChild(44, true)
         .deriveChild(145, true)
@@ -191,6 +202,13 @@ export class Wallet {
     await P.map(scriptHashes, scriptHash => this.updateUTXOFromScriptHash(scriptHash), { concurrency: 5 })
   }
 
+  async startListeners () {
+    const client = await this.electrumClientPromise
+    const scriptHashes = Object.keys(this.electrumScriptHashes)
+
+    await P.map(scriptHashes, scriptHash => client.subscribe(this.scriptHashSubscriber, 'blockchain.scripthash.subscribe', scriptHash), { concurrency: 5 })
+  }
+
   async fixOutpoint (utxoId) {
     // TODO: This needs some thought to ensure we do not delete outpoints that
     // are possibly just out of sync with the mempool.
@@ -232,19 +250,6 @@ export class Wallet {
     const [scriptHash, status] = params
     console.log('Subscription hit', scriptHash, status)
     await this.updateUTXOFromScriptHash(scriptHash)
-  }
-
-  async startListeners () {
-    const ecl = await this.electrumClientPromise
-    const addresses = Object.keys(this.allAddresses)
-
-    await P.map(addresses, address => {
-      const scriptHash = Script.buildPublicKeyHashOut(address)
-      const scriptHashRaw = scriptHash.toBuffer()
-      const digest = crypto.Hash.sha256(scriptHashRaw)
-      const digestHexReversed = digest.reverse().toString('hex')
-      return ecl.subscribe(this.scriptHashSubscriber, 'blockchain.scripthash.subscribe', digestHexReversed)
-    }, { concurrency: 20 })
   }
 
   async forwardUTXOsToAddress ({ utxos, address }) {
