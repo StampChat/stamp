@@ -2,52 +2,46 @@
   <div class="col q-gutter-y-md">
     <q-input
       v-model="name"
-      class="q-pa-xs"
       filled
       :label="$t('profile.name')"
       lazy-rules
       style="width:100%"
       :rules="[ val => !!val || val.length > 0 || $t('profile.pleaseType') ]"
-    >
-      <template v-slot:after>
-        <q-btn
-          class="q-ma-xs q-ma-xs"
-          flat
-          color="primary"
-          label="Import"
-          @click="toggleImport"
-        />
-      </template>
-    </q-input>
-    <div v-if="!importSeed">
-      <q-input
-        class="q-pa-xs"
-        v-model="seed"
-        :label="$t('profile.seedEntry')"
-        type="textarea"
-        filled
-        rows="2"
-        lazy-rules
-        :rules=" [ val => isSeedValid || $t('profile.invalidSeed') ]"
-        :placeholder="$t('profile.enterSeed')"
-      />
-      <q-btn
-        class="q-pa-xs q-ma-none"
-        round
-        flat
-        color="primary"
-        icon="content_copy"
-        @click="copySeed"
-      />
-      <q-btn
-        class="q-pa-xs q-ma-none"
-        round
-        flat
-        color="primary"
-        icon="refresh"
-        @click="generateMnemonic"
-      />
-    </div>
+    />
+    <q-input
+      v-model="seed"
+      ref="seedInput"
+      :label="$t('profile.seedEntry')"
+      type="textarea"
+      filled
+      rows="2"
+      lazy-rules
+      :rules=" [ val => isSeedValid || $t('profile.invalidSeed') ]"
+      :placeholder="$t('profile.enterSeed')"
+    />
+    <q-btn
+      class="q-pa-xs q-ma-none"
+      round
+      flat
+      color="primary"
+      icon="content_copy"
+      @click="copySeed"
+    />
+    <q-btn
+      class="q-pa-xs q-ma-none"
+      round
+      flat
+      color="primary"
+      icon="refresh"
+      @click="generateMnemonic"
+    />
+    <q-btn
+      class="q-ma-xs q-ma-xs"
+      flat
+      color="primary"
+      label="Import"
+      @click="pasteImported"
+    />
   </div>
 </template>
 
@@ -83,8 +77,15 @@ export default {
         // fail
       })
     },
-    toggleImport () {
-      this.importSeed = true
+    pasteImported () {
+      const el = document.createElement('textarea')
+      document.body.appendChild(el)
+      el.focus()
+      this.seed = ''
+      document.execCommand('paste')
+      this.seed = el.value
+      document.body.removeChild(el)
+      this.$nextTick(() => this.$refs.seedInput.select())
     }
   },
   computed: {

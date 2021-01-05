@@ -86,7 +86,7 @@ export default {
     darkMode: 'Dark Mode'
   },
   profile: {
-    name: 'Enter your display name...',
+    name: 'Enter your desired character name...',
     seedEntry: 'Your password (Seed)...',
     invalidSeed: 'Invalid seed phrase...',
     nameHint: 'Name displayed to others',
