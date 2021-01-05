@@ -4,6 +4,7 @@
       v-model="myDrawerOpen"
       :width="splitterRatio"
       :breakpoint="400"
+      show-if-above
     >
       <left-drawer :loaded="loaded" />
     </q-drawer>
@@ -67,7 +68,7 @@ export default {
     return {
       trueSplitterRatio: compactCutoff,
       loaded: false,
-      myDrawerOpen: false,
+      myDrawerOpen: !!this.activeChatAddr,
       contactDrawerOpen: false,
       contactBookOpen: false,
       compact: false,
