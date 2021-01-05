@@ -21,7 +21,7 @@
     "@capacitor/core": "^2.4.3",
     "@quasar/extras": "^1.9.10",
     "@vue/composition-api": "^0.6.4",
-    "axios": "^0.18.1",
+    "axios": "^0.21.1",
     "bip39": "^3.0.2",
     "bitcore-lib-cash": "^8.23.0",
     "bluebird": "^3.7.2",
