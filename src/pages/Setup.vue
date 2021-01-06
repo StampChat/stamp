@@ -39,6 +39,12 @@
               class="q-ml-sm"
             />
           </q-stepper-navigation>
+          <q-banner
+            inline-actions
+            class="text-white bg-red"
+          >
+            {{ $t('setup.seedWarning') }}
+          </q-banner>
         </template>
       </q-stepper>
     </div>
@@ -361,6 +367,16 @@ export default {
     },
     isWalletNonEmpty () {
       return !!this.balance
+    },
+    nextButtonLabel () {
+      switch (this.step) {
+        case 1:
+          return this.$t('setup.accountSetupNext')
+        case 2:
+          return this.$t('setup.depositStepNext')
+        default:
+          return 'Unknown'
+      }
     }
   },
   created () {

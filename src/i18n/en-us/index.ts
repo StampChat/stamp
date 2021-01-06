@@ -16,12 +16,11 @@ export default {
   },
   setup: {
     welcome: 'Welcome',
-    setupWallet: 'Setup Account',
-    deposit: 'Deposit Funds',
-    chooseRelay: 'Choose a relay server',
-    setupProfile: 'Setup Profile',
+    setupWallet: 'Character Setup',
+    deposit: 'Deposit eCash',
     settings: 'Settings',
     back: 'Back',
+    seedWarning: 'Do not forget your character\'s secret name, you will never be able to remember them again.',
     searchingRelay: 'Searching for existing relay data...',
     networkErrorRelayDied: 'Network Error: Relay server connection died. ',
     networkErrorRelayUnexpected: 'Network error: Relay disconnnected unexpectedly.',
@@ -32,26 +31,25 @@ export default {
     profileImageLargeError: 'Profile image is too large, select a smaller image.',
     continue: 'Continue',
     finish: 'Finish',
-    unkown: 'Unkown',
-    newWallet: 'New Wallet',
-    importWallet: 'Import Wallet',
     generatingWallet: 'Generating wallet...',
     gatheringBalances: 'Gathering balances...',
     watchingWallet: 'Watching wallet...',
     searchingExistingMetaData: 'Searching for existing keyserver metadata...',
-    errorContactKeyServer: 'Unable to contact keyserver'
+    errorContactKeyServer: 'Unable to contact keyserver',
+    accountSetupNext: 'Proceed',
+    depositStepNext: 'Enter the Masquerade'
   },
   newContactDialog: {
     newContact: 'New Contact',
-    enterBitcoinCashAddress: 'Enter Bitcoin Cash address...',
+    enterBitcoinCashAddress: 'Enter eCash address...',
     notFound: 'Not Found',
     minimumStamp: 'Minimum Stamp'
   },
   SettingPanel: {
     newContact: 'New Contact',
     contacts: 'Contacts',
-    sendBitcoinCash: 'Send Bitcoin Cash',
-    recieveBitcoinCash: 'Receive Bitcoin Cash',
+    sendBitcoinCash: 'Send eCash',
+    recieveBitcoinCash: 'Receive eCash',
     profile: 'Profile',
     settings: 'Settings'
   },
@@ -63,7 +61,7 @@ export default {
   },
   sendAddressDialog: {
     sendToAddress: 'Send to Address',
-    enterBitcoinCashAddress: 'Enter Bitcoin Cash address...',
+    enterBitcoinCashAddress: 'Enter eCash address...',
     enterAmount: 'Enter Amount',
     cancel: 'Cancel',
     send: 'Send'
@@ -86,12 +84,13 @@ export default {
     darkMode: 'Dark Mode'
   },
   profile: {
-    name: 'Enter your desired character name...',
-    seedEntry: 'Your password (Seed)...',
-    invalidSeed: 'Invalid seed phrase...',
+    name: 'Character\'s Public Name',
+    seedEntry: 'Character\'s Secret Name',
+    importSeed: 'Recover past memories',
+    invalidSeed: 'Unknown secret name...',
     nameHint: 'Name displayed to others',
-    enterSeed: 'Enter a seed phrase...',
-    pleaseType: 'Please type something',
+    enterSeed: 'Enter your character\'s secret name...',
+    pleaseType: 'Please be more creative',
     bio: 'Bio',
     bioHint: 'Short biolography displayed to others',
     minimumStamp: 'Minimum Stamp *',

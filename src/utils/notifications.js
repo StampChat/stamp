@@ -39,7 +39,7 @@ export const insufficientStampNotify = function () {
 }
 
 export const seedCopiedNotify = function () {
-  infoNotify('Seed phrase copied to clipboard.')
+  infoNotify('Your secret name has been saved to your clipboard.')
 }
 
 export const sentTransactionNotify = function () {
