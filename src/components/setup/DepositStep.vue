@@ -1,12 +1,14 @@
 <template>
   <div class="col q-gutter-y-md">
     <q-resize-observer @resize="setQRSize" />
-    <qrcode-vue
-      style="row"
-      :value="identityAddress"
-      level="H"
-      size="300"
-    />
+    <div class="p-mx-sm">
+      <qrcode-vue
+        class="text-center"
+        :value="identityAddress"
+        level="H"
+        size="300"
+      />
+    </div>
 
     <q-input
       class="fit q-px-lg"
