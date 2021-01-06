@@ -37,7 +37,7 @@ export default {
     searchingExistingMetaData: 'Searching for existing keyserver metadata...',
     errorContactKeyServer: 'Unable to contact keyserver',
     accountSetupNext: 'Proceed',
-    depositStepNext: 'Enter the Colosseum'
+    depositStepNext: 'Proceed to the Masqeurade Ball'
   },
   newContactDialog: {
     newContact: 'New Contact',
