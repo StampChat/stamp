@@ -28,7 +28,7 @@
             <q-btn
               @click="next()"
               color="primary"
-              label="Next"
+              :label="nextButtonLabel"
               :disable="!forwardEnabled"
             />
             <q-btn
