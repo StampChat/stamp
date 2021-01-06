@@ -35,7 +35,9 @@ export default {
     gatheringBalances: 'Gathering balances...',
     watchingWallet: 'Watching wallet...',
     searchingExistingMetaData: 'Searching for existing keyserver metadata...',
-    errorContactKeyServer: 'Unable to contact keyserver'
+    errorContactKeyServer: 'Unable to contact keyserver',
+    accountSetupNext: 'Proceed',
+    depositStepNext: 'Enter the Colosseum'
   },
   newContactDialog: {
     newContact: 'New Contact',

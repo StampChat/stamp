@@ -367,6 +367,16 @@ export default {
     },
     isWalletNonEmpty () {
       return !!this.balance
+    },
+    nextButtonLabel () {
+      switch (this.step) {
+        case 1:
+          return this.$t('setup.accountSetupNext')
+        case 2:
+          return this.$t('setup.depositStepNext')
+        default:
+          return 'Unknown'
+      }
     }
   },
   created () {
