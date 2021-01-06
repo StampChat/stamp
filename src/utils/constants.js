@@ -19,11 +19,11 @@ export const electrumServers = [
   //   port: 50003,
   //   scheme: ElectrumTransport.WS.Scheme
   // },
-  {
-    url: 'telectrum.bitcoinabc.org',
-    port: 60006,
-    scheme: ElectrumTransport.WS.Scheme
-  },
+  // {
+  //   url: 'telectrum.bitcoinabc.org',
+  //   port: 60006,
+  //   scheme: ElectrumTransport.WS.Scheme
+  // },
   {
     url: 'tfulcrum.cashweb.io',
     port: 443,
