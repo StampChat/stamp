@@ -20,26 +20,23 @@
       :placeholder="$t('profile.enterSeed')"
     />
     <q-btn
-      class="q-pa-xs q-ma-none"
-      round
       flat
+      class="q-pa-xs q-ma-none"
       color="primary"
       icon="content_copy"
       @click="copySeed"
     />
     <q-btn
-      class="q-pa-xs q-ma-none"
-      round
       flat
+      class="q-pa-xs q-ma-none"
       color="primary"
       icon="refresh"
       @click="generateMnemonic"
     />
     <q-btn
       class="q-ma-xs q-ma-xs"
-      flat
       color="primary"
-      label="Import"
+      :label="$t('profile.importSeed')"
       @click="pasteImported"
     />
   </div>
@@ -82,8 +79,6 @@ export default {
       document.body.appendChild(el)
       el.focus()
       this.seed = ''
-      document.execCommand('paste')
-      this.seed = el.value
       document.body.removeChild(el)
       this.$nextTick(() => this.$refs.seedInput.select())
     }

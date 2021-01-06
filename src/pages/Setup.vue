@@ -39,6 +39,12 @@
               class="q-ml-sm"
             />
           </q-stepper-navigation>
+          <q-banner
+            inline-actions
+            class="text-white bg-red"
+          >
+            {{ $t('setup.seedWarning') }}
+          </q-banner>
         </template>
       </q-stepper>
     </div>
