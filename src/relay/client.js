@@ -167,13 +167,13 @@ export class RelayClient {
     assert(typeof digest === 'string')
 
     try {
-      const message = this.messageStore.getMessage(digest)
+      const message = await this.messageStore.getMessage(digest)
       assert(message, 'message not found?')
 
       // Send utxos to a change address
       const changeAddresses = Object.keys(this.wallet.changeAddresses)
       const changeAddress = changeAddresses[changeAddresses.length * Math.random() << 0]
-      await this.wallet.forwardUTXOsToAddress({ utxos: message.outpoints, address: changeAddress })
+      await this.wallet.forwardUTXOsToAddress({ utxos: message.newMsg.outpoints, address: changeAddress })
 
       const url = `${this.url}/messages/${this.wallet.myAddressStr}`
       await axios({

@@ -286,7 +286,7 @@ export class Wallet {
       const electrumClient = await this.electrumClientPromise
       await electrumClient.request('blockchain.transaction.broadcast', txHex)
       // TODO: we shouldn't be dealing with this here. Leaky abstraction
-      await Promise.forEach(usedIDs.map(id => this.storage.deleteOutpoint(id)))
+      await Promise.all(usedIDs.map(id => this.storage.deleteOutpoint(id)))
     } catch (err) {
       console.error(err)
       // Fix UTXOs if tx broadcast fails
