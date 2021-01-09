@@ -79,23 +79,22 @@ export const messageMixin = {
   digest () {
     const payloadDigest = this.getPayloadDigest()
     const payload = this.getPayload()
+    const payloadBuffer = Buffer.from(payload)
     switch (payloadDigest.length) {
       case 0:
         if (!payload.length) {
           throw new Error('Missing payload and digest')
         }
-        return crypto.Hash.sha256(payload)
+        return crypto.Hash.sha256(payloadBuffer)
       case 32:
-        if (!payload.length) {
-          const computedPayloadDigest = crypto.Hash.sha256(payload)
-
-          if (payloadDigest !== computedPayloadDigest) {
-            throw new Error('Fraudulent payload digest')
+        if (payload.length) {
+          const computedPayloadDigest = crypto.Hash.sha256(payloadBuffer)
+          const computedDigest = Buffer.from(computedPayloadDigest)
+          if (computedDigest.compare(payloadDigest) !== 0) {
+            throw new Error(`Fraudulent payload digest: ${payloadDigest} !== ${computedDigest}`)
           }
-          return payloadDigest
-        } else {
-          return payload
         }
+        return payloadDigest
       default:
         throw new Error('Unexpected length payload digest')
     }
