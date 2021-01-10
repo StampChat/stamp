@@ -62,7 +62,7 @@ import { generateMnemonic } from 'bip39'
 import KeyserverHandler from '../keyserver/handler'
 import pop from '../pop'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
-import { defaultRelayData, defaultRelayUrl, defaultAvatars } from '../utils/constants'
+import { defaultRelayData, defaultRelayUrl, defaultAvatars, recomendedBalance } from '../utils/constants'
 import { errorNotify } from '../utils/notifications'
 
 import AccountStep from '../components/setup/AccountStep.vue'
@@ -361,14 +361,14 @@ export default {
       if (!this.$electrum.connected) {
         return false
       }
-      console.log('isWalletNonEmpty', this.isWalletNonEmpty)
+      console.log('isWalletSufficient', this.isWalletSufficient)
       console.log('isRelayValid', this.isRelayValid)
 
       switch (this.step) {
         case 1:
           return this.isWalletValid
         case 2:
-          return this.isRelayValid && this.isWalletNonEmpty
+          return this.isRelayValid && this.isWalletSufficient
         default:
           return true
       }
@@ -382,8 +382,8 @@ export default {
       console.log('price', this.relayData.inbox.acceptancePrice)
       return !!(this.relayData.profile.name && this.relayData.profile.avatar && this.relayData.inbox.acceptancePrice)
     },
-    isWalletNonEmpty () {
-      return !!this.balance
+    isWalletSufficient () {
+      return !!this.balance && this.balance >= recomendedBalance
     },
     nextButtonLabel () {
       switch (this.step) {
