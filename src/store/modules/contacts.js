@@ -104,8 +104,7 @@ export default {
         ...pendingRelayData,
         profile: {
           ...pendingRelayData.profile,
-          name: defaultContact.name,
-          pubKey: defaultContact.pubKey
+          name: defaultContact.name
         }
       }
       commit('addContact', { address: defaultContact.address, contact })
