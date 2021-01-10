@@ -4,7 +4,8 @@ import { Payload, Message, MessagePage, MessageSet, Profile } from './relay_pb'
 import stealth from './stealth_pb'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
-import { relayReconnectInterval } from '../utils/constants'
+// TODO: Relay code should not depend on Stamp base code. Fix this import
+import { relayReconnectInterval, networkName } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
 import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage, constructProfileMetadata, constructPriceFilter } from './constructors'
@@ -339,7 +340,7 @@ export class RelayClient {
       const messageSet = new MessageSet()
       messageSet.addMessages(message)
 
-      const destinationAddress = destinationPublicKey.toAddress('testnet').toLegacyAddress()
+      const destinationAddress = destinationPublicKey.toAddress(networkName).toLegacyAddress()
       const electrumClient = await this.wallet.electrumClientPromise
       Promise.all(transactions.map(async (transaction) => {
         console.log('Broadcasting a transaction', transaction.id)
@@ -442,7 +443,7 @@ export class RelayClient {
     Object.assign(Message.prototype, messageMixin)
     const parsedMessage = message.parse()
 
-    const senderAddress = parsedMessage.sourcePublicKey.toAddress('testnet').toCashAddress() // TODO: Make generic
+    const senderAddress = parsedMessage.sourcePublicKey.toAddress(networkName).toCashAddress() // TODO: Make generic
     const wallet = this.wallet
     const myAddress = wallet.myAddressStr
     const outbound = (senderAddress === myAddress)
@@ -479,7 +480,7 @@ export class RelayClient {
       return
     }
 
-    const destinationAddress = parsedMessage.destinationPublicKey.toAddress('testnet').toCashAddress()
+    const destinationAddress = parsedMessage.destinationPublicKey.toAddress(networkName).toCashAddress()
 
     if (outbound && myAddress === destinationAddress) {
       // TODO: Process self sends
@@ -513,7 +514,7 @@ export class RelayClient {
       for (const [j, outputIndex] of vouts.entries()) {
         const output = stampTx.outputs[outputIndex]
         const satoshis = output.satoshis
-        const address = output.script.toAddress('testnet') // TODO: Make generic
+        const address = output.script.toAddress(networkName) // TODO: Make generic
         stampValue += satoshis
 
         // Also note, we should use an HD key here.
@@ -524,7 +525,7 @@ export class RelayClient {
         // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
         // HASH160(SHA256(point)) ourself
         // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
-        const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress('testnet')
+        const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress(networkName)
         if (!outbound && !address.toBuffer().equals(computedAddress.toBuffer())) {
           // Assume outbound addresses were valid.  Otherwise we need to calclate a different
           // derivation then based on our identity address.
@@ -619,11 +620,11 @@ export class RelayClient {
               .deriveChild(i)
               .deriveChild(j)
               .privateKey
-            const address = output.script.toAddress('testnet') // TODO: Make generic
+            const address = output.script.toAddress(networkName) // TODO: Make generic
             // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
             // HASH160(SHA256(point)) ourself
             // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
-            const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress('testnet')
+            const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress(networkName)
             if (!outbound && !address.toBuffer().equals(computedAddress.toBuffer())) {
               console.error('invalid stealth address, ignoring')
               continue
@@ -664,7 +665,7 @@ export class RelayClient {
     }
 
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
-    const copartyAddress = copartyPubKey.toAddress('testnet').toString() // TODO: Make generic
+    const copartyAddress = copartyPubKey.toAddress(networkName).toString() // TODO: Make generic
     const payloadDigestHex = payloadDigest.toString('hex')
     const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
     await this.messageStore.saveMessage(finalizedMessage)
@@ -700,7 +701,7 @@ export class RelayClient {
   async updateProfile (idPrivKey, profile, acceptancePrice) {
     const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
     const metadata = constructProfileMetadata(profile, priceFilter, idPrivKey)
-    await this.putProfile(idPrivKey.toAddress('testnet').toLegacyAddress().toString(), metadata)
+    await this.putProfile(idPrivKey.toAddress(networkName).toLegacyAddress().toString(), metadata)
   }
 }
 

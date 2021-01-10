@@ -30,6 +30,13 @@ export const electrumServers = [
     scheme: ElectrumTransport.WSS.Scheme
   }
 ]
+
+// The separation here is due the fork. Not all backends support the new network prefixes yet
+// So we are using the legacy prefixes everywhere for API calls, but using
+// the ecash prefix for display
+export const networkName = 'testnet'
+export const displayNetwork = 'ecash-testnet'
+
 export const electrumPingInterval = 10_000
 
 // Wallet constants

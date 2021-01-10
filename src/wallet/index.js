@@ -37,8 +37,11 @@ const shuffleArray = function (arr) {
 }
 
 export class Wallet {
-  constructor (storage) {
+  constructor (storage, { networkName = 'testnet', displayNetworkName = 'ecash-testnet' } = {}) {
     this.storage = storage
+    this.networkName = networkName
+    this.displayNetworkName = displayNetworkName
+
     this.constructionLock = new Lock()
     // Workaround for the way electrum-cash ensures a subscription isn't handled
     // twice.
@@ -109,7 +112,7 @@ export class Wallet {
         .deriveChild(0)
         .deriveChild(i)
         .privateKey
-      const address = privKey.toAddress('testnet').toLegacyAddress()
+      const address = privKey.toAddress(this.networkName).toLegacyAddress()
       this.setAddress({ address, privKey })
 
       // Index by script hash
@@ -123,7 +126,7 @@ export class Wallet {
         .deriveChild(1)
         .deriveChild(j)
         .privateKey
-      const address = privKey.toAddress('testnet').toLegacyAddress()
+      const address = privKey.toAddress(this.networkName).toLegacyAddress()
       this.setChangeAddress({ address, privKey })
 
       // Index by script hash
@@ -593,13 +596,20 @@ export class Wallet {
   get myAddress () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
-    return this.identityPrivKey.toAddress('testnet')
+    return this.identityPrivKey.toAddress(this.networkName)
   }
 
   get myAddressStr () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
-    return this.identityPrivKey.toAddress('testnet')
+    return this.identityPrivKey.toAddress(this.networkName)
+      .toCashAddress()
+  }
+
+  get displayAddress () {
+    // TODO: This should be in the relay client, not the wallet...
+    // TODO: Not just testnet
+    return this.identityPrivKey.toAddress(this.displayNetworkName)
       .toCashAddress()
   }
 

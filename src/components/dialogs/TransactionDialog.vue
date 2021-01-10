@@ -53,6 +53,8 @@
 <script>
 import { Script } from 'bitcore-lib-cash'
 
+import { networkName } from '../../utils/constants'
+
 export default {
   props: {
     title: {
@@ -74,7 +76,7 @@ export default {
     extractAddress (output) {
       const script = new Script(output.script)
       if (script.isPublicKeyHashOut()) {
-        return script.toAddress('testnet') // TODO: Make generic
+        return script.toAddress(networkName) // TODO: Make generic
       }
       return 'Non-p2pkh'
     }

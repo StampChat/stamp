@@ -2,6 +2,9 @@ import { PrivateKey, PublicKey, crypto, HDPublicKey, HDPrivateKey } from 'bitcor
 
 import forge from 'node-forge'
 
+// TODO: network clients should not
+import { networkName } from '../utils/constants'
+
 export const constructPayloadHmac = function (sharedKey, payloadDigest) {
   return crypto.Hash.sha256hmac(sharedKey, Buffer.from(payloadDigest))
 }
@@ -33,7 +36,7 @@ export const constructHDStealthPublicKey = function (emphemeralPrivKey, destinat
   return new HDPublicKey({
     publicKey: stealthPublicKey.toBuffer(),
     depth: 0,
-    network: 'testnet',
+    network: networkName,
     childIndex: 0,
     chainCode: digest,
     parentFingerPrint: 0
@@ -57,7 +60,7 @@ export const constructHDStealthPrivateKey = function (emphemeralPubKey, destinat
   return new HDPrivateKey({
     privateKey: stealthPrivateKey.toBuffer(),
     depth: 0,
-    network: 'testnet',
+    network: networkName,
     childIndex: 0,
     chainCode: digest,
     parentFingerPrint: 0
@@ -77,7 +80,7 @@ export const constructStampHDPublicKey = function (payloadDigest, destinationPub
   return new HDPublicKey({
     publicKey: stampPublicKey.toBuffer(),
     depth: 0,
-    network: 'testnet',
+    network: networkName,
     childIndex: 0,
     chainCode: payloadDigest,
     parentFingerPrint: 0
@@ -96,7 +99,7 @@ export const constructStampHDPrivateKey = function (payloadDigest, destinationPr
   return new HDPrivateKey({
     privateKey: stampPrivateKey.toBuffer(),
     depth: 0,
-    network: 'testnet',
+    network: networkName,
     childIndex: 0,
     chainCode: payloadDigest,
     parentFingerPrint: 0
@@ -106,7 +109,7 @@ export const constructStampHDPrivateKey = function (payloadDigest, destinationPr
 export const constructStampAddress = function (outpointDigest, privKey) {
   const digestBn = crypto.BN.fromBuffer(outpointDigest)
   const stampPrivBn = privKey.bn.add(digestBn).mod(crypto.Point.getN())
-  const stampAddress = PrivateKey(stampPrivBn).toAddress('testnet')
+  const stampAddress = PrivateKey(stampPrivBn).toAddress(networkName)
   return stampAddress
 }
 

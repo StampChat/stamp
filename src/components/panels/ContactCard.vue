@@ -44,7 +44,7 @@
             caption
             lines="1"
           >
-            {{ address }}
+            {{ displayAddress }}
           </q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -65,6 +65,8 @@
 <script>
 import { copyToClipboard } from 'quasar'
 import { addressCopiedNotify } from '../../utils/notifications'
+import { Address, Networks } from 'bitcore-lib-cash'
+import { displayNetwork } from 'src/utils/constants'
 
 export default {
   props: {
@@ -91,13 +93,20 @@ export default {
   },
   methods: {
     copyAddress () {
-      copyToClipboard(this.address)
+      copyToClipboard(this.displayAddress)
         .then(() => {
           addressCopiedNotify()
         })
         .catch(() => {
           // fail
         })
+    }
+  },
+  computed: {
+    displayAddress () {
+      const address = Address(this.address)
+      const displayAddress = Address(address.hashBuffer, Networks.get(displayNetwork)).toCashAddress()
+      return displayAddress
     }
   }
 }

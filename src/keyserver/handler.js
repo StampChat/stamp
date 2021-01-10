@@ -2,7 +2,7 @@ import axios from 'axios'
 import { Entry, AddressMetadata } from './keyserver_pb'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
-import { trustedKeyservers } from '../utils/constants'
+import { trustedKeyservers, networkName } from '../utils/constants'
 import { crypto } from 'bitcore-lib-cash'
 
 class KeyserverHandler {
@@ -104,7 +104,7 @@ class KeyserverHandler {
   }
 
   async updateKeyMetadata (relayUrl, idPrivKey) {
-    const idAddress = idPrivKey.toAddress('testnet').toLegacyAddress().toString()
+    const idAddress = idPrivKey.toAddress(networkName).toLegacyAddress().toString()
     // Construct metadata
     const authWrapper = KeyserverHandler.constructRelayUrlMetadata(relayUrl, idPrivKey)
 
