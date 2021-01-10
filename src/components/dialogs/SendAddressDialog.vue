@@ -45,9 +45,10 @@
 </template>
 
 <script>
-import { sentTransactionNotify, errorNotify } from '../../utils/notifications'
-
 import { Address, Transaction, Script } from 'bitcore-lib-cash'
+
+import { sentTransactionNotify, errorNotify } from '../../utils/notifications'
+import { displayNetwork, networkName } from '../../utils/constants'
 
 export default {
   components: {
@@ -63,12 +64,15 @@ export default {
       if (!this.amount) {
         return false
       }
-      try {
-        Address(this.address, 'testnet') // TODO: Make this generic
-        return true
-      } catch {
-        return false
+      for (const networkString of [displayNetwork, networkName]) {
+        try {
+          Address(this.address, networkString) // TODO: Make this generic
+          return true
+        } catch (err) {
+          console.log(`Address not for ${networkString}`)
+        }
       }
+      return false
     }
   },
   methods: {

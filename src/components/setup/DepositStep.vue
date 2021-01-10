@@ -4,7 +4,7 @@
     <div class="p-mx-sm">
       <qrcode-vue
         class="text-center"
-        :value="identityAddress"
+        :value="displayAddress"
         level="H"
         size="300"
       />
@@ -14,10 +14,17 @@
       class="fit q-px-lg"
       filled
       auto-grow
-      v-model="identityAddress"
+      v-model="displayAddress"
       readonly
     >
       <template v-slot:after>
+        <q-btn
+          dense
+          color="primary"
+          flat
+          icon="swap_vert"
+          @click="toggleLegacy"
+        />
         <q-btn
           dense
           color="primary"
@@ -57,12 +64,16 @@ export default {
     return {
       paymentAddrCounter: 0,
       recomendedBalance,
-      qrSize: 300
+      qrSize: 300,
+      legacy: false
     }
   },
   methods: {
+    toggleLegacy () {
+      this.legacy = !this.legacy
+    },
     copyAddress () {
-      copyToClipboard(this.identityAddress)
+      copyToClipboard(this.displayAddress)
         .then(() => {
           addressCopiedNotify()
         })
@@ -80,8 +91,8 @@ export default {
   },
   computed: {
     ...mapGetters({ balance: 'wallet/balance' }),
-    identityAddress () {
-      return this.$wallet.myAddress.toString()
+    displayAddress () {
+      return this.legacy ? this.$wallet.myAddressStr : this.$wallet.displayAddress
     },
     percentageBalance () {
       const percentage = this.balance / this.recomendedBalance

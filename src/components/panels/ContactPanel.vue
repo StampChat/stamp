@@ -26,9 +26,7 @@
 
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
-      <contact-book-dialog
-        :contact-click="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }"
-      />
+      <contact-book-dialog :contact-click="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }" />
     </q-dialog>
 
     <!-- Contact card -->

@@ -19,6 +19,7 @@ module.exports = configure(function (ctx) {
       'composition-api',
       'i18n',
       'axios',
+      'network-prefix',
       'setup-apis',
       ctx.mode.electron ? 'electron' : 'capacitor'
     ],

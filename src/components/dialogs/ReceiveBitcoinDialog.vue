@@ -20,7 +20,7 @@
       <div class="row">
         <qrcode-vue
           style="margin-left: auto; margin-right: auto;"
-          :value="currentAddress"
+          :value="displayAddress"
           :size="300"
           level="H"
         />
@@ -30,7 +30,7 @@
           class="fit"
           filled
           auto-grow
-          v-model="currentAddress"
+          v-model="displayAddress"
           readonly
         >
           <template v-slot:after>
@@ -38,15 +38,15 @@
               dense
               color="primary"
               flat
-              icon="content_copy"
-              @click="copyAddress"
+              icon="swap_vert"
+              @click="toggleLegacy"
             />
             <q-btn
               dense
               color="primary"
               flat
-              icon="refresh"
-              @click="nextAddress"
+              icon="content_copy"
+              @click="copyAddress"
             />
           </template>
         </q-input>
@@ -77,7 +77,6 @@ import QrcodeVue from 'qrcode.vue'
 import SeedPhraseDialog from './SeedPhraseDialog.vue'
 import { mapGetters } from 'vuex'
 import { formatBalance } from '../../utils/formatting'
-import { numAddresses } from '../../utils/constants'
 import { copyToClipboard } from 'quasar'
 
 export default {
@@ -87,9 +86,8 @@ export default {
   },
   data () {
     return {
-      currentAddress: this.$wallet.privKeys[0].toAddress('testnet').toString(), // TODO: Generic over network
-      paymentAddrCounter: 0,
-      seedPhraseOpen: false
+      seedPhraseOpen: false,
+      legacy: false
     }
   },
   computed: {
@@ -98,11 +96,17 @@ export default {
     }),
     formattedBalance () {
       return formatBalance(this.balance)
+    },
+    displayAddress () {
+      return this.legacy ? this.$wallet.myAddressStr : this.$wallet.displayAddress
     }
   },
   methods: {
+    toggleLegacy () {
+      this.legacy = !this.legacy
+    },
     copyAddress () {
-      copyToClipboard(this.currentAddress).then(() => {
+      copyToClipboard(this.displayAddress).then(() => {
         this.$q.notify({
           message: `<div class="text-center">${this.$t('receiveBitcoinDialog.addressCopied')}</div>`,
           html: true,
@@ -112,13 +116,6 @@ export default {
         .catch(() => {
           // fail
         })
-    },
-    nextAddress () {
-      // Increment address
-      // TODO: This should have no idea what number of addresses there are
-      this.paymentAddrCounter = (this.paymentAddrCounter + 1) % numAddresses
-      const privKey = this.$wallet.privKeys[this.paymentAddrCounter]
-      this.currentAddress = privKey.toAddress('testnet').toString()
     }
   }
 }
