@@ -153,8 +153,8 @@ module.exports = configure(function (ctx) {
       workboxPluginMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
       workboxOptions: {}, // only for GenerateSW
       manifest: {
-        name: 'Stamp',
-        short_name: 'Stamp',
+        name: 'Holy Messenger',
+        short_name: 'Holy Messenger',
         description: ' A eCash powered internet cryptomessenger',
         display: 'standalone',
         orientation: 'portrait',

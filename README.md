@@ -1,5 +1,5 @@
 <h1 align="center">
-  Stamp
+  Holy Messenger
 </h1>
 
 <p align="center">
@@ -16,7 +16,7 @@
   </a>
 </p>
 
-**WARNING: Stamp is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the eCash testnet as to protect against lost funds.**
+**WARNING: Holy Messenger is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the eCash testnet as to protect against lost funds.**
 
 ## Install from Binary
 

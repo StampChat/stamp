@@ -1,6 +1,6 @@
 {
   "appId": "org.cashweb.stamp",
-  "appName": "Stamp",
+  "appName": "Holy Messenger",
   "bundledWebRuntime": false,
   "npmClient": "yarn",
   "webDir": "www"

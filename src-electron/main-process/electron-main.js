@@ -40,13 +40,13 @@ const nativeIcon = nativeImage.createFromPath(getIconPNGPath())
 function createWindow () {
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Open Stamp',
+      label: 'Open Holy Messenger',
       click: function () {
         mainWindow.show()
       }
     },
     {
-      label: 'Quit Stamp',
+      label: 'Quit Holy Messenger',
       click: function () {
         mainWindow.destroy()
         app.quit()
