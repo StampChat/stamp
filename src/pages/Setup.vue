@@ -260,28 +260,45 @@ export default {
       })
 
       const idAddress = this.$wallet.myAddress
-      try {
-        const relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress().toString())
-        // Send payment
-        this.$q.loading.show({
-          delay: 100,
-          message: this.$t('setup.sendingPayment')
-        })
+      // We might have spent our only UTXO above, so this will possibly take a few tries.
+      let triesLeft = 3
+      while (triesLeft > 0) {
+        try {
+          const relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress().toString())
+          // Send payment
+          this.$q.loading.show({
+            delay: 100,
+            message: this.$t('setup.sendingPayment')
+          })
 
-        // Get token from relay server
-        const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
-        const paymentUrlFull = new URL(paymentUrl, this.relayUrl)
-        console.log('Sending payment to', paymentUrlFull.href)
-        const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
-        relayClient.setToken(token)
-        this.setRelayToken(token)
-        this.$relayClient.setToken(token)
-      } catch (err) {
-        console.log(err)
-        errorNotify(new Error(this.$t('setup.networkErrorRelayUnexpected')))
-        throw err
-      } finally {
-        this.$q.loading.hide()
+          // Get token from relay server
+          const { paymentUrl, payment, usedIDs } = await pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
+
+          const paymentUrlFull = new URL(paymentUrl, this.relayUrl)
+          console.log('Sending payment to', paymentUrlFull.href)
+          const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+          relayClient.setToken(token)
+          this.setRelayToken(token)
+          this.$relayClient.setToken(token)
+          await Promise.all(usedIDs.map(id => this.$wallet.storage.deleteOutpoint(id)))
+        } catch (err) {
+          // TODO: errors should not be stringly typed. Fix this
+          // later. Also retry here should be more explicit. This is
+          // basically so that things work when the person only had one UTXO to begin with.
+          if (err.message === 'insufficient funds') {
+            triesLeft--
+            await new Promise((resolve) => {
+              setTimeout(() => resolve(), 1000)
+            })
+            continue
+          }
+          console.log(err)
+          throw err
+        } finally {
+          this.$q.loading.hide()
+        }
+        // We succeeded
+        break
       }
 
       // Create metadata

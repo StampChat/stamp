@@ -23,7 +23,7 @@ export default {
     seedWarning: 'Do not forget your character\'s secret name, you will never be able to remember them again.',
     searchingRelay: 'Searching for existing relay data...',
     networkErrorRelayDied: 'Network Error: Relay server connection died. ',
-    networkErrorRelayUnexpected: 'Network error: Relay disconnnected unexpectedly.',
+    networkErrorRelayUnexpected: 'Network error: Relay errored unexpectedly.',
     requestingPayment: 'Requesting Payment...',
     sendingPayment: 'Sending Payment...',
     uploadingMetaData: 'Uploading Metadata...',
