@@ -120,10 +120,11 @@ class KeyserverHandler {
     const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper)
 
     // Construct payment
-    const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
+    const { paymentUrl, payment, usedIDs } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
 
     const paymentUrlFull = new URL(paymentUrl, serverUrl)
     const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+    await Promise.all(usedIDs.map(id => this.wallet.storage.deleteOutpoint(id)))
 
     await KeyserverHandler.putMetadata(idAddress, serverUrl, authWrapper, token)
   }
