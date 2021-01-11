@@ -441,22 +441,24 @@ export class RelayClient {
   async receiveMessage (message, receivedTime = Date.now()) {
     // Parse message
     Object.assign(Message.prototype, messageMixin)
-    const parsedMessage = message.parse()
+    const preParsedMessage = message.parse()
 
-    const senderAddress = parsedMessage.sourcePublicKey.toAddress(networkName).toCashAddress() // TODO: Make generic
+    const senderAddress = preParsedMessage.sourcePublicKey.toAddress(networkName).toCashAddress() // TODO: Make generic
     const wallet = this.wallet
     const myAddress = wallet.myAddressStr
     const outbound = (senderAddress === myAddress)
-    const serverTime = parsedMessage.receivedTime
+    const serverTime = preParsedMessage.receivedTime
 
     // if this client sent the message, we already have the data and don't need to process it or get the payload again
-    if (parsedMessage.payloadDigest.length !== 0) {
-      const payloadDigestHex = Array.prototype.map.call(parsedMessage.payloadDigest, x => ('00' + x.toString(16)).slice(-2)).join('')
+    if (preParsedMessage.payloadDigest.length !== 0) {
+      const payloadDigestHex = Array.prototype.map.call(preParsedMessage.payloadDigest, x => ('00' + x.toString(16)).slice(-2)).join('')
       const message = await this.messageStore.getMessage(payloadDigestHex)
       if (message) {
+        console.log('Already have message', payloadDigestHex)
         // TODO: We really should handle unfreezing UTXOs here via a callback in the future.
         return
       }
+      console.log('Message not found locally', payloadDigestHex)
     }
 
     const getPayload = async (payloadDigest, messagePayload) => {
@@ -472,7 +474,16 @@ export class RelayClient {
     }
 
     // Get payload if serialized payload is missing
-    const rawCipherPayload = await getPayload(parsedMessage.payloadDigest, parsedMessage.payload)
+    // TODO: write a test that we actually use these payloads in the future.
+    // :facepalm:
+    const rawCipherPayload = await getPayload(preParsedMessage.payloadDigest, preParsedMessage.payload)
+    console.log('Processing message payload', rawCipherPayload.length)
+
+    // If we had to fetch the payload, let's actually use it!
+    preParsedMessage.payload = rawCipherPayload
+
+    // Just to be clear that this is where the message is now valid.
+    const parsedMessage = preParsedMessage
 
     const payloadDigest = crypto.Hash.sha256(rawCipherPayload)
     if (!payloadDigest.equals(parsedMessage.payloadDigest)) {
