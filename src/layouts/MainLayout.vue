@@ -14,7 +14,7 @@
       :width="splitterRatio"
       :breakpoint="400"
     >
-      <contact-panel
+      <right-drawer
         v-if="activeChatAddr !== null"
         :address="activeChatAddr"
         :contact="getContact(activeChatAddr)"
@@ -45,7 +45,7 @@
 <script>
 import Chat from '../pages/Chat.vue'
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
-import ContactPanel from '../components/panels/ContactPanel.vue'
+import RightDrawer from '../components/panels/RightDrawer.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
@@ -60,7 +60,7 @@ const compactMidpoint = (compactCutoff + compactWidth) / 2
 export default {
   components: {
     Chat,
-    ContactPanel,
+    RightDrawer,
     LeftDrawer,
     ContactBookDialog
   },

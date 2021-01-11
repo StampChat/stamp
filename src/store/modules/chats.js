@@ -144,6 +144,10 @@ export default {
       const items = lastMessage.items
       const lastItem = items[items.length - 1]
 
+      if (!lastItem) {
+        console.error(address)
+        return null
+      }
       if (lastItem.type === 'text') {
         const info = {
           outbound: lastMessage.outbound,
