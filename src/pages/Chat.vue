@@ -52,11 +52,6 @@
           @scroll="scrollHandler"
           class="q-px-none absolute full-width full-height"
         >
-          <anouncement
-            class="q-pt-sm"
-            :name="$t('chat.announcementName')"
-            :text="$t('chat.donationMessage')"
-          />
           <template v-if="loaded || active">
             <template v-for="({ chunk, globalIndex }, index) in chunkedMessages">
               <chat-message-stack
@@ -143,7 +138,6 @@
 import moment from 'moment'
 import { mapGetters, mapActions } from 'vuex'
 
-import Anouncement from '../components/chat/messages/Announcement.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessageStack from '../components/chat/messages/ChatMessageStack.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
@@ -176,7 +170,6 @@ export default {
     }
   },
   components: {
-    Anouncement,
     ChatMessageStack,
     ChatMessageText,
     ChatMessageImage,

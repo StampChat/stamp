@@ -3,7 +3,6 @@
 
 export default {
   chat: {
-    announcementName: 'Stamp Developers',
     donationMessage: 'Thank you for participating in our vision of the future of online communications. Please consider donating to our efforts by sending real BCH to bitcoincash:qq7vt04md0pt6fk5szhcx4cgsfuzmppy5u4hxshr4a'
   },
   chatInput: {
