@@ -591,14 +591,20 @@ export class RelayClient {
           type: 'reply',
           payloadDigest
         })
-      } else if (kind === 'text-utf8') {
+        continue
+      }
+
+      if (kind === 'text-utf8') {
         const entryData = entry.getBody()
         const text = new TextDecoder().decode(entryData)
         newMsg.items.push({
           type: 'text',
           text
         })
-      } else if (kind === 'stealth-payment') {
+        continue
+      }
+
+      if (kind === 'stealth-payment') {
         const entryData = entry.getBody()
         const stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
 
@@ -664,7 +670,10 @@ export class RelayClient {
           type: 'stealth',
           amount: stealthValue
         })
-      } else if (kind === 'image') {
+        continue
+      }
+
+      if (kind === 'image') {
         const image = entryToImage(entry)
 
         // TODO: Save to folder instead of in Vuex
@@ -672,7 +681,9 @@ export class RelayClient {
           type: 'image',
           image
         })
+        continue
       }
+      console.log('Entry Kind', kind)
     }
 
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
