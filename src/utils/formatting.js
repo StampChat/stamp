@@ -4,14 +4,22 @@ import { colorSalt } from './constants'
 export const formatBalance = function (balance) {
   if (balance < 1_000) {
     return String(balance) + ' sats'
-  } else if (balance < 100_000) {
-    return String(balance / 100) + ' uBCH'
-  } else if (balance < 10_000_000) {
-    return String(balance / 100_000) + ' mBCH'
-  } else if (balance < 100_000_000) {
-    return String(balance / 1_000_000) + ' cBCH'
-  } else {
-    return String(balance / 100_000_000) + ' BCH'
+  }
+
+  if (balance < 1_000_000) {
+    return String(balance / 1_000) + ' kilosats'
+  }
+
+  if (balance < 1_000_000_000) {
+    return String(balance / 1_000_000) + ' megasats'
+  }
+
+  if (balance < 1_000_000_000_000_000) {
+    return String(balance / 1_000_000_000) + ' gigasats'
+  }
+
+  if (balance < 1_000_000_000_000_000_000) {
+    return String(balance / 1_000_000_000_000) + ' terasats'
   }
 }
 
