@@ -1,9 +1,10 @@
-import { PublicKey } from 'bitcore-lib-cash'
+import { PublicKey, Address, Networks } from 'bitcore-lib-cash'
 import { getRelayClient } from '../../adapters/vuex-relay-adapter'
-import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl } from '../../utils/constants'
+import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl, displayNetwork, networkName } from '../../utils/constants'
 import KeyserverHandler from '../../keyserver/handler'
 import Vue from 'vue'
 import moment from 'moment'
+import networkPrefix from 'src/boot/network-prefix'
 
 export function rehydrateContacts (contactState) {
   if (!contactState) {
@@ -82,9 +83,23 @@ export default {
     }
   },
   actions: {
-    addLoadingContact ({ commit }, { address, pubKey }) {
-      const contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, pubKey } }
-      commit('addContact', { address, contact })
+    addLoadingContact ({ commit, dispatch }, { address, pubKey }) {
+      console.log('Adding contact', address)
+      // TODO: Make generic
+      const parsedAddress = Address(address)
+      const displayAddress = Address(parsedAddress.hashBuffer, Networks.get(displayNetwork)).toCashAddress()
+      const legacyAddress = Address(parsedAddress.hashBuffer, Networks.get(networkName)).toLegacyAddress().toString()
+      console.log('Adding contact', { address, displayAddress, legacyAddress })
+
+      const contact = {
+        ...pendingRelayData,
+        profile: {
+          ...pendingRelayData.profile, pubKey, name: displayAddress
+        }
+      }
+      commit('addContact', { address: legacyAddress, contact })
+      commit('chats/openChat', legacyAddress, { root: true })
+      dispatch('refresh', legacyAddress)
     },
     deleteContact ({ commit }, address) {
       commit('chats/clearChat', address, { root: true })

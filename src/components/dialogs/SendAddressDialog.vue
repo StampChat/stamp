@@ -46,6 +46,7 @@
 
 <script>
 import { Address, Transaction, Script } from 'bitcore-lib-cash'
+import { mapActions } from 'vuex'
 
 import { sentTransactionNotify, errorNotify } from '../../utils/notifications'
 import { displayNetwork, networkName } from '../../utils/constants'
@@ -76,6 +77,9 @@ export default {
     }
   },
   methods: {
+    ...mapActions({
+      addLoadingContact: 'contacts/addLoadingContact'
+    }),
     async send () {
       try {
         const output = new Transaction.Output({
@@ -99,6 +103,10 @@ export default {
           })
           throw err
         }
+
+        // TODO: Make generic
+        const cashAddress = Address.fromString(this.address).toCashAddress()
+        await this.addLoadingContact({ address: cashAddress })
       } catch (err) {
         console.error(err)
         errorNotify(new Error('Failed to send transaction'))
