@@ -44,7 +44,7 @@
       color="warning"
       class="q-mt-sm"
     />
-    <span class="text-h5">{{ formatBalance }}</span>
+    <span class="row q-mx-sm q-px-none">Current: {{ formatBalance }}, Need: {{ formatRecommended }}</span>
   </div>
 </template>
 
@@ -97,6 +97,9 @@ export default {
     percentageBalance () {
       const percentage = this.balance / this.recomendedBalance
       return percentage
+    },
+    formatRecommended () {
+      return formatBalance(this.recomendedBalance)
     },
     formatBalance () {
       return formatBalance(this.balance)
