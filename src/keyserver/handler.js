@@ -4,6 +4,7 @@ import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
 import { trustedKeyservers, networkName } from '../utils/constants'
 import { crypto } from 'bitcore-lib-cash'
+import { toAPIAddress } from '../utils/address'
 
 class KeyserverHandler {
   constructor ({ wallet, defaultSampleSize = 3, keyservers = trustedKeyservers } = {}) {
@@ -40,7 +41,8 @@ class KeyserverHandler {
   }
 
   static async fetchMetadata (keyserver, address) {
-    const url = `${keyserver}/keys/${address}`
+    const legacyAddress = toAPIAddress(address)
+    const url = `${keyserver}/keys/${legacyAddress}`
     const response = await axios(
       {
         method: 'get',
@@ -60,20 +62,24 @@ class KeyserverHandler {
   }
 
   static async paymentRequest (serverUrl, address, truncatedAuthWrapper) {
+    const legacyAddress = toAPIAddress(address)
+
     const rawAuthWrapper = truncatedAuthWrapper.serializeBinary()
-    const url = `${serverUrl}/keys/${address}`
+    const url = `${serverUrl}/keys/${legacyAddress}`
     return pop.getPaymentRequest(url, 'put', rawAuthWrapper)
   }
 
-  async uniformSample (address) {
+  async _uniformSample (address) {
     // TODO: Sample correctly
     const server = this.chooseServer()
     return KeyserverHandler.fetchMetadata(server, address)
   }
 
   async getRelayUrl (address) {
+    const legacyAddress = toAPIAddress(address)
+
     // Get metadata
-    const metadata = await this.uniformSample(address)
+    const metadata = await this._uniformSample(legacyAddress)
     const payload = AddressMetadata.deserializeBinary(metadata.getPayload())
 
     // Find vCard
@@ -104,7 +110,7 @@ class KeyserverHandler {
   }
 
   async updateKeyMetadata (relayUrl, idPrivKey) {
-    const idAddress = idPrivKey.toAddress(networkName).toLegacyAddress().toString()
+    const idAddress = idPrivKey.toAddress(networkName).toCashAddress()
     // Construct metadata
     const authWrapper = KeyserverHandler.constructRelayUrlMetadata(relayUrl, idPrivKey)
 

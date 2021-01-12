@@ -281,7 +281,7 @@ declare module 'bitcore-lib-cash' {
 
         function add(data: any): Network;
         function remove(network: Network): void;
-        function get(args: string | number | Network, keys: string | string[]): Network;
+        function get(args: string | number | Network, keys: string | string[] | undefined): Network;
     }
 
     export class Address {
@@ -290,6 +290,8 @@ declare module 'bitcore-lib-cash' {
         readonly type: string;
 
         constructor(data: Buffer | Uint8Array | string | object, network?: Networks.Network, type?: string);
+
+        toCashAddress(): string;
     }
 
     export class Unit {

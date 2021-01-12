@@ -2,9 +2,10 @@ import * as R from 'ramda'
 import * as P from 'bluebird'
 import assert from 'assert'
 
-import { numAddresses, numChangeAddresses } from '../utils/constants'
+import { numAddresses, numChangeAddresses, displayNetwork as constantDisplayNetworkName, networkName as constantNetworkName } from '../utils/constants'
 
 import { toElectrumScriptHash } from '../utils/formatting'
+
 import { calcId } from './helpers'
 
 import { Address, Script, Transaction } from 'bitcore-lib-cash'
@@ -37,7 +38,7 @@ const shuffleArray = function (arr) {
 }
 
 export class Wallet {
-  constructor (storage, { networkName = 'testnet', displayNetworkName = 'ecash-testnet' } = {}) {
+  constructor (storage, { networkName = constantNetworkName, displayNetworkName = constantDisplayNetworkName } = {}) {
     this.storage = storage
     this.networkName = networkName
     this.displayNetworkName = displayNetworkName
@@ -109,7 +110,7 @@ export class Wallet {
         .deriveChild(0)
         .deriveChild(i)
         .privateKey
-      const address = privKey.toAddress(this.networkName).toLegacyAddress()
+      const address = privKey.toAddress(this.networkName).toCashAddress()
       this.setAddress({ address, privKey })
 
       // Index by script hash
@@ -123,7 +124,7 @@ export class Wallet {
         .deriveChild(1)
         .deriveChild(j)
         .privateKey
-      const address = privKey.toAddress(this.networkName).toLegacyAddress()
+      const address = privKey.toAddress(this.networkName).toCashAddress()
       this.setChangeAddress({ address, privKey })
 
       // Index by script hash
