@@ -5,21 +5,30 @@
         v-model="step"
         ref="stepper"
         color="primary"
+        contracted
         alternative-labels
       >
         <q-step
           :name="1"
+          :title="$t('setup.eula')"
+          icon="flaky"
+          :done="step > 1"
+        >
+          <eula-step />
+        </q-step>
+        <q-step
+          :name="2"
           :title="$t('setup.setupWallet')"
           icon="vpn_key"
-          :done="step > 1"
+          :done="step > 2"
         >
           <account-step v-model="accountData" />
         </q-step>
         <q-step
-          :name="2"
+          :name="3"
           :title="$t('setup.deposit')"
           icon="attach_money"
-          :done="step > 2"
+          :done="step > 3"
         >
           <deposit-step />
         </q-step>
@@ -28,7 +37,7 @@
             <q-btn
               @click="next()"
               color="primary"
-              label="Next"
+              :label="nextButtonLabel"
               :disable="!forwardEnabled"
             />
             <q-btn
@@ -67,6 +76,7 @@ import { errorNotify } from '../utils/notifications'
 
 import AccountStep from '../components/setup/AccountStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
+import EulaStep from '../components/setup/EULAStep.vue'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
@@ -76,7 +86,8 @@ Vue.use(VueRouter)
 export default {
   components: {
     AccountStep,
-    DepositStep
+    DepositStep,
+    EulaStep
   },
   data () {
     return {
@@ -339,12 +350,15 @@ export default {
     next () {
       switch (this.step) {
         case 1:
+          this.$refs.stepper.next()
+          break
+        case 2:
           this.newWallet()
             .then(() => this.setupRelayData())
             .then(() => this.$refs.stepper.next())
             .catch((err) => errorNotify(err))
           break
-        case 2:
+        case 3:
           this.setupSettings()
             .then(() => this.$router.push('/'))
             .catch((err) => errorNotify(err))
@@ -365,9 +379,9 @@ export default {
       console.log('isRelayValid', this.isRelayValid)
 
       switch (this.step) {
-        case 1:
-          return this.isWalletValid
         case 2:
+          return this.isWalletValid
+        case 3:
           return this.isRelayValid && this.isWalletSufficient
         default:
           return true
@@ -386,10 +400,15 @@ export default {
       return !!this.balance && this.balance >= recomendedBalance
     },
     nextButtonLabel () {
+      console.log('Step', this.step)
+
       switch (this.step) {
         case 1:
-          return this.$t('setup.accountSetupNext')
+          console.log('hrm')
+          return this.$t('agree')
         case 2:
+          return this.$t('setup.accountSetupNext')
+        case 3:
           return this.$t('setup.depositStepNext')
         default:
           return 'Unknown'
