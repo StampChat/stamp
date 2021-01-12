@@ -155,7 +155,7 @@ module.exports = configure(function (ctx) {
       manifest: {
         name: 'Stamp',
         short_name: 'Stamp',
-        description: ' A Bitcoin Cash powered internet relay chat',
+        description: ' A eCash powered internet cryptomessenger',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#ffffff',

@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  A Bitcoin Cash powered internet relay chat.
+  A eCash powered cryptomessenger.
 </p>
 
 <p align="center">
@@ -16,7 +16,7 @@
   </a>
 </p>
 
-**WARNING: Stamp is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the Bitcoin Cash testnet as to protect against lost funds.**
+**WARNING: Stamp is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the eCash testnet as to protect against lost funds.**
 
 ## Install from Binary
 

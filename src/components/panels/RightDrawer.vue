@@ -1,6 +1,6 @@
 <template>
   <div class="column full-height">
-    <!-- Send Bitcoin dialog -->
+    <!-- Send eCash dialog -->
     <q-dialog v-model="sendBitcoinOpen">
       <send-bitcoin-dialog
         :address="address"
@@ -66,7 +66,7 @@
             <q-icon name="attach_money" />
           </q-item-section>
           <q-item-section>
-            Send Bitcoin
+            Send eCash
           </q-item-section>
         </q-item>
 

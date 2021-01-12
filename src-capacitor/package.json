@@ -1,7 +1,7 @@
 {
   "name": "stamp",
   "version": "0.0.3-alpha.1",
-  "description": " A Bitcoin Cash powered internet relay chat",
+  "description": " A eCash powered internet cryptomessenger",
   "author": "harry@cryptonumismatics.org",
   "private": true,
   "dependencies": {

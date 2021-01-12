@@ -90,7 +90,7 @@ export default {
       },
       set (val) {
         console.log('seed', val)
-        this.accountData.seed = val
+        this.accountData.seed = val.toLowerCase().trim()
         this.accountData.valid = this.isValid
         console.log(this.accountData)
         this.$emit('input', this.accountData)
@@ -100,7 +100,7 @@ export default {
       return this.isSeedValid && (this.accountData.name.length > 1)
     },
     isSeedValid () {
-      return validateMnemonic(this.seed.trim())
+      return validateMnemonic(this.seed.toLowerCase().trim())
     },
     name: {
       get () {
