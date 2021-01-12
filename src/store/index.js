@@ -87,6 +87,7 @@ const vuexLocal = new VuexPersistence({
       },
       contacts: state.contacts,
       myProfile: state.myProfile,
+      networkName: displayNetwork,
       version: STORE_SCHEMA_VERSION
     }
   },
