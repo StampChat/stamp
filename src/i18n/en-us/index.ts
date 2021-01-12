@@ -2,6 +2,7 @@
 // so you can safely delete all default props below
 
 export default {
+  agree: 'Agree',
   chat: {
     donationMessage: 'Thank you for participating in our vision of the future of online communications. Please consider donating to our efforts by sending real BCH to bitcoincash:qq7vt04md0pt6fk5szhcx4cgsfuzmppy5u4hxshr4a'
   },
@@ -16,6 +17,7 @@ export default {
   setup: {
     welcome: 'Welcome',
     setupWallet: 'Character Setup',
+    eula: 'EULA',
     deposit: 'Deposit eCash',
     settings: 'Settings',
     back: 'Back',
