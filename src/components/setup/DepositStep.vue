@@ -1,17 +1,17 @@
 <template>
   <div class="col q-gutter-y-md">
     <q-resize-observer @resize="setQRSize" />
-    <div class="p-mx-sm">
+    <div class="p-mx-none">
       <qrcode-vue
         class="text-center"
         :value="displayAddress"
         level="H"
-        size="300"
+        size="150"
       />
     </div>
 
     <q-input
-      class="fit q-px-lg"
+      class="fit"
       filled
       auto-grow
       v-model="displayAddress"
