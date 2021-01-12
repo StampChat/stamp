@@ -58,9 +58,16 @@ export class Wallet {
 
   setXPrivKey (xPrivKey) {
     this._xPrivKey = xPrivKey
-    this._identityPrivKey = xPrivKey.deriveChild(20102019)
+    // TODO: we're just using the first key in the HD addresses for now
+    // so that it'll be compatible (mostly) with other HD wallets.
+    // We should do something to allow revocations in the future.
+    this._identityPrivKey = xPrivKey
+      .deriveChild(44, true)
+      .deriveChild(899, true)
       .deriveChild(0, true)
-      .privateKey // TODO: Proper path for this
+      .deriveChild(0)
+      .deriveChild(0)
+      .privateKey
 
     this.init()
   }
@@ -95,19 +102,9 @@ export class Wallet {
     this.addresses = {}
     this.changeAddresses = {}
     this.electrumScriptHashes = {}
-    // Init setup for the identity script hash
-    const myLegacyAddress = this.myAddress.toLegacyAddress()
-    this.addElectrumScriptHash({
-      scriptHash: toElectrumScriptHash(myLegacyAddress),
-      address: myLegacyAddress,
-      change: false,
-      privKey: this.identityPrivKey
-    })
-    this.setAddress({ address: myLegacyAddress, privKey: this.identityPrivKey })
-
     for (let i = 0; i < numAddresses; i++) {
       const privKey = xPrivKey.deriveChild(44, true)
-        .deriveChild(145, true)
+        .deriveChild(899, true)
         .deriveChild(0, true)
         .deriveChild(0)
         .deriveChild(i)
@@ -121,7 +118,7 @@ export class Wallet {
     }
     for (let j = 0; j < numChangeAddresses; j++) {
       const privKey = xPrivKey.deriveChild(44, true)
-        .deriveChild(145, true)
+        .deriveChild(899, true)
         .deriveChild(0, true)
         .deriveChild(1)
         .deriveChild(j)
