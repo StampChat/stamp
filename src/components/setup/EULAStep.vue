@@ -13,7 +13,7 @@
     </div>
 
     <div class="row q-gutter-y-md">
-      This software is very early stage, and may lose funds. Keep larger amounts of eCash in more established wallets. Nobody™ will take responsibility for your loss.
+      This software is very early stage, and may lose funds. Keep larger amounts of eCash in more established wallets.
     </div>
 
     <div class="row q-gutter-y-md">
