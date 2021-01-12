@@ -4,6 +4,7 @@ import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl } from '../../
 import KeyserverHandler from '../../keyserver/handler'
 import Vue from 'vue'
 import moment from 'moment'
+import { toAPIAddress } from '../../utils/address'
 
 export function rehydrateContacts (contactState) {
   if (!contactState) {
@@ -25,60 +26,83 @@ export default {
       return state.updateInterval
     },
     getNotify: (state) => (address) => {
-      return state.contacts[address] ? state.contacts[address].notify : false
+      const apiAddress = toAPIAddress(address)
+
+      return state.contacts[apiAddress] ? state.contacts[apiAddress].notify : false
     },
     getRelayURL: (state) => (address) => {
-      return state.contacts[address] ? state.contacts[address].relayURL : defaultRelayUrl
+      const apiAddress = toAPIAddress(address)
+
+      return state.contacts[apiAddress] ? state.contacts[apiAddress].relayURL : defaultRelayUrl
     },
     isContact: (state) => (address) => {
-      return (address in state.contacts)
+      const apiAddress = toAPIAddress(address)
+
+      return (apiAddress in state.contacts)
     },
     getContact: (state) => (address) => {
-      return state.contacts[address] ? state.contacts[address] : { ...pendingRelayData, profile: { ...pendingRelayData.profile } }
+      const apiAddress = toAPIAddress(address)
+
+      return state.contacts[apiAddress] ? state.contacts[apiAddress] : { ...pendingRelayData, profile: { ...pendingRelayData.profile } }
     },
     getContacts: (state) => {
       return state.contacts
     },
     getContactProfile: (state) => (address) => {
-      return state.contacts[address] ? state.contacts[address].profile : { ...pendingRelayData.profile }
+      const apiAddress = toAPIAddress(address)
+
+      return state.contacts[apiAddress] ? state.contacts[apiAddress].profile : { ...pendingRelayData.profile }
     },
     getAcceptancePrice: (state) => (address) => {
-      return state.contacts[address].inbox.acceptancePrice
+      const apiAddress = toAPIAddress(address)
+
+      return state.contacts[apiAddress].inbox.acceptancePrice
     },
     getPubKey: (state) => (address) => {
-      if (!state.contacts[address] || !state.contacts[address].profile) {
+      const apiAddress = toAPIAddress(address)
+
+      if (!state.contacts[apiAddress] || !state.contacts[apiAddress].profile) {
         return undefined
       }
-      const arr = Uint8Array.from(Object.values(state.contacts[address].profile.pubKey))
+      const arr = Uint8Array.from(Object.values(state.contacts[apiAddress].profile.pubKey))
       return PublicKey.fromBuffer(arr)
     }
   },
   mutations: {
     addContact (state, { address, contact }) {
-      Vue.set(state.contacts, address, contact)
+      const apiAddress = toAPIAddress(address)
+
+      Vue.set(state.contacts, apiAddress, contact)
     },
     setUpdateInterval (state, interval) {
       state.updateInterval = interval
     },
     updateContact (state, { address, profile, inbox }) {
+      const apiAddress = toAPIAddress(address)
       if (!(address in state.contacts)) {
         return
       }
-      state.contacts[address].lastUpdateTime = moment().valueOf()
-      state.contacts[address].profile = profile || state.contacts[address].profile
-      state.contacts[address].inbox = inbox || state.contacts[address].inbox
+      state.contacts[apiAddress].lastUpdateTime = moment().valueOf()
+      state.contacts[apiAddress].profile = profile || state.contacts[apiAddress].profile
+      state.contacts[apiAddress].inbox = inbox || state.contacts[apiAddress].inbox
     },
     setNotify (state, { address, value }) {
-      if (!state.contacts[address]) {
+      const apiAddress = toAPIAddress(address)
+
+      if (!state.contacts[apiAddress]) {
         return
       }
-      state.contacts[address].notify = value
+      state.contacts[apiAddress].notify = value
     },
     deleteContact (state, address) {
-      Vue.delete(state.contacts, address)
+      const apiAddress = toAPIAddress(address)
+
+      Vue.delete(state.contacts, apiAddress)
     },
     setPubKey (state, { address, pubKey }) {
-      state.contacts[address].profile.pubKey = pubKey
+      const apiAddress = toAPIAddress(address)
+
+      state.contacts[apiAddress].profile.pubKey = pubKey
     }
   },
   actions: {

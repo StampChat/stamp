@@ -4,6 +4,7 @@ import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
+import { toAPIAddress } from '../../utils/address'
 
 const defaultContactObject = {
   inputMessage: '',
@@ -94,7 +95,9 @@ export default {
       return state.messages[payloadDigest]
     },
     getNumUnread: (state) => (address) => {
-      return state.chats[address] ? state.chats[address].totalUnreadMessages : 0
+      const apiAddress = toAPIAddress(address)
+
+      return state.chats[apiAddress] ? state.chats[apiAddress].totalUnreadMessages : 0
     },
     totalUnread (state) {
       return Object.values(state.chats).map((chat) => chat.totalUnreadMessages).reduce((acc, val) => acc + val, 0)
@@ -125,27 +128,33 @@ export default {
       return sortedOrder
     },
     lastRead: (state) => (address) => {
-      return address in state.chats ? state.chats[address].lastRead : 0
+      const apiAddress = toAPIAddress(address)
+
+      return apiAddress in state.chats ? state.chats[apiAddress].lastRead : 0
     },
     getStampAmount: (state) => (address) => {
-      return state.chats[address].stampAmount || defaultStampAmount
+      const apiAddress = toAPIAddress(address)
+
+      return state.chats[apiAddress].stampAmount || defaultStampAmount
     },
     getActiveChat (state) {
       return state.activeChatAddr
     },
     getLatestMessage: (state) => (address) => {
-      const nMessages = Object.keys(state.chats[address].messages).length
+      const apiAddress = toAPIAddress(address)
+
+      const nMessages = Object.keys(state.chats[apiAddress].messages).length
       if (nMessages === 0) {
         return null
       }
 
-      const lastMessageKey = Object.keys(state.chats[address].messages)[nMessages - 1]
-      const lastMessage = state.chats[address].messages[lastMessageKey]
+      const lastMessageKey = Object.keys(state.chats[apiAddress].messages)[nMessages - 1]
+      const lastMessage = state.chats[apiAddress].messages[lastMessageKey]
       const items = lastMessage.items
       const lastItem = items[items.length - 1]
 
       if (!lastItem) {
-        console.error(address)
+        console.error(apiAddress)
         return null
       }
       if (lastItem.type === 'text') {
@@ -178,17 +187,21 @@ export default {
   },
   mutations: {
     deleteMessage (state, { address, index }) {
-      state.chats[address].messages.splice(index, 1)
+      const apiAddress = toAPIAddress(address)
+
+      state.chats[apiAddress].messages.splice(index, 1)
     },
     readAll (state, address) {
-      const values = state.chats[address].messages
+      const apiAddress = toAPIAddress(address)
+
+      const values = state.chats[apiAddress].messages
       if (values.length === 0) {
-        state.chats[address].lastRead = null
+        state.chats[apiAddress].lastRead = null
       } else {
-        state.chats[address].lastRead = Math.max(values[values.length - 1].serverTime, state.chats[address].lastRead)
+        state.chats[apiAddress].lastRead = Math.max(values[values.length - 1].serverTime, state.chats[apiAddress].lastRead)
       }
-      state.chats[address].totalUnreadMessages = 0
-      state.chats[address].totalUnreadValue = 0
+      state.chats[apiAddress].totalUnreadMessages = 0
+      state.chats[apiAddress].totalUnreadValue = 0
     },
     reset (state) {
       state.order = []
@@ -197,17 +210,27 @@ export default {
       state.lastReceived = null
     },
     openChat (state, address) {
-      if (!(address in state.chats)) {
-        Vue.set(state.chats, address, { ...defaultContactObject, messages: [], address })
+      const apiAddress = toAPIAddress(address)
+
+      if (!(apiAddress in state.chats)) {
+        Vue.set(state.chats, apiAddress, { ...defaultContactObject, messages: [], address: apiAddress })
       }
     },
     setActiveChat (state, address) {
-      if (!(address in state.chats)) {
-        Vue.set(state.chats, address, { ...defaultContactObject, messages: [], address })
+      if (!address) {
+        state.activeChatAddr = null
+        return
+      }
+      const apiAddress = toAPIAddress(address)
+
+      if (!(apiAddress in state.chats)) {
+        Vue.set(state.chats, apiAddress, { ...defaultContactObject, messages: [], address: apiAddress })
       }
       state.activeChatAddr = address
     },
     sendMessageLocal (state, { address, senderAddress, index, items, outpoints = [], status = 'pending', retryData = null }) {
+      const apiAddress = toAPIAddress(address)
+
       const timestamp = Date.now()
       const newMsg = {
         outbound: true,
@@ -235,25 +258,31 @@ export default {
       }
 
       state.messages[index] = message
-      if (address in state.chats) {
-        state.chats[address].messages.push(message)
-        state.chats[address].lastRead = Date.now()
+      if (apiAddress in state.chats) {
+        state.chats[apiAddress].messages.push(message)
+        state.chats[apiAddress].lastRead = Date.now()
         return
       }
-      Vue.set(state.chats, address, { ...defaultContactObject, messages: [message], address })
+      Vue.set(state.chats, apiAddress, { ...defaultContactObject, messages: [message], address: apiAddress })
     },
     clearChat (state, address) {
-      if (address in state.chats) {
-        state.chats[address].messages = []
+      const apiAddress = toAPIAddress(address)
+
+      if (apiAddress in state.chats) {
+        state.chats[apiAddress].messages = []
       }
     },
     deleteChat (state, address) {
-      if (state.activeChatAddr === address) {
+      const apiAddress = toAPIAddress(address)
+
+      if (state.activeChatAddr === apiAddress) {
         state.activeChatAddr = null
       }
-      Vue.delete(state.chats, address)
+      Vue.delete(state.chats, apiAddress)
     },
     receiveMessage (state, { address, index, newMsg }) {
+      const apiAddress = toAPIAddress(address)
+
       assert(newMsg.outbound !== undefined, 'outbound is not defined')
       assert(newMsg.status !== undefined, 'status is not defined')
       assert(newMsg.receivedTime !== undefined, 'receivedTime is not defined')
@@ -273,21 +302,21 @@ export default {
       }
       // We don't need reactivity here
       state.messages[index] = message
-      if (!(address in state.chats)) {
+      if (!(apiAddress in state.chats)) {
         // We do need reactivity to create a new chat
-        Vue.set(state.chats, address, { ...defaultContactObject, messages: [], address })
+        Vue.set(state.chats, apiAddress, { ...defaultContactObject, messages: [], address: apiAddress })
       }
 
       // TODO: Better indexing
-      state.chats[address].messages.push(message)
-      state.chats[address].lastReceived = message.serverTime
+      state.chats[apiAddress].messages.push(message)
+      state.chats[apiAddress].lastReceived = message.serverTime
       const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-      if (address !== state.activeChatAddr && state.chats[address].lastRead < message.serverTime) {
-        state.chats[address].totalUnreadValue += messageValue
-        state.chats[address].totalUnreadMessages += 1
+      if (apiAddress !== state.activeChatAddr && state.chats[apiAddress].lastRead < message.serverTime) {
+        state.chats[apiAddress].totalUnreadValue += messageValue
+        state.chats[apiAddress].totalUnreadMessages += 1
       }
       state.lastReceived = message.serverTime
-      state.chats[address].totalValue += messageValue
+      state.chats[apiAddress].totalValue += messageValue
     },
     setStampAmount (state, { address, stampAmount }) {
       state.chats[address].stampAmount = stampAmount
