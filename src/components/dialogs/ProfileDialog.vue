@@ -76,8 +76,9 @@ export default {
         }
         errorNotify(new Error(this.$t('profileDialog.unableContactRelay')))
         throw err
+      } finally {
+        this.$q.loading.hide()
       }
-      this.$q.loading.hide()
     }
   },
   computed: {
