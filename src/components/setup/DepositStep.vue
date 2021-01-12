@@ -92,7 +92,7 @@ export default {
   computed: {
     ...mapGetters({ balance: 'wallet/balance' }),
     displayAddress () {
-      return this.legacy ? this.$wallet.myAddressStr : this.$wallet.displayAddress
+      return (this.legacy ? this.$wallet.myAddressStr : this.$wallet.displayAddress) + `?amount=${this.recomendedBalance}`
     },
     percentageBalance () {
       const percentage = this.balance / this.recomendedBalance
