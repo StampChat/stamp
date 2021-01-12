@@ -10,6 +10,8 @@ import VCard from 'vcf'
 import EventEmitter from 'events'
 import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage, constructProfileMetadata, constructPriceFilter } from './constructors'
 import { entryToImage, arrayBufferToBase64 } from '../utils/image'
+import { toAPIAddress } from '../utils/address'
+
 import { constructStampHDPrivateKey, constructHDStealthPrivateKey } from './crypto'
 import { messageMixin } from './extension'
 import { calcId } from '../wallet/helpers'
@@ -38,12 +40,16 @@ export class RelayClient {
   }
 
   async profilePaymentRequest (address) {
-    const url = `${this.url}/profiles/${address}`
+    const addressLegacy = toAPIAddress(address)
+
+    const url = `${this.url}/profiles/${addressLegacy}`
     return await pop.getPaymentRequest(url, 'put')
   }
 
   async getRelayData (address) {
-    const url = `${this.url}/profiles/${address}`
+    const addressLegacy = toAPIAddress(address)
+
+    const url = `${this.url}/profiles/${addressLegacy}`
     const response = await axios({
       method: 'get',
       url,
@@ -97,7 +103,9 @@ export class RelayClient {
   }
 
   setUpWebsocket (address) {
-    const url = new URL(`/ws/${address}`, this.url)
+    const addressLegacy = toAPIAddress(address)
+
+    const url = new URL(`/ws/${addressLegacy}`, this.url)
     url.protocol = 'wss'
     url.searchParams.set('access_token', this.token)
     const socket = new WebSocket(url.toString())
@@ -128,10 +136,12 @@ export class RelayClient {
   }
 
   async getAcceptancePrice (address) {
+    const addressLegacy = toAPIAddress(address)
+
     // Get fee
     let acceptancePrice
     try {
-      const filters = await this.getFilter(address)
+      const filters = await this.getFilter(addressLegacy)
       const priceFilter = filters.getPriceFilter()
       acceptancePrice = priceFilter.getAcceptancePrice()
     } catch (err) {
@@ -141,7 +151,9 @@ export class RelayClient {
   }
 
   async getRawPayload (address, digest) {
-    const url = `${this.url}/payloads/${address}`
+    const addressLegacy = toAPIAddress(address)
+
+    const url = `${this.url}/payloads/${addressLegacy}`
 
     const hexDigest = Array.prototype.map.call(digest, x => ('00' + x.toString(16)).slice(-2)).join('')
     const response = await axios({
@@ -159,7 +171,9 @@ export class RelayClient {
   }
 
   async getPayload (address, digest) {
-    const rawPayload = await this.getRawPayload(address, digest)
+    const addressLegacy = toAPIAddress(address)
+
+    const rawPayload = await this.getRawPayload(addressLegacy, digest)
     const payload = Payload.deserializeBinary(rawPayload)
     return payload
   }
@@ -194,8 +208,10 @@ export class RelayClient {
   }
 
   async putProfile (address, metadata) {
+    const addressLegacy = toAPIAddress(address)
+
     const rawProfile = metadata.serializeBinary()
-    const url = `${this.url}/profiles/${address}`
+    const url = `${this.url}/profiles/${addressLegacy}`
     await axios({
       method: 'put',
       url: url,
@@ -207,7 +223,9 @@ export class RelayClient {
   }
 
   async getMessages (address, startTime, endTime, retries = 3) {
-    const url = `${this.url}/messages/${address}`
+    const addressLegacy = toAPIAddress(address)
+
+    const url = `${this.url}/messages/${addressLegacy}`
     try {
       const response = await axios({
         method: 'get',
@@ -251,7 +269,9 @@ export class RelayClient {
   }
 
   async messagePaymentRequest (address) {
-    const url = `${this.url}/messages/${address}`
+    const addressLegacy = toAPIAddress(address)
+
+    const url = `${this.url}/messages/${addressLegacy}`
     return await pop.getPaymentRequest(url, 'get')
   }
 
@@ -260,8 +280,10 @@ export class RelayClient {
   }
 
   async pushMessages (address, messageSet) {
+    const addressLegacy = toAPIAddress(address)
+
     const rawMetadata = messageSet.serializeBinary()
-    const url = `${this.url}/messages/${address}`
+    const url = `${this.url}/messages/${addressLegacy}`
     await axios({
       method: 'put',
       url: url,
@@ -340,7 +362,7 @@ export class RelayClient {
       const messageSet = new MessageSet()
       messageSet.addMessages(message)
 
-      const destinationAddress = destinationPublicKey.toAddress(networkName).toLegacyAddress()
+      const destinationAddress = destinationPublicKey.toAddress(networkName).toCashAddress()
       const electrumClient = await this.wallet.electrumClientPromise
       Promise.all(transactions.map(async (transaction) => {
         console.log('Broadcasting a transaction', transaction.id)
@@ -545,7 +567,7 @@ export class RelayClient {
         }
 
         const stampOutput = {
-          address: address.toLegacyAddress(),
+          address: address.toCashAddress(),
           privKey: outbound ? null : outputPrivKey, // This is okay, we don't add it to the wallet.
           satoshis,
           txId,
@@ -650,7 +672,7 @@ export class RelayClient {
             stealthValue += satoshis
 
             const stampOutput = {
-              address: address.toLegacyAddress(),
+              address: address.toCashAddress(),
               satoshis,
               outputIndex,
               privKey: outpointPrivKey,
@@ -723,7 +745,7 @@ export class RelayClient {
   async updateProfile (idPrivKey, profile, acceptancePrice) {
     const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
     const metadata = constructProfileMetadata(profile, priceFilter, idPrivKey)
-    await this.putProfile(idPrivKey.toAddress(networkName).toLegacyAddress().toString(), metadata)
+    await this.putProfile(idPrivKey.toAddress(networkName).toCashAddress().toString(), metadata)
   }
 }
 

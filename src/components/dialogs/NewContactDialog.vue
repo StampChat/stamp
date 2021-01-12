@@ -100,7 +100,7 @@ import KeyserverHandler from '../../keyserver/handler'
 
 import { Address } from 'bitcore-lib-cash'
 
-import { networkName } from '../../utils/constants'
+import { toAPIAddress } from '../../utils/address'
 
 export default {
   data () {
@@ -118,7 +118,7 @@ export default {
       this.contact = 'loading'
       try {
         // Validate address
-        const address = Address.fromString(newAddress.trim(), networkName).toLegacyAddress().toString() // TODO: Make generic
+        const address = toAPIAddress(newAddress.trim()) // TODO: Make generic
 
         // Pull information from keyserver then relay server
         const ksHandler = new KeyserverHandler()
@@ -138,7 +138,7 @@ export default {
     }),
 
     addContact () {
-      const cashAddress = Address.fromString(this.address, networkName).toCashAddress() // TODO: Make generic
+      const cashAddress = toAPIAddress(this.address) // TODO: Make generic
       this.addContactVuex({ address: cashAddress, contact: this.contact })
     }
   },

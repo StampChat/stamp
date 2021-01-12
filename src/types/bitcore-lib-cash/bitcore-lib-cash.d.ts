@@ -290,6 +290,8 @@ declare module 'bitcore-lib-cash' {
         readonly type: string;
 
         constructor(data: Buffer | Uint8Array | string | object, network?: Networks.Network, type?: string);
+
+        toCashAddress(data: any): string;
     }
 
     export class Unit {
