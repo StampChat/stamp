@@ -3,6 +3,8 @@
     <q-scroll-area class="q-px-none col">
       <q-list>
         <q-separator />
+        <chat-list-link title="News" />
+        <q-separator />
         <chat-list-item
           v-for="(contact) in getSortedChatOrder"
           :key="contact.address"
@@ -24,6 +26,7 @@
 
 <script>
 import ChatListItem from './ChatListItem.vue'
+import ChatListLink from './ChatListLink.vue'
 import { mapGetters } from 'vuex'
 import { formatBalance } from '../../utils/formatting'
 
@@ -39,7 +42,8 @@ export default {
     }
   },
   components: {
-    ChatListItem
+    ChatListItem,
+    ChatListLink
   },
   data () {
     return {
