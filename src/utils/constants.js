@@ -88,7 +88,12 @@ export const defaultAvatars = ['bunny_cyborg.png', 'croc_music.png', 'kitty_stan
 
 // Chat constants
 export const defaultStampAmount = 5000
-export const defaultContacts = []
+export const defaultContacts = [
+  {
+    name: 'God',
+    address: 'ecash:qznv94fgtyh423yw0hndmzy4lf7a2fv33y7eyv7g99'
+  }
+]
 
 // Notification constants
 export const notificationTimeout = 4000
