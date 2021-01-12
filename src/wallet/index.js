@@ -37,7 +37,7 @@ const shuffleArray = function (arr) {
 }
 
 export class Wallet {
-  constructor (storage, { networkName = 'testnet', displayNetworkName = 'ecash-testnet' } = {}) {
+  constructor (storage, { networkName = 'mainnet', displayNetworkName = 'ecash-mainnet' } = {}) {
     this.storage = storage
     this.networkName = networkName
     this.displayNetworkName = displayNetworkName
@@ -109,7 +109,7 @@ export class Wallet {
         .deriveChild(0)
         .deriveChild(i)
         .privateKey
-      const address = privKey.toAddress(this.networkName).toLegacyAddress()
+      const address = privKey.toAddress(this.networkName).toCashAddress()
       this.setAddress({ address, privKey })
 
       // Index by script hash
@@ -123,7 +123,7 @@ export class Wallet {
         .deriveChild(1)
         .deriveChild(j)
         .privateKey
-      const address = privKey.toAddress(this.networkName).toLegacyAddress()
+      const address = privKey.toAddress(this.networkName).toCashAddress()
       this.setChangeAddress({ address, privKey })
 
       // Index by script hash

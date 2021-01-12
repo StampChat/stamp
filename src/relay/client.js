@@ -17,7 +17,7 @@ import assert from 'assert'
 import paymentrequest from '../bip70/paymentrequest_pb'
 
 import WebSocket from 'isomorphic-ws'
-import { PublicKey, crypto, Transaction } from 'bitcore-lib-cash'
+import { PublicKey, crypto, Transaction, Address, Networks } from 'bitcore-lib-cash'
 
 export class RelayClient {
   constructor (url, wallet, electrumClientPromise, { getPubKey, messageStore }) {
@@ -43,7 +43,9 @@ export class RelayClient {
   }
 
   async getRelayData (address) {
-    const url = `${this.url}/profiles/${address}`
+    const addressLegacy = Address(Address(address).hashBuffer, Networks.get(networkName)).toCashAddress()
+
+    const url = `${this.url}/profiles/${addressLegacy}`
     const response = await axios({
       method: 'get',
       url,
@@ -340,7 +342,7 @@ export class RelayClient {
       const messageSet = new MessageSet()
       messageSet.addMessages(message)
 
-      const destinationAddress = destinationPublicKey.toAddress(networkName).toLegacyAddress()
+      const destinationAddress = destinationPublicKey.toAddress(networkName).toCashAddress()
       const electrumClient = await this.wallet.electrumClientPromise
       Promise.all(transactions.map(async (transaction) => {
         console.log('Broadcasting a transaction', transaction.id)
@@ -545,7 +547,7 @@ export class RelayClient {
         }
 
         const stampOutput = {
-          address: address.toLegacyAddress(),
+          address: address.toCashAddress(),
           privKey: outbound ? null : outputPrivKey, // This is okay, we don't add it to the wallet.
           satoshis,
           txId,
@@ -650,7 +652,7 @@ export class RelayClient {
             stealthValue += satoshis
 
             const stampOutput = {
-              address: address.toLegacyAddress(),
+              address: address.toCashAddress(),
               satoshis,
               outputIndex,
               privKey: outpointPrivKey,
@@ -723,7 +725,7 @@ export class RelayClient {
   async updateProfile (idPrivKey, profile, acceptancePrice) {
     const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
     const metadata = constructProfileMetadata(profile, priceFilter, idPrivKey)
-    await this.putProfile(idPrivKey.toAddress(networkName).toLegacyAddress().toString(), metadata)
+    await this.putProfile(idPrivKey.toAddress(networkName).toCashAddress().toString(), metadata)
   }
 }
 
