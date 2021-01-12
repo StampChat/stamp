@@ -6,6 +6,7 @@ import { rehydateChat } from './modules/chats'
 import { rehydrateWallet } from './modules/wallet'
 import { path, pathOr, mapObjIndexed } from 'ramda'
 import { rehydrateContacts } from './modules/contacts'
+import { displayNetwork } from '../utils/constants'
 
 Vue.use(Vuex)
 
@@ -16,7 +17,7 @@ const parseState = (value) => {
     return (value || {})
   }
 }
-const STORE_SCHEMA_VERSION = 2
+const STORE_SCHEMA_VERSION = 3
 
 let lastSave = Date.now()
 
@@ -25,10 +26,18 @@ const vuexLocal = new VuexPersistence({
   // Hack to allow us to easily rehydrate the store
   restoreState: async (key, storage) => {
     const value = storage.getItem(key)
-    let newState = parseState(value)
+    const newState = parseState(value)
+    if (newState.networkName !== displayNetwork) {
+      return {
+        wallet: {
+          seedPhrase: path(['wallet', 'seedPhrase'], newState)
+        }
+      }
+    }
+
     if (newState.version !== STORE_SCHEMA_VERSION) {
       // Import everything else from the server again
-      newState = {
+      return {
         wallet: {
           xPrivKey: path(['wallet', 'xPrivKey'], newState),
           seedPhrase: path(['wallet', 'seedPhrase'], newState)
@@ -47,6 +56,7 @@ const vuexLocal = new VuexPersistence({
           }, pathOr({}, ['chats', 'chats'], newState))
         },
         version: STORE_SCHEMA_VERSION,
+        networkName: displayNetwork,
         myProfile: newState.myProfile
       }
     }
