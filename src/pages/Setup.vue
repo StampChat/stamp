@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <div class="q-pa-sm">
+    <div class="q-pa-none">
       <q-stepper
         v-model="step"
         ref="stepper"
