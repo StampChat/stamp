@@ -2,16 +2,18 @@
   <div class="col q-gutter-y-md">
     <div class="row p-mx-sm">
       <q-space />
-      <q-img
-        src="~assets/donation_qr_code.jpg"
-        width="50vw"
-        spinner-color="white"
-      />
+      <q-card>
+        <q-img
+          src="~assets/shofar.jpg"
+          width="150px"
+          spinner-color="white"
+        />
+      </q-card>
       <q-space />
     </div>
 
     <div class="row q-gutter-y-md">
-      This software is very early stage, and may lose funds. Keep larger amounts of eCash in more established wallets.
+      This software is very early stage, and may lose funds. Keep larger amounts of eCash in more established wallets. Nobody™ will take responsibility for your loss.
     </div>
 
     <div class="row q-gutter-y-md">
