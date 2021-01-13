@@ -3,7 +3,7 @@
     <q-drawer
       v-model="myDrawerOpen"
       :width="splitterRatio"
-      :breakpoint="400"
+      :breakpoint="800"
       show-if-above
     >
       <left-drawer :loaded="loaded" />
@@ -12,7 +12,7 @@
       v-model="contactDrawerOpen"
       side="right"
       :width="splitterRatio"
-      :breakpoint="400"
+      :breakpoint="800"
     >
       <right-drawer
         v-if="activeChatAddr !== null"
