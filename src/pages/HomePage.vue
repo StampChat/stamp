@@ -14,7 +14,7 @@
           icon="menu"
         />
         <q-toolbar-title class="h6">
-          Welcome
+          Welcome to Paradise
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
@@ -27,12 +27,12 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
-            Welcome to Mercury Messenger
+            Welcome to God's Holy Messenger
           </div>
           <div class="text-body1">
-            Mercury Messenger is a decentralized, secure, and free for all,
-            cryptomessenger. It is currently, highly experimental. Please do
-            report bugs to Shammah, from your default contacts.
+            God's Holy Messenger is a decentralized, secure, and free for all,
+            cryptomessenger. It is currently, highly experimental. You have been
+            warned.
           </div>
         </q-scroll-area>
         <q-page-sticky

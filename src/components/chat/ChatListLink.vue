@@ -8,7 +8,7 @@
   >
     <q-item-section avatar>
       <q-avatar rounded>
-        <!-- <img src="~assets/shofar.jpg"> -->
+        <img src="~assets/herald_angel.jpg">
       </q-avatar>
     </q-item-section>
     <q-item-section>
