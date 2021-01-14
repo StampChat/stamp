@@ -2,11 +2,12 @@
   <div class="col q-gutter-y-md">
     <div class="row p-mx-sm">
       <q-space />
-      <q-img
+      Welcome to Stamp
+      <!-- <q-img
         src="~assets/donation_qr_code.jpg"
         width="50vw"
         spinner-color="white"
-      />
+      /> -->
       <q-space />
     </div>
 
