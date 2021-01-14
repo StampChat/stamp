@@ -228,7 +228,7 @@ export default {
       }
       state.activeChatAddr = address
     },
-    sendMessageLocal (state, { address, senderAddress, index, items, outpoints = [], status = 'pending', retryData = null }) {
+    sendMessageLocal (state, { address, senderAddress, index, items, outpoints = [], status = 'pending', previousHash = null }) {
       const apiAddress = toAPIAddress(address)
 
       const timestamp = Date.now()
@@ -239,8 +239,8 @@ export default {
         serverTime: timestamp,
         receivedTime: timestamp,
         outpoints,
-        retryData,
-        senderAddress
+        senderAddress,
+        messageHash: index
       }
       assert(newMsg.outbound !== undefined, 'outbound is not defined')
       assert(newMsg.status !== undefined, 'status is not defined')
@@ -254,6 +254,20 @@ export default {
       if (index in state.messages) {
         // we have the message already, just need to update some fields and return
         state.messages[index] = Object.assign(state.messages[index], message)
+        return
+      }
+
+      if (index in state.messages) {
+        // we have the message already, just need to update some fields and return
+        state.messages[index] = Object.assign(state.messages[index], message)
+        return
+      }
+
+      if (previousHash in state.messages) {
+        // we have the message already, just need to update some fields and return
+        const msgIndex = state.chats[apiAddress].messages.findIndex((msg) => msg.messageHash === previousHash)
+        state.chats[apiAddress].messages.splice(msgIndex, 1)
+        delete state.messages[index]
         return
       }
 
