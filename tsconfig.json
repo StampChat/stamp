@@ -6,7 +6,8 @@
   },
   "include": [
     "src",
-    "local_modules/bn.js/lib/bn.js"
+    "local_modules/bn.js/lib/bn.js",
+    "src-pwa/register-service-worker.js"
   ],
   "exclude": [
     "node_modules"
