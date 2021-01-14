@@ -291,7 +291,7 @@ export class RelayClient {
     })
   }
 
-  async sendMessageImpl ({ address, items, stampAmount, errCount = 0 }) {
+  async sendMessageImpl ({ address, items, stampAmount, errCount = 0, previousHash }) {
     const wallet = this.wallet
     const sourcePrivateKey = wallet.identityPrivKey
     const destinationPublicKey = this.getPubKey(address)
@@ -345,7 +345,7 @@ export class RelayClient {
       const payloadDigestHex = payloadDigest.toString('hex')
 
       // Add localy
-      this.events.emit('messageSending', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
+      this.events.emit('messageSending', { address, senderAddress, index: payloadDigestHex, items, outpoints, previousHash, transactions })
 
       outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
         transactions.push(transaction)
@@ -384,13 +384,14 @@ export class RelayClient {
           errCount += 1
           console.log('error sending message', err)
           if (errCount >= 3) {
+            this.events.emit('messageSendError', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
             console.log(`unable to send message after ${errCount} retries`)
             return
           }
           // TODO: Currently, we can lose stealth transaction data if the stamp inputs fail.
           // Also, retries messages are not deleted from the message output window.
           // Both of these issues need to be fixed.
-          await this.sendMessageImpl({ address, items, stampAmount, errCount })
+          await this.sendMessageImpl({ address, items, stampAmount, errCount, previousHash: payloadDigestHex })
         })
     } catch (err) {
       console.error(err)
