@@ -127,6 +127,16 @@ export default {
       )
       return sortedOrder
     },
+    getFractions: (state) => address => {
+      const chatList = Object.values(state.chats)
+      const totalValue = chatList.reduce((total, { totalValue }) => total + totalValue, 0) -
+        state.chats[address].totalValue
+      const rewards = {}
+      for (const chat of chatList) {
+        rewards[chat.address] = chat.totalValue / totalValue
+      }
+      return rewards
+    },
     lastRead: (state) => (address) => {
       const apiAddress = toAPIAddress(address)
 
