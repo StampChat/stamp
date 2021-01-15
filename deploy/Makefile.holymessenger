@@ -5,7 +5,7 @@ VERSION := $(shell git rev-parse HEAD)
 .PHONY: image push
 
 image:
-	cd .. && quasar build -T spa
+	cd .. && quasar build -T pwa
 	docker build -f ./Dockerfile --no-cache .. -t $(PROJECT)$(IMAGE_NAME):latest
 	docker tag $(PROJECT)$(IMAGE_NAME):latest $(PROJECT)$(IMAGE_NAME):$(VERSION)
 
