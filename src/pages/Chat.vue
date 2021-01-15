@@ -147,6 +147,7 @@ import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.v
 import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
 import { insufficientStampNotify } from '../utils/notifications'
 import { addressColorFromStr } from '../utils/formatting'
+import { stampLowerLimit } from '../utils/constants'
 
 const scrollDuration = 0
 
@@ -225,7 +226,7 @@ export default {
       }
     },
     stampAmountChanged (stampAmount) {
-      const stampAmountNumber = Number(stampAmount)
+      const stampAmountNumber = Math.max(stampLowerLimit, Number(stampAmount))
       this.setStampAmount({ address: this.address, stampAmount: stampAmountNumber })
     },
     scrollBottom () {

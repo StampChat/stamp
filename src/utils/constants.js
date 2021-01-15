@@ -86,6 +86,8 @@ export const defaultAvatars = ['bunny_cyborg.png', 'croc_music.png', 'kitty_stan
 
 // Chat constants
 export const defaultStampAmount = 5000
+export const stampLowerLimit = 1000
+
 export const defaultContacts = [
   {
     name: 'Harry',
