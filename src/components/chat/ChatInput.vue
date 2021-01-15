@@ -98,6 +98,8 @@ import emoji from 'node-emoji'
 import { Picker, EmojiIndex } from 'emoji-mart-vue-fast'
 import data from '../../assets/emoticons/all.json'
 import 'emoji-mart-vue-fast/css/emoji-mart.css'
+import { defaultStampAmount } from '../../utils/constants'
+
 const emojiIndex = new EmojiIndex(data)
 
 export default {
@@ -120,7 +122,7 @@ export default {
     },
     stampAmount: {
       type: Number,
-      default: () => 5000
+      default: () => defaultStampAmount
     }
   },
   methods: {
