@@ -21,12 +21,20 @@ const STORE_SCHEMA_VERSION = 3
 
 let lastSave = Date.now()
 
+const storeKeys = [
+  'wallet', 'relayClient', 'chats', 'version', 'networkName', 'myProfile', 'contacts'
+]
+
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
   // Hack to allow us to easily rehydrate the store
   restoreState: async (key, storage) => {
-    const value = storage.getItem(key)
-    const newState = parseState(value)
+    const newState = {}
+    for (const partitionedKey of storeKeys) {
+      const value = parseState(storage.getItem(partitionedKey))
+      newState[partitionedKey] = {}
+      Object.assign(newState[partitionedKey], value)
+    }
     if (newState.networkName !== displayNetwork) {
       return {
         wallet: {
@@ -77,7 +85,7 @@ const vuexLocal = new VuexPersistence({
       chats: {
         activeChatAddr: pathOr(null, ['chats', 'activeChatAddr'], state),
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        chats: mapObjIndexed((addressData, address) => {
+        chats: mapObjIndexed((addressData) => {
           return ({
             ...addressData,
             // Overwrite messages because storing them would be prohibitive.
@@ -85,18 +93,35 @@ const vuexLocal = new VuexPersistence({
           })
         }, pathOr({}, ['chats', 'chats'], state))
       },
-      contacts: state.contacts,
+      contacts: {
+        updateInterval: pathOr(600000, ['contacts', 'updateInterval'], state),
+        contacts: mapObjIndexed((contactData) => {
+          return ({
+            ...contactData,
+            profile: {
+              ...contactData.profile,
+              avatar: undefined
+            }
+          })
+        }, pathOr({}, ['contacts', 'contacts'], state))
+      },
       myProfile: state.myProfile,
       networkName: displayNetwork,
       version: STORE_SCHEMA_VERSION
     }
   },
   saveState (key, state, storage) {
-    storage.setItem(key, JSON.stringify(state))
+    for (const partitionedKey of storeKeys) {
+      try {
+        storage.setItem(partitionedKey, JSON.stringify(state[partitionedKey]))
+      } catch (err) {
+        console.log(err)
+      }
+    }
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   filter: (mutation) => {
-    if (lastSave + 1000 >= Date.now()) {
+    if (lastSave + 6000 >= Date.now()) {
       return false
     }
     lastSave = Date.now()
