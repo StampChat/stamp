@@ -90,12 +90,36 @@ export const stampLowerLimit = 1000
 
 export const defaultContacts = [
   {
-    name: 'Harry',
-    address: 'bchtest:qq3q7kzdds2xuzug05tn7w3lp7kkfulqfsf85x8tty'
+    name: 'Yoshiyahu',
+    address: 'ecash:qrz6dtj4ahlrv67q7hjcqa78tyvcl48f9yasgwwvea'
   },
   {
-    name: 'Shammah',
-    address: 'bchtest:qqu3vqt9hydcmhkydn9h68qzlyduypuwqgnc8vvjhc'
+    name: 'Mengerian',
+    address: 'ecash:qrfzkvmk7mrvvh55zyy0q7ksxth6l7xr4sgaspdrj9'
+  },
+  {
+    name: 'deadalnix',
+    address: 'ecash:qrnqz2da0xdef8xmcfadyjcqmm0z73nyug4xha2jgj'
+  },
+  {
+    name: 'Marco',
+    address: 'ecash:qpd8uqdp6nc4jt6pantt5plj0qqt9m4vdss695azhe'
+  },
+  {
+    name: 'Pierre',
+    address: 'ecash:qzdf44zy632zk4etztvmaqav0y2cest4evtph9jyf4'
+  },
+  {
+    name: 'Vin',
+    address: 'ecash:qrfv6ws03vlavn5fjls6fhmakfgthrqs3qsmaul0su'
+  },
+  {
+    name: 'Tendo Pein',
+    address: 'ecash:qr2sv83tfcqdt6mhfct5mt7ukn5n4p9dmyu97jl454'
+  },
+  {
+    name: 'BytesOfMan',
+    address: 'ecash:qqd3qn4zazjhygk5a2vzw2gvqgqwempr4gtfza25mc'
   }
 ]
 
