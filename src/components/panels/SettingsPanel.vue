@@ -8,32 +8,12 @@
       :acceptance-price="getInbox.acceptancePrice"
     />
 
-    <!-- New contact dialog -->
-    <q-dialog v-model="newContactOpen">
-      <new-contact-dialog />
-    </q-dialog>
-
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
       <contact-book-dialog
         :contact-click="function (address, contact) { return setActiveChat(address) }"
         @close-contact-search-dialog="closeContactSearchDialog"
       />
-    </q-dialog>
-
-    <!-- Contact book dialog -->
-    <q-dialog v-model="sendAddressOpen">
-      <send-address-dialog />
-    </q-dialog>
-
-    <!-- Wallet dialog -->
-    <q-dialog v-model="walletOpen">
-      <receive-bitcoin-dialog />
-    </q-dialog>
-
-    <!-- Profile dialog -->
-    <q-dialog v-model="profileOpen">
-      <profile-dialog :current-profile="getProfile" />
     </q-dialog>
 
     <div class="flex-break" />
@@ -43,7 +23,7 @@
         <q-item
           clickable
           v-ripple
-          @click="newContactOpen = true"
+          @click="newContact"
         >
           <q-item-section avatar>
             <q-icon name="add_comment" />
@@ -68,7 +48,7 @@
         <q-item
           clickable
           v-ripple
-          @click="sendAddressOpen = true"
+          @click="sendECash"
         >
           <q-item-section avatar>
             <q-icon name="send" />
@@ -80,7 +60,7 @@
         <q-item
           clickable
           v-ripple
-          @click="walletOpen = true"
+          @click="receiveECash"
         >
           <q-item-section avatar>
             <q-icon name="account_balance_wallet" />
@@ -94,7 +74,7 @@
         <q-item
           clickable
           v-ripple
-          @click="profileOpen = true"
+          @click="openProfile"
         >
           <q-item-section avatar>
             <q-icon name="face" />
@@ -122,29 +102,23 @@
 <script>
 import { mapActions, mapGetters } from 'vuex'
 import ContactCard from './ContactCard.vue'
-import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
-import ReceiveBitcoinDialog from '../dialogs/ReceiveBitcoinDialog.vue'
-import ProfileDialog from '../dialogs/ProfileDialog.vue'
-import SendAddressDialog from '../dialogs/SendAddressDialog.vue'
+
+const openPage = (router, currentRoute, route) => {
+  if (currentRoute.startsWith('/chat/')) {
+    return router.push(route)
+  }
+  return router.replace(route)
+}
 
 export default {
   components: {
     ContactCard,
-    NewContactDialog,
-    ContactBookDialog,
-    ReceiveBitcoinDialog,
-    ProfileDialog,
-    SendAddressDialog
+    ContactBookDialog
   },
   data () {
     return {
-      newContactOpen: false,
-      sendAddressOpen: false,
-      contactBookOpen: false,
-      walletOpen: false,
-      profileOpen: false,
-      settingsOpen: false
+      contactBookOpen: false
     }
   },
   props: {
@@ -159,8 +133,6 @@ export default {
   },
   methods: {
     ...mapActions({
-      setDrawerOpen: 'myDrawer/setDrawerOpen',
-      addNewContact: 'contacts/addNewContact',
       setActiveChat: 'chats/setActiveChat'
     }),
     getIdentityPrivKey () {
@@ -170,7 +142,19 @@ export default {
       this.contactBookOpen = false
     },
     openSettings () {
-      this.$router.push('/settings')
+      openPage(this.$router, this.$route.path, '/settings')
+    },
+    openProfile () {
+      openPage(this.$router, this.$route.path, '/profile')
+    },
+    receiveECash () {
+      openPage(this.$router, this.$route.path, '/receive')
+    },
+    sendECash () {
+      openPage(this.$router, this.$route.path, '/send')
+    },
+    newContact () {
+      openPage(this.$router, this.$route.path, '/add-contact')
     }
   },
   computed: {

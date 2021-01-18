@@ -1,5 +1,5 @@
 <template>
-  <q-card class="q-px-sm q-pb-md dialog-medium">
+  <q-card class="q-ma-sm">
     <q-card-section>
       <div class="text-h6">
         {{ $t('newContactDialog.newContact') }}
@@ -77,18 +77,15 @@
     </q-slide-transition>
     <q-card-actions align="right">
       <q-btn
-        flat
-        label="Cancel"
-        color="primary"
-        v-close-popup
-      />
-      <q-btn
-        flat
         :disable="contact === null"
         label="Add"
         color="primary"
         @click="addContact()"
-        v-close-popup
+      />
+      <q-btn
+        label="Cancel"
+        color="negative"
+        @click="cancel"
       />
     </q-card-actions>
   </q-card>
@@ -96,8 +93,8 @@
 
 <script>
 import { mapActions } from 'vuex'
-import KeyserverHandler from '../../keyserver/handler'
-import { toAPIAddress } from '../../utils/address'
+import KeyserverHandler from '../keyserver/handler'
+import { toAPIAddress } from '../utils/address'
 
 export default {
   data () {
@@ -133,10 +130,13 @@ export default {
     ...mapActions({
       addContactVuex: 'contacts/addContact'
     }),
-
     addContact () {
       const cashAddress = toAPIAddress(this.address) // TODO: Make generic
       this.addContactVuex({ address: cashAddress, contact: this.contact })
+      window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
+    },
+    cancel () {
+      window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     }
   },
   mounted () {

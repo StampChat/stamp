@@ -73,11 +73,10 @@
 </template>
 
 <script>
+import { mapActions, mapGetters, mapState } from 'vuex'
+
 import ChatList from '../chat/ChatList.vue'
 import SettingsPanel from '../panels/SettingsPanel.vue'
-import { mapActions, mapGetters, mapState } from 'vuex'
-import ReceiveBitcoinDialog from '../dialogs/ReceiveBitcoinDialog.vue'
-import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 import { formatBalance } from '../../utils/formatting'
 
@@ -87,9 +86,7 @@ export default {
   components: {
     ChatList,
     SettingsPanel,
-    ReceiveBitcoinDialog,
-    RelayConnectDialog,
-    NewContactDialog
+    RelayConnectDialog
   },
   props: {
     loaded: {

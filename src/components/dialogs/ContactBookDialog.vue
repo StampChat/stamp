@@ -1,10 +1,5 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
-    <!-- New contact dialog -->
-    <q-dialog v-model="newContactOpen">
-      <new-contact-dialog />
-    </q-dialog>
-
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6">
         {{ $t('contactBookDialog.contacts') }}
@@ -48,7 +43,6 @@
 
 <script>
 import ContactList from '../contacts/ContactList.vue'
-import NewContactDialog from '../dialogs/NewContactDialog.vue'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -59,8 +53,7 @@ export default {
     }
   },
   components: {
-    ContactList,
-    NewContactDialog
+    ContactList
   },
   methods: {
     searchContacts (searchPrefix) {

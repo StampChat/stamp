@@ -1,5 +1,5 @@
 <template>
-  <q-card class="q-px-sm q-pb-md dialog-medium">
+  <q-card class="q-ma-sm">
     <q-card-section>
       <div class="text-h6">
         {{ $t('sendAddressDialog.sendToAddress') }}
@@ -27,18 +27,15 @@
     </q-card-section>
     <q-card-actions align="right">
       <q-btn
-        flat
-        :label="$t('sendAddressDialog.cancel')"
-        color="primary"
-        v-close-popup
-      />
-      <q-btn
-        flat
         :disable="!isValid"
         :label="$t('sendAddressDialog.send')"
         color="primary"
         @click="send()"
-        v-close-popup
+      />
+      <q-btn
+        :label="$t('sendAddressDialog.cancel')"
+        color="negative"
+        @click="cancel"
       />
     </q-card-actions>
   </q-card>
@@ -47,8 +44,8 @@
 <script>
 import { Address, Transaction, Script } from 'bitcore-lib-cash'
 
-import { sentTransactionNotify, errorNotify } from '../../utils/notifications'
-import { displayNetwork, networkName } from '../../utils/constants'
+import { sentTransactionNotify, errorNotify } from '../utils/notifications'
+import { displayNetwork, networkName } from '../utils/constants'
 
 export default {
   components: {
@@ -103,7 +100,12 @@ export default {
         console.error(err)
         errorNotify(new Error('Failed to send transaction'))
         // Unfreeze UTXOs if stealth tx broadcast fails
+      } finally {
+        window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
       }
+    },
+    cancel () {
+      window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     }
   },
   mounted () {

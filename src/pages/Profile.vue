@@ -1,5 +1,5 @@
 <template>
-  <q-card class="q-px-sm q-pb-md dialog-large">
+  <q-card class="q-ma-sm">
     <q-card-section>
       <div class="text-h6">
         Profile
@@ -8,18 +8,15 @@
     <profile v-model="relayData" />
     <q-card-actions align="right">
       <q-btn
-        flat
-        :label="$t('profileDialog.cancel')"
-        color="primary"
-        v-close-popup
-      />
-      <q-btn
-        flat
         :disable="identical"
         :label="$t('profileDialog.update')"
-        color="primary"
-        v-close-popup
+        color="negative"
         @click="updateRelayData()"
+      />
+      <q-btn
+        :label="$t('profileDialog.cancel')"
+        color="primary"
+        @click="cancel"
       />
     </q-card-actions>
   </q-card>
@@ -27,8 +24,8 @@
 
 <script>
 import { mapMutations, mapGetters } from 'vuex'
-import Profile from '../Profile'
-import { errorNotify } from '../../utils/notifications'
+import Profile from '../components/Profile'
+import { errorNotify } from '../utils/notifications'
 
 export default {
   props: {
@@ -79,6 +76,10 @@ export default {
       } finally {
         this.$q.loading.hide()
       }
+      window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
+    },
+    cancel () {
+      window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     }
   },
   computed: {

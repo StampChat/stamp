@@ -1,5 +1,5 @@
 <template>
-  <q-card class="q-px-sm q-pb-md dialog-medium">
+  <q-card class="q-ma-sm">
     <!-- New contact dialog -->
     <q-dialog v-model="seedPhraseOpen">
       <seed-phrase-dialog />
@@ -52,21 +52,19 @@
         </q-input>
       </div>
     </q-card-section>
-    <q-separator />
-    <q-item-section>
+    <q-card-section>
       <q-btn
         color="primary"
         @click="seedPhraseOpen = true"
       >
         {{ $t('receiveBitcoinDialog.showSeed') }}
       </q-btn>
-    </q-item-section>
+    </q-card-section>
     <q-card-actions align="right">
       <q-btn
-        flat
         :label="$t('receiveBitcoinDialog.close')"
         color="primary"
-        v-close-popup
+        @click="close"
       />
     </q-card-actions>
   </q-card>
@@ -74,9 +72,9 @@
 
 <script>
 import QrcodeVue from 'qrcode.vue'
-import SeedPhraseDialog from './SeedPhraseDialog.vue'
+import SeedPhraseDialog from '../components/dialogs/SeedPhraseDialog.vue'
 import { mapGetters } from 'vuex'
-import { formatBalance } from '../../utils/formatting'
+import { formatBalance } from '../utils/formatting'
 import { copyToClipboard } from 'quasar'
 
 export default {
@@ -116,6 +114,9 @@ export default {
         .catch(() => {
           // fail
         })
+    },
+    close () {
+      window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     }
   }
 }

@@ -20,7 +20,11 @@ const routes: RouteConfig[] = [
     children: [
       { path: '', component: () => import('pages/HomePage.vue') },
       { path: 'chat/:address', component: () => import('pages/Chat.vue') },
-      { path: 'settings', component: () => import('pages/Settings.vue') }
+      { path: 'settings', component: () => import('pages/Settings.vue') },
+      { path: 'profile', component: () => import('pages/Profile.vue') },
+      { path: 'receive', component: () => import('pages/Receive.vue') },
+      { path: 'send', component: () => import('pages/Send.vue') },
+      { path: 'add-contact', component: () => import('pages/AddContact.vue') }
     ],
     beforeEnter: redirectIfNoProfile
   },
