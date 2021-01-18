@@ -4,11 +4,11 @@
     :active="isActive"
     active-class="active-chat-list-item"
     clickable
-    @click="setActiveChat(null)"
+    @click="setRoute()"
   >
     <q-item-section avatar>
       <q-avatar rounded>
-        <!-- <img src="~assets/shofar.jpg"> -->
+        <img :src="avatar">
       </q-avatar>
     </q-item-section>
     <q-item-section>
@@ -18,22 +18,30 @@
 </template>
 
 <script>
-import { mapGetters, mapMutations } from 'vuex'
 
 export default {
   methods: {
-    ...mapMutations({ setActiveChat: 'chats/setActiveChat' })
+    setRoute () {
+      this.$router.push(this.route).catch(() => {
+        // Don't care. Probably duplicate route
+      })
+    }
   },
   computed: {
-    ...mapGetters({
-      getActiveChat: 'chats/getActiveChat'
-    }),
     isActive () {
-      return this.getActiveChat === null
+      return this.$route.path === this.route
     }
   },
   props: {
     title: {
+      type: String,
+      required: true
+    },
+    route: {
+      type: String,
+      required: true
+    },
+    avatar: {
       type: String,
       required: true
     }

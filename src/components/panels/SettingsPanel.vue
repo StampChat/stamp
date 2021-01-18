@@ -36,10 +36,6 @@
       <profile-dialog :current-profile="getProfile" />
     </q-dialog>
 
-    <!-- Settings dialog -->
-    <q-dialog v-model="settingsOpen">
-      <settings-dialog />
-    </q-dialog>
     <div class="flex-break" />
     <!-- Drawer -->
     <q-scroll-area class="col">
@@ -110,7 +106,7 @@
         <q-item
           clickable
           v-ripple
-          @click="settingsOpen = true"
+          @click="openSettings"
         >
           <q-item-section avatar>
             <q-icon name="tune" />
@@ -131,7 +127,6 @@ import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import ReceiveBitcoinDialog from '../dialogs/ReceiveBitcoinDialog.vue'
 import ProfileDialog from '../dialogs/ProfileDialog.vue'
 import SendAddressDialog from '../dialogs/SendAddressDialog.vue'
-import SettingsDialog from '../dialogs/SettingsDialog.vue'
 
 export default {
   components: {
@@ -140,8 +135,7 @@ export default {
     ContactBookDialog,
     ReceiveBitcoinDialog,
     ProfileDialog,
-    SendAddressDialog,
-    SettingsDialog
+    SendAddressDialog
   },
   data () {
     return {
@@ -174,6 +168,9 @@ export default {
     },
     closeContactSearchDialog () {
       this.contactBookOpen = false
+    },
+    openSettings () {
+      this.$router.push('/settings')
     }
   },
   computed: {

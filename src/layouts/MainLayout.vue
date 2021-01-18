@@ -25,19 +25,7 @@
     </q-dialog>
     <q-page-container>
       <q-page :style-fn="tweak">
-        <home-page
-          v-show="activeChatAddr === null"
-          @toggleMyDrawerOpen="toggleMyDrawerOpen"
-        />
-        <chat
-          v-for="(item, index) in chats"
-          v-show="activeChatAddr === index"
-          :key="index"
-          :address="index"
-          :messages="item.messages"
-          :active="activeChatAddr === index"
-          :style="`height: inherit; min-height: inherit;`"
-          :loaded="loaded"
+        <router-view
           @toggleContactDrawerOpen="toggleContactDrawerOpen"
           @toggleMyDrawerOpen="toggleMyDrawerOpen"
         />
@@ -47,8 +35,6 @@
 </template>
 
 <script>
-import Chat from '../pages/Chat.vue'
-import HomePage from '../pages/HomePage.vue'
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import RightDrawer from '../components/panels/RightDrawer.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
@@ -64,8 +50,6 @@ const compactMidpoint = (compactCutoff + compactWidth) / 2
 
 export default {
   components: {
-    Chat,
-    HomePage,
     RightDrawer,
     LeftDrawer,
     ContactBookDialog

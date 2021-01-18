@@ -82,7 +82,9 @@ export default {
     networking: 'Networking',
     contactRefreshInterval: 'Contact Refresh Interval *',
     contactRefreshIntervalHint: 'Interval between contact updates',
-    darkMode: 'Dark Mode'
+    darkMode: 'Dark Mode',
+    saveSettings: 'Save',
+    cancelSettings: 'Cancel'
   },
   profile: {
     name: 'Character\'s Public Name',

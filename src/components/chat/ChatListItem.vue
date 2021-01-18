@@ -54,12 +54,17 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
   methods: {
-    ...mapActions({ setActiveChat: 'chats/setActiveChat' })
+    ...mapActions({ vuexSetActiveChat: 'chats/setActiveChat' }),
+    setActiveChat (newAddress) {
+      this.vuexSetActiveChat(newAddress)
+      this.$router.push(`/chat/${newAddress}`).catch(() => {
+        // Don't care. Probably duplicate route
+      })
+    }
   },
   computed: {
     ...mapGetters({
       getContactProfile: 'contacts/getContactProfile',
-      getActiveChat: 'chats/getActiveChat',
       getLatestMessage: 'chats/getLatestMessage'
     }),
     latestMessageBody () {
@@ -77,7 +82,7 @@ export default {
       return this.getContactProfile(this.chatAddress)
     },
     isActive () {
-      return this.getActiveChat === this.chatAddress
+      return this.$route.params.address === this.chatAddress
     }
   },
   props: {
@@ -110,6 +115,6 @@ export default {
 </script>
 <style lang="scss" scoped>
 .active-chat-list-item {
-    background: var(--q-color-bg-active);
+  background: var(--q-color-bg-active);
 }
 </style>

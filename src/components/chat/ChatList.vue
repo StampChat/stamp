@@ -3,7 +3,11 @@
     <q-scroll-area class="q-px-none col">
       <q-list>
         <q-separator />
-        <chat-list-link title="News" />
+        <chat-list-link
+          title="News"
+          route="/"
+          avatar="/news.jpg"
+        />
         <q-separator />
         <chat-list-item
           v-for="(contact) in getSortedChatOrder"
