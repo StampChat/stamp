@@ -35,7 +35,3 @@ yarn-error.log*
 
 # Test coverage
 /test/jest/coverage
-
-# Auto-generated icons
-src-electron/icons
-public/*
