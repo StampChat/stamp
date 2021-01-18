@@ -52,19 +52,17 @@
           @scroll="scrollHandler"
           class="q-px-none absolute full-width full-height"
         >
-          <template v-if="loaded || active">
-            <template v-for="({ chunk, globalIndex }, index) in chunkedMessages">
-              <chat-message-stack
-                v-if="chunk[0]"
-                :key="index"
-                :address="address"
-                :messages="chunk"
-                :global-index="globalIndex"
-                :contact="getContact(chunk[0].outbound)"
-                :name-color="chunk[0].outbound ? '': `color: ${nameColor};`"
-                @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
-              />
-            </template>
+          <template v-for="({ chunk, globalIndex }, index) in chunkedMessages">
+            <chat-message-stack
+              v-if="chunk[0]"
+              :key="index"
+              :address="address"
+              :messages="chunk"
+              :global-index="globalIndex"
+              :contact="getContact(chunk[0].outbound)"
+              :name-color="chunk[0].outbound ? '': `color: ${nameColor};`"
+              @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
+            />
           </template>
         </q-scroll-area>
         <q-page-sticky
@@ -160,14 +158,6 @@ export default {
     messages: {
       type: Array,
       default: () => []
-    },
-    loaded: {
-      type: Boolean,
-      default: () => false
-    },
-    active: {
-      type: Boolean,
-      default: () => false
     }
   },
   components: {

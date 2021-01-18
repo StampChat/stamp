@@ -1,12 +1,9 @@
 <template>
   <div class="col full-height">
     <chat
-      v-for="(item, index) in chats"
-      v-show="activeChatAddr === index"
-      :key="index"
-      :address="index"
-      :messages="item.messages"
-      :active="activeChatAddr === index"
+      :key="address"
+      :address="address"
+      :messages="messages"
       :style="`height: inherit; min-height: inherit;`"
       v-on="$listeners"
     />
@@ -22,12 +19,12 @@ export default {
     Chat
   },
   beforeRouteUpdate (to, from, next) {
-    this.activeChatAddr = to.params.address
+    this.address = to.params.address
     next()
   },
   data () {
     return {
-      activeChatAddr: this.$route.params.address
+      address: this.$route.params.address
     }
   },
   methods: {
@@ -41,7 +38,11 @@ export default {
     })
   },
   computed: {
-    ...mapState('chats', ['chats'])
+    ...mapState('chats', ['chats']),
+    messages () {
+      const activeChat = this.chats[this.address]
+      return activeChat ? activeChat.messages : []
+    }
   }
 }
 </script>
