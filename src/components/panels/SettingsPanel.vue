@@ -104,11 +104,21 @@ import { mapActions, mapGetters } from 'vuex'
 import ContactCard from './ContactCard.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 
+const settingsRoutes = [
+  '/settings',
+  '/profile',
+  '/receive',
+  '/send',
+  '/add-contact'
+]
+
 const openPage = (router, currentRoute, route) => {
-  if (currentRoute.startsWith('/chat/')) {
-    return router.push(route)
+  for (const settingsRoute of settingsRoutes) {
+    if (currentRoute.startsWith(settingsRoute)) {
+      return router.replace(route)
+    }
   }
-  return router.replace(route)
+  return router.push(route)
 }
 
 export default {
