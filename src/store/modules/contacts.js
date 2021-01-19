@@ -147,7 +147,9 @@ export default {
       const updateInterval = getters.getUpdateInterval
       const now = moment()
       const lastUpdateTime = oldContactInfo.lastUpdateTime
-      if (lastUpdateTime && moment(lastUpdateTime).add(updateInterval, 'milliseconds').isAfter(now)) {
+      const expired = lastUpdateTime && moment(lastUpdateTime).add(updateInterval, 'milliseconds').isBefore(now)
+      const noPicture = oldContactInfo.profile && !oldContactInfo.profile.avatar
+      if (!expired && !noPicture) {
         // Short circuit if we already updated this contact recently.
         console.log('skipping contact update, checked recently')
         return
