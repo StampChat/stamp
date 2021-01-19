@@ -17,12 +17,12 @@ const parseState = (value) => {
     return (value || {})
   }
 }
-const STORE_SCHEMA_VERSION = 3
+const STORE_SCHEMA_VERSION = 4
 
-let lastSave = Date.now()
+let lastSave = -1
 
 const storeKeys = [
-  'wallet', 'relayClient', 'chats', 'version', 'networkName', 'myProfile', 'contacts'
+  'wallet', 'relayClient', 'chats', 'storeMetadata', 'myProfile', 'contacts'
 ]
 
 const vuexLocal = new VuexPersistence({
@@ -35,7 +35,8 @@ const vuexLocal = new VuexPersistence({
       newState[partitionedKey] = {}
       Object.assign(newState[partitionedKey], value)
     }
-    if (newState.networkName !== displayNetwork) {
+
+    if (newState.storeMetadata && newState.storeMetadata.networkName !== displayNetwork) {
       return {
         wallet: {
           seedPhrase: path(['wallet', 'seedPhrase'], newState)
@@ -43,7 +44,7 @@ const vuexLocal = new VuexPersistence({
       }
     }
 
-    if (newState.version !== STORE_SCHEMA_VERSION) {
+    if (newState.storeMetadata && newState.storeMetadata.version !== STORE_SCHEMA_VERSION) {
       // Import everything else from the server again
       return {
         wallet: {
@@ -63,8 +64,10 @@ const vuexLocal = new VuexPersistence({
             }
           }, pathOr({}, ['chats', 'chats'], newState))
         },
-        version: STORE_SCHEMA_VERSION,
-        networkName: displayNetwork,
+        storeMetadata: {
+          version: STORE_SCHEMA_VERSION,
+          networkName: displayNetwork
+        },
         myProfile: newState.myProfile
       }
     }
@@ -106,8 +109,10 @@ const vuexLocal = new VuexPersistence({
         }, pathOr({}, ['contacts', 'contacts'], state))
       },
       myProfile: state.myProfile,
-      networkName: displayNetwork,
-      version: STORE_SCHEMA_VERSION
+      storeMetadata: {
+        networkName: displayNetwork,
+        version: STORE_SCHEMA_VERSION
+      }
     }
   },
   saveState (key, state, storage) {
@@ -121,12 +126,22 @@ const vuexLocal = new VuexPersistence({
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   filter: (mutation) => {
-    if (lastSave + 6000 >= Date.now()) {
-      return false
+    if (mutation.type.startsWith('wallet/')) {
+      lastSave = Date.now()
+      return true
     }
-    lastSave = Date.now()
 
-    return true
+    if (mutation.type.startsWith('myProfile/')) {
+      lastSave = Date.now()
+      return true
+    }
+
+    if (lastSave + 6000 <= Date.now()) {
+      lastSave = Date.now()
+      return true
+    }
+
+    return false
   },
   asyncStorage: true
 })
