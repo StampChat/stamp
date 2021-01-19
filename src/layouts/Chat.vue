@@ -176,6 +176,8 @@ export default {
       sendFileOpen: false,
       sendMoneyOpen: false,
       bottom: true,
+      top: false,
+      messagesToShow: 30,
       message: '',
       replyDigest: null
     }
@@ -188,7 +190,9 @@ export default {
   destroyed () {
     clearTimeout(this.timer)
   },
-
+  mounted () {
+    this.scrollBottom()
+  },
   methods: {
     ...mapGetters({
       getAcceptancePrice: 'contacts/getAcceptancePrice',
@@ -249,6 +253,28 @@ export default {
       } else {
         this.bottom = false
       }
+
+      if (
+        // Ten pixels from top
+        details.verticalPosition <= 10
+      ) {
+        this.top = true
+        this.messagesToShow += 30
+        this.$nextTick(() => {
+          const scrollArea = this.$refs.chatScroll
+          if (!scrollArea) {
+            // Not mounted yet
+            return
+          }
+          const scrollTarget = scrollArea.getScrollTarget()
+          scrollArea.setScrollPosition(
+            scrollTarget.scrollHeight - details.verticalSize,
+            scrollDuration
+          )
+        })
+      } else {
+        this.top = false
+      }
     },
     setReply (payloadDigest) {
       this.replyDigest = payloadDigest
@@ -274,7 +300,11 @@ export default {
         return []
       }
 
-      const { chunks, currentChunk, globalIndex } = this.messages.slice(1).reduce(({ chunks, currentChunk, globalIndex }, message) => {
+      const length = Math.min(this.messages.length, this.messagesToShow)
+      const start = this.messages.length - length
+      const end = this.messages.length
+
+      const { chunks, currentChunk, globalIndex } = this.messages.slice(start + 1, end).reduce(({ chunks, currentChunk, globalIndex }, message) => {
         if (currentChunk[0].senderAddress === message.senderAddress) {
           currentChunk.push(message)
           return { chunks, currentChunk, globalIndex: globalIndex }
@@ -282,7 +312,7 @@ export default {
           chunks.push({ chunk: currentChunk, globalIndex: globalIndex })
           return { chunks, currentChunk: [message], globalIndex: globalIndex + currentChunk.length }
         }
-      }, { chunks: [], currentChunk: [this.messages[0]], globalIndex: 0 })
+      }, { chunks: [], currentChunk: [this.messages[start]], globalIndex: start })
 
       chunks.push({ chunk: currentChunk, globalIndex: globalIndex })
       return chunks
