@@ -127,15 +127,27 @@ export default {
       )
       return sortedOrder
     },
-    getFractions: (state) => address => {
+    getFractions: (state) => {
       const chatList = Object.values(state.chats)
-      const totalValue = chatList.reduce((total, { totalValue }) => total + totalValue, 0) -
-        state.chats[address].totalValue
       const rewards = {}
       for (const chat of chatList) {
-        rewards[chat.address] = chat.totalValue / totalValue
+        const totalValue =
+          chat.messages.reduce(
+            (total, { outbound, outpoints, items, receivedTime }) => {
+              if (receivedTime < Date.now() - 36000) {
+                return total
+              }
+              if (outbound) {
+                return total
+              }
+              const calculatedStampPrice = stampPrice(outpoints)
+              const stealthPrice = items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
+              return total + calculatedStampPrice + stealthPrice
+            }, 0
+          )
+        rewards[chat.address] = totalValue
       }
-      return rewards
+      return { rewards, totalValue: Object.values(rewards).reduce((total, value) => total + value, 0) }
     },
     lastRead: (state) => (address) => {
       const apiAddress = toAPIAddress(address)
@@ -334,7 +346,9 @@ export default {
         state.chats[apiAddress].totalUnreadMessages += 1
       }
       state.lastReceived = message.serverTime
-      state.chats[apiAddress].totalValue += messageValue
+      if (newMsg.senderAddress !== apiAddress) {
+        state.chats[apiAddress].totalValue += messageValue
+      }
     },
     setStampAmount (state, { address, stampAmount }) {
       state.chats[address].stampAmount = stampAmount

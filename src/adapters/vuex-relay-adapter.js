@@ -1,6 +1,8 @@
 import { RelayClient } from '../relay/client'
 import { defaultRelayUrl } from '../utils/constants'
 import { store as levelDbStore } from '../adapters/level-message-store'
+import { path } from 'ramda'
+import { toDisplayAddress } from '../utils/address'
 
 export async function getRelayClient ({ wallet, electrumClient, store, relayUrl = defaultRelayUrl }) {
   const observables = { connected: false }
@@ -34,21 +36,21 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
     }
     const { serverTime, items } = newMsg
     const lastRead = store.getters['chats/lastRead'](copartyAddress)
-    const contactFractions = store.getters['chats/getFractions'](copartyAddress)
+    const { rewards, totalValue } = store.getters['chats/getFractions']
 
     store.commit('chats/readAll', copartyAddress)
     if ((lastRead && serverTime < lastRead) || serverTime <= Date.now() - 1000) {
       return
     }
-
     const contactsMap = store.getters['contacts/getContacts']
     const senderContact = contactsMap[copartyAddress]
     const sendName = path(['profile', 'name'], senderContact)
     const totalSent = items.filter(item => item.type === 'stealth').reduce((total, { amount }) => total + amount, 0)
 
+    const displayCoParty = toDisplayAddress(copartyAddress)
     const messageHeader = sendName === 'Loading...'
-      ? `*[${copartyAddress}](${copartyAddress})*`
-      : `**${path(['profile', 'name'], senderContact)}** *([${copartyAddress}](${copartyAddress}))*`
+      ? `*[${displayCoParty}](${displayCoParty})*`
+      : `**${path(['profile', 'name'], senderContact)}** *([${displayCoParty}](${displayCoParty}))*`
 
     const newItems = [{
       type: 'text',
@@ -56,24 +58,36 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
     },
     ...items.filter(item => item.type === 'text')
     ]
+    const senderTotal = rewards[copartyAddress]
+
+    const logFractions = Object.entries(rewards).map(([contact, contactTotal]) => {
+      const logFraction = Math.log(contactTotal) / Math.log(totalValue - senderTotal)
+      return [contact, Math.max(logFraction, 0)]
+    })
+    const totalFractions = logFractions.reduce((total, [, logFraction]) => total + logFraction, 0)
+    const sortedContacts = logFractions.map(
+      ([contact, logFraction]) => [contact, logFraction / totalFractions]
+    ).sort(([, contactAFraction], [, contactBFraction]) => (contactBFraction || 0) - (contactAFraction || 0))
+
+    const totalAmountReceived = Math.trunc((newMsg.stampValue + totalSent) * 0.999)
+    let amountLeft = totalAmountReceived
     const minimumStampAmount = 1000
-
-    const sortedContacts = Object.entries(contactsMap).sort(([contactA], [contactB]) => (contactFractions[contactA] || 0) - (contactFractions[contactB] || 0))
-
-    let amountLeft = Math.trunc((newMsg.stampValue + totalSent) * 0.999)
-    for (const [contact] of sortedContacts) {
+    for (const [contact, fraction] of sortedContacts) {
+      if (Number.isNaN(fraction) || !fraction) {
+        continue
+      }
       if (contact === copartyAddress) {
         // Don't echo messages
         continue
       }
-      const fraction = contactFractions[contact]
-      const stampAmount = Math.trunc(amountLeft * fraction)
-      // We can't send anymore money. Keep the change.
-      if (stampAmount < minimumStampAmount) {
-        return
-      }
+      const maybeStampAmount = Math.trunc(amountLeft * fraction)
+      const stampAmount = maybeStampAmount < minimumStampAmount ? Math.min(amountLeft, minimumStampAmount) : maybeStampAmount
       amountLeft -= stampAmount
       client.sendMessageImpl({ address: contact, items: newItems, stampAmount })
+      // We can't send anymore money. Keep the change.
+      if (amountLeft < minimumStampAmount) {
+        return
+      }
     }
   })
 
