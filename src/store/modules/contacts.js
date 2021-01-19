@@ -49,6 +49,9 @@ export default {
       return state.contacts
     },
     getContactProfile: (state) => (address) => {
+      if (!address) {
+        return { ...pendingRelayData.profile }
+      }
       const apiAddress = toAPIAddress(address)
 
       return state.contacts[apiAddress] ? state.contacts[apiAddress].profile : { ...pendingRelayData.profile }
