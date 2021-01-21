@@ -28,15 +28,9 @@ import Profile from '../components/Profile'
 import { errorNotify } from '../utils/notifications'
 
 export default {
-  props: {
-    currentProfile: {
-      type: Object,
-      default: () => ({})
-    }
-  },
   data () {
     return {
-      relayData: this.getRelayData()
+      relayData: this.getCurrentRelayData()
     }
   },
   components: {
@@ -44,7 +38,7 @@ export default {
   },
   methods: {
     ...mapGetters({
-      getRelayData: 'myProfile/getRelayData'
+      getCurrentRelayData: 'myProfile/getRelayData'
     }),
     ...mapMutations({ setRelayData: 'myProfile/setRelayData' }),
     async updateRelayData () {
@@ -83,19 +77,10 @@ export default {
     }
   },
   computed: {
-    constructProfile () {
-      if (this.name === '' || this.avatar === null) {
-        return null
-      } else {
-        return {
-          name: this.name,
-          bio: this.bio,
-          avatar: this.avatar
-        }
-      }
-    },
     identical () {
-      return this.currentProfile.name === this.name && this.currentProfile.bio === this.bio && this.currentProfile.avatar === this.avatar
+      const currentProfile = this.getCurrentRelayData().profile
+      const newProfile = this.relayData.profile
+      return currentProfile.name === newProfile.name && currentProfile.bio === newProfile.bio && currentProfile.avatar === newProfile.avatar
     }
   }
 }
