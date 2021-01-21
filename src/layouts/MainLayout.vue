@@ -98,8 +98,7 @@ export default {
     },
     contactClicked (address) {
       this.contactBookOpen = false
-
-      return this.setActiveChat(address)
+      this.$router.replace(`/chat/${address}`)
     }
   },
   computed: {
