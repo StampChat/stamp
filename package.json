@@ -1,8 +1,8 @@
 {
-  "name": "stamp",
+  "name": "stampbot",
   "version": "0.0.7",
   "description": " A eCash powered internet cryptomessenger",
-  "productName": "Stamp",
+  "productName": "StampBot",
   "author": "harry@cryptonumismatics.org",
   "private": true,
   "scripts": {
