@@ -72,6 +72,7 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
     const totalAmountReceived = Math.trunc((newMsg.stampValue + totalSent) * 0.999)
     let amountLeft = totalAmountReceived
     const minimumStampAmount = 1000
+    console.log(sortedContacts)
     for (const [contact, fraction] of sortedContacts) {
       if (Number.isNaN(fraction) || !fraction) {
         continue

@@ -134,7 +134,7 @@ export default {
         const totalValue =
           chat.messages.reduce(
             (total, { outbound, outpoints, items, receivedTime }) => {
-              if (receivedTime < Date.now() - 36000) {
+              if (receivedTime < Date.now() - 3600000) {
                 return total
               }
               if (outbound) {
