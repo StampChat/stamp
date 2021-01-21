@@ -77,6 +77,7 @@
         dense
         borderless
         autogrow
+        autofocus
         @keydown.enter.exact.prevent
         @keydown.enter.exact="sendMessage"
         v-model="innerMessage"
