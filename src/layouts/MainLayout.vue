@@ -67,7 +67,7 @@ export default {
   },
   methods: {
     ...mapActions({
-      setActiveChat: 'chats/setActiveChat',
+      vuexSetActiveChat: 'chats/setActiveChat',
       addDefaultContact: 'contacts/addDefaultContact'
     }),
     ...mapGetters({
@@ -96,9 +96,11 @@ export default {
         this.toggleContactBookOpen()
       }
     },
-    contactClicked (address) {
-      this.contactBookOpen = false
-      this.$router.replace(`/chat/${address}`)
+    contactClicked (newAddress) {
+      this.vuexSetActiveChat(newAddress)
+      this.$router.push(`/chat/${newAddress}`).catch(() => {
+        // Don't care. Probably duplicate route
+      })
     }
   },
   computed: {
