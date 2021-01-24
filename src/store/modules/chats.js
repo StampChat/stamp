@@ -355,9 +355,6 @@ export default {
       commit('setActiveChat', address)
       commit('readAll', address)
     },
-    startChatUpdater ({ dispatch }) {
-      setInterval(() => { dispatch('refresh') }, 1_000)
-    },
     setStampAmount ({ commit }, { address, stampAmount }) {
       assert(typeof stampAmount === 'number', 'stampAmount wrong type')
       commit('setStampAmount', { address, stampAmount })

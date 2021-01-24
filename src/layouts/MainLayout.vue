@@ -68,7 +68,8 @@ export default {
   methods: {
     ...mapActions({
       vuexSetActiveChat: 'chats/setActiveChat',
-      addDefaultContact: 'contacts/addDefaultContact'
+      addDefaultContact: 'contacts/addDefaultContact',
+      refreshContacts: 'contacts/refreshContacts'
     }),
     ...mapGetters({
       getSortedChatOrder: 'chats/getSortedChatOrder',
@@ -138,13 +139,6 @@ export default {
     this.$q.dark.set(this.getDarkMode())
     console.log('Loading')
 
-    if (!this.activeChatAddr) {
-      const contacts = this.getSortedChatOrder()
-      if (contacts.length) {
-        this.setActiveChat(contacts[0].address)
-      }
-    }
-
     // Setup everything at once. This are independent processes
     try {
       this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
@@ -156,6 +150,7 @@ export default {
     for (const defaultContact of defaultContacts) {
       this.addDefaultContact(defaultContact)
     }
+    this.$nextTick(this.refreshContacts)
 
     // const lastReceived = this.lastReceived
     const t0 = performance.now()

@@ -136,10 +136,14 @@ export default {
       }
       commit('addContact', { address: defaultContact.address, contact })
       commit('chats/openChat', defaultContact.address, { root: true })
-      dispatch('refresh', defaultContact.address)
     },
     deleteChat ({ commit }, address) {
       commit('chats/deleteChat', address, { root: true })
+    },
+    refreshContacts ({ getters, dispatch }) {
+      for (const address of Object.keys(getters.getContacts)) {
+        dispatch('refresh', address)
+      }
     },
     async refresh ({ commit, getters }, address) {
       // Make this generic over networks
