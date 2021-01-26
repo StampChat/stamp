@@ -256,14 +256,14 @@ export class Wallet {
   async forwardUTXOsToAddress ({ utxos, address }) {
     let transaction = new Transaction()
 
-    const outpoints = await this.storage.getOutpoints()
     const outpointIds = utxos.map(utxo => calcId(utxo))
     const signingKeys = []
     let satoshis = 0
 
     const usedIDs = []
-    for (const [outpointId, outpoint] of outpoints) {
-      if (!outpointIds.includes(outpointId)) {
+    for (const outpointId of outpointIds) {
+      const outpoint = this.storage.getOutpoint(outpointId)
+      if (!outpoint) {
         continue
       }
       usedIDs.push(outpointId)
@@ -271,6 +271,10 @@ export class Wallet {
       signingKeys.push(outpoint.privKey)
       transaction = transaction.from(outpoint)
       satoshis += outpoint.satoshis
+    }
+
+    if (usedIDs.length === 0) {
+      return { transaction: null, usedIDs: [] }
     }
 
     const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun

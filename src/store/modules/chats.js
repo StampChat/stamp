@@ -164,10 +164,13 @@ export default {
     },
     getLatestMessage: (state) => (address) => {
       const apiAddress = toAPIAddress(address)
-
+      const nopInfo = {
+        outbound: false,
+        text: ''
+      }
       const nMessages = Object.keys(state.chats[apiAddress].messages).length
       if (nMessages === 0) {
-        return null
+        return nopInfo
       }
 
       const lastMessageKey = Object.keys(state.chats[apiAddress].messages)[nMessages - 1]
@@ -202,6 +205,8 @@ export default {
         }
         return info
       }
+
+      return nopInfo
     },
     getLastReceived (state) {
       return state.lastReceived

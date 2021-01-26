@@ -2,13 +2,15 @@ import axios from 'axios'
 import { splitEvery } from 'ramda'
 import { Payload, Message, MessagePage, MessageSet, Profile } from './relay_pb'
 import stealth from './stealth_pb'
+import p2pkh from './p2pkh_pb'
+
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
 // TODO: Relay code should not depend on Stamp base code. Fix this import
 import { relayReconnectInterval, networkName } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
-import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage, constructProfileMetadata, constructPriceFilter } from './constructors'
+import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage, constructProfileMetadata, constructPriceFilter, constructP2PKHEntry } from './constructors'
 import { entryToImage, arrayBufferToBase64 } from '../utils/image'
 import { toAPIAddress } from '../utils/address'
 
@@ -294,7 +296,7 @@ export class RelayClient {
   async sendMessageImpl ({ address, items, stampAmount, errCount = 0, previousHash }) {
     const wallet = this.wallet
     const sourcePrivateKey = wallet.identityPrivKey
-    const destinationPublicKey = this.getPubKey(address)
+    const destinationPublicKey = address === wallet.myAddressStr ? wallet.identityPrivKey.publicKey : this.getPubKey(address)
 
     const usedIDs = []
     const outpoints = []
@@ -327,6 +329,14 @@ export class RelayClient {
         }
         if (item.type === 'image') {
           return constructImageEntry({ ...item })
+        }
+        if (item.type === 'p2pkh') {
+          const { entry, transaction, usedIDs } = await constructP2PKHEntry({ ...item, wallet: this.wallet })
+
+          transactions.push(transaction)
+          usedIDs.push(...usedIDs)
+
+          return entry
         }
       }
     ))
@@ -461,6 +471,49 @@ export class RelayClient {
     await this.sendMessageImpl({ address, items, stampAmount })
   }
 
+  // Stub for original API
+  // TODO: Fix clients to not use these APIs at all
+  async sendToPubKeyHash ({ address, amount }) {
+    // Send locally
+    const items = [
+      {
+        type: 'p2pkh',
+        address,
+        amount
+      }
+    ]
+    console.log(items)
+    await this.sendMessageImpl({ address: this.wallet.myAddressStr, items })
+  }
+
+  async receiveSelfSend ({ payload, receivedTime = Date.now() } = {}) {
+    // Decode entries
+    const entriesList = payload.getEntriesList()
+
+    for (const index in entriesList) {
+      const entry = entriesList[index]
+      // If address data doesn't exist then add it
+      const kind = entry.getKind()
+      if (kind === 'p2pkh') {
+        const entryData = entry.getBody()
+        const p2pkhMessage = p2pkh.P2PKHEntry.deserializeBinary(entryData)
+
+        // Add stealth outputs
+        const transactionRaw = p2pkhMessage.getTransaction()
+        const p2pkhTxRaw = Buffer.from(transactionRaw)
+        const p2pkhTxR = Transaction(p2pkhTxRaw)
+
+        for (const input of p2pkhTxR.inputs) {
+          // Don't add these outputs to our wallet. They're the other persons
+          const utxoId = calcId({ txId: input.prevTxId.toString('hex'), outputIndex: input.outputIndex })
+          await this.wallet.deleteOutpoint(utxoId)
+        }
+
+        continue
+      }
+    }
+  }
+
   async receiveMessage (message, receivedTime = Date.now()) {
     // Parse message
     Object.assign(Message.prototype, messageMixin)
@@ -515,12 +568,6 @@ export class RelayClient {
     }
 
     const destinationAddress = parsedMessage.destinationPublicKey.toAddress(networkName).toCashAddress()
-
-    if (outbound && myAddress === destinationAddress) {
-      // TODO: Process self sends
-      console.log('Self sent message. Need to process differently.')
-      return
-    }
 
     // Add UTXO
     const stampOutpoints = parsedMessage.stamp.getStampOutpointsList()
@@ -590,6 +637,10 @@ export class RelayClient {
 
     const rawPayload = outbound ? parsedMessage.openSelf(wallet.identityPrivKey) : parsedMessage.open(wallet.identityPrivKey)
     const payload = Payload.deserializeBinary(rawPayload)
+
+    if (outbound && myAddress === destinationAddress) {
+      return this.receiveSelfSend({ payload, receivedTime })
+    }
 
     // Decode entries
     const entriesList = payload.getEntriesList()
@@ -747,6 +798,19 @@ export class RelayClient {
     const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
     const metadata = constructProfileMetadata(profile, priceFilter, idPrivKey)
     await this.putProfile(idPrivKey.toAddress(networkName).toCashAddress().toString(), metadata)
+  }
+
+  async wipeWallet (messageDeleter) {
+    const messageIterator = await this.messageStore.getIterator()
+    // Todo, this rehydrate stuff is common to receiveMessage
+    for await (const messageWrapper of messageIterator) {
+      if (!messageWrapper.newMsg) {
+        continue
+      }
+      const { index, copartyAddress } = messageWrapper
+      await this.deleteMessage(messageWrapper.index)
+      messageDeleter({ address: copartyAddress, payloadDigest: index, index })
+    }
   }
 }
 

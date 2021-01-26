@@ -1,0 +1,4 @@
+syntax = "proto3";
+package p2pkh;
+
+message P2PKHEntry { bytes transaction = 1; }
