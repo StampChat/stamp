@@ -1,11 +1,12 @@
 import { Header, Message, PayloadEntry, Profile, ProfileEntry, Stamp, StampOutpoints } from './relay_pb'
 import stealth from './stealth_pb'
+import p2pkh from './p2pkh_pb'
 import filters from './filters_pb'
 import { constructSharedKey, constructStampHDPublicKey, constructHDStealthPublicKey, constructPayloadHmac, encrypt } from './crypto'
 import VCard from 'vcf'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 
-import { crypto, PublicKey, PrivateKey } from 'bitcore-lib-cash'
+import { PublicKey, crypto, Transaction, Script, Address, PrivateKey } from 'bitcore-lib-cash'
 import assert from 'assert'
 
 export const constructStampTransactions = async function (wallet, payloadDigest, destPubKey, amount) {
@@ -26,6 +27,9 @@ export const constructStampTransactions = async function (wallet, payloadDigest,
     const address = PublicKey(crypto.Point.pointToCompressed(outpointPubKey.point))
     transactionNumber += 1
     return address
+  }
+  if (!amount) {
+    return []
   }
 
   // Construct transaction
@@ -181,6 +185,27 @@ export const constructImageEntry = function ({ image }) {
   imgEntry.addHeaders(imgHeader)
 
   return imgEntry
+}
+
+export async function constructP2PKHEntry ({ address, amount, wallet }) {
+  const p2pkhEntry = new p2pkh.P2PKHEntry()
+
+  const output = new Transaction.Output({
+    script: Script(new Address(address)),
+    satoshis: amount
+  })
+
+  const { transaction, usedIDs } = await wallet.constructTransaction({ outputs: [output] })
+  const rawTransaction = transaction.toBuffer()
+
+  p2pkhEntry.setTransaction(rawTransaction)
+
+  const p2pkhEntryRaw = p2pkhEntry.serializeBinary()
+  const payloadEntry = new PayloadEntry()
+  payloadEntry.setKind('p2pkh')
+  payloadEntry.setBody(p2pkhEntryRaw)
+
+  return { entry: payloadEntry, transaction, usedIDs }
 }
 
 export const constructPriceFilter = function (isPublic, acceptancePrice, notificationPrice) {

@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import { Address, Transaction, Script } from 'bitcore-lib-cash'
+import { Address } from 'bitcore-lib-cash'
 
 import { sentTransactionNotify, errorNotify } from '../utils/notifications'
 import { displayNetwork, networkName } from '../utils/constants'
@@ -75,27 +75,8 @@ export default {
   methods: {
     async send () {
       try {
-        const output = new Transaction.Output({
-          script: Script(new Address(this.address)),
-          satoshis: this.amount
-        })
-
-        const { transaction, usedIDs } = await this.$wallet.constructTransaction({ outputs: [output] })
-        const txHex = transaction.toString()
-
-        try {
-          const electrumHandler = await this.$electrumClientPromise
-          await electrumHandler.request('blockchain.transaction.broadcast', txHex)
-          sentTransactionNotify()
-          console.log('Sent transaction', txHex)
-          // TODO: we shouldn't be dealing with this here. Leaky abstraction
-          await Promise.all(usedIDs.map(id => this.$wallet.storage.deleteOutpoint(id)))
-        } catch (err) {
-          usedIDs.forEach(id => {
-            this.$wallet.unfreezeUTXO(id)
-          })
-          throw err
-        }
+        await this.$relayClient.sendToPubKeyHash({ address: this.address, amount: this.amount })
+        sentTransactionNotify()
       } catch (err) {
         console.error(err)
         errorNotify(new Error('Failed to send transaction'))
