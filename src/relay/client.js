@@ -799,6 +799,19 @@ export class RelayClient {
     const metadata = constructProfileMetadata(profile, priceFilter, idPrivKey)
     await this.putProfile(idPrivKey.toAddress(networkName).toCashAddress().toString(), metadata)
   }
+
+  async wipeWallet (messageDeleter) {
+    const messageIterator = await this.messageStore.getIterator()
+    // Todo, this rehydrate stuff is common to receiveMessage
+    for await (const messageWrapper of messageIterator) {
+      if (!messageWrapper.newMsg) {
+        continue
+      }
+      const { index, copartyAddress } = messageWrapper
+      await this.deleteMessage(messageWrapper.index)
+      messageDeleter({ address: copartyAddress, payloadDigest: index, index })
+    }
+  }
 }
 
 export default RelayClient

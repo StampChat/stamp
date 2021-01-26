@@ -52,7 +52,8 @@ export default {
     sendBitcoinCash: 'Send eCash',
     recieveBitcoinCash: 'Receive eCash',
     profile: 'Profile',
-    settings: 'Settings'
+    settings: 'Settings',
+    wipeAndSave: 'Remote Wipe Wallet'
   },
   receiveBitcoinDialog: {
     walletStatus: 'Wallet Status',

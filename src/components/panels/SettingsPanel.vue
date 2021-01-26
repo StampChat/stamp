@@ -94,15 +94,29 @@
 
           <q-item-section>{{ $t('SettingPanel.settings') }}</q-item-section>
         </q-item>
+        <q-separator />
+
+        <q-item
+          clickable
+          v-ripple
+          @click="deleteForever"
+        >
+          <q-item-section avatar>
+            <q-icon name="delete_forever" />
+          </q-item-section>
+
+          <q-item-section>{{ $t('SettingPanel.wipeAndSave') }}</q-item-section>
+        </q-item>
       </q-list>
     </q-scroll-area>
   </div>
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapGetters, mapMutations } from 'vuex'
 import ContactCard from './ContactCard.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
+import { errorNotify } from '../../utils/notifications'
 
 const settingsRoutes = [
   '/settings',
@@ -142,6 +156,9 @@ export default {
     event: 'update:drawerOpen'
   },
   methods: {
+    ...mapMutations({
+      deleteMessage: 'chats/deleteMessage'
+    }),
     ...mapActions({
       setActiveChat: 'chats/setActiveChat'
     }),
@@ -165,6 +182,18 @@ export default {
     },
     newContact () {
       openPage(this.$router, this.$route.path, '/add-contact')
+    },
+    deleteForever () {
+      this.$q.loading.show({
+        delay: 100,
+        message: this.$t('SettingPanel.wipeAndSave')
+      })
+      this.$relayClient.wipeWallet(({ address, payloadDigest, index }) => {
+        this.deleteMessage({ address, payloadDigest, index })
+      }).then(() => this.$q.loading.hide()).catch((err) => {
+        errorNotify(err)
+        this.$q.loading.hide()
+      })
     }
   },
   computed: {
