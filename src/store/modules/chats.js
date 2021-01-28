@@ -127,14 +127,14 @@ export default {
       )
       return sortedOrder
     },
-    getFractions: (state) => {
+    getFractions: (state) => (timing) => {
       const chatList = Object.values(state.chats)
       const rewards = {}
       for (const chat of chatList) {
         const totalValue =
           chat.messages.reduce(
             (total, { outbound, outpoints, items, receivedTime }) => {
-              if (receivedTime < Date.now() - 3600000) {
+              if (receivedTime < Date.now() - timing) {
                 return total
               }
               if (outbound) {
