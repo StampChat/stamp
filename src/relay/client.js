@@ -776,7 +776,7 @@ export class RelayClient {
     const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
     const messageList = messagePage.getMessagesList()
     console.log('processing messages')
-    const messageChunks = splitEvery(5, messageList)
+    const messageChunks = splitEvery(20, messageList)
     for (const messageChunk of messageChunks) {
       await new Promise((resolve) => {
         setTimeout(() => {
