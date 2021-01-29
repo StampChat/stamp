@@ -35,3 +35,6 @@ yarn-error.log*
 
 # Test coverage
 /test/jest/coverage
+
+# The release keystore
+release.keystore.jks

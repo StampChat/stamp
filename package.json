@@ -16,7 +16,9 @@
     "build-ios": "quasar build  -m capacitor -T ios",
     "dev-android": "quasar dev -m capacitor -T android",
     "build-android": "quasar build  -m capacitor -T android",
-    "build-android-debug": "quasar build  -m capacitor -T android -d"
+    "build-android-debug": "quasar build  -m capacitor -T android -d",
+    "zipalign-android": "zipalign -v -p 4 ./dist/capacitor/android/apk/release/app-release-unsigned.apk ./dist/capacitor/android/apk/release/app-release-unsigned-aligned.apk",
+    "build-android-release": "yarn build-android && yarn zipalign-android && apksigner sign --ks release.keystore.jks --out ./dist/capacitor/android/apk/release/app-release.apk ./dist/capacitor/android/apk/release/app-release-unsigned-aligned.apk"
   },
   "dependencies": {
     "@capacitor/core": "^2.4.3",
