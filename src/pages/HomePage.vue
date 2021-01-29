@@ -27,10 +27,10 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
-            Welcome to Mercury Messenger
+            Welcome to Stamp
           </div>
           <div class="text-body1">
-            Mercury Messenger is a decentralized, secure, and free for all,
+            Stamp is a decentralized, secure, and free for all,
             cryptomessenger. It is currently, highly experimental. Please do
             report bugs to Shammah, from your default contacts.
           </div>
