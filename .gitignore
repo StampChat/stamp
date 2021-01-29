@@ -35,3 +35,6 @@ yarn-error.log*
 
 # Test coverage
 /test/jest/coverage
+
+# Don't include deploy folder
+/deploy
