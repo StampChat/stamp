@@ -38,3 +38,6 @@ yarn-error.log*
 
 # The release keystore
 release.keystore.jks
+
+# Don't include deploy folder
+/deploy

@@ -14,6 +14,7 @@ export async function rehydrateWallet (wallet) {
   }
   wallet.xPrivKey = HDPrivateKey.fromObject(wallet.xPrivKey)
   wallet.utxos = {}
+  wallet.balance = 0
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.
   const store = await levelOutpointStore
@@ -23,7 +24,8 @@ export async function rehydrateWallet (wallet) {
     if (!outpoint.address) {
       continue
     }
-    wallet.utxos[id] = outpoint
+    wallet.utxos[id] = outpoint.satoshis
+    wallet.balance += outpoint.satoshis
   }
 }
 
@@ -33,7 +35,8 @@ export default {
     xPrivKey: null,
     utxos: {},
     feePerByte: 2,
-    seedPhrase: null
+    seedPhrase: null,
+    balance: 0
   },
   mutations: {
     setSeedPhrase (state, seedPhrase) {
@@ -47,11 +50,13 @@ export default {
       state.xPrivKey = xPrivKey
     },
     removeUTXO (state, id) {
+      state.balance -= state.utxos[id] || 0
       Vue.delete(state.utxos, id)
     },
     addUTXO (state, output) {
+      state.balance += output.satoshis || 0
       const utxoId = calcId(output)
-      Vue.set(state.utxos, utxoId, output)
+      Vue.set(state.utxos, utxoId, output.satoshis)
     }
   },
   getters: {
@@ -61,11 +66,8 @@ export default {
     getXPrivKey (state) {
       return state.xPrivKey
     },
-    getUTXOs (state) {
-      return state.utxos
-    },
     balance (state) {
-      return Object.values(state.utxos).reduce((acc, output) => acc + output.satoshis, 0) || 0
+      return state.balance
     }
   }
 }

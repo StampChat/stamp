@@ -2,17 +2,22 @@
   <div class="col q-gutter-y-md">
     <div class="row p-mx-sm">
       <q-space />
-      Welcome to Stamp
-      <!-- <q-img
-        src="~assets/donation_qr_code.jpg"
-        width="50vw"
+      <q-img
+        src="~assets/stamp-icon.png"
+        width="25vw"
         spinner-color="white"
-      /> -->
+      />
+      <q-space />
+    </div>
+
+    <div class="row p-mx-sm text-h6">
+      <q-space />
+      Welcome to StampChat
       <q-space />
     </div>
 
     <div class="row q-gutter-y-md">
-      This software is very early stage, and may lose funds. Keep larger amounts of eCash in more established wallets.
+      This software is very prototype cryptomessenger, and may lose funds. Keep larger amounts of eCash in more established wallets.
     </div>
 
     <div class="row q-gutter-y-md">

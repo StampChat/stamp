@@ -27,13 +27,33 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
-            Welcome to Mercury Messenger
+            Welcome to Stamp
           </div>
           <div class="text-body1">
-            Mercury Messenger is a decentralized, secure, and free for all,
+            Stamp is a decentralized, secure, and free for all,
             cryptomessenger. It is currently, highly experimental. Please do
             report bugs to Shammah, from your default contacts.
           </div>
+          <div class="text-h6">
+            v0.0.8 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Use Stamp icon on EULA screen</li>
+              <li>Add stamp icon to assets and use it for default news icon</li>
+              <li>Fix copy on news page to say Stamp</li>
+              <li>Add HostFat to default contacts</li>
+              <li>Update EULA copy</li>
+              <li>Remove add/remove UTXO log lines which slow down client</li>
+              <li>Remove the need to recalculate wallet balance from all UTXOs</li>
+              <li>Increase chunk size when reloading messages</li>
+              <li>Implement a quick-and-dirty way to reset your remote wallet</li>
+              <li>Fix bugs in forwardUTXOsToAddress when deleting messages</li>
+              <li>Add recording of p2pkh transactions in remote outbox</li>
+              <li>Refresh contacts on start, including fetching profile image</li>
+            </ul>
+          </div>
+
         </q-scroll-area>
         <q-page-sticky
           position="bottom-right"

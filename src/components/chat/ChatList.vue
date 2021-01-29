@@ -4,9 +4,8 @@
       <q-list>
         <q-separator />
         <chat-list-link
-          title="News"
+          title="Stamp News"
           route="/"
-          avatar="/news.jpg"
         />
         <q-separator />
         <chat-list-item

@@ -635,7 +635,6 @@ export class Wallet {
     assert(utxo.satoshis !== undefined, 'putOupoint utxo wrong format')
     assert(utxo.txId !== undefined, 'putOupoint utxo wrong format')
     assert(utxo.outputIndex !== undefined, 'putOupoint utxo wrong format')
-    console.log('adding utxo', calcId(utxo))
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.putOutpoint(utxo)
   }
@@ -646,7 +645,6 @@ export class Wallet {
       console.log(id, 'missing from UTXO set?')
       return
     }
-    console.log('removing utxo', id)
     // TODO: Nobody should be calling this outside of the wallet
     await this.storage.deleteOutpoint(id)
   }
