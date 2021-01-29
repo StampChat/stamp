@@ -8,7 +8,7 @@
   >
     <q-item-section avatar>
       <q-avatar rounded>
-        <img :src="avatar">
+        <img src="~assets/stamp-icon.png">
       </q-avatar>
     </q-item-section>
     <q-item-section>
@@ -38,10 +38,6 @@ export default {
       required: true
     },
     route: {
-      type: String,
-      required: true
-    },
-    avatar: {
       type: String,
       required: true
     }
