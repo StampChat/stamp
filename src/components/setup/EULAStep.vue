@@ -12,7 +12,7 @@
     </div>
 
     <div class="row q-gutter-y-md">
-      This software is very early stage, and may lose funds. Keep larger amounts of eCash in more established wallets.
+      This software is very prototype cryptomessenger, and may lose funds. Keep larger amounts of eCash in more established wallets.
     </div>
 
     <div class="row q-gutter-y-md">
