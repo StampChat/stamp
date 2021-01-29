@@ -120,6 +120,10 @@ export const defaultContacts = [
   {
     name: 'BytesOfMan',
     address: 'ecash:qqd3qn4zazjhygk5a2vzw2gvqgqwempr4gtfza25mc'
+  },
+  {
+    name: 'HostFat',
+    address: 'ecash:qr898f5fwqvxl6mq8654dp4p6dgruvkz4c6x40mfru'
   }
 ]
 
