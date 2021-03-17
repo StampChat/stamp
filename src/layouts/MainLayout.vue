@@ -141,7 +141,7 @@ export default {
     this.$q.dark.set(this.getDarkMode())
     console.log('Loading')
 
-    await BackgroundFetch.configure({
+    BackgroundFetch.configure({
       minimumFetchInterval: 15,
       forceAlarmManager: true
     }, async (taskId) => {
