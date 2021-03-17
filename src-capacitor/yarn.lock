@@ -111,6 +111,11 @@ compare-versions@^3.1.0:
   resolved "https://registry.yarnpkg.com/compare-versions/-/compare-versions-3.6.0.tgz#1a5689913685e5a87637b8d3ffca75514ec41d62"
   integrity sha512-W6Af2Iw1z4CB7q4uU4hv646dW9GQuBM+YpC0UvUCWSD8w90SJjp+ujJuXaEMtAXBtSqGfMPuFOVn4/+FlaqfBA==
 
+cordova-plugin-background-fetch@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/cordova-plugin-background-fetch/-/cordova-plugin-background-fetch-7.0.1.tgz#001577389e4a74fc68f3244d96b56449d3d99434"
+  integrity sha512-IIFljNoIZbxVEL5jrVvWYv2M5E4q04EnzBrNgiSz4cWpuGsLEikCcUqsVMXH9a6AEugAvKOAvVjqSyQplrfyCA==
+
 escape-string-regexp@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-1.0.5.tgz#1b61c0562190a8dff6ae3bb2cf0200ca130b86d4"

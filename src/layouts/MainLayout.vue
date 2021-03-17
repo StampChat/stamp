@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 <template>
   <q-layout view="hHr LpR lff">
     <q-drawer
@@ -35,6 +36,7 @@
 </template>
 
 <script>
+import BackgroundFetch from 'cordova-plugin-background-fetch'
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import RightDrawer from '../components/panels/RightDrawer.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
@@ -139,9 +141,22 @@ export default {
     this.$q.dark.set(this.getDarkMode())
     console.log('Loading')
 
+    await BackgroundFetch.configure({
+      minimumFetchInterval: 15,
+      forceAlarmManager: true
+    }, async (taskId) => {
+      console.log('[BackgroundFetch] taskId: ', taskId)
+      BackgroundFetch.finish(taskId)
+    }, async (taskId) => {
+      // This task has exceeded its allowed running-time.
+      // You must stop what you're doing and immediately .finish(taskId)
+      console.log('[BackgroundFetch] TIMEOUT taskId: ', taskId)
+      BackgroundFetch.finish(taskId)
+    })
+
     // Setup everything at once. This are independent processes
     try {
-      this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
+      // this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
     } catch (err) {
       console.error(err)
     }

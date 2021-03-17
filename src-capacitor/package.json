@@ -7,6 +7,7 @@
   "dependencies": {
     "@capacitor/cli": "^2.0.0",
     "@capacitor/core": "^2.0.0",
-    "@capacitor/ios": "2.4.4"
+    "@capacitor/ios": "2.4.4",
+    "cordova-plugin-background-fetch": "^7.0.1"
   }
 }
