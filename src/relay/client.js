@@ -812,6 +812,21 @@ export class RelayClient {
       messageDeleter({ address: copartyAddress, payloadDigest: index, index })
     }
   }
+
+  /**
+   * Check to see if there're new messages for current address
+   */
+  async checkNewMessages () {
+    const wallet = this.wallet
+    const myAddressStr = wallet.myAddressStr
+    const lastReceived = await this.messageStore.mostRecentMessageTime()
+    console.log('checkNewMessages', lastReceived, myAddressStr)
+    const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
+    const messageList = messagePage.getMessagesList()
+    console.log('processing new messages')
+    const numberOfNewMessages = messageList.length
+    return numberOfNewMessages > 0
+  }
 }
 
 export default RelayClient

@@ -44,7 +44,7 @@ import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
 import { defaultContacts } from '../utils/constants'
 import KeyserverHandler from '../keyserver/handler'
-import { errorNotify } from '../utils/notifications'
+import { errorNotify, newMessagesNotify } from '../utils/notifications'
 
 const compactWidth = 70
 const compactCutoff = 325
@@ -141,18 +141,30 @@ export default {
     this.$q.dark.set(this.getDarkMode())
     console.log('Loading')
 
-    BackgroundFetch.configure({
-      minimumFetchInterval: 15,
-      forceAlarmManager: true
-    }, async (taskId) => {
-      console.log('[BackgroundFetch] taskId: ', taskId)
-      BackgroundFetch.finish(taskId)
-    }, async (taskId) => {
-      // This task has exceeded its allowed running-time.
-      // You must stop what you're doing and immediately .finish(taskId)
-      console.log('[BackgroundFetch] TIMEOUT taskId: ', taskId)
-      BackgroundFetch.finish(taskId)
-    })
+    try {
+      if (this.$q.platform.is.mobile) {
+        // Run the polling new message in the background
+        // Then notify locally if there're new messages
+        BackgroundFetch.configure({
+          minimumFetchInterval: 15,
+          forceAlarmManager: true
+        }, async (taskId) => {
+          console.log('[BackgroundFetch] taskId: ', taskId)
+          BackgroundFetch.finish(taskId)
+          const hasNewMessages = await this.$relayClient.checkNewMessages()
+          if (hasNewMessages) {
+            newMessagesNotify()
+          }
+        }, async (taskId) => {
+          // This task has exceeded its allowed running-time.
+          // You must stop what you're doing and immediately .finish(taskId)
+          console.log('[BackgroundFetch] TIMEOUT taskId: ', taskId)
+          BackgroundFetch.finish(taskId)
+        })
+      }
+    } catch (err) {
+      console.log(err)
+    }
 
     // Setup everything at once. This are independent processes
     try {

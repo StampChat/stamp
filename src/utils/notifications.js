@@ -42,6 +42,10 @@ export const seedCopiedNotify = function () {
   infoNotify('Your secret name has been saved to your clipboard.')
 }
 
+export const newMessagesNotify = function () {
+  infoNotify('You have new messages. Please check your stamp for new messages')
+}
+
 export const sentTransactionNotify = function () {
   Notify.create({
     message: '<div class="text-center"> Sent transaction </div>',
