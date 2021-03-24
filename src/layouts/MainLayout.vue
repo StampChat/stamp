@@ -185,7 +185,7 @@ export default {
 
     // Setup everything at once. This are independent processes
     try {
-      // this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
+      this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
     } catch (err) {
       console.error(err)
     }
