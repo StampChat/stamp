@@ -36,6 +36,7 @@
 </template>
 
 <script>
+import { Plugins } from '@capacitor/core';
 import BackgroundFetch from 'cordova-plugin-background-fetch'
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import RightDrawer from '../components/panels/RightDrawer.vue'
@@ -45,6 +46,8 @@ import { debounce } from 'quasar'
 import { defaultContacts } from '../utils/constants'
 import KeyserverHandler from '../keyserver/handler'
 import { errorNotify, newMessagesNotify } from '../utils/notifications'
+
+const { LocalNotifications } = Plugins;
 
 const compactWidth = 70
 const compactCutoff = 325
@@ -153,7 +156,21 @@ export default {
           BackgroundFetch.finish(taskId)
           const hasNewMessages = await this.$relayClient.checkNewMessages()
           if (hasNewMessages) {
-            newMessagesNotify()
+            const notifs = await LocalNotifications.schedule({
+              notifications: [
+                {
+                  title: "New Messages",
+                  body: "You have new messages. Please check your stamp for new messages.",
+                  id: 1,
+                  schedule: { at: new Date(Date.now() + 5) },
+                  sound: null,
+                  attachments: null,
+                  actionTypeId: "",
+                  extra: null
+                }
+              ]
+            })
+            console.log('scheduled notifications', notifs)
           }
         }, async (taskId) => {
           // This task has exceeded its allowed running-time.
