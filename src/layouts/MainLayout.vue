@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import { Plugins } from '@capacitor/core';
+import { Plugins } from '@capacitor/core'
 import BackgroundFetch from 'cordova-plugin-background-fetch'
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import RightDrawer from '../components/panels/RightDrawer.vue'
@@ -45,9 +45,9 @@ import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
 import { defaultContacts } from '../utils/constants'
 import KeyserverHandler from '../keyserver/handler'
-import { errorNotify, newMessagesNotify } from '../utils/notifications'
+import { errorNotify } from '../utils/notifications'
 
-const { LocalNotifications } = Plugins;
+const { LocalNotifications } = Plugins
 
 const compactWidth = 70
 const compactCutoff = 325
@@ -146,39 +146,59 @@ export default {
 
     try {
       if (this.$q.platform.is.mobile) {
-        // Run the polling new message in the background
-        // Then notify locally if there're new messages
-        LocalNotifications.requestPermissions()
+        // Run the polling new message in the background only in mobile case
 
-        BackgroundFetch.configure({
-          minimumFetchInterval: 15,
-          forceAlarmManager: true
-        }, async (taskId) => {
-          console.log('[BackgroundFetch] taskId: ', taskId)
-          BackgroundFetch.finish(taskId)
-          const hasNewMessages = await this.$relayClient.checkNewMessages()
-          if (hasNewMessages) {
-            const notifs = await LocalNotifications.schedule({
-              notifications: [
+        // Setup the local notification type to open stamp application
+        LocalNotifications.registerActionTypes({
+          types: [
+            {
+              id: 'OPEN_STAMP',
+              actions: [
                 {
-                  title: "New Messages",
-                  body: "You have new messages. Please check your stamp for new messages.",
-                  id: 1,
-                  schedule: { at: new Date(Date.now() + 5) },
-                  sound: null,
-                  attachments: null,
-                  actionTypeId: "",
-                  extra: null
+                  id: 'view',
+                  title: 'Stamp'
                 }
               ]
+            }
+          ]
+        })
+
+        // Request the local notification permission only
+        LocalNotifications.requestPermission().then(permission => {
+          if (permission && permission.granted === true) {
+            BackgroundFetch.configure({
+              minimumFetchInterval: 15, // minimum in ios is 15 minutes
+              forceAlarmManager: true
+            }, async (taskId) => {
+              console.log('[BackgroundFetch] taskId: ', taskId)
+              BackgroundFetch.finish(taskId)
+              // Do the polling
+              const hasNewMessages = await this.$relayClient.checkNewMessages()
+              if (hasNewMessages) {
+                // Then notify locally if there're new messages
+                const notifs = await Plugins.LocalNotifications.schedule({
+                  notifications: [
+                    {
+                      title: 'New Messages',
+                      body: 'You have new messages. Please check your stamp for new messages.',
+                      id: Math.floor(Math.random() * 10),
+                      sound: 'beep.aiff',
+                      attachments: null,
+                      actionTypeId: 'OPEN_STAMP',
+                      extra: null,
+                      iconColor: '#00ff00'
+                    }
+                  ]
+                })
+                console.log('scheduled notifications', notifs)
+              }
+            }, async (taskId) => {
+              // This task has exceeded its allowed running-time.
+              // You must stop what you're doing and immediately .finish(taskId)
+              console.log('[BackgroundFetch] TIMEOUT taskId: ', taskId)
+              BackgroundFetch.finish(taskId)
             })
-            console.log('scheduled notifications', notifs)
           }
-        }, async (taskId) => {
-          // This task has exceeded its allowed running-time.
-          // You must stop what you're doing and immediately .finish(taskId)
-          console.log('[BackgroundFetch] TIMEOUT taskId: ', taskId)
-          BackgroundFetch.finish(taskId)
         })
       }
     } catch (err) {

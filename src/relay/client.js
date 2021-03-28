@@ -820,12 +820,19 @@ export class RelayClient {
     const wallet = this.wallet
     const myAddressStr = wallet.myAddressStr
     const lastReceived = await this.messageStore.mostRecentMessageTime()
-    console.log('checkNewMessages', lastReceived, myAddressStr)
+    let hasNewMessages = false
     const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
     const messageList = messagePage.getMessagesList()
-    console.log('processing new messages')
-    const numberOfNewMessages = messageList.length
-    return numberOfNewMessages > 0
+    for (const message of messageList) {
+      // Loop through all new messages and ignore the message with receive before lastReceived
+      const preParsedMessage = message.parse()
+      const messageReceivedTime = preParsedMessage.receivedTime
+      if (messageReceivedTime > lastReceived) {
+        hasNewMessages = true
+        break
+      }
+    }
+    return hasNewMessages
   }
 }
 
