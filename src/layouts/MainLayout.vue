@@ -148,6 +148,8 @@ export default {
       if (this.$q.platform.is.mobile) {
         // Run the polling new message in the background
         // Then notify locally if there're new messages
+        LocalNotifications.requestPermissions()
+
         BackgroundFetch.configure({
           minimumFetchInterval: 15,
           forceAlarmManager: true

@@ -3837,6 +3837,11 @@ copy-webpack-plugin@6.3.1:
     serialize-javascript "^5.0.1"
     webpack-sources "^1.4.3"
 
+cordova-plugin-background-fetch@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/cordova-plugin-background-fetch/-/cordova-plugin-background-fetch-7.0.1.tgz#001577389e4a74fc68f3244d96b56449d3d99434"
+  integrity sha512-IIFljNoIZbxVEL5jrVvWYv2M5E4q04EnzBrNgiSz4cWpuGsLEikCcUqsVMXH9a6AEugAvKOAvVjqSyQplrfyCA==
+
 core-js-compat@^3.6.5, core-js-compat@^3.7.0:
   version "3.8.0"
   resolved "https://registry.yarnpkg.com/core-js-compat/-/core-js-compat-3.8.0.tgz#3248c6826f4006793bd637db608bca6e4cd688b1"
