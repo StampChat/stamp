@@ -145,6 +145,7 @@ export default {
     console.log('Loading')
 
     try {
+      const pollingInterval = this.$q.platform.is.android ? 5 : 15
       if (this.$q.platform.is.mobile) {
         // Run the polling new message in the background only in mobile case
 
@@ -167,7 +168,7 @@ export default {
         LocalNotifications.requestPermission().then(permission => {
           if (permission && permission.granted === true) {
             BackgroundFetch.configure({
-              minimumFetchInterval: 15, // minimum in ios is 15 minutes
+              minimumFetchInterval: pollingInterval, // minimum in ios is 15 minutes
               forceAlarmManager: true
             }, async (taskId) => {
               console.log('[BackgroundFetch] taskId: ', taskId)
@@ -185,8 +186,7 @@ export default {
                       sound: 'beep.aiff',
                       attachments: null,
                       actionTypeId: 'OPEN_STAMP',
-                      extra: null,
-                      iconColor: '#00ff00'
+                      extra: null
                     }
                   ]
                 })
