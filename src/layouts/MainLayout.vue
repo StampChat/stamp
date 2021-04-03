@@ -182,7 +182,8 @@ export default {
                     {
                       title: 'New Messages',
                       body: 'You have new messages. Please check your stamp for new messages.',
-                      id: Math.floor(Math.random() * 10),
+                      id: 1,
+                      schedule: { at: new Date(Date.now() + 500) },
                       sound: 'beep.aiff',
                       attachments: null,
                       actionTypeId: 'OPEN_STAMP',

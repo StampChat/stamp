@@ -1,5 +1,7 @@
-import { Notify } from 'quasar'
+import { Plugins } from '@capacitor/core'
+import { Notify, Platform } from 'quasar'
 import { notificationTimeout } from './constants'
+const { LocalNotifications } = Plugins
 // import { remote } from 'electron'
 
 // Error notifications
@@ -69,4 +71,26 @@ export const desktopNotify = function (title, body, icon, callback) {
     notify.close()
   }
   setTimeout(notify.close.bind(notify), notificationTimeout)
+}
+
+export const mobileNotify = function (title, body) {
+  // Only run local notification in mobile platform
+  if (!Platform.is.mobile) {
+    return
+  }
+  const notifs = await LocalNotifications.schedule({
+    notifications: [
+      {
+        title: title,
+        body: body,
+        id: Math.floor(Math.random() * 10),
+        schedule: { at: new Date(Date.now() + 500) },
+        sound: 'beep.aiff',
+        attachments: null,
+        actionTypeId: 'OPEN_STAMP',
+        extra: null
+      }
+    ]
+  })
+  console.log('scheduled notifications', notifs)
 }
