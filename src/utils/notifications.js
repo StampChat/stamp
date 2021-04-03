@@ -73,7 +73,7 @@ export const desktopNotify = function (title, body, icon, callback) {
   setTimeout(notify.close.bind(notify), notificationTimeout)
 }
 
-export const mobileNotify = function (title, body) {
+export const mobileNotify = async function (title, body) {
   // Only run local notification in mobile platform
   if (!Platform.is.mobile) {
     return

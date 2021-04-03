@@ -395,10 +395,11 @@ export default {
             })
           }
           if (Platform.is.mobile) {
-            const { isActive } = await App.getState()
-            if (!isActive) {
-              mobileNotify(contact.profile.name, textItem.text)
-            }
+            App.getState().then(({ isActive }) => {
+              if (!isActive) {
+                mobileNotify(contact.profile.name, textItem.text)
+              }
+            })
           }
         }
       }
