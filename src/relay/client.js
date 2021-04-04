@@ -375,7 +375,7 @@ export class RelayClient {
       const destinationAddress = destinationPublicKey.toAddress(networkName).toCashAddress()
       const electrumClient = await this.wallet.electrumClientPromise
       Promise.all(transactions.map(async (transaction) => {
-        console.log('Broadcasting a transaction', transaction.id)
+        console.log('Broadcasting a transaction', transaction.id, transaction.toString())
         await electrumClient.request('blockchain.transaction.broadcast', transaction.toString())
         console.log('Finished broadcasting tx', transaction.id)
       }))
