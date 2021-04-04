@@ -35,6 +35,15 @@
             report bugs to Shammah, from your default contacts.
           </div>
           <div class="text-h6">
+            v0.0.9 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Fix various issues with transaction construction which were causing coin burns</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.8 Changelog
           </div>
           <div class="text-body1">
@@ -53,7 +62,6 @@
               <li>Refresh contacts on start, including fetching profile image</li>
             </ul>
           </div>
-
         </q-scroll-area>
         <q-page-sticky
           position="bottom-right"
