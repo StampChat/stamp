@@ -465,7 +465,7 @@ export class Wallet {
 
   constructTransactionSet ({ addressGenerator, amount }) {
     // Don't use frozen utxos.
-    const utxos = [...this.storage.getOutpoints().values()]
+    const utxos = [...this.storage.getOutpoints().values()].filter(utxo => !utxo.frozen)
     // Coin selection
     const transactionBundle = []
     let amountLeft = amount
