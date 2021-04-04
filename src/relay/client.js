@@ -390,7 +390,7 @@ export class RelayClient {
           if (err.response) {
             console.error(err.response)
           }
-          await Promise.all(usedIDs.map(id => wallet.fixOutpoint(id)))
+          usedIDs.forEach(id => wallet.fixOutpoint(id))
           errCount += 1
           console.log('error sending message', err)
           if (errCount >= 3) {

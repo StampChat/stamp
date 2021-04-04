@@ -284,7 +284,7 @@ export class Wallet {
       const electrumClient = await this.electrumClientPromise
       await electrumClient.request('blockchain.transaction.broadcast', txHex)
       // TODO: we shouldn't be dealing with this here. Leaky abstraction
-      await Promise.all(usedIDs.map(id => this.storage.deleteOutpoint(id)))
+      usedIDs.map(id => this.storage.deleteOutpoint(id))
     } catch (err) {
       console.error(err)
       // Fix UTXOs if tx broadcast fails
@@ -495,7 +495,7 @@ export class Wallet {
       amountLeft -= amountToBuild
     }
     for (const transaction of transactionBundle) {
-      await Promise.all(transaction.usedIds.map(utxoId => this.storage.freezeOutpoint(utxoId)))
+      transaction.usedIds.forEach(utxoId => this.storage.freezeOutpoint(utxoId))
     }
     return transactionBundle
   }
