@@ -15,10 +15,8 @@ export const constructStampTransactions = async function (wallet, payloadDigest,
   // Stamp output
   const stampHDPubKey = constructStampHDPublicKey(payloadDigest, destPubKey)
   // Assuming one txn and one output for now.
-  let transactionNumber = 0// This should be the index of the transaction in the outpoint list
-  const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
 
-  const stampAddressGenerator = () => {
+  const stampAddressGenerator = (transactionNumber) => (outputNumber) => {
     const outpointPubKey = stampHDPubKey.deriveChild(44)
       .deriveChild(145)
       .deriveChild(transactionNumber)
@@ -40,11 +38,9 @@ export const constructStealthTransactions = function (wallet, ephemeralPrivKey, 
   // Add ephemeral output
   // NOTE: We're only doing 1 stealth txn, and 1 output for now.
   // But the spec should allow doing confidential amounts.
-  let transactionNumber = 0// This should be the index of the transaction in the outpoint list
-  const outputNumber = 0 // This should the index in the outpoint list *NOT* the vout.  Otherwise they can't be reordered before signing
   const stealthHDPubKey = constructHDStealthPublicKey(ephemeralPrivKey, destPubKey)
 
-  const stealthPubKeyGenerator = () => {
+  const stealthPubKeyGenerator = (transactionNumber) => (outputNumber) => {
     const stealthPubKey = stealthHDPubKey
       .deriveChild(44)
       .deriveChild(145)

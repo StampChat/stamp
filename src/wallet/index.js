@@ -16,13 +16,6 @@ const standardInputSize = 175 // A few extra bytes
 const minimumOutputAmount = 5120
 const feePerByte = 2
 
-const pickOne = function (arr) {
-  if (arr.length === 0) {
-    throw new RangeError('Chance: Cannot pickone() from an empty array')
-  }
-  return arr[Math.floor(Math.random() * Math.floor(arr.length))]
-}
-
 const shuffleArray = function (arr) {
   const swaps = [...arr.keys()]
   for (let i = arr.length - 1; i > 0; i--) {
@@ -379,11 +372,18 @@ export class Wallet {
     return newIndex
   }
 
-  _buildTransactionSetForExplicitAmount ({ addressGenerator, amount, utxos }) {
-    let retries = 0
+  _buildTransactionSetForExplicitAmount ({ addressGenerator, amount, utxos, transactionOffset = 0 }) {
     let amountLeft = amount
     const transactionBundle = []
-    while (amountLeft > 0 && retries < 5) {
+    let transactionNumber = transactionOffset
+    const pickOne = function (arr) {
+      if (arr.length === 0) {
+        throw new RangeError('Chance: Cannot pickone() from an empty array')
+      }
+      return arr.splice(Math.floor(Math.random() * Math.floor(arr.length)), 1)[0]
+    }
+
+    while (amountLeft > 0) {
       const signingKeys = []
       const transaction = new Transaction()
 
@@ -396,9 +396,12 @@ export class Wallet {
       let satoshis = 0
       const stagedUtxos = []
       while (true) {
-        const requisiteSize = amountLeft + (transaction._estimateSize() + 2 * standardUtxoSize + standardInputSize + minimumOutputAmount) * feePerByte
+        // We would ideally like to find a UTXO that is larger than the amount left, minus the amounts of all the other UTXOs we have added thus far to this transaction
+        // additinoally we need to include the size of the output and the fees.
+        const requisiteSize = (amountLeft - satoshis) + (transaction._estimateSize() + 1 * standardUtxoSize + standardInputSize + minimumOutputAmount) * feePerByte
         const biggerUtxos = utxos.filter((a) => a.satoshis >= requisiteSize)
         const utxoSetToUse = biggerUtxos.length !== 0 ? biggerUtxos : utxos
+        // Use a random UTXO from the available set
         const utxoToUse = pickOne(utxoSetToUse)
         stagedUtxos.push(utxoToUse)
         utxoToUse.script = Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
@@ -407,43 +410,47 @@ export class Wallet {
         const txnSize = transaction._estimateSize()
         // Grab private key
         satoshis += utxoToUse.satoshis
-        // Make sure we don't generate dust
-        if (satoshis > minimumOutputAmount + (txnSize + standardUtxoSize) * feePerByte) {
-          break
+        if (satoshis < minimumOutputAmount + (txnSize + standardUtxoSize) * feePerByte) {
+          continue
         }
+
+        console.log(`transaction._estimateSize() + standardUtxoSize : ${transaction._estimateSize()} + ${standardUtxoSize}`)
+        const availableAmount = satoshis - (transaction._estimateSize() + standardUtxoSize) * feePerByte
+        // If availableAmount is the minimum, there will be no change output
+        // if amountLeft is the minimum, there will need to be change.  However, the delta may be less than the dust limit
+        // in which case we may want to throw this iteration away.
+        const amountToUse = Math.min(amountLeft, availableAmount)
+        const availableForFeesAndChange = satoshis - amountToUse
+        console.log(`availableForFeesAndChange ${availableForFeesAndChange}`)
+        // We subtract out the fees require to generate both the recipients output, and the posibility of change
+        const availableForChange = availableForFeesAndChange - (transaction._estimateSize() + 2 * standardUtxoSize) * feePerByte
+        // We have a fairly large overage, but we don't have enough excess to create the output
+        if (availableForChange > standardUtxoSize && availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte) {
+          console.log('availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte')
+          console.log(`${availableForChange} < ${minimumOutputAmount} + ${standardUtxoSize} * ${feePerByte}`)
+          // Try adding another UTXO so we can generate change
+          continue
+        }
+
+        // We can't generate another transaction with the amount that would be left
+        // try adding another UTXO to the inputs of this one.
+        const overage = amountLeft - amountToUse
+        if (overage > 0 && overage < minimumOutputAmount) {
+          console.log(`Amount left < minimumOutputAmount: ${amountLeft - amountToUse} < ${minimumOutputAmount}`)
+          continue
+        }
+        break
       }
-      const address = addressGenerator()
-      console.log(`transaction._estimateSize() + standardUtxoSize : ${transaction._estimateSize()} + ${standardUtxoSize}`)
       const availableAmount = satoshis - (transaction._estimateSize() + standardUtxoSize) * feePerByte
-      // If availableAmount is the minimum, there will be no change output
-      // if amountLeft is the minimum, there will need to be change.  However, the delta may be less than the dust limit
-      // in which case we may want to throw this iteration away.
+      const address = addressGenerator(transactionNumber)(0)
       const amountToUse = Math.min(amountLeft, availableAmount)
       transaction.addOutput(new Transaction.Output({
         script: Script(new Address(address)),
         satoshis: amountToUse
       }))
-      const availableForFeesAndChange = satoshis - amountToUse
-      console.log(`availableForFeesAndChange ${availableForFeesAndChange}`)
-      const availableForChange = availableForFeesAndChange - transaction._estimateSize() * feePerByte
+      // Wait until succeeding to update the transactionNumber
+      transactionNumber += 1
 
-      // We have a fairly large overage, but we don't have enough excess to create the output
-      if (availableForChange > standardUtxoSize && availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte) {
-        console.log('availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte')
-        console.log(`${availableForChange} < ${minimumOutputAmount} + ${standardUtxoSize} * ${feePerByte}`)
-        // Retry iteration
-        retries++
-        continue
-      }
-
-      // We can't generate another transaction
-      const overage = amountLeft - amountToUse
-      if (overage > 0 && overage < minimumOutputAmount) {
-        console.log(`Amount left < minimumOutputAmount: ${amountLeft - amountToUse} < ${minimumOutputAmount}`)
-        // Retry iteration
-        retries++
-        continue
-      }
       const stagedIds = stagedUtxos.map(utxo => calcId(utxo))
       amountLeft -= amountToUse
       const outputIndex = this.finalizeTransaction({ transaction, signingKeys })
@@ -452,24 +459,12 @@ export class Wallet {
         vouts: [outputIndex],
         usedIds: stagedIds
       })
-      // TODO: Need to be able to use unconfirmed outputs here that this function is generating.
-      console.log(stagedIds)
-      // Remove used UTXOs
-      for (const utxo of stagedUtxos) {
-        const index = utxos.findIndex((availableUtxo) => {
-          return calcId(utxo) !== calcId(availableUtxo)
-        })
-        if (index === -1) {
-          continue
-        }
-        utxos.splice(index, 1)
-      }
     }
-    assert(retries < 5, 'Error building transactions')
     return transactionBundle
   }
 
-  async constructTransactionSet ({ addressGenerator, amount }) {
+  constructTransactionSet ({ addressGenerator, amount }) {
+    // Don't use frozen utxos.
     const utxos = [...this.storage.getOutpoints().values()]
     // Coin selection
     const transactionBundle = []
@@ -496,7 +491,7 @@ export class Wallet {
 
     // We re-wrap the transaction set builder so we can ensure the amount is split, in addition to each amount operating independently.
     for (const amountToBuild of amounts) {
-      transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ addressGenerator, amount: amountToBuild, utxos }))
+      transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ addressGenerator, amount: amountToBuild, utxos, transactionOffset: transactionBundle.length }))
       amountLeft -= amountToBuild
     }
     for (const transaction of transactionBundle) {
