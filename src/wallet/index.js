@@ -380,7 +380,7 @@ export class Wallet {
       if (arr.length === 0) {
         throw new RangeError('Chance: Cannot pickone() from an empty array')
       }
-      return arr.splice(Math.floor(Math.random() * Math.floor(arr.length)), 1)[0]
+      return arr[Math.floor(Math.random() * Math.floor(arr.length))]
     }
 
     while (amountLeft > 0) {
@@ -403,6 +403,9 @@ export class Wallet {
         const utxoSetToUse = biggerUtxos.length !== 0 ? biggerUtxos : utxos
         // Use a random UTXO from the available set
         const utxoToUse = pickOne(utxoSetToUse)
+        const usedUtxoId = calcId(utxoToUse)
+        // Remove UTXO from available set
+        utxos.splice(utxos.findIndex(utxo => calcId(utxo) === usedUtxoId), 1)
         stagedUtxos.push(utxoToUse)
         utxoToUse.script = Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
         transaction.from(utxoToUse)
