@@ -376,12 +376,6 @@ export class Wallet {
     let amountLeft = amount
     const transactionBundle = []
     let transactionNumber = transactionOffset
-    const pickOne = function (arr) {
-      if (arr.length === 0) {
-        throw new RangeError('Chance: Cannot pickone() from an empty array')
-      }
-      return arr[Math.floor(Math.random() * Math.floor(arr.length))]
-    }
 
     while (amountLeft > 0) {
       const signingKeys = []
@@ -398,11 +392,15 @@ export class Wallet {
       while (true) {
         // We would ideally like to find a UTXO that is larger than the amount left, minus the amounts of all the other UTXOs we have added thus far to this transaction
         // additinoally we need to include the size of the output and the fees.
-        const requisiteSize = (amountLeft - satoshis) + (transaction._estimateSize() + 1 * standardUtxoSize + standardInputSize + minimumOutputAmount) * feePerByte
-        const biggerUtxos = utxos.filter((a) => a.satoshis >= requisiteSize)
-        const utxoSetToUse = biggerUtxos.length !== 0 ? biggerUtxos : utxos
-        // Use a random UTXO from the available set
-        const utxoToUse = pickOne(utxoSetToUse)
+        const requisiteSize = (amountLeft - satoshis) + (transaction._estimateSize() + 1 * standardUtxoSize + standardInputSize) * feePerByte
+        if (utxos.length === 0) {
+          throw new RangeError('out of utxos, unable to construct transaction set')
+        }
+        console.log(`requisiteSize == ${requisiteSize}`)
+        const smallerUtxos = utxos.filter((a) => a.satoshis <= requisiteSize)
+        // Use the biggest UTXO smaller than the amount we're trying to build,
+        // or use the smallest UTXO if we don't have a "greatest lower bound" utxo
+        const utxoToUse = smallerUtxos.length !== 0 ? smallerUtxos[smallerUtxos.length - 1] : utxos[0]
         const usedUtxoId = calcId(utxoToUse)
         // Remove UTXO from available set
         utxos.splice(utxos.findIndex(utxo => calcId(utxo) === usedUtxoId), 1)
@@ -411,14 +409,15 @@ export class Wallet {
         transaction.from(utxoToUse)
         signingKeys.push(utxoToUse.privKey)
         const txnSize = transaction._estimateSize()
-        // Grab private key
         satoshis += utxoToUse.satoshis
+        // We can't generate a transaction at all yet
         if (satoshis < minimumOutputAmount + (txnSize + standardUtxoSize) * feePerByte) {
+          console.log("We can't generate a transaction at all yet")
           continue
         }
 
-        console.log(`transaction._estimateSize() + standardUtxoSize : ${transaction._estimateSize()} + ${standardUtxoSize}`)
-        const availableAmount = satoshis - (transaction._estimateSize() + standardUtxoSize) * feePerByte
+        console.log(`transaction._estimateSize() + standardUtxoSize : ${txnSize} + ${standardUtxoSize}`)
+        const availableAmount = satoshis - (txnSize + standardUtxoSize) * feePerByte
         // If availableAmount is the minimum, there will be no change output
         // if amountLeft is the minimum, there will need to be change.  However, the delta may be less than the dust limit
         // in which case we may want to throw this iteration away.
@@ -426,11 +425,13 @@ export class Wallet {
         const availableForFeesAndChange = satoshis - amountToUse
         console.log(`availableForFeesAndChange ${availableForFeesAndChange}`)
         // We subtract out the fees require to generate both the recipients output, and the posibility of change
-        const availableForChange = availableForFeesAndChange - (transaction._estimateSize() + 2 * standardUtxoSize) * feePerByte
-        // We have a fairly large overage, but we don't have enough excess to create the output
-        if (availableForChange > standardUtxoSize && availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte) {
-          console.log('availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte')
-          console.log(`${availableForChange} < ${minimumOutputAmount} + ${standardUtxoSize} * ${feePerByte}`)
+        const availableForChange = availableForFeesAndChange - (txnSize + standardUtxoSize) * feePerByte
+        console.log(`availableForChange ${availableForChange}`)
+        // We have a fairly large overage (more than double fees), but we don't have enough excess to create the output
+        if (availableForChange > 2 * (txnSize + standardUtxoSize) * feePerByte && availableForChange < minimumOutputAmount + standardUtxoSize * feePerByte) {
+          console.log("Too much overage to drop and can't generate a change output. Add another input")
+          console.log(`${availableForChange} > ${2 * minimumOutputAmount} + ${standardUtxoSize} * ${feePerByte}`)
+          console.log(`${availableForChange} > ${minimumOutputAmount + standardUtxoSize * feePerByte}`)
           // Try adding another UTXO so we can generate change
           continue
         }
@@ -439,6 +440,7 @@ export class Wallet {
         // try adding another UTXO to the inputs of this one.
         const overage = amountLeft - amountToUse
         if (overage > 0 && overage < minimumOutputAmount) {
+          console.log("If we made this transaction, we wouldn't be able to make another. Add another UTXO here")
           console.log(`Amount left < minimumOutputAmount: ${amountLeft - amountToUse} < ${minimumOutputAmount}`)
           continue
         }
@@ -469,6 +471,7 @@ export class Wallet {
   constructTransactionSet ({ addressGenerator, amount }) {
     // Don't use frozen utxos.
     const utxos = [...this.storage.getOutpoints().values()].filter(utxo => !utxo.frozen)
+    utxos.sort((a, b) => a.satoshis - b.satoshis)
     // Coin selection
     const transactionBundle = []
     let amountLeft = amount
