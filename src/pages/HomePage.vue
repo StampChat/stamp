@@ -35,6 +35,16 @@
             report bugs to Shammah, from your default contacts.
           </div>
           <div class="text-h6">
+            v0.0.10 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Ensure UTXOs are unable to be used twice during transaction construction</li>
+              <li>Select UTXOs and fee rates to avoid creating change almost always</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.9 Changelog
           </div>
           <div class="text-body1">
