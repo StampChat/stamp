@@ -84,7 +84,12 @@
         :placeholder="$t('chatInput.placeHolder')"
       />
       <q-space />
-      <div @mousedown.prevent="sendMessage">
+      <div
+        dense
+        flat
+        class="q-btn q-pa-sm"
+        @mousedown.prevent="sendMessage"
+      >
         <q-icon
           name="send"
         />

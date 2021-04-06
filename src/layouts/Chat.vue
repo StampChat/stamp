@@ -216,9 +216,6 @@ export default {
         })
         this.message = ''
         this.replyDigest = null
-        this.$nextTick(() => {
-          this.$refs.chatInput.$refs.inputBox.$el.focus()
-        })
       }
     },
     stampAmountChanged (stampAmount) {
