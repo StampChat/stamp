@@ -84,12 +84,11 @@
         :placeholder="$t('chatInput.placeHolder')"
       />
       <q-space />
-      <q-btn
-        dense
-        flat
-        icon="send"
-        @click="sendMessage"
-      />
+      <div @mousedown.prevent="sendMessage">
+        <q-icon
+          name="send"
+        />
+      </div>
     </q-toolbar>
   </div>
 </template>
@@ -129,6 +128,9 @@ export default {
   methods: {
     focus () {
       this.$refs.inputBox.focus()
+    },
+    mousedown (message) {
+      console.log('mousedown: ' + message)
     },
     sendMessage () {
       if (this.message === '') {
