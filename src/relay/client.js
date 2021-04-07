@@ -832,6 +832,23 @@ export class RelayClient {
         break
       }
     }
+    const messageChunks = splitEvery(20, messageList)
+    for (const messageChunk of messageChunks) {
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          for (const message of messageChunk) {
+            // TODO: Check correct destination
+            // Here we are ensuring that their are yields between messages to the event loop.
+            // Ideally, we move this to a webworker in the future.
+            this.receiveMessage(message).then(resolve).catch((err) => {
+              console.error('Unable to deserialize message:', err.message)
+              resolve()
+            })
+          }
+        }, 0)
+      })
+    }
+    
     return hasNewMessages
   }
 }
