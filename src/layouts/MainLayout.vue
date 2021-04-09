@@ -174,25 +174,7 @@ export default {
               console.log('[BackgroundFetch] taskId: ', taskId)
               BackgroundFetch.finish(taskId)
               // Do the polling
-              const hasNewMessages = await this.$relayClient.checkNewMessages()
-              if (hasNewMessages) {
-                // Then notify locally if there're new messages
-                const notifs = await Plugins.LocalNotifications.schedule({
-                  notifications: [
-                    {
-                      title: 'New Messages',
-                      body: 'You have new messages. Please check your stamp for new messages.',
-                      id: 1,
-                      schedule: { at: new Date(Date.now() + 500) },
-                      sound: 'beep.aiff',
-                      attachments: null,
-                      actionTypeId: 'OPEN_STAMP',
-                      extra: null
-                    }
-                  ]
-                })
-                console.log('scheduled notifications', notifs)
-              }
+              await this.$relayClient.checkNewMessages()
             }, async (taskId) => {
               // This task has exceeded its allowed running-time.
               // You must stop what you're doing and immediately .finish(taskId)

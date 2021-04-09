@@ -30,6 +30,11 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
   client.events.on('receivedMessage', (args) => {
     store.dispatch('chats/receiveMessage', args)
   })
+  client.events.on('hasNewMessages', (hasNewMessages) => {
+    if (hasNewMessages === true) {
+      store.dispatch('chats/hasNewMessages')
+    }
+  })
 
   return { client, observables }
 }

@@ -832,6 +832,7 @@ export class RelayClient {
         break
       }
     }
+    this.events.emit('hasNewMessages', hasNewMessages)
     const messageChunks = splitEvery(20, messageList)
     for (const messageChunk of messageChunks) {
       await new Promise((resolve) => {
@@ -848,8 +849,6 @@ export class RelayClient {
         }, 0)
       })
     }
-    
-    return hasNewMessages
   }
 }
 
