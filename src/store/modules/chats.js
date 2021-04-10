@@ -404,16 +404,16 @@ export default {
         }
       }
       commit('receiveMessage', { address: copartyAddress, index, newMsg })
-    }
-  },
-  hasNewMessages () {
-    // Notify that we have new messages, but only for mobile in case the app not active
-    if (Platform.is.mobile) {
-      App.getState().then(({ isActive }) => {
-        if (!isActive) {
-          mobileNotify('New Messages', 'You have new messages. Please check your stamp for new messages.')
-        }
-      })
+    },
+    hasNewMessages () {
+      // Notify that we have new messages, but only for mobile in case the app not active
+      if (Platform.is.mobile) {
+        App.getState().then(({ isActive }) => {
+          if (!isActive) {
+            mobileNotify('New Messages', 'You have new messages. Please check your stamp for new messages.')
+          }
+        })
+      }
     }
   }
 }
