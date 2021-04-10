@@ -116,6 +116,11 @@ cordova-plugin-background-fetch@^7.0.1:
   resolved "https://registry.yarnpkg.com/cordova-plugin-background-fetch/-/cordova-plugin-background-fetch-7.0.1.tgz#001577389e4a74fc68f3244d96b56449d3d99434"
   integrity sha512-IIFljNoIZbxVEL5jrVvWYv2M5E4q04EnzBrNgiSz4cWpuGsLEikCcUqsVMXH9a6AEugAvKOAvVjqSyQplrfyCA==
 
+cordova-plugin-doze-optimize@^0.5.4:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/cordova-plugin-doze-optimize/-/cordova-plugin-doze-optimize-0.5.4.tgz#2aa6e1d86513369fa98ef34928409843efbad5ae"
+  integrity sha512-mUM+n33oCalxJOMT8sNYfllHlxhaE6/9lrH52P49Q/Zz/e8FrFBLQf71UVipvrpz+MCgNPVSMO/7l6GmZ0/UBg==
+
 escape-string-regexp@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-1.0.5.tgz"

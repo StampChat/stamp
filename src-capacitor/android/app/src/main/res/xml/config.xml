@@ -6,5 +6,9 @@
     <param name="android-package" value="com.transistorsoft.cordova.backgroundfetch.CDVBackgroundFetch"/>
   </feature>
 
+  <feature name="DozeOptimize">
+    <param name="android-package" value="cordova.plugins.DozeOptimize.DozeOptimize"/>
+  </feature>
+
   
 </widget>

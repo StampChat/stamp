@@ -169,7 +169,8 @@ export default {
           if (permission && permission.granted === true) {
             BackgroundFetch.configure({
               minimumFetchInterval: pollingInterval, // minimum in ios is 15 minutes
-              forceAlarmManager: true
+              forceAlarmManager: true,
+              requiredNetworkType: BackgroundFetch.NETWORK_TYPE_ANY
             }, async (taskId) => {
               console.log('[BackgroundFetch] taskId: ', taskId)
               BackgroundFetch.finish(taskId)
@@ -182,6 +183,21 @@ export default {
               BackgroundFetch.finish(taskId)
             })
           }
+        })
+
+        // Request exclude from battery Optimization
+        cordova.plugins.DozeOptimize.IsIgnoringBatteryOptimizations((isIgnore) => {
+          if (isIgnore === 'false') {
+            cordova.plugins.DozeOptimize.RequestOptimizations((result) => {
+              console.log(result)
+            }, (error) => {
+              console.error('BatteryOptimizations Request Error' + error)
+            })
+          } else {
+            console.log('Application already Ignoring Battery Optimizations')
+          }
+        }, (error) => {
+          console.error('IsIgnoringBatteryOptimizations Error' + error)
         })
       }
     } catch (err) {
