@@ -474,32 +474,8 @@ export class Wallet {
     utxos.sort((a, b) => a.satoshis - b.satoshis)
     // Coin selection
     const transactionBundle = []
-    let amountLeft = amount
-    const calcAmounts = (splits, amount) => {
-      const splitPoints = []
-      let amountLeft = amount
-      assert(splits > 0, 'transaction set split number invalid')
-      while (splitPoints.length < splits - 1) {
-        const splitPoint = Math.floor(Math.random() * (amountLeft - 2 * minimumOutputAmount)) + minimumOutputAmount
-        if (splitPoint < minimumOutputAmount) {
-          break
-        }
-        splitPoints.push(splitPoint)
-        amountLeft -= splitPoint
-      }
-      splitPoints.push(amountLeft)
-      return splitPoints
-    }
 
-    const amounts = calcAmounts(2, amountLeft)
-    const totalSegments = amounts.reduce((total, amount) => total + amount, 0)
-    assert(totalSegments === amount, `${totalSegments} != ${amount}`)
-
-    // We re-wrap the transaction set builder so we can ensure the amount is split, in addition to each amount operating independently.
-    for (const amountToBuild of amounts) {
-      transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ addressGenerator, amount: amountToBuild, utxos, transactionOffset: transactionBundle.length }))
-      amountLeft -= amountToBuild
-    }
+    transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ amount, addressGenerator, utxos, transactionOffset: transactionBundle.length }))
     for (const transaction of transactionBundle) {
       transaction.usedIds.forEach(utxoId => this.storage.freezeOutpoint(utxoId))
     }
