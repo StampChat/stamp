@@ -14,6 +14,7 @@ import { Lock } from './lock'
 const standardUtxoSize = 35 // 1 extra byte because we don't want to underrun
 const standardInputSize = 175 // A few extra bytes
 const minimumOutputAmount = 5120
+const dustLimit = 600
 const feePerByte = 2
 
 const shuffleArray = function (arr) {
@@ -310,22 +311,20 @@ export class Wallet {
     let skipAmount = 0
     // Create change outputs randomly in decreasing orders of magnitude
     for (const changeAddress of changeAddresses) {
-      const size = transaction._estimateSize() + transaction.outputs.length
+      const estimatedFutureSize = transaction._estimateSize() + 1 * standardUtxoSize
       const delta = transaction.inputAmount - transaction.outputAmount - skipAmount
-      const overallChangeUtxoCost = minimumOutputAmount + standardUtxoSize * feePerByte + size * feePerByte
-      if (delta + skipAmount < overallChangeUtxoCost) {
-        console.log('Can\'t make another output given currently available funds', delta, overallChangeUtxoCost)
+      console.log(`Available amount for change and fees = ${delta}`)
+      if (delta < dustLimit + estimatedFutureSize * feePerByte) {
+        console.log(`Can't make another output given currently available funds ${delta} < ${dustLimit + estimatedFutureSize * feePerByte}`)
         // We can't make more outputs without going over the fee.
         break
       }
 
-      const upperBound = delta - (overallChangeUtxoCost)
-      const splitPosition = Math.ceil(Math.random() * upperBound) + skipAmount
-      const largerAmount = (splitPosition >= upperBound - splitPosition ? splitPosition : upperBound - splitPosition)
-      // Use the amount which gives us a fee larger than the fee per byte, but minimally so
-      const changeOutputAmount = largerAmount + minimumOutputAmount
+      const upperBound = delta - estimatedFutureSize * feePerByte
+      const changeOutputAmount = Math.ceil(Math.random() * (upperBound - skipAmount - dustLimit)) + skipAmount + dustLimit
       if (amountOOM === OOM(changeOutputAmount)) {
         skipAmount += changeOutputAmount
+        console.log('Skipping change output due to same OOM as recipient amount')
         continue
       }
       skipAmount = 0
