@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { splitEvery } from 'ramda'
+import { Plugins } from '@capacitor/core'
 import { Payload, Message, MessagePage, MessageSet, Profile } from './relay_pb'
 import stealth from './stealth_pb'
 import p2pkh from './p2pkh_pb'
@@ -22,6 +23,8 @@ import paymentrequest from '../bip70/paymentrequest_pb'
 
 import WebSocket from 'isomorphic-ws'
 import { PublicKey, crypto, Transaction } from 'bitcore-lib-cash'
+
+const { Storage } = Plugins
 
 export class RelayClient {
   constructor (url, wallet, electrumClientPromise, { getPubKey, messageStore }) {
@@ -225,9 +228,13 @@ export class RelayClient {
   }
 
   async getMessages (address, startTime, endTime, retries = 3) {
+    console.log('before toAPIAddress')
     const addressLegacy = toAPIAddress(address)
+    console.log('after toAPIAddress')
 
     const url = `${this.url}/messages/${addressLegacy}`
+    console.log(url)
+    console.log(startTime)
     try {
       const response = await axios({
         method: 'get',
@@ -242,9 +249,12 @@ export class RelayClient {
         responseType: 'arraybuffer'
       })
       assert(response.status === 200, 'We should not be here')
+      console.log('before deserializeBinary')
       const messagePage = MessagePage.deserializeBinary(response.data)
+      console.log('after deserializeBinary')
       return messagePage
     } catch (err) {
+      console.log('error getMessages:' + err)
       const response = err.response
       if (response.status !== 402) {
         throw err
@@ -771,7 +781,7 @@ export class RelayClient {
   async refresh () {
     const wallet = this.wallet
     const myAddressStr = wallet.myAddressStr
-    const lastReceived = await this.messageStore.mostRecentMessageTime()
+    const lastReceived = await 
     console.log('refreshing', lastReceived, myAddressStr)
     const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
     const messageList = messagePage.getMessagesList()
@@ -817,38 +827,54 @@ export class RelayClient {
    * Check to see if there're new messages for current address
    */
   async checkNewMessages () {
-    const wallet = this.wallet
-    const myAddressStr = wallet.myAddressStr
-    const lastReceived = await this.messageStore.mostRecentMessageTime()
+    console.log('checkNewMessages')
     let hasNewMessages = false
-    const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
-    const messageList = messagePage.getMessagesList()
-    for (const message of messageList) {
-      // Loop through all new messages and ignore the message with receive before lastReceived
-      const preParsedMessage = message.parse()
-      const messageReceivedTime = preParsedMessage.receivedTime
-      if (messageReceivedTime > lastReceived) {
-        hasNewMessages = true
-        break
+    let messageList = undefined
+    try {
+      const wallet = this.wallet
+      const myAddressStr = wallet.myAddressStr
+      const lastReceived = (await Storage.get({ key: 'lastServerTime' }))?.value
+      console.log('before getMessages')
+      const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
+      console.log('checkNewMessages success')
+      const messageList = messagePage.getMessagesList()
+      if (messageList) {
+        for (const message of messageList) {
+          // Loop through all new messages and ignore the message with receive before lastReceived
+          const preParsedMessage = message.parse()
+          const messageReceivedTime = preParsedMessage.receivedTime
+          if (messageReceivedTime > lastReceived) {
+            hasNewMessages = true
+            break
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.log('error here checkNewMessages')
+    }
+    
+    console.log('hasNewMessages:' + hasNewMessages)
+    this.events.emit('hasNewMessages', hasNewMessages)
+    if (messageList) {
+      const messageChunks = splitEvery(20, messageList)
+      for (const messageChunk of messageChunks) {
+        await new Promise((resolve) => {
+          setTimeout(() => {
+            for (const message of messageChunk) {
+              // TODO: Check correct destination
+              // Here we are ensuring that their are yields between messages to the event loop.
+              // Ideally, we move this to a webworker in the future.
+              this.receiveMessage(message).then(resolve).catch((err) => {
+                console.error('Unable to deserialize message:', err.message)
+                resolve()
+              })
+            }
+          }, 0)
+        })
       }
     }
-    this.events.emit('hasNewMessages', hasNewMessages)
-    const messageChunks = splitEvery(20, messageList)
-    for (const messageChunk of messageChunks) {
-      await new Promise((resolve) => {
-        setTimeout(() => {
-          for (const message of messageChunk) {
-            // TODO: Check correct destination
-            // Here we are ensuring that their are yields between messages to the event loop.
-            // Ideally, we move this to a webworker in the future.
-            this.receiveMessage(message).then(resolve).catch((err) => {
-              console.error('Unable to deserialize message:', err.message)
-              resolve()
-            })
-          }
-        }, 0)
-      })
-    }
+    
   }
 }
 

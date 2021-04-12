@@ -145,7 +145,7 @@ export default {
     console.log('Loading')
 
     try {
-      const pollingInterval = this.$q.platform.is.android ? 5 : 15
+      const pollingInterval = this.$q.platform.is.android ? 2 : 15
       if (this.$q.platform.is.mobile) {
         // Run the polling new message in the background only in mobile case
 
@@ -173,9 +173,9 @@ export default {
               requiredNetworkType: BackgroundFetch.NETWORK_TYPE_ANY
             }, async (taskId) => {
               console.log('[BackgroundFetch] taskId: ', taskId)
-              BackgroundFetch.finish(taskId)
               // Do the polling
               await this.$relayClient.checkNewMessages()
+              BackgroundFetch.finish(taskId)
             }, async (taskId) => {
               // This task has exceeded its allowed running-time.
               // You must stop what you're doing and immediately .finish(taskId)

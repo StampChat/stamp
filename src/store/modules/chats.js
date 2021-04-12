@@ -410,6 +410,7 @@ export default {
       if (Platform.is.mobile) {
         App.getState().then(({ isActive }) => {
           if (!isActive) {
+            console.log('mobile Notify: ' + isActive)
             mobileNotify('New Messages', 'You have new messages. Please check your stamp for new messages.')
           }
         })
