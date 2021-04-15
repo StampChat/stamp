@@ -5,7 +5,7 @@ import { ElectrumTransport } from 'electrum-cash'
 export const electrumServers = [
   // Our mainnet server, we need to setup a testnet server as well.
   {
-    url: 'fulcrum.cashweb.io',
+    url: 'tfulcrum.cashweb.io',
     port: 443,
     scheme: ElectrumTransport.WSS.Scheme
   }
@@ -34,8 +34,8 @@ export const electrumServers = [
 // The separation here is due the fork. Not all backends support the new network prefixes yet
 // So we are using the legacy prefixes everywhere for API calls, but using
 // the ecash prefix for display
-export const networkName = 'mainnet'
-export const displayNetwork = 'ecash-mainnet'
+export const networkName = 'testnet'
+export const displayNetwork = 'lotus-testnet'
 
 export const electrumPingInterval = 10_000
 
@@ -48,14 +48,14 @@ export const feeUpdateTimerMilliseconds = 60_000
 export const defaultFeePerByte = 2
 
 // Keyserver constants
-export const trustedKeyservers = ['https://mainnet-keyserver.cashweb.io']
+export const trustedKeyservers = ['https://keyserver.cashweb.io']
 
 // Relay constants
 export const pingTimeout = 20_000
 export const relayReconnectInterval = 10_000
 export const defaultAcceptancePrice = 100
-export const defaultRelayUrl = 'https://mainnet-relay.cashweb.io'
-export const relayUrlOptions = ['https://mainnet-relay.cashweb.io']
+export const defaultRelayUrl = 'https://relay.cashweb.io'
+export const relayUrlOptions = ['https://relay.cashweb.io']
 export const defaultRelayData = {
   profile: {
     name: '',
