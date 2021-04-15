@@ -179,7 +179,7 @@ export default {
       if (lastItem.type === 'stealth') {
         const info = {
           outbound: lastMessage.outbound,
-          text: 'Sent eCash'
+          text: 'Sent Lotus'
         }
         return info
       }

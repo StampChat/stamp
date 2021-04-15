@@ -18,7 +18,7 @@ export default {
     welcome: 'Welcome',
     setupWallet: 'Character Setup',
     eula: 'EULA',
-    deposit: 'Deposit eCash',
+    deposit: 'Deposit Lotus',
     settings: 'Settings',
     back: 'Back',
     seedWarning: 'Do not forget your character\'s secret name, you will never be able to remember them again.',
@@ -42,15 +42,15 @@ export default {
   },
   newContactDialog: {
     newContact: 'New Contact',
-    enterBitcoinCashAddress: 'Enter eCash address...',
+    enterBitcoinCashAddress: 'Enter Lotus address...',
     notFound: 'Not Found',
     minimumStamp: 'Minimum Stamp'
   },
   SettingPanel: {
     newContact: 'New Contact',
     contacts: 'Contacts',
-    sendBitcoinCash: 'Send eCash',
-    recieveBitcoinCash: 'Receive eCash',
+    sendBitcoinCash: 'Send Lotus',
+    recieveBitcoinCash: 'Receive Lotus',
     profile: 'Profile',
     settings: 'Settings',
     wipeAndSave: 'Remote Wipe Wallet'
@@ -63,7 +63,7 @@ export default {
   },
   sendAddressDialog: {
     sendToAddress: 'Send to Address',
-    enterBitcoinCashAddress: 'Enter eCash address...',
+    enterBitcoinCashAddress: 'Enter Lotus address...',
     enterAmount: 'Enter Amount',
     cancel: 'Cancel',
     send: 'Send'

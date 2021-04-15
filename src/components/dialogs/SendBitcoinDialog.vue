@@ -2,7 +2,7 @@
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
       <div class="text-h6">
-        Send eCash to {{ contact.name }}
+        Send Lotus to {{ contact.name }}
       </div>
     </q-card-section>
     <q-card-section>
@@ -12,7 +12,7 @@
         type="number"
         filled
         dense
-        hint="Set the amount of eCash to be sent (satoshis)."
+        hint="Set the amount of Lotus to be sent (satoshis)."
         placeholder="Enter number of satoshis..."
         ref="amount"
       />

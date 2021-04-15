@@ -2,7 +2,7 @@ import { Networks } from 'bitcore-lib-cash'
 import { boot } from 'quasar/wrappers'
 
 export default boot(() => {
-  // from https://github.com/eCash-ABC/bitcoin-abc/blob/master/src/chainparams.cpp#L212
+  // from https://github.com/Lotus-ABC/bitcoin-abc/blob/master/src/chainparams.cpp#L212
   const dnsSeeds = [
     'seed.bitcoinabc.org',
     'seeder.jasonbcox.com',
