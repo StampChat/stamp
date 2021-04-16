@@ -228,13 +228,8 @@ export class RelayClient {
   }
 
   async getMessages (address, startTime, endTime, retries = 3) {
-    console.log('before toAPIAddress')
     const addressLegacy = toAPIAddress(address)
-    console.log('after toAPIAddress')
-
     const url = `${this.url}/messages/${addressLegacy}`
-    console.log(url)
-    console.log(startTime)
     try {
       const response = await axios({
         method: 'get',
@@ -249,12 +244,64 @@ export class RelayClient {
         responseType: 'arraybuffer'
       })
       assert(response.status === 200, 'We should not be here')
-      console.log('before deserializeBinary')
       const messagePage = MessagePage.deserializeBinary(response.data)
-      console.log('after deserializeBinary')
       return messagePage
     } catch (err) {
-      console.log('error getMessages:' + err)
+      const response = err.response
+      if (response.status !== 402) {
+        throw err
+      }
+
+      if (retries === 0) {
+        throw err
+      }
+
+      // TODO: We need to ensure this payment is reasonable to the user, otherwise the relay server
+      // could request amounts of money that are ridiculous.
+
+      const paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
+      const serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
+      const paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
+
+      const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
+      const paymentUrlFull = new URL(paymentUrl, this.url)
+      console.log('Sending payment to', paymentUrlFull.href)
+      const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+      this.setToken(token)
+      return this.getMessages(address, startTime, endTime, retries--)
+    }
+  }
+
+  /**
+   * Get messages which use native http instead of web based http request
+   * So don't get issue pending when the app is inactive 
+   */
+  async getMessagesNative (address, startTime, endTime, retries = 3) {
+    const addressLegacy = toAPIAddress(address)
+    const url = `${this.url}/messages/${addressLegacy}`
+    try {
+      const options = {
+        method: 'get',
+        headers: {
+          Authorization: this.token
+        },
+        params: {
+          start_time: startTime,
+          end_time: endTime
+        },
+        responseType: 'arraybuffer',
+        timeout: 29
+      }
+      const response = await new Promise((resolve, reject) => {
+        cordova.plugin.http.sendRequest(url, options, (response) => {
+          assert(response.status === 200, 'We should not be here')
+          const messagePage = MessagePage.deserializeBinary(response.data)
+          resolve(messagePage)
+        }, (response) => {
+          reject({ response })
+        })
+      })
+    } catch (err) {
       const response = err.response
       if (response.status !== 402) {
         throw err
@@ -781,7 +828,7 @@ export class RelayClient {
   async refresh () {
     const wallet = this.wallet
     const myAddressStr = wallet.myAddressStr
-    const lastReceived = await 
+    const lastReceived = await this.messageStore.mostRecentMessageTime()
     console.log('refreshing', lastReceived, myAddressStr)
     const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
     const messageList = messagePage.getMessagesList()
@@ -829,13 +876,13 @@ export class RelayClient {
   async checkNewMessages () {
     console.log('checkNewMessages')
     let hasNewMessages = false
-    let messageList = undefined
+    let messageList
     try {
       const wallet = this.wallet
       const myAddressStr = wallet.myAddressStr
       const lastReceived = (await Storage.get({ key: 'lastServerTime' }))?.value
       console.log('before getMessages')
-      const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
+      const messagePage = await this.getMessagesNative(myAddressStr, lastReceived || 0, null)
       console.log('checkNewMessages success')
       const messageList = messagePage.getMessagesList()
       if (messageList) {
@@ -849,11 +896,9 @@ export class RelayClient {
           }
         }
       }
-      
     } catch (error) {
       console.log('error here checkNewMessages')
     }
-    
     console.log('hasNewMessages:' + hasNewMessages)
     this.events.emit('hasNewMessages', hasNewMessages)
     if (messageList) {
@@ -874,7 +919,6 @@ export class RelayClient {
         })
       }
     }
-    
   }
 }
 
