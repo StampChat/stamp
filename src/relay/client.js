@@ -274,7 +274,7 @@ export class RelayClient {
 
   /**
    * Get messages which use native http instead of web based http request
-   * So don't get issue pending when the app is inactive 
+   * So don't get issue pending when the app is inactive
    */
   async getMessagesNative (address, startTime, endTime, retries = 3) {
     const addressLegacy = toAPIAddress(address)
@@ -285,22 +285,28 @@ export class RelayClient {
         headers: {
           Authorization: this.token
         },
-        params: {
-          start_time: startTime,
-          end_time: endTime
-        },
         responseType: 'arraybuffer',
         timeout: 29
       }
+      // Build the params because native http only allow string as param
+      const params = {}
+      if (startTime) {
+        params.start_time = String(startTime)
+      }
+      if (endTime) {
+        params.end_time = String(endTime)
+      }
+      options.params = params
       const response = await new Promise((resolve, reject) => {
         cordova.plugin.http.sendRequest(url, options, (response) => {
           assert(response.status === 200, 'We should not be here')
-          const messagePage = MessagePage.deserializeBinary(response.data)
-          resolve(messagePage)
+          resolve(response)
         }, (response) => {
           reject({ response })
         })
       })
+      const messagePage = MessagePage.deserializeBinary(response.data)
+      return messagePage
     } catch (err) {
       const response = err.response
       if (response.status !== 402) {
@@ -881,9 +887,7 @@ export class RelayClient {
       const wallet = this.wallet
       const myAddressStr = wallet.myAddressStr
       const lastReceived = (await Storage.get({ key: 'lastServerTime' }))?.value
-      console.log('before getMessages')
       const messagePage = await this.getMessagesNative(myAddressStr, lastReceived || 0, null)
-      console.log('checkNewMessages success')
       const messageList = messagePage.getMessagesList()
       if (messageList) {
         for (const message of messageList) {
@@ -896,10 +900,9 @@ export class RelayClient {
           }
         }
       }
-    } catch (error) {
-      console.log('error here checkNewMessages')
+    } catch (err) {
+      console.error('Could not check new messages', err)
     }
-    console.log('hasNewMessages:' + hasNewMessages)
     this.events.emit('hasNewMessages', hasNewMessages)
     if (messageList) {
       const messageChunks = splitEvery(20, messageList)

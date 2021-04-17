@@ -31,9 +31,7 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
     store.dispatch('chats/receiveMessage', args)
   })
   client.events.on('hasNewMessages', (hasNewMessages) => {
-    console.log('before dispatch hasNewMessages: ' + hasNewMessages)
     if (hasNewMessages === true) {
-      console.log('dispatch hasNewMessages')
       store.dispatch('chats/hasNewMessages')
     }
   })
