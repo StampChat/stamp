@@ -145,7 +145,7 @@ export default {
     console.log('Loading')
 
     try {
-      const pollingInterval = this.$q.platform.is.android ? 2 : 15
+      const pollingInterval = this.$q.platform.is.android ? 3 : 15
       if (this.$q.platform.is.mobile) {
         // Run the polling new message in the background only in mobile case
 

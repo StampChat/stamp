@@ -92,4 +92,5 @@ export const mobileNotify = async function (title, body) {
       }
     ]
   })
+  console.log('Scheduled notifications', notifs)
 }
