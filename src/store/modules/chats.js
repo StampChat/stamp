@@ -1,7 +1,7 @@
 import assert from 'assert'
 import Vue from 'vue'
 import { defaultStampAmount } from '../../utils/constants'
-import { stampPrice } from '../../wallet/helpers'
+import { stampPrice } from '../../cashweb/wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toAPIAddress } from '../../utils/address'

@@ -93,8 +93,9 @@
 
 <script>
 import { mapActions } from 'vuex'
-import KeyserverHandler from '../keyserver/handler'
+import { KeyserverHandler } from '../cashweb/keyserver/handler'
 import { toAPIAddress } from '../utils/address'
+import { keyservers, networkName } from '../utils/constants'
 
 export default {
   data () {
@@ -115,7 +116,7 @@ export default {
         const address = toAPIAddress(newAddress.trim()) // TODO: Make generic
 
         // Pull information from keyserver then relay server
-        const ksHandler = new KeyserverHandler()
+        const ksHandler = new KeyserverHandler({ keyservers, networkName })
         const relayURL = await ksHandler.getRelayUrl(address)
         const relayData = await this.$relayClient.getRelayData(address)
         relayData.notify = true

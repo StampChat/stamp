@@ -1,4 +1,4 @@
-import { LevelOutpointStore } from '../wallet/storage/level-storage'
+import { LevelOutpointStore } from '../cashweb/wallet/storage/level-storage'
 import { Platform } from 'quasar'
 
 async function createStore (): Promise<LevelOutpointStore> {

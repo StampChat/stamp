@@ -68,10 +68,10 @@ import { mapActions, mapGetters, mapMutations } from 'vuex'
 import { HDPrivateKey } from 'bitcore-lib-cash'
 import { generateMnemonic } from 'bip39'
 
-import KeyserverHandler from '../keyserver/handler'
-import pop from '../pop'
+import { KeyserverHandler } from '../cashweb/keyserver/handler'
+import pop from '../cashweb/pop'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
-import { defaultRelayData, defaultRelayUrl, defaultAvatars, recomendedBalance } from '../utils/constants'
+import { defaultRelayData, defaultRelayUrl, defaultAvatars, recomendedBalance, keyservers, networkName } from '../utils/constants'
 import { errorNotify } from '../utils/notifications'
 
 import AccountStep from '../components/setup/AccountStep.vue'
@@ -182,7 +182,7 @@ export default {
     },
     async setupRelayData () {
       // Set profile
-      const ksHandler = new KeyserverHandler({ wallet: this.$wallet })
+      const ksHandler = new KeyserverHandler({ wallet: this.$wallet, keyservers: keyservers, networkName })
       const idAddress = this.$wallet.myAddress
 
       // Check for existing metadata
@@ -246,7 +246,7 @@ export default {
     },
     async setUpKeyserver () {
       // Set profile
-      const ksHandler = new KeyserverHandler({ wallet: this.$wallet })
+      const ksHandler = new KeyserverHandler({ wallet: this.$wallet, networkName })
 
       try {
         this.$q.loading.show({
