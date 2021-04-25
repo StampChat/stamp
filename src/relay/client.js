@@ -26,14 +26,19 @@ import { PublicKey, crypto, Transaction } from 'bitcore-lib-cash'
 
 const { Storage } = Plugins
 
+const metadataKeys = {
+  lastServerTime: 'lastServerTime'
+}
+
 export class RelayClient {
-  constructor (url, wallet, electrumClientPromise, { getPubKey, messageStore }) {
+  constructor (url, wallet, electrumClientPromise, { getPubKey, messageStore, store }) {
     this.url = url
     this.events = new EventEmitter()
     this.wallet = wallet
     this.electrumClientPromise = electrumClientPromise
     this.getPubKey = getPubKey
     this.messageStore = messageStore
+    this.store = store
   }
 
   setToken (token) {
@@ -577,7 +582,7 @@ export class RelayClient {
     }
   }
 
-  async receiveMessage (message, receivedTime = Date.now()) {
+  async receiveMessage (message, receivedTime = Date.now(), isFromPollingBackground = false) {
     // Parse message
     Object.assign(Message.prototype, messageMixin)
     const preParsedMessage = message.parse()
@@ -591,7 +596,7 @@ export class RelayClient {
     // if this client sent the message, we already have the data and don't need to process it or get the payload again
     if (preParsedMessage.payloadDigest.length !== 0) {
       const payloadDigestHex = Array.prototype.map.call(preParsedMessage.payloadDigest, x => ('00' + x.toString(16)).slice(-2)).join('')
-      const message = await this.messageStore.getMessage(payloadDigestHex)
+      const message = isFromPollingBackground ? this.store.getters['relayClient/getBackgroundMessage'](payloadDigestHex) : await this.messageStore.getMessage(payloadDigestHex)
       if (message) {
         console.log('Already have message', payloadDigestHex)
         // TODO: We really should handle unfreezing UTXOs here via a callback in the future.
@@ -827,8 +832,14 @@ export class RelayClient {
     const copartyAddress = copartyPubKey.toAddress(networkName).toString() // TODO: Make generic
     const payloadDigestHex = payloadDigest.toString('hex')
     const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
-    await this.messageStore.saveMessage(finalizedMessage)
-    this.events.emit('receivedMessage', finalizedMessage)
+    if (isFromPollingBackground) {
+      // Receive message from polling in the background mode
+      await this.mostRecentBackgroundMessageTime(finalizedMessage.newMsg.serverTime)
+      this.events.emit('receiveBackgroundMessage', finalizedMessage)
+    } else {
+      await this.messageStore.saveMessage(finalizedMessage)
+      this.events.emit('receivedMessage', finalizedMessage)
+    }
   }
 
   async refresh () {
@@ -877,7 +888,40 @@ export class RelayClient {
   }
 
   /**
+   * Get and set the most recent message
+   * but only for background process, should not be used in active mode
+   * because background mode use in-memory database and Storage plugin instead of leveldb
+   */
+  async mostRecentBackgroundMessageTime (newLastServerTime) {
+    const jsonNewLastServerTime = JSON.stringify(newLastServerTime || 0)
+    try {
+      const lastServerTimeString = (await Storage.get({ key: metadataKeys.lastServerTime }))?.value
+      const lastServerTime = JSON.parse(lastServerTimeString)
+      if (!lastServerTime) {
+        await Storage.set({ key: metadataKeys.lastServerTime, value: jsonNewLastServerTime })
+      }
+      if (!newLastServerTime) {
+        return JSON.parse(lastServerTime)
+      }
+      if (lastServerTime < newLastServerTime) {
+        await Storage.set({ key: metadataKeys.lastServerTime, value: jsonNewLastServerTime })
+      }
+      return Math.max(newLastServerTime, lastServerTime)
+    } catch (err) {
+      if (err.type === 'NotFoundError') {
+        if (newLastServerTime) {
+          await Storage.set({ key: metadataKeys.lastServerTime, value: jsonNewLastServerTime })
+          return newLastServerTime
+        }
+        return 0
+      }
+      throw err
+    }
+  }
+
+  /**
    * Check to see if there're new messages for current address
+   * It should only be called when the app in the background mode
    */
   async checkNewMessages () {
     console.log('checkNewMessages')
@@ -886,7 +930,7 @@ export class RelayClient {
     try {
       const wallet = this.wallet
       const myAddressStr = wallet.myAddressStr
-      const lastReceived = (await Storage.get({ key: 'lastServerTime' }))?.value
+      const lastReceived = await this.mostRecentBackgroundMessageTime()
       const messagePage = await this.getMessagesNative(myAddressStr, lastReceived || 0, null)
       const messageList = messagePage.getMessagesList()
       if (messageList) {
@@ -913,7 +957,7 @@ export class RelayClient {
               // TODO: Check correct destination
               // Here we are ensuring that their are yields between messages to the event loop.
               // Ideally, we move this to a webworker in the future.
-              this.receiveMessage(message).then(resolve).catch((err) => {
+              this.receiveMessage(message, Date.now(), true).then(resolve).catch((err) => {
                 console.error('Unable to deserialize message:', err.message)
                 resolve()
               })

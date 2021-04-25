@@ -9,7 +9,8 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
       const destPubKey = store.getters['contacts/getPubKey'](address)
       return destPubKey
     },
-    messageStore: await levelDbStore
+    messageStore: await levelDbStore,
+    store
   })
   client.events.on('disconnected', () => {
     observables.connected = false
@@ -34,6 +35,9 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
     if (hasNewMessages === true) {
       store.dispatch('chats/hasNewMessages')
     }
+  })
+  client.events.on('receiveBackgroundMessage', (args) => {
+    store.dispatch('relayClient/receiveBackgroundMessage', args)
   })
 
   return { client, observables }

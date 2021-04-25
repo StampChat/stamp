@@ -47,7 +47,7 @@ import { defaultContacts } from '../utils/constants'
 import KeyserverHandler from '../keyserver/handler'
 import { errorNotify } from '../utils/notifications'
 
-const { LocalNotifications } = Plugins
+const { LocalNotifications, App } = Plugins
 
 const compactWidth = 70
 const compactCutoff = 325
@@ -174,7 +174,10 @@ export default {
             }, async (taskId) => {
               console.log('[BackgroundFetch] taskId: ', taskId)
               // Do the polling
-              await this.$relayClient.checkNewMessages()
+              const { isActive } = await App.getState()
+              if (!isActive) {
+                await this.$relayClient.checkNewMessages()
+              }
               BackgroundFetch.finish(taskId)
             }, async (taskId) => {
               // This task has exceeded its allowed running-time.
