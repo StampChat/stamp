@@ -1,7 +1,7 @@
 import { PublicKey } from 'bitcore-lib-cash'
-import { getRelayClient } from '../../adapters/vuex-relay-adapter'
-import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl } from '../../utils/constants'
-import KeyserverHandler from '../../keyserver/handler'
+import { ReadOnlyRelayClient } from '../../cashweb/relay'
+import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl, keyservers, networkName } from '../../utils/constants'
+import { KeyserverHandler } from '../../cashweb/keyserver/handler'
 import Vue from 'vue'
 import moment from 'moment'
 import { toAPIAddress } from '../../utils/address'
@@ -122,7 +122,7 @@ export default {
       commit('addContact', { address, contact })
       commit('chats/setActiveChat', address, { root: true })
     },
-    addDefaultContact ({ commit, getters, dispatch }, defaultContact) {
+    addDefaultContact ({ commit, getters }, defaultContact) {
       if (getters.isContact(defaultContact.address)) {
         return
       }
@@ -162,10 +162,10 @@ export default {
 
       // Get metadata
       try {
-        const handler = new KeyserverHandler()
+        const handler = new KeyserverHandler({ networkName, keyservers })
         const relayURL = await handler.getRelayUrl(address)
 
-        const { client: relayClient } = await getRelayClient({ relayURL })
+        const relayClient = new ReadOnlyRelayClient(relayURL, networkName)
         const relayData = await relayClient.getRelayData(address)
         commit('updateContact', { address, profile: relayData.profile, inbox: relayData.inbox })
       } catch (err) {

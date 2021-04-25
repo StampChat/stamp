@@ -35,7 +35,7 @@
 <script>
 import moment from 'moment'
 import ChatMessage from './ChatMessage.vue'
-import { stampPrice } from '../../../wallet/helpers'
+import { stampPrice } from '../../../cashweb/wallet/helpers'
 
 export default {
   components: {

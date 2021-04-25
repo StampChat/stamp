@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-import { calcId } from '../../wallet/helpers'
+import { calcId } from '../../cashweb/wallet/helpers'
 import { store as levelOutpointStore } from '../../adapters/level-outpoint-store'
 
 import { HDPrivateKey } from 'bitcore-lib-cash'

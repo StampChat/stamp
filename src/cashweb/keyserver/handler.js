@@ -1,19 +1,26 @@
 import axios from 'axios'
+import assert from 'assert'
+
 import { Entry, AddressMetadata } from './keyserver_pb'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
-import { trustedKeyservers, networkName } from '../utils/constants'
-import { crypto } from 'bitcore-lib-cash'
-import { toAPIAddress } from '../utils/address'
+import { crypto, Address, Networks } from 'bitcore-lib-cash'
 
-class KeyserverHandler {
-  constructor ({ wallet, defaultSampleSize = 3, keyservers = trustedKeyservers } = {}) {
+export class KeyserverHandler {
+  constructor ({ wallet = undefined, defaultSampleSize = 3, keyservers, networkName } = {}) {
+    assert(networkName, 'Missing networkName while initializing KeyserverHandler')
+    assert(keyservers, 'Missing keyservers while initializing KeyserverHandler')
     this.keyservers = keyservers
+    this.networkName = networkName
     this.defaultSampleSize = defaultSampleSize
     this.wallet = wallet
   }
 
-  static constructRelayUrlMetadata (relayUrl, privKey) {
+  toAPIAddressString (address) {
+    return new Address(new Address(address).hashBuffer, Networks.get(this.networkName, undefined)).toCashAddress()
+  }
+
+  constructRelayUrlMetadata (relayUrl, privKey) {
     const relayUrlEntry = new Entry()
     relayUrlEntry.setKind('relay-server')
     const rawRelayUrl = new TextEncoder().encode(relayUrl)
@@ -40,8 +47,8 @@ class KeyserverHandler {
     return authWrapper
   }
 
-  static async fetchMetadata (keyserver, address) {
-    const legacyAddress = toAPIAddress(address)
+  async fetchMetadata (keyserver, address) {
+    const legacyAddress = this.toAPIAddressString(address)
     const url = `${keyserver}/keys/${legacyAddress}`
     const response = await axios(
       {
@@ -61,8 +68,8 @@ class KeyserverHandler {
     return this.keyservers[0]
   }
 
-  static async paymentRequest (serverUrl, address, truncatedAuthWrapper) {
-    const legacyAddress = toAPIAddress(address)
+  async paymentRequest (serverUrl, address, truncatedAuthWrapper) {
+    const legacyAddress = this.toAPIAddressString(address)
 
     const rawAuthWrapper = truncatedAuthWrapper.serializeBinary()
     const url = `${serverUrl}/keys/${legacyAddress}`
@@ -72,11 +79,11 @@ class KeyserverHandler {
   async _uniformSample (address) {
     // TODO: Sample correctly
     const server = this.chooseServer()
-    return KeyserverHandler.fetchMetadata(server, address)
+    return this.fetchMetadata(server, address)
   }
 
   async getRelayUrl (address) {
-    const legacyAddress = toAPIAddress(address)
+    const legacyAddress = this.toAPIAddressString(address)
 
     // Get metadata
     const metadata = await this._uniformSample(legacyAddress)
@@ -96,7 +103,7 @@ class KeyserverHandler {
     return relayUrl
   }
 
-  static async putMetadata (address, server, metadata, token) {
+  async putMetadata (address, server, metadata, token) {
     const rawMetadata = metadata.serializeBinary()
     const url = `${server}/keys/${address}`
     await axios({
@@ -110,9 +117,10 @@ class KeyserverHandler {
   }
 
   async updateKeyMetadata (relayUrl, idPrivKey) {
-    const idAddress = idPrivKey.toAddress(networkName).toCashAddress()
+    assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
+    const idAddress = idPrivKey.toAddress(this.networkName).toCashAddress()
     // Construct metadata
-    const authWrapper = KeyserverHandler.constructRelayUrlMetadata(relayUrl, idPrivKey)
+    const authWrapper = this.constructRelayUrlMetadata(relayUrl, idPrivKey)
 
     const serverUrl = this.chooseServer()
     // Truncate metadata
@@ -123,7 +131,7 @@ class KeyserverHandler {
     truncatedAuthWrapper.setPublicKey(publicKey)
     truncatedAuthWrapper.setPayloadDigest(payloadDigest)
 
-    const { paymentDetails } = await KeyserverHandler.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper)
+    const { paymentDetails } = await this.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper)
 
     // Construct payment
     const { paymentUrl, payment, usedIDs } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
@@ -132,8 +140,6 @@ class KeyserverHandler {
     const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
     await Promise.all(usedIDs.map(id => this.wallet.storage.deleteOutpoint(id)))
 
-    await KeyserverHandler.putMetadata(idAddress, serverUrl, authWrapper, token)
+    await this.putMetadata(idAddress, serverUrl, authWrapper, token)
   }
 }
-
-export default KeyserverHandler

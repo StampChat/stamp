@@ -1,5 +1,5 @@
-import { RelayClient } from '../relay/client'
-import { defaultRelayUrl } from '../utils/constants'
+import { RelayClient } from '../cashweb/relay'
+import { defaultRelayUrl, networkName } from '../utils/constants'
 import { store as levelDbStore } from '../adapters/level-message-store'
 
 export async function getRelayClient ({ wallet, electrumClient, store, relayUrl = defaultRelayUrl }) {
@@ -9,6 +9,7 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
       const destPubKey = store.getters['contacts/getPubKey'](address)
       return destPubKey
     },
+    networkName,
     messageStore: await levelDbStore
   })
   client.events.on('disconnected', () => {

@@ -2,13 +2,9 @@ import * as R from 'ramda'
 import * as P from 'bluebird'
 import assert from 'assert'
 
-import { numAddresses, numChangeAddresses, displayNetwork as constantDisplayNetworkName, networkName as constantNetworkName } from '../utils/constants'
-
-import { toElectrumScriptHash } from '../utils/formatting'
-
 import { calcId } from './helpers'
 
-import { Address, Script, Transaction } from 'bitcore-lib-cash'
+import { Address, Script, Transaction, crypto } from 'bitcore-lib-cash'
 import { Lock } from './lock'
 
 const standardUtxoSize = 34
@@ -20,7 +16,7 @@ const maxFeePerByte = 2
 // Don't build transactions larger than this
 const maximumTransactionSize = 100000
 
-const shuffleArray = function (arr) {
+function shuffleArray (arr) {
   const swaps = [...arr.keys()]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * i)
@@ -34,11 +30,21 @@ const shuffleArray = function (arr) {
   return swaps
 }
 
+function toElectrumScriptHash (address) {
+  const scriptHash = Script.buildPublicKeyHashOut(address)
+  const scriptHashRaw = scriptHash.toBuffer()
+  const digest = crypto.Hash.sha256(scriptHashRaw)
+  const digestHexReversed = digest.reverse().toString('hex')
+  return digestHexReversed
+}
+
 export class Wallet {
-  constructor (storage, { networkName = constantNetworkName, displayNetworkName = constantDisplayNetworkName } = {}) {
+  constructor (storage, { networkName = 'testnet', displayNetworkName = 'lotus-testnet', numAddresses = 20, numChangeAddresses = 20 } = {}) {
     this.storage = storage
     this.networkName = networkName
     this.displayNetworkName = displayNetworkName
+    this.numAddresses = numAddresses
+    this.numChangeAddresses = numChangeAddresses
 
     this.constructionLock = new Lock()
     // Workaround for the way electrum-cash ensures a subscription isn't handled
@@ -100,7 +106,7 @@ export class Wallet {
     this.addresses = {}
     this.changeAddresses = {}
     this.electrumScriptHashes = {}
-    for (let i = 0; i < numAddresses; i++) {
+    for (let i = 0; i < this.numAddresses; i++) {
       const privKey = xPrivKey.deriveChild(44, true)
         .deriveChild(899, true)
         .deriveChild(0, true)
@@ -114,7 +120,7 @@ export class Wallet {
       const scriptHash = toElectrumScriptHash(address)
       this.addElectrumScriptHash({ scriptHash, address, change: false, privKey })
     }
-    for (let j = 0; j < numChangeAddresses; j++) {
+    for (let j = 0; j < this.numChangeAddresses; j++) {
       const privKey = xPrivKey.deriveChild(44, true)
         .deriveChild(899, true)
         .deriveChild(0, true)

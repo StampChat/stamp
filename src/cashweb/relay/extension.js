@@ -1,5 +1,5 @@
 import { Message } from './relay_pb'
-import { decrypt, constructPayloadHmac, constructSharedKey } from './crypto'
+import { PayloadConstructor } from './crypto'
 import { crypto, PublicKey } from 'bitcore-lib-cash'
 
 export class ParsedMessage {
@@ -13,7 +13,8 @@ export class ParsedMessage {
     payloadDigest,
     payloadHmac,
     payloadSize,
-    payload) {
+    payload,
+    networkName) {
     this.sourcePublicKey = sourcePublicKey
     this.destinationPublicKey = destinationPublicKey
     this.receivedTime = receivedTime
@@ -24,6 +25,7 @@ export class ParsedMessage {
     this.payloadHmac = payloadHmac
     this.payloadSize = payloadSize
     this.payload = payload
+    this.payloadConstructor = new PayloadConstructor({ networkName })
   }
 
   intoMessage () {
@@ -39,21 +41,21 @@ export class ParsedMessage {
   }
 
   constructSharedKey (privateKey) {
-    return constructSharedKey(privateKey, this.sourcePublicKey, this.salt)
+    return this.payloadConstructor.constructSharedKey(privateKey, this.sourcePublicKey, this.salt)
   }
 
   constructSharedKeySelf (privateKey) {
-    return constructSharedKey(privateKey, this.destinationPublicKey, this.salt)
+    return this.payloadConstructor.constructSharedKey(privateKey, this.destinationPublicKey, this.salt)
   }
 
   authenticate (sharedKey) {
-    const payloadHmac = constructPayloadHmac(sharedKey, this.payloadDigest)
+    const payloadHmac = this.payloadConstructor.constructPayloadHmac(sharedKey, this.payloadDigest)
     return (this.payloadHmac.every((value, index) => value === payloadHmac[index]))
   }
 
   decrypt (sharedKey) {
     // TODO: Check scheme
-    return decrypt(sharedKey, this.payload)
+    return this.payloadConstructor.decrypt(sharedKey, this.payload)
   }
 
   open (privateKey) {
@@ -75,7 +77,7 @@ export class ParsedMessage {
   }
 }
 
-export const messageMixin = {
+export const messageMixin = (networkPrefix) => ({
   digest () {
     const payloadDigest = this.getPayloadDigest()
     const payload = this.getPayload()
@@ -126,6 +128,7 @@ export const messageMixin = {
       payloadDigest,
       payloadHmac,
       payloadSize,
-      payload)
+      payload,
+      networkPrefix)
   }
-}
+})

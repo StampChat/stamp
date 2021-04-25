@@ -7,49 +7,33 @@ import p2pkh from './p2pkh_pb'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
 // TODO: Relay code should not depend on Stamp base code. Fix this import
-import { relayReconnectInterval, networkName } from '../utils/constants'
 import VCard from 'vcf'
 import EventEmitter from 'events'
-import { constructStealthEntry, constructReplyEntry, constructTextEntry, constructImageEntry, constructMessage, constructProfileMetadata, constructPriceFilter, constructP2PKHEntry } from './constructors'
-import { entryToImage, arrayBufferToBase64 } from '../utils/image'
-import { toAPIAddress } from '../utils/address'
+import { MessageConstructor } from './constructors'
+import { entryToImage, arrayBufferToBase64 } from './images'
 
-import { constructStampHDPrivateKey, constructHDStealthPrivateKey } from './crypto'
+import { PayloadConstructor } from './crypto'
 import { messageMixin } from './extension'
 import { calcId } from '../wallet/helpers'
 import assert from 'assert'
 import paymentrequest from '../bip70/paymentrequest_pb'
 
 import WebSocket from 'isomorphic-ws'
-import { PublicKey, crypto, Transaction } from 'bitcore-lib-cash'
+import { PublicKey, crypto, Transaction, Networks, Address } from 'bitcore-lib-cash'
 
-export class RelayClient {
-  constructor (url, wallet, electrumClientPromise, { getPubKey, messageStore }) {
+export class ReadOnlyRelayClient {
+  constructor (url, networkName) {
     this.url = url
-    this.events = new EventEmitter()
-    this.wallet = wallet
-    this.electrumClientPromise = electrumClientPromise
-    this.getPubKey = getPubKey
-    this.messageStore = messageStore
+    this.networkName = networkName
+    this.networkPrefix = Networks.get(networkName).prefix
   }
 
-  setToken (token) {
-    this.token = token
-  }
-
-  setWallet (wallet) {
-    this.wallet = wallet
-  }
-
-  async profilePaymentRequest (address) {
-    const addressLegacy = toAPIAddress(address)
-
-    const url = `${this.url}/profiles/${addressLegacy}`
-    return await pop.getPaymentRequest(url, 'put')
+  toAPIAddressString (address) {
+    return new Address(new Address(address).hashBuffer, Networks.get(this.networkName, undefined)).toCashAddress()
   }
 
   async getRelayData (address) {
-    const addressLegacy = toAPIAddress(address)
+    const addressLegacy = this.toAPIAddressString(address)
 
     const url = `${this.url}/profiles/${addressLegacy}`
     const response = await axios({
@@ -104,41 +88,8 @@ export class RelayClient {
     return relayData
   }
 
-  setUpWebsocket (address) {
-    const addressLegacy = toAPIAddress(address)
-
-    const url = new URL(`/ws/${addressLegacy}`, this.url)
-    url.protocol = 'wss'
-    url.searchParams.set('access_token', this.token)
-    const socket = new WebSocket(url.toString())
-    socket.binaryType = 'arraybuffer'
-
-    socket.onmessage = event => {
-      const buffer = event.data
-      const message = Message.deserializeBinary(buffer)
-      this.receiveMessage(message).catch(err => console.error(err))
-    }
-
-    const disconnectHandler = () => {
-      this.events.emit('disconnected')
-      setTimeout(() => {
-        this.setUpWebsocket(address, this.token)
-      }, relayReconnectInterval)
-    }
-
-    socket.onerror = (err) => {
-      this.events.emit('error', err)
-    }
-    socket.onclose = () => {
-      disconnectHandler()
-    }
-    socket.onopen = () => {
-      this.events.emit('opened')
-    }
-  }
-
   async getAcceptancePrice (address) {
-    const addressLegacy = toAPIAddress(address)
+    const addressLegacy = this.toAPIAddressString(address)
 
     // Get fee
     let acceptancePrice
@@ -153,7 +104,7 @@ export class RelayClient {
   }
 
   async getRawPayload (address, digest) {
-    const addressLegacy = toAPIAddress(address)
+    const addressLegacy = this.toAPIAddressString(address)
 
     const url = `${this.url}/payloads/${addressLegacy}`
 
@@ -171,9 +122,77 @@ export class RelayClient {
     })
     return response.data
   }
+}
+
+export class RelayClient extends ReadOnlyRelayClient {
+  constructor (url, wallet, electrumClientPromise, { networkName = 'testnet', relayReconnectInterval = 10_000, getPubKey, messageStore }) {
+    super(url, networkName)
+    assert(networkName, 'Missing networkName while initializing RelayClient')
+    assert(url, 'Missing url while initializing RelayClient')
+    assert(getPubKey, 'Missing getPubKey while initializing RelayClient')
+    assert(messageStore, 'Missing messageStore while initializing RelayClient')
+
+    this.url = url
+    this.events = new EventEmitter()
+    this.wallet = wallet
+    this.electrumClientPromise = electrumClientPromise
+    this.getPubKey = getPubKey
+    this.messageStore = messageStore
+    this.relayReconnectInterval = relayReconnectInterval
+    this.payloadConstructor = new PayloadConstructor({ networkName })
+    this.messageConstructor = new MessageConstructor({ networkName, wallet })
+  }
+
+  setToken (token) {
+    this.token = token
+  }
+
+  setWallet (wallet) {
+    this.wallet = wallet
+  }
+
+  async profilePaymentRequest (address) {
+    const addressLegacy = this.toAPIAddressString(address)
+
+    const url = `${this.url}/profiles/${addressLegacy}`
+    return await pop.getPaymentRequest(url, 'put')
+  }
+
+  setUpWebsocket (address) {
+    const addressLegacy = this.toAPIAddressString(address)
+
+    const url = new URL(`/ws/${addressLegacy}`, this.url)
+    url.protocol = 'wss'
+    url.searchParams.set('access_token', this.token)
+    const socket = new WebSocket(url.toString())
+    socket.binaryType = 'arraybuffer'
+
+    socket.onmessage = event => {
+      const buffer = event.data
+      const message = Message.deserializeBinary(buffer)
+      this.receiveMessage(message).catch(err => console.error(err))
+    }
+
+    const disconnectHandler = () => {
+      this.events.emit('disconnected')
+      setTimeout(() => {
+        this.setUpWebsocket(address, this.token)
+      }, this.relayReconnectInterval)
+    }
+
+    socket.onerror = (err) => {
+      this.events.emit('error', err)
+    }
+    socket.onclose = () => {
+      disconnectHandler()
+    }
+    socket.onopen = () => {
+      this.events.emit('opened')
+    }
+  }
 
   async getPayload (address, digest) {
-    const addressLegacy = toAPIAddress(address)
+    const addressLegacy = this.toAPIAddressString(address)
 
     const rawPayload = await this.getRawPayload(addressLegacy, digest)
     const payload = Payload.deserializeBinary(rawPayload)
@@ -210,7 +229,7 @@ export class RelayClient {
   }
 
   async putProfile (address, metadata) {
-    const addressLegacy = toAPIAddress(address)
+    const addressLegacy = this.toAPIAddressString(address)
 
     const rawProfile = metadata.serializeBinary()
     const url = `${this.url}/profiles/${addressLegacy}`
@@ -225,7 +244,7 @@ export class RelayClient {
   }
 
   async getMessages (address, startTime, endTime, retries = 3) {
-    const addressLegacy = toAPIAddress(address)
+    const addressLegacy = this.toAPIAddressString(address)
 
     const url = `${this.url}/messages/${addressLegacy}`
     try {
@@ -271,7 +290,7 @@ export class RelayClient {
   }
 
   async messagePaymentRequest (address) {
-    const addressLegacy = toAPIAddress(address)
+    const addressLegacy = this.toAPIAddressString(address)
 
     const url = `${this.url}/messages/${addressLegacy}`
     return await pop.getPaymentRequest(url, 'get')
@@ -282,7 +301,7 @@ export class RelayClient {
   }
 
   async pushMessages (address, messageSet) {
-    const addressLegacy = toAPIAddress(address)
+    const addressLegacy = this.toAPIAddressString(address)
 
     const rawMetadata = messageSet.serializeBinary()
     const url = `${this.url}/messages/${addressLegacy}`
@@ -306,7 +325,7 @@ export class RelayClient {
       async item => {
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'stealth') {
-          const { paymentEntry, transactionBundle } = await constructStealthEntry({ ...item, wallet: this.wallet, destPubKey: destinationPublicKey })
+          const { paymentEntry, transactionBundle } = this.messageConstructor.constructStealthEntry({ ...item, wallet: this.wallet, destPubKey: destinationPublicKey })
           outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
             transactions.push(transaction)
             usedIDs.push(...usedIds)
@@ -322,16 +341,16 @@ export class RelayClient {
         }
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'text') {
-          return constructTextEntry({ ...item })
+          return this.messageConstructor.constructTextEntry({ ...item })
         }
         if (item.type === 'reply') {
-          return constructReplyEntry({ ...item })
+          return this.messageConstructor.constructReplyEntry({ ...item })
         }
         if (item.type === 'image') {
-          return constructImageEntry({ ...item })
+          return this.messageConstructor.constructImageEntry({ ...item })
         }
         if (item.type === 'p2pkh') {
-          const { entry, transaction, usedIDs } = await constructP2PKHEntry({ ...item, wallet: this.wallet })
+          const { entry, transaction, usedIDs } = this.messageConstructor.constructP2PKHEntry({ ...item, wallet: this.wallet })
 
           transactions.push(transaction)
           usedIDs.push(...usedIDs)
@@ -351,7 +370,7 @@ export class RelayClient {
 
     // Construct message
     try {
-      const { message, transactionBundle, payloadDigest } = await constructMessage(wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount)
+      const { message, transactionBundle, payloadDigest } = this.messageConstructor.constructMessage(wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount)
       const payloadDigestHex = payloadDigest.toString('hex')
 
       // Add localy
@@ -372,7 +391,7 @@ export class RelayClient {
       const messageSet = new MessageSet()
       messageSet.addMessages(message)
 
-      const destinationAddress = destinationPublicKey.toAddress(networkName).toCashAddress()
+      const destinationAddress = destinationPublicKey.toAddress(this.networkName).toCashAddress()
       const electrumClient = await this.wallet.electrumClientPromise
       Promise.all(transactions.map(async (transaction) => {
         console.log('Broadcasting a transaction', transaction.id, transaction.toString())
@@ -486,7 +505,7 @@ export class RelayClient {
     await this.sendMessageImpl({ address: this.wallet.myAddressStr, items })
   }
 
-  async receiveSelfSend ({ payload, receivedTime = Date.now() } = {}) {
+  receiveSelfSend ({ payload } = {}) {
     // Decode entries
     const entriesList = payload.getEntriesList()
 
@@ -506,7 +525,7 @@ export class RelayClient {
         for (const input of p2pkhTxR.inputs) {
           // Don't add these outputs to our wallet. They're the other persons
           const utxoId = calcId({ txId: input.prevTxId.toString('hex'), outputIndex: input.outputIndex })
-          await this.wallet.deleteOutpoint(utxoId)
+          this.wallet.deleteOutpoint(utxoId)
         }
 
         continue
@@ -516,10 +535,10 @@ export class RelayClient {
 
   async receiveMessage (message, receivedTime = Date.now()) {
     // Parse message
-    Object.assign(Message.prototype, messageMixin)
+    Object.assign(Message.prototype, messageMixin(this.networkPrefix))
     const preParsedMessage = message.parse()
 
-    const senderAddress = preParsedMessage.sourcePublicKey.toAddress(networkName).toCashAddress() // TODO: Make generic
+    const senderAddress = preParsedMessage.sourcePublicKey.toAddress(this.networkName).toCashAddress() // TODO: Make generic
     const wallet = this.wallet
     const myAddress = wallet.myAddressStr
     const outbound = (senderAddress === myAddress)
@@ -567,7 +586,7 @@ export class RelayClient {
       return
     }
 
-    const destinationAddress = parsedMessage.destinationPublicKey.toAddress(networkName).toCashAddress()
+    const destinationAddress = parsedMessage.destinationPublicKey.toAddress(this.networkName).toCashAddress()
 
     // Add UTXO
     const stampOutpoints = parsedMessage.stamp.getStampOutpointsList()
@@ -575,7 +594,7 @@ export class RelayClient {
 
     let stampValue = 0
 
-    const stampRootHDPrivKey = constructStampHDPrivateKey(payloadDigest, wallet.identityPrivKey)
+    const stampRootHDPrivKey = this.payloadConstructor.constructStampHDPrivateKey(payloadDigest, wallet.identityPrivKey)
       .deriveChild(44)
       .deriveChild(145)
 
@@ -595,7 +614,7 @@ export class RelayClient {
       for (const [j, outputIndex] of vouts.entries()) {
         const output = stampTx.outputs[outputIndex]
         const satoshis = output.satoshis
-        const address = output.script.toAddress(networkName) // TODO: Make generic
+        const address = output.script.toAddress(this.networkName) // TODO: Make generic
         stampValue += satoshis
 
         // Also note, we should use an HD key here.
@@ -606,7 +625,7 @@ export class RelayClient {
         // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
         // HASH160(SHA256(point)) ourself
         // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
-        const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress(networkName)
+        const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outputPrivKey.toPublicKey().point)).toAddress(this.networkName)
         if (!outbound && !address.toBuffer().equals(computedAddress.toBuffer())) {
           // Assume outbound addresses were valid.  Otherwise we need to calclate a different
           // derivation then based on our identity address.
@@ -686,7 +705,7 @@ export class RelayClient {
         const outpointsList = stealthMessage.getOutpointsList()
         const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
         const ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
-        const stealthHDPrivKey = constructHDStealthPrivateKey(ephemeralPubKey, wallet.identityPrivKey)
+        const stealthHDPrivKey = this.messageConstructor.constructHDStealthPrivateKey(ephemeralPubKey, wallet.identityPrivKey)
         for (const [i, outpoint] of outpointsList.entries()) {
           const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
           const stealthTx = Transaction(stealthTxRaw)
@@ -711,11 +730,11 @@ export class RelayClient {
               .deriveChild(i)
               .deriveChild(j)
               .privateKey
-            const address = output.script.toAddress(networkName) // TODO: Make generic
+            const address = output.script.toAddress(this.networkName) // TODO: Make generic
             // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
             // HASH160(SHA256(point)) ourself
             // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
-            const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress(networkName)
+            const computedAddress = new PublicKey(crypto.Point.pointToCompressed(outpointPrivKey.toPublicKey().point)).toAddress(this.networkName)
             if (!outbound && !address.toBuffer().equals(computedAddress.toBuffer())) {
               console.error('invalid stealth address, ignoring')
               continue
@@ -761,7 +780,7 @@ export class RelayClient {
     }
 
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
-    const copartyAddress = copartyPubKey.toAddress(networkName).toString() // TODO: Make generic
+    const copartyAddress = copartyPubKey.toAddress(this.networkName).toString() // TODO: Make generic
     const payloadDigestHex = payloadDigest.toString('hex')
     const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
     await this.messageStore.saveMessage(finalizedMessage)
@@ -795,9 +814,9 @@ export class RelayClient {
   }
 
   async updateProfile (idPrivKey, profile, acceptancePrice) {
-    const priceFilter = constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
-    const metadata = constructProfileMetadata(profile, priceFilter, idPrivKey)
-    await this.putProfile(idPrivKey.toAddress(networkName).toCashAddress().toString(), metadata)
+    const priceFilter = this.messageConstructor.constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
+    const metadata = this.messageConstructor.constructProfileMetadata(profile, priceFilter, idPrivKey)
+    await this.putProfile(idPrivKey.toAddress(this.networkName).toCashAddress().toString(), metadata)
   }
 
   async wipeWallet (messageDeleter) {
