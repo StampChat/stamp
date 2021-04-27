@@ -1,10 +1,5 @@
 <template>
   <div class="column full-height">
-    <!-- Wallet dialog -->
-    <q-dialog v-model="walletOpen">
-      <receive-bitcoin-dialog />
-    </q-dialog>
-
     <!-- Relay reconnect dialog -->
     <q-dialog v-model="relayConnectOpen">
       <relay-connect-dialog />
@@ -37,7 +32,7 @@
     <q-list>
       <q-separator />
       <q-item clickable>
-        <q-item-section @click="walletOpen=true">
+        <q-item-section @click="receiveECash">
           <q-item-label>{{ $t('chatList.balance') }}</q-item-label>
           <q-item-label caption>
             {{ formattedBalance }}
@@ -79,6 +74,7 @@ import ChatList from '../chat/ChatList.vue'
 import SettingsPanel from '../panels/SettingsPanel.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 import { formatBalance } from '../../utils/formatting'
+import { openPage } from '../../utils/routes'
 
 const compactCutoff = 325
 
@@ -145,7 +141,10 @@ export default {
         return
       }
       return formatBalance(balance)
-    }
+    },
+    receiveECash () {
+      openPage(this.$router, this.$route.path, '/receive')
+    },
   },
   computed: {
     ...mapState('chats', ['chats', 'activeChatAddr']),
