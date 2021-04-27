@@ -70,12 +70,12 @@
           :offset="[18, 18]"
           v-show="!bottom"
         >
-          <q-btn
+          <q-icon
             round
             size="md"
-            icon="keyboard_arrow_down"
+            name="arrow_circle_down"
+            @mousedown.prevent="scrollBottom"
             color="accent"
-            @click="scrollBottom"
           />
         </q-page-sticky>
       </q-page>
@@ -216,7 +216,6 @@ export default {
         })
         this.message = ''
         this.replyDigest = null
-        this.$nextTick(() => this.$refs.chatInput.$el.focus())
       }
     },
     stampAmountChanged (stampAmount) {
