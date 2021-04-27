@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@capacitor/core": "^2.4.3",
-    "@quasar/extras": "^1.9.10",
+    "@quasar/extras": "^1.10.4",
     "@vue/composition-api": "^0.6.4",
     "axios": "^0.21.1",
     "bip39": "^3.0.2",
@@ -42,7 +42,7 @@
     "node-emoji": "^1.10.0",
     "node-forge": "^0.10.0",
     "qrcode.vue": "^1.7.0",
-    "quasar": "^1.14.5",
+    "quasar": "^1.15.11",
     "ramda": "^0.27.0",
     "typescript": "^3.9.7",
     "vcf": "^2.0.6",
@@ -52,13 +52,13 @@
     "ws": "^7.3.0"
   },
   "devDependencies": {
-    "@quasar/app": "^2.1.8",
+    "@capacitor/android": "^2.4.6",
+    "@quasar/app": "^2.2.5",
     "@quasar/quasar-app-extension-testing": "^1.0.3",
     "@quasar/quasar-app-extension-testing-unit-jest": "^1.1.0-beta.7",
     "@types/node": "^14.14.10",
     "@typescript-eslint/eslint-plugin": "^3.3.0",
     "@typescript-eslint/parser": "^3.3.0",
-    "@capacitor/android": "^2.4.6",
     "babel-eslint": "^10.0.1",
     "devtron": "^1.4.0",
     "electron": "^11.0.3",
