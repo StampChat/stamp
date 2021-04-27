@@ -49,6 +49,7 @@
     "vcf": "^2.0.6",
     "vue-i18n": "^8.0.0",
     "vuex-persist": "^2.2.0",
+    "workbox-webpack-plugin": "^6.1.5",
     "worker-loader": "^2.0.0",
     "ws": "^7.3.0"
   },
