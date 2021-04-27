@@ -117,23 +117,7 @@ import { mapActions, mapGetters, mapMutations } from 'vuex'
 import ContactCard from './ContactCard.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import { errorNotify } from '../../utils/notifications'
-
-const settingsRoutes = [
-  '/settings',
-  '/profile',
-  '/receive',
-  '/send',
-  '/add-contact'
-]
-
-const openPage = (router, currentRoute, route) => {
-  for (const settingsRoute of settingsRoutes) {
-    if (currentRoute.startsWith(settingsRoute)) {
-      return router.replace(route)
-    }
-  }
-  return router.push(route)
-}
+import { openPage } from '../../utils/routes'
 
 export default {
   components: {
