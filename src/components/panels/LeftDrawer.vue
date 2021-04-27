@@ -144,7 +144,7 @@ export default {
     },
     receiveECash () {
       openPage(this.$router, this.$route.path, '/receive')
-    },
+    }
   },
   computed: {
     ...mapState('chats', ['chats', 'activeChatAddr']),
