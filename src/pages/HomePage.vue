@@ -35,6 +35,17 @@
             report bugs to Shammah, from your default contacts.
           </div>
           <div class="text-h6">
+            v0.0.11 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Change licensing to be GPL for UI, and MIT for libraries</li>
+              <li>Fix balance button on UI</li>
+              <li>Various improcements to transaction construction and change creation</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.10 Changelog
           </div>
           <div class="text-body1">
