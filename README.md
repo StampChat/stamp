@@ -85,6 +85,8 @@ quasar build -m capacitor -T android
 ```bash
 quasar build -m capacitor -T ios
 ```
+In order to remote debugging on real ios device, the devtools option in quasar.conf.js should not be 'source-map'. Instead try 'eval-source-map'
+The root cause is that the Safari web inspector disconnects/crashes when the size of any files are too large.
 
 ### Updating the generated protobuf files:
 
