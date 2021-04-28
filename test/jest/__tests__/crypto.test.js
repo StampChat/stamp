@@ -1,8 +1,7 @@
-import {
-  encrypt, decrypt, constructStealthPublicKey,
-  constructStealthPrivateKey, constructSharedKey
-} from '../../../src/relay/crypto'
+import { PayloadConstructor } from '../../../src/cashweb/relay/crypto'
 import { PrivateKey } from 'bitcore-lib-cash'
+
+const payloadConstructor = new PayloadConstructor({networkName: 'test-net'})
 
 function getRandomInt (max) {
   return Math.floor(Math.random() * Math.floor(max))
@@ -22,13 +21,13 @@ test('Encrypt', () => {
 
   const privateKey = PrivateKey()
   const destinationPublicKey = PrivateKey().toPublicKey()
-  const sharedKey = constructSharedKey(privateKey, destinationPublicKey, salt)
+  const sharedKey = payloadConstructor.constructSharedKey(privateKey, destinationPublicKey, salt)
 
-  encrypt(sharedKey, plainText)
+  payloadConstructor.encrypt(sharedKey, plainText)
 })
 
 test('Decrypt', () => {
-  const length = 8
+  const length = 300
   const prePlainText = new Uint8Array(new ArrayBuffer(length))
   for (let i = 0; i < length; i++) {
     prePlainText[i] = getRandomInt(255)
@@ -41,10 +40,9 @@ test('Decrypt', () => {
 
   const privateKey = PrivateKey()
   const destinationPublicKey = PrivateKey().toPublicKey()
-  const sharedKey = constructSharedKey(privateKey, destinationPublicKey, salt)
-
-  const cipherText = encrypt(sharedKey, prePlainText)
-  const postPlainText = decrypt(sharedKey, cipherText)
+  const sharedKey = payloadConstructor.constructSharedKey(privateKey, destinationPublicKey, salt)
+  const cipherText = payloadConstructor.encrypt(sharedKey, prePlainText)
+  const postPlainText = payloadConstructor.decrypt(sharedKey, cipherText)
 
   expect(postPlainText).toStrictEqual(prePlainText)
 })
@@ -56,8 +54,8 @@ test('StealthKey', () => {
   const ephemeralPrivKey = PrivateKey()
   const ephemeralPubKey = ephemeralPrivKey.toPublicKey()
 
-  const { stealthPublicKey } = constructStealthPublicKey(ephemeralPrivKey, destPubKey)
-  const { stealthPrivateKey } = constructStealthPrivateKey(ephemeralPubKey, destPrivKey)
+  const { stealthPublicKey } = payloadConstructor.constructStealthPublicKey(ephemeralPrivKey, destPubKey)
+  const { stealthPrivateKey } = payloadConstructor.constructStealthPrivateKey(ephemeralPubKey, destPrivKey)
 
   expect(stealthPublicKey.toBuffer()).toStrictEqual(stealthPrivateKey.toPublicKey().toBuffer())
 })

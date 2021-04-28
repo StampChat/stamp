@@ -21,6 +21,7 @@
     "build-android-release": "yarn build-android && yarn zipalign-android && apksigner sign --ks release.keystore.jks --out ./dist/capacitor/android/apk/release/app-release.apk ./dist/capacitor/android/apk/release/app-release-unsigned-aligned.apk"
   },
   "dependencies": {
+    "@babel/preset-typescript": "^7.13.0",
     "@capacitor/core": "^2.4.3",
     "@quasar/extras": "^1.10.4",
     "@vue/composition-api": "^0.6.4",

@@ -50,6 +50,7 @@ module.exports = {
   transform: {
     '.*\\.vue$': 'vue-jest',
     '.*\\.js$': 'babel-jest',
+    '^.+\\.(ts|js)$': 'babel-jest',
     '.+\\.(css|styl|less|sass|scss|svg|png|jpg|ttf|woff|woff2)$': 'jest-transform-stub'
     // use these if NPM is being flaky
     // '.*\\.vue$': '<rootDir>/node_modules/@quasar/quasar-app-extension-testing-unit-jest/node_modules/vue-jest',
@@ -60,5 +61,6 @@ module.exports = {
   ],
   snapshotSerializers: [
     '<rootDir>/node_modules/jest-serializer-vue'
-  ]
+  ],
+  testEnvironment: "node"
 }
