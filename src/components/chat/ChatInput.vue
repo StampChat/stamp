@@ -80,16 +80,19 @@
         autofocus
         @keydown.enter.exact.prevent
         @keydown.enter.exact="sendMessage"
+        @mousedown.self.stop
         v-model="innerMessage"
         :placeholder="$t('chatInput.placeHolder')"
       />
       <q-space />
-      <q-btn
+      <div
         dense
         flat
-        icon="send"
-        @click="sendMessage"
-      />
+        class="q-btn q-pa-sm"
+        @mousedown.prevent="sendMessage"
+      >
+        <q-icon name="send" />
+      </div>
     </q-toolbar>
   </div>
 </template>

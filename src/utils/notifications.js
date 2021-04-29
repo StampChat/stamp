@@ -6,7 +6,7 @@ const { LocalNotifications } = Plugins
 
 // Error notifications
 
-const negativeNotify = function (text) {
+function negativeNotify (text) {
   Notify.create({
     message: '<div class="text-center"> ' + text + ' </div>',
     html: true,
@@ -14,7 +14,7 @@ const negativeNotify = function (text) {
   })
 }
 
-export const errorNotify = function (err) {
+export function errorNotify (err) {
   console.error(err)
   if (err.response) {
     console.error(err.response)
@@ -24,7 +24,7 @@ export const errorNotify = function (err) {
 
 // Info notifications
 
-export const infoNotify = function (text) {
+export function infoNotify (text) {
   Notify.create({
     message: '<div class="text-center"> ' + text + ' </div>',
     html: true,
@@ -32,23 +32,23 @@ export const infoNotify = function (text) {
   })
 }
 
-export const addressCopiedNotify = function () {
+export function addressCopiedNotify () {
   infoNotify('Address copied to clipboard.')
 }
 
-export const insufficientStampNotify = function () {
+export function insufficientStampNotify () {
   infoNotify('Stamp is too small, receiver will not be notified.')
 }
 
-export const seedCopiedNotify = function () {
+export function seedCopiedNotify () {
   infoNotify('Your secret name has been saved to your clipboard.')
 }
 
-export const newMessagesNotify = function () {
+export function newMessagesNotify () {
   infoNotify('You have new messages. Please check your stamp for new messages')
 }
 
-export const sentTransactionNotify = function () {
+export function sentTransactionNotify () {
   Notify.create({
     message: '<div class="text-center"> Sent transaction </div>',
     html: true,
@@ -58,7 +58,7 @@ export const sentTransactionNotify = function () {
     ]
   })
 }
-export const desktopNotify = function (title, body, icon, callback) {
+export function desktopNotify (title, body, icon, callback) {
   const notify = new window.Notification(title, {
     title,
     body,
@@ -73,7 +73,7 @@ export const desktopNotify = function (title, body, icon, callback) {
   setTimeout(notify.close.bind(notify), notificationTimeout)
 }
 
-export const mobileNotify = async function (title, body) {
+export async function mobileNotify (title, body) {
   // Only run local notification in mobile platform
   if (!Platform.is.mobile) {
     return

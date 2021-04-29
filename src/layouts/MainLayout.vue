@@ -43,8 +43,8 @@ import RightDrawer from '../components/panels/RightDrawer.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
-import { defaultContacts } from '../utils/constants'
-import KeyserverHandler from '../keyserver/handler'
+import { defaultContacts, keyservers, networkName } from '../utils/constants'
+import { KeyserverHandler } from '../cashweb/keyserver/handler'
 import { errorNotify } from '../utils/notifications'
 
 const { LocalNotifications, App } = Plugins
@@ -242,7 +242,7 @@ export default {
     }
     refreshMessages()
 
-    const handler = new KeyserverHandler({ wallet: this.$wallet })
+    const handler = new KeyserverHandler({ wallet: this.$wallet, keyservers: keyservers, networkName })
     // Update keyserver data if it doesn't exist.
     handler.getRelayUrl(this.$wallet.myAddressStr).catch(() => {
       handler.updateKeyMetadata(

@@ -129,7 +129,7 @@ export class LevelOutpointStore implements OutpointStore {
     this.db.put(index, JSON.stringify(outpoint))
   }
 
-  async freezeOutpoint (outpointId: OutpointId) {
+  freezeOutpoint (outpointId: OutpointId) {
     const outpoint = this.getOutpoint(outpointId)
     if (outpoint === undefined) {
       throw Error('missing key')
@@ -138,7 +138,7 @@ export class LevelOutpointStore implements OutpointStore {
     this.putOutpoint(outpoint)
   }
 
-  async unfreezeOutpoint (outpointId: OutpointId) {
+  unfreezeOutpoint (outpointId: OutpointId) {
     const outpoint = this.getOutpoint(outpointId)
     if (outpoint === undefined) {
       throw Error('missing key')

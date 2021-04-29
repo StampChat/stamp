@@ -2,7 +2,7 @@ import { Networks } from 'bitcore-lib-cash'
 import { boot } from 'quasar/wrappers'
 
 export default boot(() => {
-  // from https://github.com/eCash-ABC/bitcoin-abc/blob/master/src/chainparams.cpp#L212
+  // from https://github.com/Bitcoin-ABC/bitcoin-abc/blob/master/src/chainparams.cpp#L212
   const dnsSeeds = [
     'seed.bitcoinabc.org',
     'seeder.jasonbcox.com',
@@ -10,9 +10,9 @@ export default boot(() => {
   ]
 
   const liveNetwork = {
-    name: 'ecash-livenet',
-    alias: 'ecash-mainnet',
-    prefix: 'ecash',
+    name: 'lotus-livenet',
+    alias: 'lotus-mainnet',
+    prefix: 'lotus',
     pubkeyhash: 28,
     privatekey: 0x80,
     scripthash: 40,
@@ -26,8 +26,8 @@ export default boot(() => {
   // TODO: we need to clean this up.
   // There shouldn't need to be this additional prefix stuff.
   const testNetwork = {
-    name: 'ecash-testnet',
-    prefix: 'tecash',
+    name: 'lotus-testnet',
+    prefix: 'tlotus',
     pubkeyhash: 0x6f,
     privatekey: 0xef,
     scripthash: 0xc4,

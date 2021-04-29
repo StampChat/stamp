@@ -1,4 +1,4 @@
-export const arrayBufferToBase64 = function (buffer) {
+export function arrayBufferToBase64 (buffer) {
   let binary = ''
   const bytes = new Uint8Array(buffer)
   const len = bytes.byteLength
@@ -8,7 +8,7 @@ export const arrayBufferToBase64 = function (buffer) {
   return window.btoa(binary)
 }
 
-export const entryToImage = function (entry) {
+export function entryToImage (entry) {
   const rawAvatar = entry.getBody()
 
   const value = entry.getHeadersList()[0].getValue()

@@ -5,7 +5,7 @@ import { ElectrumTransport } from 'electrum-cash'
 export const electrumServers = [
   // Our mainnet server, we need to setup a testnet server as well.
   {
-    url: 'fulcrum.cashweb.io',
+    url: 'tfulcrum.cashweb.io',
     port: 443,
     scheme: ElectrumTransport.WSS.Scheme
   }
@@ -34,8 +34,8 @@ export const electrumServers = [
 // The separation here is due the fork. Not all backends support the new network prefixes yet
 // So we are using the legacy prefixes everywhere for API calls, but using
 // the ecash prefix for display
-export const networkName = 'mainnet'
-export const displayNetwork = 'ecash-mainnet'
+export const networkName = 'testnet'
+export const displayNetwork = 'lotus-testnet'
 
 export const electrumPingInterval = 10_000
 
@@ -48,14 +48,14 @@ export const feeUpdateTimerMilliseconds = 60_000
 export const defaultFeePerByte = 2
 
 // Keyserver constants
-export const trustedKeyservers = ['https://mainnet-keyserver.cashweb.io']
+export const keyservers = ['https://keyserver.cashweb.io']
 
 // Relay constants
 export const pingTimeout = 20_000
 export const relayReconnectInterval = 10_000
 export const defaultAcceptancePrice = 100
-export const defaultRelayUrl = 'https://mainnet-relay.cashweb.io'
-export const relayUrlOptions = ['https://mainnet-relay.cashweb.io']
+export const defaultRelayUrl = 'https://relay.cashweb.io'
+export const relayUrlOptions = ['https://relay.cashweb.io']
 export const defaultRelayData = {
   profile: {
     name: '',
@@ -90,40 +90,16 @@ export const stampLowerLimit = 1000
 
 export const defaultContacts = [
   {
-    name: 'Yoshiyahu',
-    address: 'ecash:qrz6dtj4ahlrv67q7hjcqa78tyvcl48f9yasgwwvea'
+    name: 'LotusBot',
+    address: 'tlotus:qqegajxrzx9juvg9fuu4cqvndz3u2yz6eg8kp2sx8k'
   },
   {
-    name: 'Mengerian',
-    address: 'ecash:qrfzkvmk7mrvvh55zyy0q7ksxth6l7xr4sgaspdrj9'
+    name: 'President Chancellor',
+    address: 'tlotus:qq34halvkdfwqnqkavangm39lj034yrkevv04qnrta'
   },
   {
-    name: 'deadalnix',
-    address: 'ecash:qrnqz2da0xdef8xmcfadyjcqmm0z73nyug4xha2jgj'
-  },
-  {
-    name: 'Marco',
-    address: 'ecash:qpd8uqdp6nc4jt6pantt5plj0qqt9m4vdss695azhe'
-  },
-  {
-    name: 'Pierre',
-    address: 'ecash:qzdf44zy632zk4etztvmaqav0y2cest4evtph9jyf4'
-  },
-  {
-    name: 'Vin',
-    address: 'ecash:qrfv6ws03vlavn5fjls6fhmakfgthrqs3qsmaul0su'
-  },
-  {
-    name: 'Tendo Pein',
-    address: 'ecash:qr2sv83tfcqdt6mhfct5mt7ukn5n4p9dmyu97jl454'
-  },
-  {
-    name: 'BytesOfMan',
-    address: 'ecash:qqd3qn4zazjhygk5a2vzw2gvqgqwempr4gtfza25mc'
-  },
-  {
-    name: 'HostFat',
-    address: 'ecash:qr898f5fwqvxl6mq8654dp4p6dgruvkz4c6x40mfru'
+    name: 'Tobias Ruck',
+    address: 'tlotus:qp8edml4zc8yspk4k2u07w6ytf7jt250v5l204d5au'
   }
 ]
 

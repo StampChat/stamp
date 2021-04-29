@@ -3,7 +3,7 @@ import assert from 'assert'
 import Vue from 'vue'
 import { Platform } from 'quasar'
 import { defaultStampAmount } from '../../utils/constants'
-import { stampPrice } from '../../wallet/helpers'
+import { stampPrice } from '../../cashweb/wallet/helpers'
 import { desktopNotify, mobileNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toAPIAddress } from '../../utils/address'
@@ -183,7 +183,7 @@ export default {
       if (lastItem.type === 'stealth') {
         const info = {
           outbound: lastMessage.outbound,
-          text: 'Sent eCash'
+          text: 'Sent Lotus'
         }
         return info
       }

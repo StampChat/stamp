@@ -1,7 +1,7 @@
 
 import { ElectrumClient } from 'electrum-cash'
 import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils/constants'
-import { Wallet } from '../wallet'
+import { Wallet } from '../cashweb/wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
 import { store as levelDbOutpointStore } from '../adapters/level-outpoint-store'
 
@@ -147,7 +147,7 @@ export default async ({ store, Vue }) => {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
   }
-  const { client: relayClient, observables: relayObservables } = await getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumObservables, store })
+  const { client: relayClient, observables: relayObservables } = await getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumClient: Vue.prototype.$electrumClientPromise, store })
   const relayToken = store.getters['relayClient/getToken']
   console.log('relayToken', relayToken)
   relayClient.setToken(relayToken)

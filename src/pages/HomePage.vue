@@ -35,6 +35,37 @@
             report bugs to Shammah, from your default contacts.
           </div>
           <div class="text-h6">
+            v0.0.11 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Change licensing to be GPL for UI, and MIT for libraries</li>
+              <li>Fix balance button on UI</li>
+              <li>Various improcements to transaction construction and change creation</li>
+              <li>Update quasar and other dependencies</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
+            v0.0.10 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Ensure UTXOs are unable to be used twice during transaction construction</li>
+              <li>Select UTXOs and fee rates to avoid creating change almost always</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
+            v0.0.9 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Fix various issues with transaction construction which were causing coin burns</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.8 Changelog
           </div>
           <div class="text-body1">
@@ -53,7 +84,6 @@
               <li>Refresh contacts on start, including fetching profile image</li>
             </ul>
           </div>
-
         </q-scroll-area>
         <q-page-sticky
           position="bottom-right"

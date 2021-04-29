@@ -1,7 +1,7 @@
-import { Script, crypto, Address } from 'bitcore-lib-cash'
+import { crypto, Address } from 'bitcore-lib-cash'
 import { colorSalt } from './constants'
 
-export const formatBalance = function (balance) {
+export function formatBalance (balance) {
   if (balance < 1_000) {
     return String(balance) + ' sats'
   }
@@ -23,15 +23,7 @@ export const formatBalance = function (balance) {
   }
 }
 
-export const toElectrumScriptHash = function (address) {
-  const scriptHash = Script.buildPublicKeyHashOut(address)
-  const scriptHashRaw = scriptHash.toBuffer()
-  const digest = crypto.Hash.sha256(scriptHashRaw)
-  const digestHexReversed = digest.reverse().toString('hex')
-  return digestHexReversed
-}
-
-export const addressColor = function (address) {
+export function addressColor (address) {
   const rawAddress = address.toBuffer()
 
   // Add salt
@@ -44,7 +36,7 @@ export const addressColor = function (address) {
   return { hue, saturation }
 }
 
-export const addressColorFromStr = function (addrStr) {
+export function addressColorFromStr (addrStr) {
   const addrObj = new Address(addrStr)
   const { hue, saturation } = addressColor(addrObj)
   const color = `hsl(${hue}, ${saturation * 100}%, 60%)`

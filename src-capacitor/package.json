@@ -1,7 +1,7 @@
 {
   "name": "stamp",
-  "version": "0.0.8",
-  "description": " A eCash powered internet cryptomessenger",
+  "version": "0.0.11",
+  "description": " A Lotus powered internet cryptomessenger",
   "author": "harry@cryptonumismatics.org",
   "private": true,
   "dependencies": {

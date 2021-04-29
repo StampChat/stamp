@@ -3,24 +3,20 @@
 </h1>
 
 <p align="center">
-  A eCash powered cryptomessenger.
+  A Lotus powered cryptomessenger.
 </p>
 
 <p align="center">
-  <a href="https://circleci.com/gh/cashweb/stamp">
-    <img alt="Build Status" src="https://circleci.com/gh/cashweb/stamp.svg?style=svg">
-  </a>
-
-  <a href="LICENSE">
-    <img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg">
+  <a href="https://circleci.com/gh/stampchat/stamp">
+    <img alt="Build Status" src="https://circleci.com/gh/stampchat/stamp.svg?style=svg">
   </a>
 </p>
 
-**WARNING: Stamp is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the eCash testnet as to protect against lost funds.**
+**WARNING: Stamp is in early alpha development stage. There will be multiple breaking changes from now until a stable release. We default to the Lotus testnet as to protect against lost funds.**
 
 ## Install from Binary
 
-1. Download the appropriate binary for your machine from the [latest releases](https://github.com/cashweb/stamp/releases).
+1. Download the appropriate binary for your machine from the [latest releases](https://github.com/stampchat/stamp/releases).
 2. Unzip your package.
 3. Run it.
 
@@ -35,7 +31,7 @@
 Clone this repository using
 
 ```bash
-git clone https://github.com/cashweb/stamp.git
+git clone https://github.com/stampchat/stamp.git
 cd stamp
 ```
 
@@ -89,6 +85,8 @@ quasar build -m capacitor -T android
 ```bash
 quasar build -m capacitor -T ios
 ```
+In order to remote debugging on real ios device, the devtools option in quasar.conf.js should not be 'source-map'. Instead try 'eval-source-map'
+The root cause is that the Safari web inspector disconnects/crashes when the size of any files are too large.
 
 ### Updating the generated protobuf files:
 
@@ -105,3 +103,9 @@ yarn generate:protobuffers
 ## Usage
 
 **TODO**
+
+# Licensing
+
+The Stamp GUI is licensed under GPLv3. However, the subfolder `src/cashweb/` is
+licensed under MIT. This subfolder is a set of libraries for interacting with
+CashWeb backends.

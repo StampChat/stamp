@@ -157,7 +157,7 @@ module.exports = configure(function (ctx) {
       manifest: {
         name: 'Stamp',
         short_name: 'Stamp',
-        description: ' A eCash powered internet cryptomessenger',
+        description: ' A Lotus powered internet cryptomessenger',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#ffffff',

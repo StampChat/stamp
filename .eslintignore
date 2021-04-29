@@ -6,11 +6,11 @@
 /node_modules
 
 
-/src/keyserver/keyserver_pb.js
-/src/relay/relay_pb.js
-/src/relay/p2pkh_pb.js
-/src/relay/filters_pb.js
-/src/relay/stealth_pb.js
-/src/bip70/paymentrequest_pb.js
-/src/auth_wrapper/wrapper_pb.js
+/src/cashweb/keyserver/keyserver_pb.js
+/src/cashweb/relay/relay_pb.js
+/src/cashweb/relay/p2pkh_pb.js
+/src/cashweb/relay/filters_pb.js
+/src/cashweb/relay/stealth_pb.js
+/src/cashweb/bip70/paymentrequest_pb.js
+/src/cashweb/auth_wrapper/wrapper_pb.js
 /test/jest/utils
