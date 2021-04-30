@@ -30,20 +30,20 @@ export default {
     setToken ({ commit }, token) {
       commit('setToken', token)
     },
-    receiveBackgroundMessage ({ commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
+    async receiveBackgroundMessage ({ commit, rootGetters }, { outbound, copartyAddress, index, newMsg }) {
       // Same logic in the action chat/receiveMessage but don't commit to the UI
       const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
-      const lastRead = getters.lastRead(copartyAddress)
 
       const acceptable = (newMsg.stampValue >= acceptancePrice)
       // If not focused/active (and not outbox message) then notify
-      if (!outbound && acceptable && lastRead < newMsg.serverTime) {
+      if (!outbound && acceptable) {
         const contact = rootGetters['contacts/getContact'](copartyAddress)
         const textItem = newMsg.items.find(item => item.type === 'text') || { text: '' }
+        // Only known contact can notify - will need to discuss intention
         if (contact && contact.notify) {
           if (Platform.is.mobile) {
             if (Platform.is.mobile) {
-              const { isActive } = App.getState()
+              const { isActive } = await App.getState()
               if (!isActive) {
                 mobileNotify(contact.profile.name, textItem.text)
               }
