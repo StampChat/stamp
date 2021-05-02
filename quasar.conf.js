@@ -82,7 +82,7 @@ module.exports = configure(function (ctx) {
     build: {
       // this is a configuration passed on
       // to the underlying Webpack
-      devtool: 'eval-source-map',
+      devtool: 'source-map',
 
       vueRouterMode: 'hash', // available values: 'hash', 'history'
 
@@ -136,9 +136,7 @@ module.exports = configure(function (ctx) {
     devServer: {
       https: false,
       port: 8080,
-      vueDevtools: true,
       open: true // opens browser window automatically
-      
     },
 
     // animations: 'all', // --- includes all animations
