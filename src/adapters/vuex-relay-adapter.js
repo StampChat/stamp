@@ -10,7 +10,8 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
       return destPubKey
     },
     networkName,
-    messageStore: await levelDbStore
+    messageStore: await levelDbStore,
+    store
   })
   client.events.on('disconnected', () => {
     observables.connected = false
@@ -30,6 +31,14 @@ export async function getRelayClient ({ wallet, electrumClient, store, relayUrl 
   })
   client.events.on('receivedMessage', (args) => {
     store.dispatch('chats/receiveMessage', args)
+  })
+  client.events.on('hasNewMessages', (hasNewMessages) => {
+    if (hasNewMessages === true) {
+      store.dispatch('chats/hasNewMessages')
+    }
+  })
+  client.events.on('receiveBackgroundMessage', (args) => {
+    store.dispatch('relayClient/receiveBackgroundMessage', args)
   })
 
   return { client, observables }

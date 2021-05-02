@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 <template>
   <q-layout view="hHr LpR lff">
     <q-drawer
@@ -35,6 +36,8 @@
 </template>
 
 <script>
+import { Plugins } from '@capacitor/core'
+import BackgroundFetch from 'cordova-plugin-background-fetch'
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import RightDrawer from '../components/panels/RightDrawer.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
@@ -43,6 +46,8 @@ import { debounce } from 'quasar'
 import { defaultContacts, keyservers, networkName } from '../utils/constants'
 import { KeyserverHandler } from '../cashweb/keyserver/handler'
 import { errorNotify } from '../utils/notifications'
+
+const { LocalNotifications, App } = Plugins
 
 const compactWidth = 70
 const compactCutoff = 325
@@ -138,6 +143,69 @@ export default {
   created () {
     this.$q.dark.set(this.getDarkMode())
     console.log('Loading')
+
+    try {
+      const pollingInterval = this.$q.platform.is.android ? 3 : 15
+      if (this.$q.platform.is.mobile) {
+        // Run the polling new message in the background only in mobile case
+
+        // Setup the local notification type to open stamp application
+        LocalNotifications.registerActionTypes({
+          types: [
+            {
+              id: 'OPEN_STAMP',
+              actions: [
+                {
+                  id: 'view',
+                  title: 'Stamp'
+                }
+              ]
+            }
+          ]
+        })
+
+        // Request the local notification permission only
+        LocalNotifications.requestPermission().then(permission => {
+          if (permission && permission.granted === true) {
+            BackgroundFetch.configure({
+              minimumFetchInterval: pollingInterval, // minimum in ios is 15 minutes
+              forceAlarmManager: true,
+              requiredNetworkType: BackgroundFetch.NETWORK_TYPE_ANY
+            }, async (taskId) => {
+              console.log('[BackgroundFetch] taskId: ', taskId)
+              // Do the polling
+              const { isActive } = await App.getState()
+              if (!isActive) {
+                await this.$relayClient.checkNewMessages()
+              }
+              BackgroundFetch.finish(taskId)
+            }, async (taskId) => {
+              // This task has exceeded its allowed running-time.
+              // You must stop what you're doing and immediately .finish(taskId)
+              console.log('[BackgroundFetch] TIMEOUT taskId: ', taskId)
+              BackgroundFetch.finish(taskId)
+            })
+          }
+        })
+
+        // Request exclude from battery Optimization
+        cordova.plugins.DozeOptimize.IsIgnoringBatteryOptimizations((isIgnore) => {
+          if (isIgnore === 'false') {
+            cordova.plugins.DozeOptimize.RequestOptimizations((result) => {
+              console.log(result)
+            }, (error) => {
+              console.error('BatteryOptimizations Request Error' + error)
+            })
+          } else {
+            console.log('Application already Ignoring Battery Optimizations')
+          }
+        }, (error) => {
+          console.error('IsIgnoringBatteryOptimizations Error' + error)
+        })
+      }
+    } catch (err) {
+      console.log(err)
+    }
 
     // Setup everything at once. This are independent processes
     try {

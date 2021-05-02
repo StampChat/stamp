@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.13.0",
-    "@capacitor/core": "^2.4.3",
+    "@capacitor/core": "^2.4.7",
     "@quasar/extras": "^1.10.4",
     "@vue/composition-api": "^0.6.4",
     "axios": "^0.21.1",
@@ -30,6 +30,8 @@
     "bitcore-lib-cash": "^8.23.0",
     "bluebird": "^3.7.2",
     "bn.js": "file:./local_modules/bn.js",
+    "cordova-plugin-background-fetch": "^7.0.1",
+    "cordova-plugin-doze-optimize": "^0.5.4",
     "core-js": "^3.6.5",
     "dompurify": "^2.0.11",
     "electron-windows-badge": "^1.0.5",

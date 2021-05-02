@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Plugins } from '@capacitor/core'
 import { MessageStore, MessageResult, MessageWrapper, MessageReturnResult } from './storage'
 import level, { LevelDB } from 'level'
 import { join } from 'path'
+
+const { Storage } = Plugins
 
 const metadataKeys = {
   schemaVersion: 'schemaVersion',
@@ -138,12 +141,14 @@ export class LevelMessageStore implements MessageStore {
       const lastServerTimeString: string = await this.db.get(metadataKeys.lastServerTime)
       const lastServerTime = JSON.parse(lastServerTimeString)
       if (!lastServerTime) {
+        await Storage.set({ key: metadataKeys.lastServerTime, value: jsonNewLastServerTime })
         await this.db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
       }
       if (!newLastServerTime) {
         return JSON.parse(lastServerTime)
       }
       if (lastServerTime < newLastServerTime) {
+        await Storage.set({ key: metadataKeys.lastServerTime, value: jsonNewLastServerTime })
         await this.db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
       }
       return Math.max(newLastServerTime, lastServerTime)

@@ -1,10 +1,14 @@
+import { Plugins } from '@capacitor/core'
 import assert from 'assert'
 import Vue from 'vue'
+import { Platform } from 'quasar'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../cashweb/wallet/helpers'
-import { desktopNotify } from '../../utils/notifications'
+import { desktopNotify, mobileNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toAPIAddress } from '../../utils/address'
+
+const { App } = Plugins
 
 const defaultContactObject = {
   inputMessage: '',
@@ -379,17 +383,37 @@ export default {
       const lastRead = getters.lastRead(copartyAddress)
 
       const acceptable = (newMsg.stampValue >= acceptancePrice)
-      // If not focused (and not outbox message) then notify
-      if (!document.hasFocus() && !outbound && acceptable && lastRead < newMsg.serverTime) {
+      // If not focused/active (and not outbox message) then notify
+      if (!outbound && acceptable && lastRead < newMsg.serverTime) {
         const contact = rootGetters['contacts/getContact'](copartyAddress)
         const textItem = newMsg.items.find(item => item.type === 'text') || { text: '' }
+
         if (contact && contact.notify) {
-          desktopNotify(contact.profile.name, textItem.text, contact.profile.avatar, () => {
-            dispatch('setActiveChat', copartyAddress)
-          })
+          if (!document.hasFocus() && Platform.is.desktop) {
+            desktopNotify(contact.profile.name, textItem.text, contact.profile.avatar, () => {
+              dispatch('setActiveChat', copartyAddress)
+            })
+          }
+          if (Platform.is.mobile) {
+            App.getState().then(({ isActive }) => {
+              if (!isActive) {
+                mobileNotify(contact.profile.name, textItem.text)
+              }
+            })
+          }
         }
       }
       commit('receiveMessage', { address: copartyAddress, index, newMsg })
+    },
+    hasNewMessages () {
+      // Notify that we have new messages, but only for mobile in case the app not active
+      if (Platform.is.mobile) {
+        App.getState().then(({ isActive }) => {
+          if (!isActive) {
+            mobileNotify('New Messages', 'You have new messages. Please check your stamp for new messages.')
+          }
+        })
+      }
     }
   }
 }

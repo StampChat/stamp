@@ -5,8 +5,12 @@
   "author": "harry@cryptonumismatics.org",
   "private": true,
   "dependencies": {
-    "@capacitor/cli": "^2.0.0",
-    "@capacitor/core": "^2.0.0",
-    "@capacitor/ios": "2.4.4"
+    "@capacitor/cli": "^2.4.7",
+    "@capacitor/core": "^2.4.7",
+    "@capacitor/ios": "^2.4.7",
+    "cordova-plugin-advanced-http": "^3.1.0",
+    "cordova-plugin-background-fetch": "^7.0.1",
+    "cordova-plugin-doze-optimize": "^0.5.4",
+    "cordova-plugin-file": "^6.0.2"
   }
 }

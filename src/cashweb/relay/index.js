@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { splitEvery } from 'ramda'
+import { Plugins } from '@capacitor/core'
 import { Payload, Message, MessagePage, MessageSet, Profile } from './relay_pb'
 import stealth from './stealth_pb'
 import p2pkh from './p2pkh_pb'
@@ -20,6 +21,12 @@ import paymentrequest from '../bip70/paymentrequest_pb'
 
 import WebSocket from 'isomorphic-ws'
 import { PublicKey, crypto, Transaction, Networks, Address } from 'bitcore-lib-cash'
+
+const { Storage } = Plugins
+
+const metadataKeys = {
+  lastServerTime: 'lastServerTime'
+}
 
 export class ReadOnlyRelayClient {
   constructor (url, networkName) {
@@ -125,7 +132,7 @@ export class ReadOnlyRelayClient {
 }
 
 export class RelayClient extends ReadOnlyRelayClient {
-  constructor (url, wallet, electrumClientPromise, { networkName = 'testnet', relayReconnectInterval = 10_000, getPubKey, messageStore }) {
+  constructor (url, wallet, electrumClientPromise, { networkName = 'testnet', relayReconnectInterval = 10_000, getPubKey, messageStore, store }) {
     super(url, networkName)
     assert(networkName, 'Missing networkName while initializing RelayClient')
     assert(url, 'Missing url while initializing RelayClient')
@@ -138,6 +145,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     this.electrumClientPromise = electrumClientPromise
     this.getPubKey = getPubKey
     this.messageStore = messageStore
+    this.store = store
     this.relayReconnectInterval = relayReconnectInterval
     this.payloadConstructor = new PayloadConstructor({ networkName })
     this.messageConstructor = new MessageConstructor({ networkName, wallet })
@@ -245,7 +253,6 @@ export class RelayClient extends ReadOnlyRelayClient {
 
   async getMessages (address, startTime, endTime, retries = 3) {
     const addressLegacy = this.toAPIAddressString(address)
-
     const url = `${this.url}/messages/${addressLegacy}`
     try {
       const response = await axios({
@@ -261,6 +268,67 @@ export class RelayClient extends ReadOnlyRelayClient {
         responseType: 'arraybuffer'
       })
       assert(response.status === 200, 'We should not be here')
+      const messagePage = MessagePage.deserializeBinary(response.data)
+      return messagePage
+    } catch (err) {
+      const response = err.response
+      if (response.status !== 402) {
+        throw err
+      }
+
+      if (retries === 0) {
+        throw err
+      }
+
+      // TODO: We need to ensure this payment is reasonable to the user, otherwise the relay server
+      // could request amounts of money that are ridiculous.
+
+      const paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
+      const serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
+      const paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
+
+      const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
+      const paymentUrlFull = new URL(paymentUrl, this.url)
+      console.log('Sending payment to', paymentUrlFull.href)
+      const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+      this.setToken(token)
+      return this.getMessages(address, startTime, endTime, retries--)
+    }
+  }
+
+  /**
+   * Get messages which use native http instead of web based http request
+   * So don't get issue pending when the app is inactive
+   */
+  async getMessagesNative (address, startTime, endTime, retries = 3) {
+    const addressLegacy = this.toAPIAddressString(address)
+    const url = `${this.url}/messages/${addressLegacy}`
+    try {
+      const options = {
+        method: 'get',
+        headers: {
+          Authorization: this.token
+        },
+        responseType: 'arraybuffer',
+        timeout: 29
+      }
+      // Build the params because native http only allow string as param
+      const params = {}
+      if (startTime) {
+        params.start_time = String(startTime)
+      }
+      if (endTime) {
+        params.end_time = String(endTime)
+      }
+      options.params = params
+      const response = await new Promise((resolve, reject) => {
+        cordova.plugin.http.sendRequest(url, options, (response) => {
+          assert(response.status === 200, 'We should not be here')
+          resolve(response)
+        }, (response) => {
+          reject({ response })
+        })
+      })
       const messagePage = MessagePage.deserializeBinary(response.data)
       return messagePage
     } catch (err) {
@@ -533,7 +601,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     }
   }
 
-  async receiveMessage (message, receivedTime = Date.now()) {
+  async receiveMessage (message, receivedTime = Date.now(), isFromPollingBackground = false) {
     // Parse message
     Object.assign(Message.prototype, messageMixin(this.networkPrefix))
     const preParsedMessage = message.parse()
@@ -547,7 +615,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     // if this client sent the message, we already have the data and don't need to process it or get the payload again
     if (preParsedMessage.payloadDigest.length !== 0) {
       const payloadDigestHex = Array.prototype.map.call(preParsedMessage.payloadDigest, x => ('00' + x.toString(16)).slice(-2)).join('')
-      const message = await this.messageStore.getMessage(payloadDigestHex)
+      const message = isFromPollingBackground ? this.store.getters['relayClient/getBackgroundMessage'](payloadDigestHex) : await this.messageStore.getMessage(payloadDigestHex)
       if (message) {
         console.log('Already have message', payloadDigestHex)
         // TODO: We really should handle unfreezing UTXOs here via a callback in the future.
@@ -783,8 +851,15 @@ export class RelayClient extends ReadOnlyRelayClient {
     const copartyAddress = copartyPubKey.toAddress(this.networkName).toString() // TODO: Make generic
     const payloadDigestHex = payloadDigest.toString('hex')
     const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
-    await this.messageStore.saveMessage(finalizedMessage)
-    this.events.emit('receivedMessage', finalizedMessage)
+    if (isFromPollingBackground) {
+      // Receive message from polling in the background mode
+      await this.mostRecentBackgroundMessageTime(finalizedMessage.newMsg.serverTime)
+      this.events.emit('receiveBackgroundMessage', finalizedMessage)
+    } else {
+      await this.messageStore.saveMessage(finalizedMessage)
+      await this.mostRecentBackgroundMessageTime(finalizedMessage.newMsg.serverTime)
+      this.events.emit('receivedMessage', finalizedMessage)
+    }
   }
 
   async refresh () {
@@ -829,6 +904,84 @@ export class RelayClient extends ReadOnlyRelayClient {
       const { index, copartyAddress } = messageWrapper
       await this.deleteMessage(messageWrapper.index)
       messageDeleter({ address: copartyAddress, payloadDigest: index, index })
+    }
+  }
+
+  /**
+   * Get and set the most recent message
+   * but only for background process, should not be used in active mode
+   * because background mode use in-memory database and Storage plugin instead of leveldb
+   */
+  async mostRecentBackgroundMessageTime (newLastServerTime) {
+    const jsonNewLastServerTime = JSON.stringify(newLastServerTime || 0)
+    try {
+      const lastServerTimeString = (await Storage.get({ key: metadataKeys.lastServerTime }))?.value
+      const lastServerTime = JSON.parse(lastServerTimeString)
+      if (!lastServerTime) {
+        await Storage.set({ key: metadataKeys.lastServerTime, value: jsonNewLastServerTime })
+      }
+      if (!newLastServerTime) {
+        return JSON.parse(lastServerTime)
+      }
+      if (lastServerTime < newLastServerTime) {
+        await Storage.set({ key: metadataKeys.lastServerTime, value: jsonNewLastServerTime })
+      }
+      return Math.max(newLastServerTime, lastServerTime)
+    } catch (err) {
+      if (err.type === 'NotFoundError') {
+        if (newLastServerTime) {
+          await Storage.set({ key: metadataKeys.lastServerTime, value: jsonNewLastServerTime })
+          return newLastServerTime
+        }
+        return 0
+      }
+      throw err
+    }
+  }
+
+  /**
+   * Check to see if there're new messages for current address
+   * It should only be called when the app in the background mode
+   */
+  async checkNewMessages () {
+    let hasNewMessages = false
+    try {
+      const wallet = this.wallet
+      const myAddressStr = wallet.myAddressStr
+      const lastReceived = await this.mostRecentBackgroundMessageTime()
+      console.log('checkNewMessages', lastReceived, myAddressStr)
+      const messagePage = await this.getMessagesNative(myAddressStr, lastReceived || 0, null)
+      const messageList = messagePage.getMessagesList()
+      if (messageList) {
+        for (const message of messageList) {
+          // Loop through all new messages and ignore the message with receive before lastReceived
+          const preParsedMessage = message.parse()
+          const messageReceivedTime = preParsedMessage.receivedTime
+          if (messageReceivedTime > lastReceived) {
+            hasNewMessages = true
+            break
+          }
+        }
+        if (hasNewMessages) {
+          this.events.emit('hasNewMessages', hasNewMessages)
+          const messageChunks = splitEvery(20, messageList)
+          for (const messageChunk of messageChunks) {
+            for (const message of messageChunk) {
+              await new Promise((resolve) => {
+                // TODO: Check correct destination
+                // Here we are ensuring that their are yields between messages to the event loop.
+                // Ideally, we move this to a webworker in the future.
+                this.receiveMessage(message, Date.now(), true).then(resolve).catch((err) => {
+                  console.error('Unable to deserialize message:', err.message)
+                  resolve()
+                })
+              })
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Could not check new messages', err)
     }
   }
 }
