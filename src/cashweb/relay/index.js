@@ -857,6 +857,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       this.events.emit('receiveBackgroundMessage', finalizedMessage)
     } else {
       await this.messageStore.saveMessage(finalizedMessage)
+      await this.mostRecentBackgroundMessageTime(finalizedMessage.newMsg.serverTime)
       this.events.emit('receivedMessage', finalizedMessage)
     }
   }
@@ -943,12 +944,12 @@ export class RelayClient extends ReadOnlyRelayClient {
    * It should only be called when the app in the background mode
    */
   async checkNewMessages () {
-    console.log('checkNewMessages')
     let hasNewMessages = false
     try {
       const wallet = this.wallet
       const myAddressStr = wallet.myAddressStr
       const lastReceived = await this.mostRecentBackgroundMessageTime()
+      console.log('checkNewMessages', lastReceived, myAddressStr)
       const messagePage = await this.getMessagesNative(myAddressStr, lastReceived || 0, null)
       const messageList = messagePage.getMessagesList()
       if (messageList) {
