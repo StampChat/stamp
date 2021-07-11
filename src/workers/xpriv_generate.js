@@ -1,4 +1,4 @@
-import { HDPrivateKey } from 'bitcore-lib-cash'
+import { HDPrivateKey } from 'bitcore-lib-xpi'
 import { mnemonicToSeedSync } from 'bip39'
 
 self.addEventListener('message', function (event) {

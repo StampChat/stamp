@@ -65,7 +65,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 
-import { HDPrivateKey } from 'bitcore-lib-cash'
+import { HDPrivateKey } from 'bitcore-lib-xpi'
 import { generateMnemonic } from 'bip39'
 
 import { KeyserverHandler } from '../cashweb/keyserver/handler'

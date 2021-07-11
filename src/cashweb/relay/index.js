@@ -19,7 +19,7 @@ import assert from 'assert'
 import paymentrequest from '../bip70/paymentrequest_pb'
 
 import WebSocket from 'isomorphic-ws'
-import { PublicKey, crypto, Transaction, Networks, Address } from 'bitcore-lib-cash'
+import { PublicKey, crypto, Transaction, Networks, Address } from 'bitcore-lib-xpi'
 
 export class ReadOnlyRelayClient {
   constructor (url, networkName) {

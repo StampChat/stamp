@@ -1,7 +1,7 @@
 import axios from 'axios'
 import paymentrequest from './bip70/paymentrequest_pb'
 
-import { Transaction } from 'bitcore-lib-cash'
+import { Transaction } from 'bitcore-lib-xpi'
 
 export default {
   async getPaymentRequest (url, method, data) {

@@ -4,7 +4,7 @@ import assert from 'assert'
 import { Entry, AddressMetadata } from './keyserver_pb'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
-import { crypto, Address, Networks } from 'bitcore-lib-cash'
+import { crypto, Address, Networks } from 'bitcore-lib-xpi'
 
 export class KeyserverHandler {
   constructor ({ wallet = undefined, defaultSampleSize = 3, keyservers, networkName } = {}) {

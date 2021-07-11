@@ -1,4 +1,4 @@
-import { PublicKey } from 'bitcore-lib-cash'
+import { PublicKey } from 'bitcore-lib-xpi'
 import { ReadOnlyRelayClient } from '../../cashweb/relay'
 import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl, keyservers, networkName } from '../../utils/constants'
 import { KeyserverHandler } from '../../cashweb/keyserver/handler'

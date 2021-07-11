@@ -4,7 +4,7 @@
 /src-cordova
 /.quasar
 /node_modules
-
+/local_modules
 
 /src/cashweb/keyserver/keyserver_pb.js
 /src/cashweb/relay/relay_pb.js

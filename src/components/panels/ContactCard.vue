@@ -65,7 +65,7 @@
 <script>
 import { copyToClipboard } from 'quasar'
 import { addressCopiedNotify } from '../../utils/notifications'
-import { Address, Networks } from 'bitcore-lib-cash'
+import { Address, Networks } from 'bitcore-lib-xpi'
 import { displayNetwork } from 'src/utils/constants'
 
 export default {

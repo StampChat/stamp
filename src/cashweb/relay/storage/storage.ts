@@ -1,5 +1,5 @@
 
-import { PrivateKey } from 'bitcore-lib-cash'
+import { PrivateKey } from 'bitcore-lib-xpi'
 
 export interface Outpoint {
   address: string;

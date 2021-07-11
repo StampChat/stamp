@@ -1,4 +1,4 @@
-import { Address, Networks } from 'bitcore-lib-cash'
+import { Address, Networks } from 'bitcore-lib-xpi'
 import { networkName, displayNetwork } from './constants'
 
 // These helper functions are here because we end up using

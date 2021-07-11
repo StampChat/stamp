@@ -1,4 +1,4 @@
-import { crypto, Address } from 'bitcore-lib-cash'
+import { crypto, Address } from 'bitcore-lib-xpi'
 import { colorSalt } from './constants'
 
 export function formatBalance (balance) {

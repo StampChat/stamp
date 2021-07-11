@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import { Address } from 'bitcore-lib-cash'
+import { Address } from 'bitcore-lib-xpi'
 
 import { sentTransactionNotify, errorNotify } from '../utils/notifications'
 import { displayNetwork, networkName } from '../utils/constants'

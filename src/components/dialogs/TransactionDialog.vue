@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import { Script } from 'bitcore-lib-cash'
+import { Script } from 'bitcore-lib-xpi'
 
 import { networkName } from '../../utils/constants'
 

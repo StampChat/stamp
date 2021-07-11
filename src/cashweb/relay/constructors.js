@@ -1,4 +1,4 @@
-import { PublicKey, crypto, Networks, Transaction, Script, Address, PrivateKey } from 'bitcore-lib-cash'
+import { PublicKey, crypto, Networks, Transaction, Script, Address, PrivateKey } from 'bitcore-lib-xpi'
 import assert from 'assert'
 
 import { Header, Message, PayloadEntry, Profile, ProfileEntry, Stamp, StampOutpoints } from './relay_pb'

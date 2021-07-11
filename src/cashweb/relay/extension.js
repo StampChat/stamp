@@ -1,6 +1,6 @@
 import { Message } from './relay_pb'
 import { PayloadConstructor } from './crypto'
-import { crypto, PublicKey } from 'bitcore-lib-cash'
+import { crypto, PublicKey } from 'bitcore-lib-xpi'
 
 export class ParsedMessage {
   constructor (

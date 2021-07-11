@@ -1,4 +1,4 @@
-import { Networks } from 'bitcore-lib-cash'
+import { Networks } from 'bitcore-lib-xpi'
 import { boot } from 'quasar/wrappers'
 
 export default boot(() => {

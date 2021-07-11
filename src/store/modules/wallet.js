@@ -3,7 +3,7 @@ import Vue from 'vue'
 import { calcId } from '../../cashweb/wallet/helpers'
 import { store as levelOutpointStore } from '../../adapters/level-outpoint-store'
 
-import { HDPrivateKey } from 'bitcore-lib-cash'
+import { HDPrivateKey } from 'bitcore-lib-xpi'
 
 export async function rehydrateWallet (wallet) {
   if (!wallet || !wallet.xPrivKey) {

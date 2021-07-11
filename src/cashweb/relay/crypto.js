@@ -1,5 +1,5 @@
 import assert from 'assert'
-import { PrivateKey, PublicKey, crypto, HDPublicKey, HDPrivateKey } from 'bitcore-lib-cash'
+import { PrivateKey, PublicKey, crypto, HDPublicKey, HDPrivateKey } from 'bitcore-lib-xpi'
 
 import forge from 'node-forge'
 

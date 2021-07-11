@@ -1,4 +1,4 @@
-import { PrivateKey } from 'bitcore-lib-cash'
+import { PrivateKey } from 'bitcore-lib-xpi'
 
 export interface Outpoint {
   address: string;
@@ -33,14 +33,14 @@ export class OutpointReturnResult implements IteratorReturnResult<Outpoint | und
 }
 
 export interface OutpointStore {
-  getOutpoint(id: OutpointId): Outpoint | undefined;
-  deleteOutpoint(id: OutpointId): void;
-  putOutpoint(outpoint: Outpoint): void;
+  getOutpoint (id: OutpointId): Outpoint | undefined;
+  deleteOutpoint (id: OutpointId): void;
+  putOutpoint (outpoint: Outpoint): void;
   freezeOutpoint (outpointId: OutpointId): void;
   unfreezeOutpoint (outpointId: OutpointId): void;
 
-  getOutpoints(): Map<string, Outpoint>;
+  getOutpoints (): Map<string, Outpoint>;
 
-  getOutpointIterator(): Promise<AsyncIterableIterator<Outpoint>>;
-  getFrozenOutpointIterator(): Promise<AsyncIterableIterator<Outpoint>>;
+  getOutpointIterator (): Promise<AsyncIterableIterator<Outpoint>>;
+  getFrozenOutpointIterator (): Promise<AsyncIterableIterator<Outpoint>>;
 }

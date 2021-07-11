@@ -4,7 +4,7 @@ import assert from 'assert'
 
 import { calcId } from './helpers'
 
-import { Address, Script, Transaction, crypto } from 'bitcore-lib-cash'
+import { Address, Script, Transaction, crypto } from 'bitcore-lib-xpi'
 import { Lock } from './lock'
 
 const standardUtxoSize = 34
