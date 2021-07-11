@@ -23,7 +23,7 @@
   "dependencies": {
     "@babel/preset-typescript": "^7.13.0",
     "@capacitor/core": "^2.4.3",
-    "@quasar/extras": "^1.10.4",
+    "@quasar/extras": "^1.10.8",
     "@vue/composition-api": "^0.6.4",
     "axios": "^0.21.1",
     "bip39": "^3.0.2",
@@ -43,7 +43,7 @@
     "node-emoji": "^1.10.0",
     "node-forge": "^0.10.0",
     "qrcode.vue": "^1.7.0",
-    "quasar": "^1.15.11",
+    "quasar": "^1.15.22",
     "ramda": "^0.27.0",
     "typescript": "^3.9.7",
     "vcf": "^2.0.6",
@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@capacitor/android": "^2.4.6",
-    "@quasar/app": "^2.2.5",
+    "@quasar/app": "^2.2.10",
     "@quasar/quasar-app-extension-testing": "^1.0.3",
     "@quasar/quasar-app-extension-testing-unit-jest": "^1.1.0-beta.7",
     "@types/node": "^14.14.10",
