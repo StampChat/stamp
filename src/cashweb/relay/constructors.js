@@ -148,7 +148,7 @@ export class MessageConstructor {
     const stealthPaymentEntry = new stealth.StealthPaymentEntry()
     const ephemeralPrivKey = PrivateKey()
 
-    const transactionBundle = this.payloadConstructor.constructStealthTransactions(wallet, ephemeralPrivKey, destPubKey, amount)
+    const transactionBundle = this.constructStealthTransactions(wallet, ephemeralPrivKey, destPubKey, amount)
 
     // Sent to HASH160(ephemeralPrivKey * destPubKey)
     // Sent to HASH160(ephemeralPrivKey * destPubKey)
