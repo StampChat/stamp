@@ -35,6 +35,16 @@
             report bugs to Shammah, from your default contacts.
           </div>
           <div class="text-h6">
+            v0.0.12 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Use XAddresses</li>
+              <li>Use `Lotus` and `XPI` units</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.11 Changelog
           </div>
           <div class="text-body1">
