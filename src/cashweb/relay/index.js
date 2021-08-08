@@ -780,7 +780,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     }
 
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
-    const copartyAddress = copartyPubKey.toAddress(this.networkName).toString() // TODO: Make generic
+    const copartyAddress = copartyPubKey.toAddress(this.networkName).toCashAddress() // TODO: Make generic
     const payloadDigestHex = payloadDigest.toString('hex')
     const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
     await this.messageStore.saveMessage(finalizedMessage)

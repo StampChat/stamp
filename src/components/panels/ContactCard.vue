@@ -105,7 +105,7 @@ export default {
   computed: {
     displayAddress () {
       const address = Address(this.address)
-      const displayAddress = Address(address.hashBuffer, Networks.get(displayNetwork)).toCashAddress()
+      const displayAddress = Address(address.hashBuffer, Networks.get(displayNetwork)).toXAddress()
       return displayAddress
     }
   }
