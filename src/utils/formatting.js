@@ -11,15 +11,15 @@ export function formatBalance (balance) {
   }
 
   if (balance < 1_000_000_000) {
-    return String(balance / 1_000_000) + ' megasats'
+    return String(balance / 1_000_000) + ' Lotus'
   }
 
-  if (balance < 1_000_000_000_000_000) {
-    return String(balance / 1_000_000_000) + ' gigasats'
+  if (balance < 1_000_000_000_000) {
+    return String(balance / 1_000_000_000) + ' KiloLotus'
   }
 
   if (balance < 1_000_000_000_000_000_000) {
-    return String(balance / 1_000_000_000_000) + ' terasats'
+    return String(balance / 1_000_000_000_000) + ' MegaLotus'
   }
 }
 
