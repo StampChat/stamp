@@ -512,7 +512,7 @@ export class Wallet {
     return transactionBundle
   }
 
-  async constructTransaction ({ outputs }) {
+  constructTransaction ({ outputs }) {
     let transaction = new Transaction()
 
     // Add outputs
@@ -572,9 +572,9 @@ export class Wallet {
       throw Error('insufficient funds')
     }
 
-    await Promise.all(usedUtxos.map(
+    usedUtxos.map(
       utxo => this.storage.freezeOutpoint(calcId(utxo))
-    ))
+    )
 
     // Add change outputs using our HD wallet.  We want multiple outputs following a
     // power distribution, so we don't have to combine lots of outputs at later times
