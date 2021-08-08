@@ -35,6 +35,16 @@
             report bugs to Shammah, from your default contacts.
           </div>
           <div class="text-h6">
+            v0.0.13 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Fix issue where received stamps and stealth amounts were adding invalid utxos to wallet due to using the transactionss TxHash instead of TxId</li>
+              <li>Fix sending Lotus to legacy wallets via P2PKH transactions</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.12 Changelog
           </div>
           <div class="text-body1">
