@@ -331,7 +331,7 @@ export class RelayClient extends ReadOnlyRelayClient {
             usedIDs.push(...usedIds)
             return vouts.map(vout => ({
               type: 'stealth',
-              txId: transaction.id,
+              txId: transaction.txid,
               satoshis: transaction.outputs[vout].satoshis,
               outputIndex: vout
             }))
@@ -381,7 +381,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         usedIDs.push(...usedIds)
         return vouts.map(vout => ({
           type: 'stamp',
-          txId: transaction.id,
+          txId: transaction.txid,
           satoshis: transaction.outputs[vout].satoshis,
           outputIndex: vout
         }))
@@ -394,9 +394,9 @@ export class RelayClient extends ReadOnlyRelayClient {
       const destinationAddress = destinationPublicKey.toAddress(this.networkName).toCashAddress()
       const electrumClient = await this.wallet.electrumClientPromise
       Promise.all(transactions.map(async (transaction) => {
-        console.log('Broadcasting a transaction', transaction.id, transaction.toString())
+        console.log('Broadcasting a transaction', transaction.txid, transaction.toString())
         await electrumClient.request('blockchain.transaction.broadcast', transaction.toString())
-        console.log('Finished broadcasting tx', transaction.id)
+        console.log('Finished broadcasting tx', transaction.txid)
       }))
         .then(() => this.pushMessages(destinationAddress, messageSet))
         .then(async () => {
@@ -601,7 +601,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     for (const [i, stampOutpoint] of stampOutpoints.entries()) {
       const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
       const stampTx = Transaction(stampTxRaw)
-      const txId = stampTx.hash
+      const txId = stampTx.txid
       const vouts = stampOutpoint.getVoutsList()
       const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
       if (outbound) {
@@ -709,7 +709,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         for (const [i, outpoint] of outpointsList.entries()) {
           const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
           const stealthTx = Transaction(stealthTxRaw)
-          const txId = stealthTx.hash
+          const txId = stealthTx.txid
           const vouts = outpoint.getVoutsList()
 
           if (outbound) {
