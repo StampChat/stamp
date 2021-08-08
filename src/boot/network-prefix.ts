@@ -10,9 +10,9 @@ export default boot(() => {
   ]
 
   const liveNetwork = {
-    name: 'lotus-livenet',
-    alias: 'lotus-mainnet',
-    prefix: 'lotus',
+    name: 'cash-livenet',
+    alias: 'cash-mainnet',
+    prefix: 'bitcoincash',
     pubkeyhash: 28,
     privatekey: 0x80,
     scripthash: 40,
@@ -26,8 +26,8 @@ export default boot(() => {
   // TODO: we need to clean this up.
   // There shouldn't need to be this additional prefix stuff.
   const testNetwork = {
-    name: 'lotus-testnet',
-    prefix: 'tlotus',
+    name: 'cash-testnet',
+    prefix: 'bchtest',
     pubkeyhash: 0x6f,
     privatekey: 0xef,
     scripthash: 0xc4,

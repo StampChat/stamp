@@ -292,6 +292,7 @@ declare module 'bitcore-lib-xpi' {
         constructor (data: Buffer | Uint8Array | string | object, network?: Networks.Network, type?: string);
 
         toCashAddress (): string;
+        toXAddress (): string;
     }
 
     export class Unit {

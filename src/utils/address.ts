@@ -10,5 +10,5 @@ export function toAPIAddress (address: string) {
 }
 
 export function toDisplayAddress (address: string) {
-  return new Address(new Address(address).hashBuffer, Networks.get(displayNetwork, undefined)).toCashAddress()
+  return new Address(new Address(address).hashBuffer, Networks.get(displayNetwork, undefined)).toXAddress()
 }

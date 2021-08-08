@@ -39,7 +39,7 @@ function toElectrumScriptHash (address) {
 }
 
 export class Wallet {
-  constructor (storage, { networkName = 'testnet', displayNetworkName = 'lotus-testnet', numAddresses = 20, numChangeAddresses = 20 } = {}) {
+  constructor (storage, { networkName = 'cash-livenet', displayNetworkName = 'livenet', numAddresses = 20, numChangeAddresses = 20 } = {}) {
     this.storage = storage
     this.networkName = networkName
     this.displayNetworkName = displayNetworkName
@@ -619,7 +619,7 @@ export class Wallet {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
     return this.identityPrivKey.toAddress(this.displayNetworkName)
-      .toCashAddress()
+      .toXAddress()
   }
 
   get allAddresses () {
