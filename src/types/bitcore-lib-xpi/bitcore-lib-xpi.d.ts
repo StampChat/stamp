@@ -57,7 +57,7 @@ declare module 'bitcore-lib-xpi' {
 
         class Output {
             readonly script: Script;
-            readonly satoshis: number;
+            satoshis: number;
 
             constructor (data: object);
 
@@ -81,6 +81,11 @@ declare module 'bitcore-lib-xpi' {
         readonly id: string;
         readonly hash: string;
         nid: string;
+        readonly outputAmount: number;
+        readonly inputAmount: number;
+        // Hackery to manually mutate
+        _outputAmount: number;
+        _inputAmount: number;
 
         constructor (serialized?: any);
 
@@ -89,7 +94,7 @@ declare module 'bitcore-lib-xpi' {
         change (address: Address | string): this;
         fee (amount: number): this;
         feePerKb (amount: number): this;
-        sign (privateKey: PrivateKey | string): this;
+        sign (privateKey: PrivateKey | PrivateKey[] | string): this;
         applySignature (sig: crypto.Signature): this;
         addInput (input: Transaction.Input): this;
         addOutput (output: Transaction.Output): this;
@@ -110,6 +115,8 @@ declare module 'bitcore-lib-xpi' {
 
         inspect (): string;
         serialize (): string;
+
+        _estimateSize (): number;
     }
 
     export class Block {
@@ -128,7 +135,7 @@ declare module 'bitcore-lib-xpi' {
         readonly publicKey: PublicKey;
         readonly network: Networks.Network;
 
-        toAddress (): Address;
+        toAddress (networkName?: string): Address;
         toPublicKey (): PublicKey;
         toString (): string;
         toObject (): object;
@@ -149,6 +156,7 @@ declare module 'bitcore-lib-xpi' {
 
     export class HDPrivateKey {
         readonly hdPublicKey: HDPublicKey;
+        readonly privateKey: PrivateKey;
 
         constructor (data?: string | Buffer | object);
 
@@ -184,7 +192,7 @@ declare module 'bitcore-lib-xpi' {
         function buildWitnessMultisigOutFromScript (script: Script): Script;
         function buildMultisigIn (pubkeys: PublicKey[], threshold: number, signatures: Buffer[], opts: object): Script;
         function buildP2SHMultisigIn (pubkeys: PublicKey[], threshold: number, signatures: Buffer[], opts: object): Script;
-        function buildPublicKeyHashOut (address: Address): Script;
+        function buildPublicKeyHashOut (address: Address | PublicKey | string): Script;
         function buildPublicKeyOut (pubkey: PublicKey): Script;
         function buildDataOut (data: string | Buffer, encoding?: string): Script;
         function buildScriptHashOut (script: Script): Script;
