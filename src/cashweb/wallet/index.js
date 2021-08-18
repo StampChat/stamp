@@ -15,12 +15,13 @@ const maxFeePerByte = 2
 // Don't build transactions larger than this
 const maximumTransactionSize = 100000
 
+// TODO: This function needs a test.
 function shuffleArray (arr) {
   const swaps = [...arr.keys()]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * i)
     const temp = arr[i]
-    const tempIndex = arr[i]
+    const tempIndex = swaps[i]
     arr[i] = arr[j]
     swaps[i] = swaps[j]
     arr[j] = temp
