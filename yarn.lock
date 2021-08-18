@@ -1651,6 +1651,11 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
+"@types/google-protobuf@^3.15.5":
+  version "3.15.5"
+  resolved "https://registry.yarnpkg.com/@types/google-protobuf/-/google-protobuf-3.15.5.tgz#644b2be0f5613b1f822c70c73c6b0e0b5b5fa2ad"
+  integrity sha512-6bgv24B+A2bo9AfzReeg5StdiijKzwwnRflA8RLd1V4Yv995LeTmo0z69/MPbBDFSiZWdZHQygLo/ccXhMEDgw==
+
 "@types/graceful-fs@^4.1.2":
   version "4.1.5"
   resolved "https://registry.yarnpkg.com/@types/graceful-fs/-/graceful-fs-4.1.5.tgz#21ffba0d98da4350db64891f92a9e5db3cdb4e15"
@@ -6248,6 +6253,11 @@ google-protobuf@^3.12.0-rc.1:
   version "3.15.8"
   resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.15.8.tgz#5f3948905e4951c867d6bc143f385a80e2a39efe"
   integrity sha512-2jtfdqTaSxk0cuBJBtTTWsot4WtR9RVr2rXg7x7OoqiuOKopPrwXpM1G4dXIkLcUNRh3RKzz76C8IOkksZSeOw==
+
+google-protobuf@^3.15.5:
+  version "3.17.3"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.17.3.tgz#f87595073545a77946c8f0b67c302c5f7646d700"
+  integrity sha512-OVPzcSWIAJ+d5yiHyeaLrdufQtrvaBrF4JQg+z8ynTkbO3uFcujqXszTumqg1cGsAsjkWnI+M5B1xZ19yR4Wyg==
 
 got@^9.6.0:
   version "9.6.0"
@@ -11915,6 +11925,13 @@ ts-loader@8.0.17:
     loader-utils "^2.0.0"
     micromatch "^4.0.0"
     semver "^7.3.4"
+
+ts-protoc-gen@^0.15.0:
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/ts-protoc-gen/-/ts-protoc-gen-0.15.0.tgz#2fec5930b46def7dcc9fa73c060d770b7b076b7b"
+  integrity sha512-TycnzEyrdVDlATJ3bWFTtra3SCiEP0W0vySXReAuEygXCUr1j2uaVyL0DhzjwuUdQoW5oXPwk6oZWeA0955V+g==
+  dependencies:
+    google-protobuf "^3.15.5"
 
 tsconfig-paths@^3.9.0:
   version "3.9.0"
