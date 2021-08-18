@@ -16,12 +16,10 @@ export interface Message {
   senderAddress: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface MessageWrapper {
   newMsg: Message;
   index: string;
   outbound: boolean;
-  address: string;
   senderAddress: string;
-  pubKey: string;
+  copartyAddress: string;
 }

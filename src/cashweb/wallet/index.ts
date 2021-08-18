@@ -1,10 +1,14 @@
-import * as R from 'ramda'
-import * as P from 'bluebird'
+import P from 'bluebird'
 import assert from 'assert'
 
 import { calcId } from './helpers'
 
-import { Address, Script, Transaction, crypto } from 'bitcore-lib-xpi'
+import { Address, Script, Transaction, crypto, PrivateKey, HDPrivateKey, PublicKey } from 'bitcore-lib-xpi'
+import { OutpointStore } from './storage/storage'
+import type { ElectrumClient, RequestResponse } from 'electrum-cash'
+
+import { Outpoint, OutpointId } from '../types/outpoint'
+import { performance } from 'perf_hooks'
 
 const standardUtxoSize = 34
 const standardInputSize = 175 // A few extra bytes
@@ -16,7 +20,7 @@ const maxFeePerByte = 2
 const maximumTransactionSize = 100000
 
 // TODO: This function needs a test.
-function shuffleArray (arr) {
+function shuffleArray (arr: unknown[]) {
   const swaps = [...arr.keys()]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * i)
@@ -30,7 +34,7 @@ function shuffleArray (arr) {
   return swaps
 }
 
-function toElectrumScriptHash (address) {
+function toElectrumScriptHash (address: string | Address | PublicKey) {
   const scriptHash = Script.buildPublicKeyHashOut(address)
   const scriptHashRaw = scriptHash.toBuffer()
   const digest = crypto.Hash.sha256(scriptHashRaw)
@@ -38,8 +42,31 @@ function toElectrumScriptHash (address) {
   return digestHexReversed
 }
 
+type PrivateKeyData = { privKey: PrivateKey }
+type AddressData = { address: string, change: boolean } & PrivateKeyData
+type ElectrumScriptHash = string;
+type AddressGenerator = (txnNumber: number) => (output: number) => PublicKey
+// UnspendOutpout.fromObject can work with this
+type BuildableOutput = Outpoint & { script?: string }
+// eslint-disable-next-line camelcase, @typescript-eslint/naming-convention
+type ElectrumListUnspentOutput = { tx_hash: string, tx_pos: number, value: number }
+
 export class Wallet {
-  constructor (storage, { networkName = 'cash-livenet', displayNetworkName = 'livenet', numAddresses = 20, numChangeAddresses = 20 } = {}) {
+  storage: OutpointStore
+  networkName: string
+  displayNetworkName: string
+  numAddresses: number
+  numChangeAddresses: number
+  electrumClientPromise: Promise<ElectrumClient> | undefined
+  _xPrivKey: HDPrivateKey | undefined
+  _identityPrivKey: PrivateKey | undefined
+  addresses: Record<string, PrivateKeyData | undefined> = {}
+  changeAddresses: Record<string, PrivateKeyData | undefined> = {}
+  electrumScriptHashes: Record<ElectrumScriptHash, AddressData> = {}
+
+  scriptHashSubscriber: (response: Error | RequestResponse) => void;
+
+  constructor (storage: OutpointStore, { networkName = 'cash-livenet', displayNetworkName = 'livenet', numAddresses = 20, numChangeAddresses = 20 } = {}) {
     this.storage = storage
     this.networkName = networkName
     this.displayNetworkName = displayNetworkName
@@ -54,12 +81,12 @@ export class Wallet {
     this.scriptHashSubscriber = this.scriptHashUpdated.bind(this)
   }
 
-  setElectrumClient (electrumClientPromise) {
+  setElectrumClient (electrumClientPromise: Promise<ElectrumClient>) {
     this.electrumClientPromise = electrumClientPromise
     this.init()
   }
 
-  setXPrivKey (xPrivKey) {
+  setXPrivKey (xPrivKey: HDPrivateKey) {
     this._xPrivKey = xPrivKey
     // TODO: we're just using the first key in the HD addresses for now
     // so that it'll be compatible (mostly) with other HD wallets.
@@ -102,6 +129,8 @@ export class Wallet {
 
   initAddresses () {
     const xPrivKey = this.xPrivKey
+    assert(xPrivKey, 'xPrivKey undefined while calling wallet initialization')
+
     this.addresses = {}
     this.changeAddresses = {}
     this.electrumScriptHashes = {}
@@ -135,19 +164,19 @@ export class Wallet {
     }
   }
 
-  addElectrumScriptHash ({ scriptHash, address, change, privKey }) {
+  addElectrumScriptHash ({ scriptHash, address, change, privKey }: { scriptHash: string } & AddressData) {
     this.electrumScriptHashes[scriptHash] = { address, change, privKey }
   }
 
-  setAddress ({ address, privKey }) {
+  setAddress ({ address, privKey }: { address: string, privKey: PrivateKey }) {
     this.addresses[address] = { privKey }
   }
 
-  setChangeAddress ({ address, privKey }) {
+  setChangeAddress ({ address, privKey }: { address: string, privKey: PrivateKey }) {
     this.changeAddresses[address] = { privKey }
   }
 
-  async refreshUTXOsByAddr ({ address, outputs }) {
+  async refreshUTXOsByAddr ({ address, outputs }: { address: string, outputs: Outpoint[] }) {
     const ids = outputs.map((output) => calcId(output))
     const foundIds = []
 
@@ -176,13 +205,20 @@ export class Wallet {
     }
   }
 
-  async updateUTXOFromScriptHash (scriptHash) {
+  async updateUTXOFromScriptHash (scriptHash: string) {
     const client = await this.electrumClientPromise
+    assert(client)
     try {
-      const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
+      const elOutputs: Error | RequestResponse = await client.request('blockchain.scripthash.listunspent', scriptHash)
+      assert(elOutputs, `Null response from blockchain.scripthash.listunspent for ${scriptHash}`)
+      if (elOutputs instanceof Error) {
+        throw elOutputs
+      }
+      assert(elOutputs instanceof Array, 'output of blockchain.scripthash.listunspent was not an array!')
+      const unspentOutputs = elOutputs as ElectrumListUnspentOutput[]
       const addressMap = this.getAddressByElectrumScriptHash(scriptHash)
       const { address, privKey } = addressMap
-      const outputs = elOutputs.map(elOutput => {
+      const outputs = unspentOutputs.map((elOutput: ElectrumListUnspentOutput) => {
         const output = {
           txId: elOutput.tx_hash,
           outputIndex: elOutput.tx_pos,
@@ -207,18 +243,20 @@ export class Wallet {
 
   async startListeners () {
     const client = await this.electrumClientPromise
+    assert(client)
     const scriptHashes = Object.keys(this.electrumScriptHashes)
 
     await P.map(scriptHashes, scriptHash => client.subscribe(this.scriptHashSubscriber, 'blockchain.scripthash.subscribe', scriptHash), { concurrency: 5 })
   }
 
-  async fixOutpoint (utxoId) {
+  async fixOutpoint (utxoId: OutpointId) {
     // TODO: This needs some thought to ensure we do not delete outpoints that
     // are possibly just out of sync with the mempool.
 
     // Unfreeze UTXO if confirmed to be unspent else delete
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
     const client = await this.electrumClientPromise
+    assert(client)
     const utxo = await this.storage.getOutpoint(utxoId)
     if (!utxo) {
       console.log(`Missing UTXO for ${utxoId}`)
@@ -228,7 +266,13 @@ export class Wallet {
     try {
       const scriptHash = toElectrumScriptHash(utxo.address)
       const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-      if (elOutputs.some(output => {
+      assert(elOutputs, `Null response from blockchain.scripthash.listunspent for ${scriptHash}`)
+      if (elOutputs instanceof Error) {
+        throw elOutputs
+      }
+      assert(elOutputs instanceof Array, 'output of blockchain.scripthash.listunspent was not an array!')
+      const unspentOutputs = elOutputs as ElectrumListUnspentOutput[]
+      if (unspentOutputs.some(output => {
         return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
       })) {
         console.log(`Unfreezing UTXO ${utxoId}`)
@@ -243,19 +287,20 @@ export class Wallet {
     }
   }
 
-  async scriptHashUpdated (params) {
-    if (!(params instanceof Array)) {
+  async scriptHashUpdated (response: RequestResponse | Error) {
+    if (!(response instanceof Array)) {
       // Electrum-cash client is dumb and sends the initial subscription call response to our
       // callback handler. The data is not the same, and is actually a string with the
       // status of the particular scriptHash
       return
     }
+    const params = response as [string, string] | string
     const [scriptHash, status] = params
     console.log('Subscription hit', scriptHash, status)
     await this.updateUTXOFromScriptHash(scriptHash)
   }
 
-  async forwardUTXOsToAddress ({ utxos, address }) {
+  async forwardUTXOsToAddress ({ utxos, address }: { utxos: Outpoint[], address: string }) {
     let transaction = new Transaction()
 
     const outpointIds = utxos.map(utxo => calcId(utxo))
@@ -264,14 +309,14 @@ export class Wallet {
 
     const usedIDs = []
     for (const outpointId of outpointIds) {
-      const outpoint = this.storage.getOutpoint(outpointId)
+      const outpoint: BuildableOutput | undefined = this.storage.getOutpoint(outpointId)
       if (!outpoint) {
         continue
       }
       usedIDs.push(outpointId)
       outpoint.script = Script.buildPublicKeyHashOut(outpoint.address).toHex()
       signingKeys.push(outpoint.privKey)
-      transaction = transaction.from(outpoint)
+      transaction = transaction.from([Transaction.UnspentOutput.fromObject(outpoint)])
       satoshis += outpoint.satoshis
     }
 
@@ -291,6 +336,7 @@ export class Wallet {
     const txHex = transaction.toString()
     try {
       const electrumClient = await this.electrumClientPromise
+      assert(electrumClient)
       await electrumClient.request('blockchain.transaction.broadcast', txHex)
       // TODO: we shouldn't be dealing with this here. Leaky abstraction
       usedIDs.map(id => this.storage.deleteOutpoint(id))
@@ -308,19 +354,19 @@ export class Wallet {
   // Bitcore estimate size is horribly broken. This slightly overestimates the transaction size
   // based on the fact that there are varints in several places. This also ensure we don't underrun
   // fees.
-  _estimateSize (transaction) {
+  _estimateSize (transaction: Transaction) {
     const transactionOverHead = 4 + 9 + 9 + 4
     const maxScriptSize = 32 /* txid */ + 4 /* index */ + 1 /* length */ + 1 + /* push */ 73 /* signature */ + 33 /* pubkey */ + 4 /* sequence */
     return transactionOverHead + transaction.outputs.length * 35 + transaction.inputs.length * maxScriptSize
   }
 
-  finalizeTransaction ({ transaction, signingKeys }) {
+  finalizeTransaction ({ transaction, signingKeys }: { transaction: Transaction, signingKeys: PrivateKey[] }) {
     // Add change outputs using our HD wallet.  We want multiple outputs following a
     // power distribution, so we don't have to combine lots of outputs at later times
     // in order to create specific amounts.
     const changeAddresses = Object.keys(this.changeAddresses)
     shuffleArray(changeAddresses)
-    const OOM = (amount) => Math.floor(Math.log2(amount))
+    const OOM = (amount: number) => Math.floor(Math.log2(amount))
     const amountOOM = OOM(transaction.outputs[0].satoshis)
     // Amount to skip
     // TODO: Still probably leaks some information about which outputs are non-change
@@ -389,7 +435,8 @@ export class Wallet {
     return newIndex
   }
 
-  _buildTransactionSetForExplicitAmount ({ amount, desiredMinimumTransactions = 2, addressGenerator, utxos, transactionOffset = 0 }) {
+  _buildTransactionSetForExplicitAmount ({ amount, desiredMinimumTransactions = 2, addressGenerator, utxos, transactionOffset = 0 }:
+    { amount: number, desiredMinimumTransactions?: number, addressGenerator: AddressGenerator, utxos: Outpoint[], transactionOffset?: number }) {
     let amountLeft = amount
     const transactionBundle = []
     let transactionNumber = transactionOffset
@@ -423,13 +470,13 @@ export class Wallet {
         const smallerUtxos = utxos.filter((a) => a.satoshis < requisiteSize)
         // Use the biggest UTXO smaller than the amount we're trying to build,
         // or use the smallest UTXO if we don't have a "greatest lower bound" utxo
-        const utxoToUse = smallerUtxos.length !== 0 ? smallerUtxos[smallerUtxos.length - 1] : utxos[0]
+        const utxoToUse: BuildableOutput = smallerUtxos.length !== 0 ? smallerUtxos[smallerUtxos.length - 1] : utxos[0]
         const usedUtxoId = calcId(utxoToUse)
         // Remove UTXO from available set
         utxos.splice(utxos.findIndex(utxo => calcId(utxo) === usedUtxoId), 1)
         stagedUtxos.push(utxoToUse)
         utxoToUse.script = Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
-        transaction.from(utxoToUse)
+        transaction.from([Transaction.UnspentOutput.fromObject(utxoToUse)])
         signingKeys.push(utxoToUse.privKey)
         const txnSize = this._estimateSize(transaction)
         satoshis += utxoToUse.satoshis
@@ -474,7 +521,7 @@ export class Wallet {
       const address = addressGenerator(transactionNumber)(0)
       const amountToUse = Math.min(amountLeft, availableAmount)
       transaction.addOutput(new Transaction.Output({
-        script: Script(new Address(address)),
+        script: new Script(new Address(address)),
         satoshis: amountToUse
       }))
 
@@ -497,7 +544,7 @@ export class Wallet {
     return transactionBundle
   }
 
-  constructTransactionSet ({ addressGenerator, amount }) {
+  constructTransactionSet ({ addressGenerator, amount }: { addressGenerator: AddressGenerator, amount: number }) {
     // Don't use frozen utxos.
     const utxos = [...this.storage.getOutpoints().values()].filter(utxo => !utxo.frozen)
     utxos.sort((a, b) => a.satoshis - b.satoshis)
@@ -511,12 +558,12 @@ export class Wallet {
     return transactionBundle
   }
 
-  constructTransaction ({ outputs }) {
+  constructTransaction ({ outputs }: { outputs: Outpoint[] | Transaction.Output[] }) {
     let transaction = new Transaction()
 
     // Add outputs
     for (const i in outputs) {
-      const output = outputs[i]
+      const output = new Transaction.Output(outputs[i])
       transaction = transaction.addOutput(output)
     }
 
@@ -525,29 +572,11 @@ export class Wallet {
     const usedUtxos = []
 
     const amountRequired = transaction.outputAmount
-    const utxos = [...this.storage.getOutpoints().values()]
+    const sortedUtxos: BuildableOutput[] = [...this.storage.getOutpoints().values()]
+      .sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis)
 
-    // Sort available UTXOs by total amount per transaction
-    const sortedUtxos = R.pipe(
-      R.groupBy(utxo => utxo.txId),
-      R.map(
-        R.pipe(
-          R.sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis),
-          (utxoGroup) => R.reduce(
-            (group, utxo) => {
-              group.satoshis += utxo.satoshis
-              group.utxos.push(utxo)
-              return group
-            }, { satoshis: 0, utxos: [] }, utxoGroup) // Avoid currying the static initialization parameter.
-          // We want a different one for each group
-        )
-      ),
-      txMap => Object.values(txMap),
-      R.sort((txA, txB) => txB.satoshis - txA.satoshis),
-      R.map(group => group.utxos),
-      R.flatten()
-    )(utxos)
-    const biggerUtxos = sortedUtxos.filter((a) => a.satoshis >= amountRequired + (this._estimateSize(transaction) + standardUtxoSize + standardInputSize) * minFeePerByte)
+    const biggerUtxos = sortedUtxos.filter(
+      (a) => a.satoshis >= amountRequired + (this._estimateSize(transaction) + standardUtxoSize + standardInputSize) * minFeePerByte)
     const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
 
     let satoshis = 0
@@ -563,7 +592,7 @@ export class Wallet {
       utxo.script = Script.buildPublicKeyHashOut(address).toHex()
       // Grab private key
       signingKeys.push(utxo.privKey)
-      transaction = transaction.from(utxo)
+      transaction = transaction.from([Transaction.UnspentOutput.fromObject(utxo)])
       satoshis += utxo.satoshis
     }
 
@@ -593,31 +622,31 @@ export class Wallet {
     return 2
   }
 
-  getAddressByElectrumScriptHash (scriptHash) {
+  getAddressByElectrumScriptHash (scriptHash: string) {
     return this.electrumScriptHashes[scriptHash]
   }
 
-  getPaymentAddress (seqNum) {
+  getPaymentAddress (seqNum: number) {
     return Object.keys(this.addresses)[seqNum]
   }
 
   get myAddress () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
-    return this.identityPrivKey.toAddress(this.networkName)
+    return this.identityPrivKey?.toAddress(this.networkName)
   }
 
   get myAddressStr () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
-    return this.identityPrivKey.toAddress(this.networkName)
+    return this.identityPrivKey?.toAddress(this.networkName)
       .toCashAddress()
   }
 
   get displayAddress () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
-    return this.identityPrivKey.toAddress(this.displayNetworkName)
+    return this.identityPrivKey?.toAddress(this.displayNetworkName)
       .toXAddress()
   }
 
@@ -626,15 +655,19 @@ export class Wallet {
   }
 
   get privKeys () {
-    return Object.freeze(Object.values(this.addresses).map(address => Object.freeze(address.privKey)))
+    const privKeys = Object.values(this.addresses).map(address => {
+      assert(address)
+      return Object.freeze(address.privKey)
+    })
+    return Object.freeze(privKeys)
   }
 
-  unfreezeOutpoint (id) {
+  unfreezeOutpoint (id: string) {
     // TODO: Nobody should be calling this outside of the wallet
     return this.storage.unfreezeOutpoint(id)
   }
 
-  putOutpoint (utxo) {
+  putOutpoint (utxo: Outpoint) {
     assert(utxo.type !== undefined, 'putOupoint utxo wrong format')
     assert(utxo.privKey !== undefined, 'putOupoint utxo wrong format')
     assert(utxo.address !== undefined, 'putOupoint utxo wrong format')
@@ -645,22 +678,22 @@ export class Wallet {
     return this.storage.putOutpoint(utxo)
   }
 
-  async deleteOutpoint (id) {
-    const outpoint = await this.storage.getOutpoint(id)
+  deleteOutpoint (id: string) {
+    const outpoint = this.storage.getOutpoint(id)
     if (!outpoint) {
       console.log(id, 'missing from UTXO set?')
       return
     }
     // TODO: Nobody should be calling this outside of the wallet
-    await this.storage.deleteOutpoint(id)
+    this.storage.deleteOutpoint(id)
   }
 
   // Warning, this should only be used during initial setup to ensure the
   // levelDB database has been cleared.
   // This needs to happen when the seed has potentially changed after
   // the UTXOs have been refreshed.
-  async clearUtxos () {
-    const outpoints = await this.storage.getOutpoints()
+  clearUtxos () {
+    const outpoints = this.storage.getOutpoints()
     for (const [outpointId] of outpoints) {
       this.deleteOutpoint(outpointId)
     }
