@@ -1,41 +1,5 @@
 
-import { PrivateKey } from 'bitcore-lib-xpi'
-
-export interface Outpoint {
-  address: string;
-  privKey: PrivateKey; // This is okay, we don't add it to the wallet.
-  satoshis: number;
-  txId: string;
-  outputIndex: number;
-  type: string;
-}
-
-export interface Entry {
-  // Todo should match proto
-  type: string;
-  // Todo needs headers
-}
-
-export interface Message {
-  outbound: boolean;
-  status: string;
-  receivedTime: number;
-  serverTime: number;
-  items: Array<Entry>;
-  outpoints: Array<Outpoint>;
-  senderAddress: string;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface MessageWrapper {
-  newMsg: Message;
-  index: string;
-  outbound: boolean;
-  address: string;
-  senderAddress: string;
-  pubKey: string;
-}
-
+import { MessageWrapper } from '../../types/messages'
 export class MessageResult implements IteratorYieldResult<MessageWrapper> {
   done: false;
   value: MessageWrapper;

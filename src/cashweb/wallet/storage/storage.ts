@@ -1,16 +1,4 @@
-import { PrivateKey } from 'bitcore-lib-xpi'
-
-export interface Outpoint {
-  address: string;
-  privKey: PrivateKey; // This is okay, we don't add it to the wallet.
-  satoshis: number;
-  txId: string;
-  outputIndex: number;
-  type: string;
-  frozen: boolean | undefined;
-}
-
-export type OutpointId = string
+import { Outpoint, OutpointId } from '../../types/outpoint'
 
 export class OutpointResult implements IteratorYieldResult<Outpoint> {
   done: false;

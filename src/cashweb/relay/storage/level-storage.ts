@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { MessageStore, MessageResult, MessageWrapper, MessageReturnResult } from './storage'
+import { MessageStore, MessageResult, MessageReturnResult } from './storage'
+import { MessageWrapper } from 'src/cashweb/types/messages'
 import level, { LevelDB } from 'level'
 import { join } from 'path'
 

@@ -2,8 +2,9 @@
 import level, { LevelDB } from 'level'
 import { join } from 'path'
 
-import { OutpointStore, OutpointResult, Outpoint, OutpointReturnResult, OutpointId } from './storage'
+import { OutpointStore, OutpointResult, OutpointReturnResult } from './storage'
 import { calcId } from '../helpers'
+import { Outpoint, OutpointId } from 'src/cashweb/types/outpoint'
 
 const metadataKeys = {
   schemaVersion: 'schemaVersion',
@@ -65,7 +66,7 @@ class OutpointIterator implements AsyncIterableIterator<Outpoint> {
     })
   }
 
-  [Symbol.asyncIterator] () : AsyncIterableIterator<Outpoint> {
+  [Symbol.asyncIterator] (): AsyncIterableIterator<Outpoint> {
     this.iterator = this.db.iterator({})
     return this
   }
@@ -177,7 +178,7 @@ export class LevelOutpointStore implements OutpointStore {
     }
   }
 
-  getOutpoints () : Map<string, Outpoint> {
+  getOutpoints (): Map<string, Outpoint> {
     return this.cache
   }
 
