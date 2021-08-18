@@ -80,9 +80,11 @@ export default {
       return { height, minHeight: height }
     },
     toggleContactDrawerOpen () {
+      console.log('toggleContactDrawerOpen')
       this.contactDrawerOpen = !this.contactDrawerOpen
     },
     toggleContactBookOpen () {
+      console.log('toggleContactBookOpen')
       this.contactBookOpen = !this.contactBookOpen
     },
     toggleMyDrawerOpen () {
@@ -210,7 +212,7 @@ export default {
   mounted () {
     document.addEventListener('keydown', this.shortcutKeyListener)
   },
-  beforeDestroy () {
+  beforeUnmount () {
     document.removeEventListener('keydown', this.shortcutKeyListener)
   },
   watch: {

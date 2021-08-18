@@ -53,7 +53,7 @@ declare module 'bitcore-lib-xpi' {
 
     export namespace Transaction {
         class UnspentOutput {
-            static fromObject (o: object): UnspentOutput;
+            static fromObject (o: unknown): UnspentOutput;
 
             readonly address: Address;
             readonly txId: string;
@@ -61,7 +61,7 @@ declare module 'bitcore-lib-xpi' {
             readonly script: Script;
             readonly satoshis: number;
 
-            constructor (data: object);
+            constructor (data: unknown);
 
             inspect (): string;
             toObject (): this;
@@ -72,11 +72,11 @@ declare module 'bitcore-lib-xpi' {
             readonly script: Script;
             satoshis: number;
 
-            constructor (data: object);
+            constructor (data: unknown);
 
             setScript (script: Script | string | Buffer): this;
             inspect (): string;
-            toObject (): object;
+            toObject (): unknown;
         }
 
         class Input {
@@ -101,7 +101,7 @@ declare module 'bitcore-lib-xpi' {
         _outputAmount: number;
         _inputAmount: number;
 
-        constructor (serialized?: any);
+        constructor (serialized?: unknown);
 
         from (utxos: Transaction.UnspentOutput[]): this;
         to (address: Address[] | Address | string, amount: number): this;
@@ -144,7 +144,7 @@ declare module 'bitcore-lib-xpi' {
             prevHash: string;
         };
 
-        constructor (data: Buffer | object);
+        constructor (data: Buffer | unknown);
     }
 
     export class PrivateKey {
@@ -157,8 +157,8 @@ declare module 'bitcore-lib-xpi' {
         toAddress (networkName?: string): Address;
         toPublicKey (): PublicKey;
         toString (): string;
-        toObject (): object;
-        toJSON (): object;
+        toObject (): unknown;
+        toJSON (): unknown;
         toWIF (): string;
         toBuffer (): Buffer;
         toBigNumber (): crypto.BN;
@@ -184,15 +184,15 @@ declare module 'bitcore-lib-xpi' {
         readonly hdPublicKey: HDPublicKey;
         readonly privateKey: PrivateKey;
 
-        constructor (data?: string | Buffer | object);
+        constructor (data?: string | Buffer | unknown);
 
         derive (arg: string | number, hardened?: boolean): HDPrivateKey;
         deriveChild (arg: string | number, hardened?: boolean): HDPrivateKey;
         deriveNonCompliantChild (arg: string | number, hardened?: boolean): HDPrivateKey;
 
         toString (): string;
-        toObject (): object;
-        toJSON (): object;
+        toObject (): unknown;
+        toJSON (): unknown;
     }
 
     export class HDPublicKey {
@@ -202,7 +202,7 @@ declare module 'bitcore-lib-xpi' {
         readonly publicKey: PublicKey;
         readonly fingerPrint: Buffer;
 
-        constructor (arg: string | Buffer | object);
+        constructor (arg: string | Buffer | unknown);
 
         derive (arg: string | number, hardened?: boolean): HDPublicKey;
         deriveChild (arg: string | number, hardened?: boolean): HDPublicKey;
@@ -216,8 +216,8 @@ declare module 'bitcore-lib-xpi' {
         }
         function buildMultisigOut (publicKeys: PublicKey[], threshold: number, opts: object): Script;
         function buildWitnessMultisigOutFromScript (script: Script): Script;
-        function buildMultisigIn (pubkeys: PublicKey[], threshold: number, signatures: Buffer[], opts: object): Script;
-        function buildP2SHMultisigIn (pubkeys: PublicKey[], threshold: number, signatures: Buffer[], opts: object): Script;
+        function buildMultisigIn (pubkeys: PublicKey[], threshold: number, signatures: Buffer[], opts: unknown): Script;
+        function buildP2SHMultisigIn (pubkeys: PublicKey[], threshold: number, signatures: Buffer[], opts: unknown): Script;
         function buildPublicKeyHashOut (address: Address | PublicKey | string): Script;
         function buildPublicKeyOut (pubkey: PublicKey): Script;
         function buildDataOut (data: string | Buffer, encoding?: string): Script;
@@ -233,9 +233,9 @@ declare module 'bitcore-lib-xpi' {
     }
 
     export class Script {
-        constructor (data: string | object);
+        constructor (data: string | unknown);
 
-        set (obj: object): this;
+        set (obj: unknown): this;
 
         toBuffer (): Buffer;
         toASM (): string;
@@ -269,8 +269,8 @@ declare module 'bitcore-lib-xpi' {
 
         isStandard (): boolean;
 
-        prepend (obj: any): this;
-        add (obj: any): this;
+        prepend (obj: unkown): this;
+        add (obj: unkown): this;
 
         hasCodeseparators (): boolean;
         removeCodeseparators (): this;
@@ -301,7 +301,7 @@ declare module 'bitcore-lib-xpi' {
 
     export interface Util {
         readonly buffer: {
-            reverse (a: any): any;
+            reverse (a: unknown): unknown;
         };
     }
 
@@ -316,7 +316,7 @@ declare module 'bitcore-lib-xpi' {
         const mainnet: Network
         const testnet: Network
 
-        function add (data: any): Network;
+        function add (data: unknown): Network;
         function remove (network: Network): void;
         function get (args: string | number | Network, keys?: string | string[] | undefined): Network;
     }
@@ -326,7 +326,7 @@ declare module 'bitcore-lib-xpi' {
         readonly network: Networks.Network;
         readonly type: string;
 
-        constructor (data: Buffer | Uint8Array | string | object, network?: Networks.Network, type?: string);
+        constructor (data: Buffer | Uint8Array | string | unknown, network?: Networks.Network, type?: string);
 
         toCashAddress (): string;
         toXAddress (): string;

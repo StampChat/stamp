@@ -44,6 +44,7 @@ export default {
       required: true
     }
   },
+  emits: ['toggleMyDrawerOpen'],
   components: {
     ChatListItem,
     ChatListLink

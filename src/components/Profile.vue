@@ -1,11 +1,11 @@
 <template>
   <div>
     <q-splitter
-      :value="110"
+      v-model="splitterSize"
       unit="px"
       disable
     >
-      <template v-slot:before>
+      <template #before>
         <q-tabs
           v-model="tab"
           vertical
@@ -23,7 +23,7 @@
           />
         </q-tabs>
       </template>
-      <template v-slot:after>
+      <template #after>
         <q-tab-panels
           v-model="tab"
           animated
@@ -36,7 +36,7 @@
                 <div class="row q-pa-md">
                   <q-input
                     outlined
-                    v-model="name"
+                    v-model="internalName"
                     :label="$t('profile.name')"
                     :hint="$t('profile.nameHint')"
                     lazy-rules
@@ -46,7 +46,7 @@
                 </div>
                 <div class="row q-pa-md">
                   <q-input
-                    v-model="bio"
+                    v-model="internalBio"
                     :label="$t('profile.bio')"
                     :hint="$t('profile.bioHint')"
                     outlined
@@ -82,7 +82,7 @@
                 <div>
                   <q-img
                     ref="image"
-                    :src="avatar"
+                    :src="internalAvatar"
                     spinner-color="white"
                   />
                   <div class="text-center">
@@ -109,7 +109,7 @@
                 <div class="row q-pa-md">
                   <q-input
                     outlined
-                    v-model="acceptancePrice"
+                    v-model="internalAceptancePrice"
                     :label="$t('profile.minimumStamp')"
                     :hint="$t('profile.minimumStampHint')"
                     style="width:100%"
@@ -131,27 +131,32 @@ import { defaultAvatars } from '../utils/constants'
 
 export default {
   props: {
-    // value: {
-    //   inbox: {
-    //     acceptancePrice: ...,
-    //   },
-    //   profile: {
-    //     name: ...,
-    //     bio: ...,
-    //     avatar: ...
-    //   }
-    // }
-    value: {
-      type: Object,
-      default: () => ({})
+    name: {
+      type: String,
+      default: () => ('')
+    },
+    bio: {
+      type: String,
+      default: () => ('')
+    },
+    avatar: {
+      type: String,
+      default: () => ('')
+    },
+    acceptancePrice: {
+      type: Number,
+      default: () => 0
     }
   },
+  emits: ['update:name', 'update:bio', 'update:avatar', 'update:acceptancePrice'],
   data () {
     return {
-      name: this.value.profile.name,
-      bio: this.value.profile.bio,
-      avatar: this.value.profile.avatar,
-      acceptancePrice: this.value.inbox.acceptancePrice,
+      splitterSize: 110,
+      internalAvatar: this.avatar,
+      internalBio: this.bio,
+      internalName: this.name,
+      internalAcceptancePrice: this.acceptancePrice,
+      avatarPath: null,
       tab: 'profile',
       defaultAvatarIndex: Math.floor(Math.random() * defaultAvatars.length)
     }
@@ -173,7 +178,7 @@ export default {
         img.src = require(`../assets/avatars/${name}`)
       }
       toDataURL((dataUrl) => {
-        this.avatar = dataUrl
+        this.internalAvatar = dataUrl
       })
     },
     cycleAvatarLeft () {
@@ -191,40 +196,22 @@ export default {
       const reader = new FileReader()
       reader.readAsDataURL(this.avatarPath)
       reader.onload = () => {
-        this.avatar = reader.result
-      }
-    }
-  },
-  computed: {
-    constructProfile () {
-      return {
-        name: this.name,
-        bio: this.bio,
-        avatar: this.avatar
-      }
-    },
-    constructData () {
-      return {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        profile: this.constructProfile,
-        inbox: {
-          acceptancePrice: this.acceptancePrice
-        }
+        this.internalAvatar = reader.result
       }
     }
   },
   watch: {
-    name () {
-      this.$emit('input', this.constructData)
+    internalName (value) {
+      this.$emit('update:name', value)
     },
-    bio () {
-      this.$emit('input', this.constructData)
+    internalBio (value) {
+      this.$emit('update:bio', value)
     },
-    avatar () {
-      this.$emit('input', this.constructData)
+    internalAvatar (value) {
+      this.$emit('update:avatar', this.parseImage(value))
     },
-    acceptancePrice () {
-      this.$emit('input', this.constructData)
+    internalAcceptancePrice (value) {
+      this.$emit('update:acceptancePrice', value)
     }
   },
   created () {

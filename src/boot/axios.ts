@@ -1,13 +1,7 @@
-import axios, { AxiosInstance } from 'axios'
+import axios from 'axios'
 import { boot } from 'quasar/wrappers'
 
-declare module 'vue/types/vue' {
-  interface Vue {
-    $axios: AxiosInstance;
-  }
-}
-
-export default boot(({ Vue }) => {
+export default boot(({ app }) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  Vue.prototype.$axios = axios
+  app.config.globalProperties.$axios = axios
 })

@@ -8,7 +8,6 @@ import { OutpointStore } from './storage/storage'
 import type { ElectrumClient, RequestResponse } from 'electrum-cash'
 
 import { Outpoint, OutpointId } from '../types/outpoint'
-import { performance } from 'perf_hooks'
 
 const standardUtxoSize = 34
 const standardInputSize = 175 // A few extra bytes
@@ -107,13 +106,13 @@ export class Wallet {
     if (!this.xPrivKey) {
       return
     }
-    const t0 = performance.now()
+    const t0 = Date.now()
     this.initAddresses()
-    const initAddressTime = performance.now()
+    const initAddressTime = Date.now()
     await this.updateHDUTXOs()
-    const updateUTXOTime = performance.now()
+    const updateUTXOTime = Date.now()
     await this.startListeners()
-    const startListenersTime = performance.now()
+    const startListenersTime = Date.now()
     console.log(`initAddresses UTXOs took ${initAddressTime - t0} ms`)
     console.log(`updateUTXOTime UTXOs took ${updateUTXOTime - t0} ms`)
     console.log(`startListenersTime UTXOs took ${startListenersTime - t0} ms`)
@@ -207,7 +206,7 @@ export class Wallet {
 
   async updateUTXOFromScriptHash (scriptHash: string) {
     const client = await this.electrumClientPromise
-    assert(client)
+    assert(client, 'missing client in updateUTXOFromScriptHash')
     try {
       const elOutputs: Error | RequestResponse = await client.request('blockchain.scripthash.listunspent', scriptHash)
       assert(elOutputs, `Null response from blockchain.scripthash.listunspent for ${scriptHash}`)
@@ -243,7 +242,7 @@ export class Wallet {
 
   async startListeners () {
     const client = await this.electrumClientPromise
-    assert(client)
+    assert(client, 'missing client in startListeners')
     const scriptHashes = Object.keys(this.electrumScriptHashes)
 
     await P.map(scriptHashes, scriptHash => client.subscribe(this.scriptHashSubscriber, 'blockchain.scripthash.subscribe', scriptHash), { concurrency: 5 })
@@ -256,7 +255,7 @@ export class Wallet {
     // Unfreeze UTXO if confirmed to be unspent else delete
     // WARNING: This is not thread-safe, do not call when others hold the UTXO
     const client = await this.electrumClientPromise
-    assert(client)
+    assert(client, 'missing client in fixOutpoint')
     const utxo = await this.storage.getOutpoint(utxoId)
     if (!utxo) {
       console.log(`Missing UTXO for ${utxoId}`)
@@ -336,7 +335,7 @@ export class Wallet {
     const txHex = transaction.toString()
     try {
       const electrumClient = await this.electrumClientPromise
-      assert(electrumClient)
+      assert(electrumClient, 'missing client in forwardUTXOsToAddress')
       await electrumClient.request('blockchain.transaction.broadcast', txHex)
       // TODO: we shouldn't be dealing with this here. Leaky abstraction
       usedIDs.map(id => this.storage.deleteOutpoint(id))
@@ -656,7 +655,7 @@ export class Wallet {
 
   get privKeys () {
     const privKeys = Object.values(this.addresses).map(address => {
-      assert(address)
+      assert(address, 'address is unset in get privKeys')
       return Object.freeze(address.privKey)
     })
     return Object.freeze(privKeys)

@@ -127,10 +127,10 @@ export class LevelMessageStore implements MessageStore {
     await this.db.del(payloadDigest)
   }
 
-  async saveMessage (message: MessageWrapper): Promise<void> {
-    const index = message.index
-    await this.mostRecentMessageTime(message.newMsg.serverTime)
-    await this.db.put(index, JSON.stringify(message))
+  async saveMessage (messageWrapper: MessageWrapper): Promise<void> {
+    const index = messageWrapper.index
+    await this.mostRecentMessageTime(messageWrapper.message.serverTime)
+    await this.db.put(index, JSON.stringify(messageWrapper))
   }
 
   async mostRecentMessageTime (newLastServerTime?: number): Promise<number> {

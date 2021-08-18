@@ -63,9 +63,10 @@ function createWindow () {
     icon: nativeIcon,
     useContentSize: true,
     webPreferences: {
+      preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
+      contextIsolation: true,
+      nodeIntegration: true,
       enableRemoteModule: true,
-      nodeIntegration: process.env.QUASAR_NODE_INTEGRATION,
-      nodeIntegrationInWorker: process.env.QUASAR_NODE_INTEGRATION
     }
   })
 

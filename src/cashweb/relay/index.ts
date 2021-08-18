@@ -198,7 +198,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   setUpWebsocket (address: string | Address) {
-    assert(this.token)
+    assert(this.token, 'missing tokenw hile setting up websocket')
     const addressLegacy = this.toAPIAddressString(address)
 
     const url = new URL(`/ws/${addressLegacy}`, this.url)
@@ -216,7 +216,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     const disconnectHandler = () => {
       this.events.emit('disconnected')
       setTimeout(() => {
-        assert(this.token)
+        assert(this.token, 'missing tokenw hile setting up websocket')
         this.setUpWebsocket(address)
       }, this.relayReconnectInterval)
     }
@@ -233,7 +233,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   async getRawPayload (address: string, digest: Uint8Array) {
-    assert(this.token)
+    assert(this.token, 'missing tokenw hile setting calling getRawPayload')
     const addressLegacy = this.toAPIAddressString(address)
 
     const url = `${this.url}/payloads/${addressLegacy}`
@@ -262,7 +262,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   async deleteMessage (digest: string) {
-    assert(typeof digest === 'string')
+    assert(typeof digest === 'string', 'message digest was not a string in deleteMessage')
     assert(this.wallet, 'Attempting to delete a message with no wallet available')
 
     try {
@@ -272,7 +272,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       // Send utxos to a change address
       const changeAddresses = Object.keys(this.wallet.changeAddresses)
       const changeAddress = changeAddresses[changeAddresses.length * Math.random() << 0]
-      await this.wallet.forwardUTXOsToAddress({ utxos: message.newMsg.outpoints, address: changeAddress })
+      await this.wallet.forwardUTXOsToAddress({ utxos: message.message.outpoints, address: changeAddress })
 
       const url = `${this.url}/messages/${this.wallet.myAddressStr}`
       await axios({
@@ -481,7 +481,7 @@ export class RelayClient extends ReadOnlyRelayClient {
             console.error(err.response)
           }
           usedIDs.forEach(id => {
-            assert(this.wallet)
+            assert(this.wallet, 'wallet unset while fixing outpoints')
             this.wallet.fixOutpoint(id)
           })
           errCount += 1
@@ -581,7 +581,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   receiveSelfSend ({ payload }: { payload: Payload }) {
-    assert(this.wallet)
+    assert(this.wallet, 'wallet unset while handing receiveSelfSend')
     // Decode entries
     const entriesList = payload.getEntriesList()
 
@@ -651,7 +651,6 @@ export class RelayClient extends ReadOnlyRelayClient {
     // TODO: write a test that we actually use these payloads in the future.
     // :facepalm:
     const rawCipherPayload = await getPayload(preParsedMessage.payloadDigest, preParsedMessage.payload)
-    console.log('Processing message payload', rawCipherPayload.length)
 
     // If we had to fetch the payload, let's actually use it!
     preParsedMessage.payload = rawCipherPayload
@@ -659,8 +658,8 @@ export class RelayClient extends ReadOnlyRelayClient {
     // Just to be clear that this is where the message is now valid.
     const parsedMessage = preParsedMessage
 
-    const payloadDigest = crypto.Hash.sha256(Buffer.from(rawCipherPayload))
-    if (!payloadDigest.equals(parsedMessage.payloadDigest)) {
+    const payloadDigest = Buffer.from(crypto.Hash.sha256(Buffer.from(rawCipherPayload)))
+    if (payloadDigest.compare(parsedMessage.payloadDigest) !== 0) {
       console.error('Payload received doesn\'t match digest. Refusing to process message', payloadDigest, parsedMessage.payloadDigest)
       return
     }
@@ -672,10 +671,10 @@ export class RelayClient extends ReadOnlyRelayClient {
     const outpoints = []
 
     let stampValue = 0
-    const identityPrivKey = wallet.identityPrivKey
-    assert(identityPrivKey)
+    const identityPrivateKey = wallet.identityPrivKey
+    assert(identityPrivateKey, 'No identity privkey set')
 
-    const stampRootHDPrivKey = this.payloadConstructor.constructStampHDPrivateKey(payloadDigest, identityPrivKey)
+    const stampRootHDPrivKey = this.payloadConstructor.constructStampHDPrivateKey(payloadDigest, identityPrivateKey)
       .deriveChild(44)
       .deriveChild(145)
 
@@ -726,18 +725,15 @@ export class RelayClient extends ReadOnlyRelayClient {
           // In order to update UTXO state more quickly, go ahead and remove the inputs from our set immediately
           continue
         }
-        wallet.putOutpoint({ ...stampOutput, privKey: outputPrivKey })
+        wallet.putOutpoint({ ...stampOutput, privKey: Object.freeze(outputPrivKey) })
       }
     }
 
     // Ignore messages below acceptance price
     let stealthValue = 0
-    const identityPrivateKey = wallet.identityPrivKey
-    assert(identityPrivateKey)
 
     const rawPayload = outbound ? parsedMessage.openSelf(identityPrivateKey) : parsedMessage.open(identityPrivateKey)
     const payload = Payload.deserializeBinary(rawPayload)
-
     if (outbound && myAddress === destinationAddress) {
       return this.receiveSelfSend({ payload })
     }
@@ -758,6 +754,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       const entry = entriesList[index]
       // If address data doesn't exist then add it
       const kind = entry.getKind()
+
       if (kind === 'reply') {
         const entryData = entry.getBody()
         const payloadDigest = Buffer.from(entryData).toString('hex')
@@ -770,7 +767,14 @@ export class RelayClient extends ReadOnlyRelayClient {
 
       if (kind === 'text-utf8') {
         const entryData = entry.getBody()
-        assert(typeof entryData !== 'string')
+        if (typeof entryData === 'string') {
+          newMsg.items.push({
+            type: 'text',
+            text: entryData
+          })
+          continue
+        }
+        assert(typeof entryData !== 'string', `text entry data was a string ${entryData}`)
         const text = new TextDecoder().decode(entryData)
         newMsg.items.push({
           type: 'text',
@@ -788,7 +792,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         const outpointsList = stealthMessage.getOutpointsList()
         const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
         const ephemeralPubKey = PublicKey.fromBuffer(Buffer.from(ephemeralPubKeyRaw))
-        const stealthHDPrivKey = this.payloadConstructor.constructHDStealthPrivateKey(ephemeralPubKey, identityPrivKey)
+        const stealthHDPrivKey = this.payloadConstructor.constructHDStealthPrivateKey(ephemeralPubKey, identityPrivateKey)
         for (const [i, outpoint] of outpointsList.entries()) {
           const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
           const stealthTx = new Transaction(stealthTxRaw)
@@ -830,7 +834,6 @@ export class RelayClient extends ReadOnlyRelayClient {
               address: address.toCashAddress(),
               satoshis,
               outputIndex,
-              privKey: outpointPrivKey,
               txId
             } as Outpoint
             outpoints.push(stampOutput)
@@ -838,7 +841,7 @@ export class RelayClient extends ReadOnlyRelayClient {
               // Don't add these outputs to our wallet. They're the other persons
               continue
             }
-            wallet.putOutpoint(stampOutput)
+            wallet.putOutpoint({ ...stampOutput, privKey: Object.freeze(outpointPrivKey) })
           }
         }
         newMsg.items.push({
@@ -858,7 +861,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         })
         continue
       }
-      console.log('Entry Kind', kind)
+      console.error('Unknown entry Kind', kind)
     }
 
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
@@ -870,7 +873,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       copartyAddress,
       copartyPubKey,
       index: payloadDigestHex,
-      newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue })
+      message: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue })
     } as MessageWrapper
     await this.messageStore.saveMessage(finalizedMessage)
     this.events.emit('receivedMessage', finalizedMessage)
@@ -882,23 +885,25 @@ export class RelayClient extends ReadOnlyRelayClient {
     assert(myAddressStr, 'Missing wallet or myaddress')
     const lastReceived = await this.messageStore.mostRecentMessageTime()
     console.log('refreshing', lastReceived, myAddressStr)
-    const messagePage = await this.getMessages(myAddressStr, lastReceived || 0)
-    assert(messagePage)
+    const messagePage = await this.getMessages(myAddressStr, lastReceived)
+    assert(messagePage, 'no messagePage available?')
     const messageList = messagePage.getMessagesList()
     console.log('processing messages')
     const messageChunks = splitEvery(20, messageList)
     for (const messageChunk of messageChunks) {
+      try {
+        for (const message of messageChunk) {
+          // TODO: Check correct destination
+          // Here we are ensuring that their are yields between messages to the event loop.
+          // Ideally, we move this to a webworker in the future.
+          await this.receiveMessage(message)
+        }
+      } catch (err) {
+        console.error('Unable to deserialize message:', err.message)
+      }
       await new Promise<void>((resolve) => {
         setTimeout(() => {
-          for (const message of messageChunk) {
-            // TODO: Check correct destination
-            // Here we are ensuring that their are yields between messages to the event loop.
-            // Ideally, we move this to a webworker in the future.
-            this.receiveMessage(message).then(resolve).catch((err) => {
-              console.error('Unable to deserialize message:', err.message)
-              resolve()
-            })
-          }
+          resolve()
         }, 0)
       })
     }
@@ -918,7 +923,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     const messageIterator = await this.messageStore.getIterator()
     // Todo, this rehydrate stuff is common to receiveMessage
     for await (const messageWrapper of messageIterator) {
-      if (!messageWrapper.newMsg) {
+      if (!messageWrapper.message) {
         continue
       }
       const { index, copartyAddress } = messageWrapper

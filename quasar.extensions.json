@@ -1,11 +1,13 @@
 {
   "@quasar/testing": {
-    "harnesses": [
-      "unit-jest"
-    ]
+    "harnesses": []
   },
   "@quasar/testing-unit-jest": {
     "babel": "babelrc",
-    "options": []
+    "options": [
+      "scripts",
+      "typescript",
+      "SFC"
+    ]
   }
 }

@@ -151,21 +151,12 @@
 </template>
 
 <script>
-import Vue from 'vue'
 import { mapGetters, mapActions, mapMutations } from 'vuex'
 import ContactCard from './ContactCard.vue'
 import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
 import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import SendBitcoinDialog from '../dialogs/SendBitcoinDialog.vue'
-
-Vue.filter('truncate', function (text, length, clamp) {
-  clamp = clamp || '...'
-  const node = document.createElement('div')
-  node.innerHTML = text
-  const content = node.textContent
-  return content.length > length ? content.slice(0, length) + clamp : content
-})
 
 export default {
   components: {

@@ -1,14 +1,11 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
-import VuexPersistence from 'vuex-persist'
+import { createStore } from 'vuex'
 import modules from './modules'
 import { rehydateChat } from './modules/chats'
 import { rehydrateWallet } from './modules/wallet'
 import { path, pathOr, mapObjIndexed } from 'ramda'
 import { rehydrateContacts } from './modules/contacts'
 import { displayNetwork } from '../utils/constants'
-
-Vue.use(Vuex)
+import level from 'level'
 
 const parseState = (value) => {
   if (typeof value === 'string') { // If string, parse, or else, just return
@@ -17,70 +14,25 @@ const parseState = (value) => {
     return (value || {})
   }
 }
+
 const STORE_SCHEMA_VERSION = 4
 
-let lastSave = -1
-
 const storeKeys = [
-  'wallet', 'relayClient', 'chats', 'storeMetadata', 'myProfile', 'contacts'
+  'wallet', 'relayClient', 'chats', 'storeMetadata', 'myProfile', 'contacts', 'appearance'
 ]
 
-const vuexLocal = new VuexPersistence({
-  storage: window.localStorage,
-  // Hack to allow us to easily rehydrate the store
-  restoreState: async (key, storage) => {
-    const newState = {}
-    for (const partitionedKey of storeKeys) {
-      const value = parseState(storage.getItem(partitionedKey))
-      newState[partitionedKey] = {}
-      Object.assign(newState[partitionedKey], value)
-    }
+const storePlugin = (store) => {
+  const storage = level('vuex-store')
+  let lastSave = -1
 
-    if (newState.storeMetadata && newState.storeMetadata.networkName !== displayNetwork) {
-      return {
-        wallet: {
-          seedPhrase: path(['wallet', 'seedPhrase'], newState)
-        }
-      }
-    }
-
-    if (newState.storeMetadata && newState.storeMetadata.version !== STORE_SCHEMA_VERSION) {
-      // Import everything else from the server again
-      return {
-        wallet: {
-          xPrivKey: path(['wallet', 'xPrivKey'], newState),
-          seedPhrase: path(['wallet', 'seedPhrase'], newState)
-        },
-        relayClient: {
-          token: path(['relayClient', 'token'], newState)
-        },
-        chats: {
-          chats: mapObjIndexed((addressData, address) => {
-            console.log(`Loading lastRead time ${addressData.lastRead} for address ${address}`)
-            return {
-              messages: [],
-              stampAmount: path(['stampAmount'], addressData),
-              lastRead: path(['lastRead'], addressData)
-            }
-          }, pathOr({}, ['chats', 'chats'], newState))
-        },
-        storeMetadata: {
-          version: STORE_SCHEMA_VERSION,
-          networkName: displayNetwork
-        },
-        myProfile: newState.myProfile
-      }
-    }
-    rehydrateContacts(newState.contacts)
-    await rehydateChat(newState.chats, newState.contacts)
-    await rehydrateWallet(newState.wallet)
-    return newState
-  },
-  reducer (state) {
+  const reduceState = (state) => {
     return {
       wallet: {
         xPrivKey: path(['wallet', 'xPrivKey'], state),
-        seedPhrase: path(['wallet', 'seedPhrase'], state)
+        seedPhrase: path(['wallet', 'seedPhrase'], state),
+        utxos: {},
+        feePerByte: 2,
+        balance: 0
       },
       relayClient: {
         token: path(['relayClient', 'token'], state)
@@ -108,46 +60,98 @@ const vuexLocal = new VuexPersistence({
           })
         }, pathOr({}, ['contacts', 'contacts'], state))
       },
-      myProfile: state.myProfile,
+      myProfile: state.myProfile || {
+        profile: { name: null, bio: null, avatar: null }, inbox: { acceptancePrice: null }
+      },
+      appearance: state.appearance || {
+        darkMode: false
+      },
       storeMetadata: {
         networkName: displayNetwork,
         version: STORE_SCHEMA_VERSION
       }
     }
-  },
-  saveState (key, state, storage) {
+  }
+
+  const restoreState = async () => {
+    const newState = reduceState(store.state)
     for (const partitionedKey of storeKeys) {
       try {
-        storage.setItem(partitionedKey, JSON.stringify(state[partitionedKey]))
+        const gottenValue = await storage.get(partitionedKey)
+        const value = await parseState(gottenValue)
+        newState[partitionedKey] = value
       } catch (err) {
         console.log(err)
       }
     }
-  },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  filter: (mutation) => {
-    if (mutation.type.startsWith('wallet/')) {
+
+    if (newState.storeMetadata && (newState.storeMetadata.networkName !== displayNetwork || newState.storeMetadata.version !== STORE_SCHEMA_VERSION)) {
+      Object.assign(newState, {
+        wallet: {
+          seedPhrase: path(['wallet', 'seedPhrase'], newState)
+        }
+      })
+      store.replaceState(newState)
+      return
+    }
+
+    rehydrateContacts(newState.contacts)
+    await rehydateChat(newState.chats, newState.contacts)
+    await rehydrateWallet(newState.wallet)
+    console.log('Restoring state')
+    store.replaceState(newState)
+  }
+
+  const filterState = (mutation) => {
+    if (mutation.type.startsWith('wallet/') && !['wallet/addUTXO', 'wallet/removeUTXO'].includes(mutation.type)) {
       lastSave = Date.now()
       return true
     }
-
     if (mutation.type.startsWith('myProfile/')) {
       lastSave = Date.now()
       return true
     }
-
     if (lastSave + 6000 <= Date.now()) {
       lastSave = Date.now()
       return true
     }
-
     return false
-  },
-  asyncStorage: true
-})
+  }
 
-export default new Vuex.Store({
-  modules,
-  plugins: [vuexLocal.plugin]
-  // strict: true
-})
+  const saveState = (mutation, state) => {
+    if (!filterState(mutation, state)) {
+      return
+    }
+    console.log('Saving vuex state')
+    const newState = reduceState(state)
+    for (const partitionedKey of storeKeys) {
+      storage.put(partitionedKey, JSON.stringify(newState[partitionedKey])).catch(err => {
+        console.error('Unable to set state for key', partitionedKey)
+        console.log(err)
+      })
+    }
+  }
+
+  store.restored = Promise.resolve(new Promise((resolve, reject) => {
+    restoreState()
+      .catch((err) => reject(err))
+      .then(() => {
+        console.log('vuex state restored')
+        store.subscribe(saveState)
+        resolve(true)
+      })
+  }))
+}
+
+export default function (/* { ssrContext } */) {
+  const Store = createStore({
+    modules,
+    plugins: [storePlugin],
+
+    // enable strict mode (adds overhead!)
+    // for dev mode and --debug builds only
+    strict: process.env.DEBUGGING
+  })
+
+  return Store
+}

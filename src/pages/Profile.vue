@@ -5,13 +5,18 @@
         Profile
       </div>
     </q-card-section>
-    <profile v-model="relayData" />
+    <profile
+      v-model:name="name"
+      v-model:bio="bio"
+      v-model:avatar="avatar"
+      v-model:acceptancePrice="acceptancePrice"
+    />
     <q-card-actions align="right">
       <q-btn
         :disable="identical"
         :label="$t('profileDialog.update')"
         color="negative"
-        @click="updateRelayData()"
+        @click="updateRelayData"
       />
       <q-btn
         :label="$t('profileDialog.cancel')"
@@ -29,18 +34,21 @@ import { errorNotify } from '../utils/notifications'
 
 export default {
   data () {
+    console.log('relay data', this.getRelayData())
+    const relayData = this.getRelayData()
     return {
-      relayData: this.getCurrentRelayData()
+      name: relayData.profile.name,
+      bio: relayData.profile.bio,
+      avatar: relayData.profile.avatar,
+      acceptancePrice: relayData.inbox.acceptancePrice
     }
   },
   components: {
     Profile
   },
   methods: {
-    ...mapGetters({
-      getCurrentRelayData: 'myProfile/getRelayData'
-    }),
     ...mapMutations({ setRelayData: 'myProfile/setRelayData' }),
+    ...mapGetters('myProfile', ['getRelayData']),
     async updateRelayData () {
       // Set profile
       const client = this.$relayClient
@@ -77,10 +85,25 @@ export default {
     }
   },
   computed: {
+    profile () {
+      return {
+        name: this.name,
+        bio: this.bio,
+        avatar: this.avatar
+      }
+    },
+    relayData () {
+      return {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        profile: this.profile,
+        inbox: {
+          acceptancePrice: this.acceptancePrice
+        }
+      }
+    },
     identical () {
-      const currentProfile = this.getCurrentRelayData().profile
-      const newProfile = this.relayData.profile
-      return currentProfile.name === newProfile.name && currentProfile.bio === newProfile.bio && currentProfile.avatar === newProfile.avatar
+      const currentProfile = this.getRelayData().profile
+      return currentProfile.name === this.name && currentProfile.bio === this.bio && currentProfile.avatar === this.avatar
     }
   }
 }

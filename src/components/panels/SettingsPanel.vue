@@ -129,6 +129,7 @@ export default {
       contactBookOpen: false
     }
   },
+  emits: ['update:drawerOpen'],
   props: {
     drawerOpen: {
       type: Boolean,

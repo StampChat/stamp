@@ -3,10 +3,10 @@
     <q-resize-observer @resize="setQRSize" />
     <div class="p-mx-none">
       <qrcode-vue
-        class="text-center"
+        class="center"
         :value="displayAddress"
         level="H"
-        size="150"
+        :size="150"
       />
     </div>
 
@@ -17,7 +17,7 @@
       v-model="displayAddress"
       readonly
     >
-      <template v-slot:after>
+      <template #after>
         <q-btn
           dense
           color="primary"
@@ -81,7 +81,7 @@ export default {
           // fail
         })
     },
-    openFaucet () {
+    openFaucet (event) {
       event.preventDefault()
       this.openURL('https://developer.bitcoin.com/faucets/bch/')
     },

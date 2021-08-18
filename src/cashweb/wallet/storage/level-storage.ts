@@ -82,6 +82,7 @@ export class LevelOutpointStore implements OutpointStore {
   private cache: Map<OutpointId, Outpoint>
 
   constructor (location: string) {
+    console.log('LevelOutpointStore')
     this.outpointDbLocation = join(location, 'outpoints')
     this.metadataDbLocation = join(location, 'metadata')
     this.cache = new Map<OutpointId, Outpoint>()

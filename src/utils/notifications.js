@@ -1,6 +1,5 @@
 import { Notify } from 'quasar'
 import { notificationTimeout } from './constants'
-// import { remote } from 'electron'
 
 // Error notifications
 
@@ -59,7 +58,6 @@ export function desktopNotify (title, body, icon, callback) {
     icon
   })
   notify.onclick = () => {
-    // const window = remote.getCurrentWindow()
     window.show()
     callback()
     notify.close()

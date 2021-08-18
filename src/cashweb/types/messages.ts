@@ -17,7 +17,7 @@ export interface Message {
 }
 
 export interface MessageWrapper {
-  newMsg: Message;
+  message: Message;
   index: string;
   outbound: boolean;
   senderAddress: string;

@@ -7,7 +7,9 @@ import { getRelayClient } from '../adapters/vuex-relay-adapter'
 import { store as levelDbOutpointStore } from '../adapters/level-outpoint-store'
 import { boot } from 'quasar/wrappers'
 import { Outpoint, OutpointId } from 'src/cashweb/types/outpoint'
-import { VueConstructor } from 'vue/types/umd'
+import { reactive } from 'vue'
+import type { App } from 'vue'
+import { Store } from 'vuex'
 
 function instrumentElectrumClient ({ resolve, reject, client, observables, reconnector }:
   {
@@ -74,13 +76,12 @@ function instrumentElectrumClient ({ resolve, reject, client, observables, recon
     console.error(err)
   })
 
-  console.log('attempting to connect')
-
+  console.log('Attempting to connect')
   // No await here... May cause issues down the road
   client.connect().then(() => console.log('connected')).catch(err => console.error('unablet to connect to electrum host', err.message))
 }
 
-function createAndBindNewElectrumClient ({ Vue, observables, wallet }: { Vue: VueConstructor, observables: any, wallet: Wallet }) {
+function createAndBindNewElectrumClient ({ app, observables, wallet }: { app: App<any>, observables: any, wallet: Wallet }) {
   const { url, port, scheme } = electrumServers[Math.floor(Math.random() * electrumServers.length)]
   console.log('Using electrum server:', url, port, scheme)
   try {
@@ -92,11 +93,11 @@ function createAndBindNewElectrumClient ({ Vue, observables, wallet }: { Vue: Vu
         reject,
         client,
         observables,
-        reconnector: () => createAndBindNewElectrumClient({ Vue, observables, wallet })
+        reconnector: () => createAndBindNewElectrumClient({ app, observables, wallet })
       })
     })
     // (Re)set state on Vue prototype
-    Object.assign(Vue.prototype, { $electrumClientPromise: electrumPromise })
+    Object.assign(app.config.globalProperties, { $electrumClientPromise: electrumPromise })
     console.log('setting electrum client')
     wallet.setElectrumClient(electrumPromise)
   } catch (err) {
@@ -104,7 +105,7 @@ function createAndBindNewElectrumClient ({ Vue, observables, wallet }: { Vue: Vu
   }
 }
 
-async function getWalletClient ({ store }: { store: any }) {
+async function getWalletClient ({ store }: { store: Store<any> }) {
   const outpointStore = await levelDbOutpointStore
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.
@@ -117,7 +118,7 @@ async function getWalletClient ({ store }: { store: any }) {
       return outpointStore.deleteOutpoint(id)
     },
     putOutpoint (outpoint: Outpoint) {
-      store.commit('wallet/addUTXO', outpoint)
+      store.commit('wallet/addUTXO', Object.freeze({ ...outpoint }))
       return outpointStore.putOutpoint(outpoint)
     },
     freezeOutpoint (id: OutpointId) {
@@ -140,14 +141,11 @@ async function getWalletClient ({ store }: { store: any }) {
   return new Wallet(storageAdapter)
 }
 
-export default boot(async ({ Vue, store }) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await store.restored
-  // TODO: WE should probably rename this file to something more specific
-  // as its instantiating the wallet now also.
+export default boot(async ({ store, app }) => {
+  await (store as any).restored
   const wallet = await getWalletClient({ store })
-  const electrumObservables = Vue.observable({ connected: false })
-  createAndBindNewElectrumClient({ Vue, observables: electrumObservables, wallet })
+  const electrumObservables = reactive({ connected: false })
+  createAndBindNewElectrumClient({ app, observables: electrumObservables, wallet })
   const xPrivKey = store.getters['wallet/getXPrivKey']
   console.log('xPrivKey', xPrivKey)
   // Check if setup was finished.
@@ -158,15 +156,13 @@ export default boot(async ({ Vue, store }) => {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
   }
-  const { client: relayClient, observables: relayObservables } = await getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumClient: Vue.prototype.$electrumClientPromise, store })
+  const { client: relayClient, observables: relayObservables } = await getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumClient: app.config.globalProperties.$electrumClientPromise, store })
   const relayToken: string = store.getters['relayClient/getToken']
   console.log('relayToken', relayToken)
   relayClient.setToken(relayToken)
 
-  Object.assign(Vue.prototype, {
-    $wallet: wallet,
-    $electrum: electrumObservables,
-    $relayClient: relayClient,
-    $relay: Vue.observable(relayObservables)
-  })
+  app.config.globalProperties.$wallet = wallet
+  app.config.globalProperties.$electrum = electrumObservables
+  app.config.globalProperties.$relayClient = relayClient
+  app.config.globalProperties.$relay = relayObservables
 })

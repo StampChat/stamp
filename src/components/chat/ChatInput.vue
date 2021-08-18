@@ -34,7 +34,7 @@
               </q-item-section>
             </q-item>
 
-            <q-item clickable>
+            <!-- <q-item clickable>
               <q-item-section avatar>
                 <q-icon name="insert_emoticon" />
               </q-item-section>
@@ -51,7 +51,7 @@
                   :show-skin-tones="false"
                 />
               </q-menu>
-            </q-item>
+            </q-item> -->
             <q-item>
               <q-item-section>
                 <q-input
@@ -85,38 +85,34 @@
         :placeholder="$t('chatInput.placeHolder')"
       />
       <q-space />
-      <div
+      <q-btn
         dense
         flat
         class="q-btn q-pa-sm"
         @mousedown.prevent="sendMessage"
       >
         <q-icon name="send" />
-      </div>
+      </q-btn>
     </q-toolbar>
   </div>
 </template>
 
 <script>
 import emoji from 'node-emoji'
-import { Picker, EmojiIndex } from 'emoji-mart-vue-fast'
-import data from '../../assets/emoticons/all.json'
-import 'emoji-mart-vue-fast/css/emoji-mart.css'
+// import { Picker, EmojiIndex } from 'emoji-mart-vue-fast'
+// import data from '../../assets/emoticons/all.json'
+// import 'emoji-mart-vue-fast/css/emoji-mart.css'
 import { defaultStampAmount } from '../../utils/constants'
 
-const emojiIndex = new EmojiIndex(data)
+// const emojiIndex = new EmojiIndex(data)
 
 export default {
   components: {
-    Picker
-  },
-  model: {
-    prop: 'message',
-    event: 'input'
+    // Picker
   },
   data () {
     return {
-      emojiIndex
+      // emojiIndex
     }
   },
   props: {
@@ -129,15 +125,13 @@ export default {
       default: () => defaultStampAmount
     }
   },
+  emits: ['update:message', 'sendMessage', 'sendMoneyClicked', 'sendFileClicked', 'stampAmountChanged'],
   methods: {
     focus () {
       this.$refs.inputBox.focus()
     },
     sendMessage () {
-      if (this.message === '') {
-        return
-      }
-      this.$emit('sendMessage', this.message)
+      this.$emit('sendMessage', this.innerMessage)
     },
     sendMoneyClicked () {
       this.$emit('sendMoneyClicked')
@@ -161,8 +155,8 @@ export default {
       set (val) {
         const replacer = (match) => emoji.emojify(match)
         // TODO: Remove emojify
-        val = val.replace(/(:.*:)/g, replacer)
-        this.$emit('input', val)
+        const emojifiedValue = val.replace(/(:.*:)/g, replacer)
+        this.$emit('update:message', emojifiedValue)
       }
     }
   }

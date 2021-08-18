@@ -63,6 +63,7 @@ export default {
       required: true
     }
   },
+  emits: ['replyClicked'],
   methods: {
     replyClicked (args) {
       this.$emit('replyClicked', args)

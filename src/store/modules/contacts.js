@@ -1,8 +1,8 @@
 import { PublicKey } from 'bitcore-lib-xpi'
+
 import { ReadOnlyRelayClient } from '../../cashweb/relay'
 import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl, keyservers, networkName } from '../../utils/constants'
 import { KeyserverHandler } from '../../cashweb/keyserver/handler'
-import Vue from 'vue'
 import moment from 'moment'
 import { toAPIAddress } from '../../utils/address'
 
@@ -63,7 +63,6 @@ export default {
     },
     getPubKey: (state) => (address) => {
       const apiAddress = toAPIAddress(address)
-
       if (!state.contacts[apiAddress] || !state.contacts[apiAddress].profile) {
         return undefined
       }
@@ -73,9 +72,10 @@ export default {
   },
   mutations: {
     addContact (state, { address, contact }) {
+      const fixedContact = { ...contact, profile: { ...contact.profile, pubKey: contact.profile.pubKey } }
       const apiAddress = toAPIAddress(address)
 
-      Vue.set(state.contacts, apiAddress, contact)
+      state.contacts[apiAddress] = fixedContact
     },
     setUpdateInterval (state, interval) {
       state.updateInterval = interval
@@ -100,7 +100,7 @@ export default {
     deleteContact (state, address) {
       const apiAddress = toAPIAddress(address)
 
-      Vue.delete(state.contacts, apiAddress)
+      delete state.contacts[apiAddress]
     },
     setPubKey (state, { address, pubKey }) {
       const apiAddress = toAPIAddress(address)
@@ -110,7 +110,7 @@ export default {
   },
   actions: {
     addLoadingContact ({ commit }, { address, pubKey }) {
-      const contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, pubKey } }
+      const contact = { ...pendingRelayData, profile: { ...pendingRelayData.profile, pubKey: Object.freeze(pubKey) } }
       commit('addContact', { address, contact })
     },
     deleteContact ({ commit }, address) {

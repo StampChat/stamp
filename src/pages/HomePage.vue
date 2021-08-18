@@ -134,6 +134,7 @@ export default {
       bottom: null
     }
   },
+  emits: ['toggleMyDrawerOpen'],
   methods: {
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
@@ -141,10 +142,10 @@ export default {
         // Not mounted yet
         return
       }
-      const scrollTarget = scrollArea.getScrollTarget()
       this.$nextTick(() =>
-        scrollArea.setScrollPosition(
-          scrollTarget.scrollHeight,
+        scrollArea.setScrollPercentage(
+          'vertical',
+          1.0,
           scrollDuration
         )
       )

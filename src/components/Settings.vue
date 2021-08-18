@@ -5,7 +5,7 @@
       unit="px"
       disable
     >
-      <template v-slot:before>
+      <template #before>
         <q-tabs
           v-model="tab"
           vertical
@@ -23,7 +23,7 @@
           />
         </q-tabs>
       </template>
-      <template v-slot:after>
+      <template #after>
         <q-tab-panels
           v-model="tab"
           animated
@@ -62,11 +62,12 @@
 <script>
 export default {
   props: {
-    value: {
+    modelValue: {
       type: Object,
       default: () => ({})
     }
   },
+  emits: ['update:modelValue'],
   data () {
     return {
       tab: 'networking',
@@ -88,10 +89,10 @@ export default {
   },
   watch: {
     updateInterval () {
-      this.$emit('input', this.constructSettings)
+      this.$emit('update:modelValue', this.constructSettings)
     },
     darkMode () {
-      this.$emit('input', this.constructSettings)
+      this.$emit('update:modelValue', this.constructSettings)
     }
   },
   mounted () {

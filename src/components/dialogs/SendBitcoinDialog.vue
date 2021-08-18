@@ -63,7 +63,7 @@ export default {
     },
     contact: {
       type: Object,
-      default: () => ''
+      default: () => ({ name: 'Unknown' })
     }
   },
   methods: {

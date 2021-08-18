@@ -111,6 +111,7 @@ export default {
     TransactionDialog,
     DeleteMessageDialog
   },
+  emits: ['replyClicked'],
   data () {
     return {
       transactionDialog: false,

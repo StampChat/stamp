@@ -22,7 +22,7 @@
           icon="vpn_key"
           :done="step > 2"
         >
-          <account-step v-model="accountData" />
+          <account-step v-model:account-data="accountData" />
         </q-step>
         <q-step
           :name="3"
@@ -32,7 +32,7 @@
         >
           <deposit-step />
         </q-step>
-        <template v-slot:navigation>
+        <template #navigation>
           <q-stepper-navigation>
             <q-btn
               @click="next()"
@@ -61,8 +61,6 @@
 </template>
 
 <script>
-import Vue from 'vue'
-import VueRouter from 'vue-router'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 
 import { HDPrivateKey } from 'bitcore-lib-xpi'
@@ -81,8 +79,6 @@ import EulaStep from '../components/setup/EULAStep.vue'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
 
-Vue.use(VueRouter)
-
 export default {
   components: {
     AccountStep,
@@ -97,7 +93,6 @@ export default {
         valid: false,
         seed: this.getSeedPhrase() || generateMnemonic()
       },
-      xPrivKey: null,
       relayData: defaultRelayData,
       relayUrl: defaultRelayUrl,
       avatar: null,
@@ -165,10 +160,11 @@ export default {
           try {
             // Prepare wallet
             const xPrivKeyObj = event.data
-            this.xPrivKey = HDPrivateKey.fromObject(xPrivKeyObj)
+            const xPrivKey = HDPrivateKey.fromObject(xPrivKeyObj)
             // TODO: We should not have to update two places.
-            this.setXPrivKey(this.xPrivKey)
-            this.$wallet.setXPrivKey(this.xPrivKey)
+            this.setXPrivKey(xPrivKey)
+            this.$wallet.setXPrivKey(xPrivKey)
+
             this.$q.loading.hide()
             resolve()
           } catch (err) {
@@ -375,6 +371,7 @@ export default {
       if (!this.$electrum.connected) {
         return false
       }
+      console.log('isWalletValid', this.isWalletValid)
       console.log('isWalletSufficient', this.isWalletSufficient)
       console.log('isRelayValid', this.isRelayValid)
 
@@ -400,11 +397,8 @@ export default {
       return !!this.balance && this.balance >= recomendedBalance
     },
     nextButtonLabel () {
-      console.log('Step', this.step)
-
       switch (this.step) {
         case 1:
-          console.log('hrm')
           return this.$t('agree')
         case 2:
           return this.$t('setup.accountSetupNext')

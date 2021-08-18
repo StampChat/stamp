@@ -116,22 +116,21 @@ export function messageMixin (networkPrefix: string, message: Message): Message 
       const payloadDigest = this.digest()
 
       const payloadHmac = message.getPayloadHmac()
-      assert(typeof payloadHmac !== 'string')
+      assert(typeof payloadHmac !== 'string', `payloadHmac is string? ${payloadHmac}`)
       if (payloadHmac.length !== 32) {
         throw new Error('Unexpected length payload hmac')
       }
 
       const payload = message.getPayload()
-      assert(typeof payload !== 'string')
       const payloadSize = payload.length
       const reportedPayloadSize = message.getPayloadSize()
       if (reportedPayloadSize !== 0 && reportedPayloadSize !== payloadSize) {
         throw new Error('Unexpected payload size')
       }
       const salt = message.getSalt()
-      assert(typeof salt !== 'string')
+      assert(typeof salt !== 'string', `Salt is string? ${salt}`)
       const stamp = message.getStamp()
-      assert(stamp)
+      assert(stamp, 'Message missing stamp?')
       const encryptionScheme: Message.EncryptionSchemeMap = (message.getScheme() as unknown) as Message.EncryptionSchemeMap
 
       return new ParsedMessage(
@@ -144,7 +143,7 @@ export function messageMixin (networkPrefix: string, message: Message): Message 
         payloadDigest,
         payloadHmac,
         payloadSize,
-        payload,
+        typeof payload === 'string' ? new Uint8Array() : payload,
         networkPrefix)
     }
   })

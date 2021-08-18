@@ -76,7 +76,6 @@ export class KeyserverHandler {
 
   async paymentRequest (serverUrl: string, address: string, truncatedAuthWrapper: AuthWrapper) {
     const legacyAddress = this.toAPIAddressString(address)
-
     const rawAuthWrapper = truncatedAuthWrapper.serializeBinary()
     const url = `${serverUrl}/keys/${legacyAddress}`
     return pop.getPaymentRequest(url, 'put', rawAuthWrapper)
@@ -133,17 +132,20 @@ export class KeyserverHandler {
     const authWrapper = this.constructRelayUrlMetadata(relayUrl, idPrivKey)
 
     const serverUrl = this.chooseServer()
-    // Truncate metadata
-    const payload = Buffer.from(authWrapper.getPayload())
+    const payloadRaw = authWrapper.getPayload()
+    assert(typeof payloadRaw !== 'string', 'payloadRaw is a string?')
+    const payload = Buffer.from(payloadRaw)
     const payloadDigest = crypto.Hash.sha256(payload)
     const truncatedAuthWrapper = new AuthWrapper()
     const publicKey = authWrapper.getPublicKey()
+    assert(typeof publicKey !== 'string', 'publicKey is a string?')
+
     truncatedAuthWrapper.setPublicKey(publicKey)
-    truncatedAuthWrapper.setPayloadDigest(payloadDigest)
+    const payloadBuf = payloadDigest.buffer
+    truncatedAuthWrapper.setPayloadDigest(new Uint8Array(payloadBuf))
 
     const { paymentDetails } = await this.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper) ?? { paymentDetails: undefined }
     assert(paymentDetails, 'Missing payment details')
-
     // Construct payment
     const { paymentUrl, payment, usedIDs } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
 

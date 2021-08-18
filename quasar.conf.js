@@ -16,7 +16,6 @@ module.exports = configure(function (ctx) {
     // --> boot files are part of "main.js"
     // https://quasar.dev/quasar-cli/cli-documentation/boot-files
     boot: [
-      'composition-api',
       'i18n',
       'axios',
       'network-prefix',
@@ -49,16 +48,7 @@ module.exports = configure(function (ctx) {
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-framework
     framework: {
       iconSet: 'material-icons', // Quasar icon set
-      lang: 'en-us', // Quasar language pack
-
-      // Possible values for "all":
-      // * 'auto' - Auto-import needed Quasar components & directives
-      //            (slightly higher compile time; next to minimum bundle size; most convenient)
-      // * false  - Manually specify what to import
-      //            (fastest compile time; minimum bundle size; most tedious)
-      // * true   - Import everything from Quasar
-      //            (not treeshaking Quasar; biggest bundle size; convenient)
-      importStrategy: 'auto',
+      lang: 'en-US', // Quasar language pack
 
       components: ['QSkeleton', 'QScrollObserver'],
       directives: [],
@@ -72,8 +62,25 @@ module.exports = configure(function (ctx) {
 
     // https://quasar.dev/quasar-cli/cli-documentation/supporting-ts
     supportTS: {
-      tsCheckerConfig: { eslint: true }
+      tsCheckerConfig: {
+        eslint: {
+          enabled: true,
+          files: './src/**/*.{ts,tsx,js,jsx,vue}',
+        },
+      },
     },
+
+    // default values:
+    // sourceFiles: {
+    //   rootComponent: 'src/App.vue',
+    //   router: 'src/router',
+    //   store: 'src/store',
+    //   indexHtmlTemplate: 'src/index.template.html',
+    //   registerServiceWorker: 'src-pwa/register-service-worker.js',
+    //   serviceWorker: 'src-pwa/custom-service-worker.js',
+    //   electronMain: 'src-electron/electron-main.js',
+    //   electronPreload: 'src-electron/electron-preload.js'
+    // },
 
     // https://quasar.dev/quasar-cli/cli-documentation/prefetch-feature
     // preFetch: true
@@ -96,9 +103,24 @@ module.exports = configure(function (ctx) {
       // extractCSS: false,
 
       // https://quasar.dev/quasar-cli/cli-documentation/handling-webpack
+      chainWebpack (chain) {
+        const nodePolyfillWebpackPlugin = require('node-polyfill-webpack-plugin')
+        chain.plugin('node-polyfill').use(nodePolyfillWebpackPlugin)
+        // example for its content (adds linting)
+        const ESLintPlugin = require('eslint-webpack-plugin');
+        chain.plugin('eslint-webpack-plugin')
+          .use(ESLintPlugin, [{ extensions: ['js'] }])
+      },
+
       extendWebpack (cfg) {
         cfg.resolve.modules = [path.resolve(__dirname, 'local_modules'), ...cfg.resolve.modules]
         // linting is slow in TS projects, we execute it only for production builds
+        cfg.resolve.fallback = {
+          fs: false,
+          tls: false,
+          net: false
+        }
+
         if (ctx.prod) {
           // Ensure we are copying our local_modules folder into place
           // before yarn install --production runs. Otherwise, we
@@ -114,15 +136,7 @@ module.exports = configure(function (ctx) {
               ]
             })
           )
-          cfg.module.rules.push({
-            enforce: 'pre',
-            test: /\.(js|vue)$/,
-            loader: 'eslint-loader',
-            exclude: /node_modules/,
-            options: {
-              formatter: require('eslint').CLIEngine.getFormatter('stylish')
-            }
-          })
+
           cfg.module.rules.push({
             test: /\.xpriv_generate\.js$/,
             loader: 'worker-loader',
@@ -205,19 +219,6 @@ module.exports = configure(function (ctx) {
     electron: {
       bundler: 'builder', // 'packager' or 'builder'
 
-      packager: {
-        // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
-
-        // OS X / Mac App Store
-        // appBundleId: '',
-        // appCategoryType: '',
-        // osxSign: '',
-        // protocol: 'myapp://path',
-
-        // Windows only
-        // win32metadata: { ... }
-      },
-
       builder: {
         // https://www.electron.build/configuration/configuration
 
@@ -229,12 +230,12 @@ module.exports = configure(function (ctx) {
       },
 
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
-      nodeIntegration: true,
 
-      extendWebpack (/* cfg */) {
-        // do something with Electron main process Webpack cfg
-        // chainWebpack also available besides this extendWebpack
-      }
+      extendWebpackMain (cfg) {
+      },
+
+      extendWebpackPreload (cfg) {
+      },
     }
   }
 })

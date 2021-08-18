@@ -1,5 +1,4 @@
 import assert from 'assert'
-import Vue from 'vue'
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../cashweb/wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
@@ -41,10 +40,10 @@ export async function rehydateChat (chatState) {
   const messageIterator = await localStore.getIterator()
   // Todo, this rehydrate stuff is common to receiveMessage
   for await (const messageWrapper of messageIterator) {
-    if (!messageWrapper.newMsg) {
+    if (!messageWrapper.message) {
       continue
     }
-    const { index, newMsg, copartyAddress } = messageWrapper
+    const { index, message: newMsg, copartyAddress } = messageWrapper
     assert(newMsg.outbound !== undefined, 'outbound is not defined')
     assert(newMsg.status !== undefined, 'status is not defined')
     assert(newMsg.receivedTime !== undefined, 'receivedTime is not defined')
@@ -218,7 +217,7 @@ export default {
       const apiAddress = toAPIAddress(address)
 
       if (!(apiAddress in state.chats)) {
-        Vue.set(state.chats, apiAddress, { ...defaultContactObject, messages: [], address: apiAddress })
+        state.chats[apiAddress] = { ...defaultContactObject, messages: [], address: apiAddress }
       }
     },
     setActiveChat (state, address) {
@@ -229,7 +228,7 @@ export default {
       const apiAddress = toAPIAddress(address)
 
       if (!(apiAddress in state.chats)) {
-        Vue.set(state.chats, apiAddress, { ...defaultContactObject, messages: [], address: apiAddress })
+        state.chats[apiAddress] = { ...defaultContactObject, messages: [], address: apiAddress }
       }
       state.activeChatAddr = address
     },
@@ -276,7 +275,7 @@ export default {
         state.chats[apiAddress].lastRead = Date.now()
         return
       }
-      Vue.set(state.chats, apiAddress, { ...defaultContactObject, messages: [message], address: apiAddress })
+      state.chats[apiAddress] = { ...defaultContactObject, messages: [message], address: apiAddress }
     },
     clearChat (state, address) {
       const apiAddress = toAPIAddress(address)
@@ -291,9 +290,9 @@ export default {
       if (state.activeChatAddr === apiAddress) {
         state.activeChatAddr = null
       }
-      Vue.delete(state.chats, apiAddress)
+      delete state.chats[apiAddress]
     },
-    receiveMessage (state, { address, index, newMsg }) {
+    receiveMessage (state, { address, index, message: newMsg }) {
       const apiAddress = toAPIAddress(address)
 
       assert(newMsg.outbound !== undefined, 'outbound is not defined')
@@ -317,7 +316,7 @@ export default {
       state.messages[index] = message
       if (!(apiAddress in state.chats)) {
         // We do need reactivity to create a new chat
-        Vue.set(state.chats, apiAddress, { ...defaultContactObject, messages: [], address: apiAddress })
+        state.chats[apiAddress] = { ...defaultContactObject, messages: [], address: apiAddress }
       }
 
       // TODO: Better indexing
@@ -364,7 +363,7 @@ export default {
       assert(typeof stampAmount === 'number', 'stampAmount wrong type')
       commit('setStampAmount', { address, stampAmount })
     },
-    receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, newMsg }) {
+    receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, message: newMsg }) {
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](copartyAddress)) {
         // Add dummy contact
@@ -389,7 +388,7 @@ export default {
           })
         }
       }
-      commit('receiveMessage', { address: copartyAddress, index, newMsg })
+      commit('receiveMessage', { address: copartyAddress, index, message: newMsg })
     }
   }
 }

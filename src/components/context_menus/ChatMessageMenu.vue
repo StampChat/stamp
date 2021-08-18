@@ -81,6 +81,7 @@ export default {
       default: () => 0
     }
   },
+  emits: ['deleteClick', 'replyClick', 'txClick'],
   methods: {
     ...mapMutations({
       deleteMessage: 'chats/deleteMessage'

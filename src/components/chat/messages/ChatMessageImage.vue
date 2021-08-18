@@ -8,7 +8,7 @@
       :src="image"
       contain
       style="width: 10vw;"
-      @click="()=> showImageDialog(image)"
+      @click="showImageDialog"
     />
   </div>
 </template>
@@ -29,11 +29,11 @@ export default {
   data () {
     return {
       imageDialog: false
+
     }
   },
   methods: {
-    showImageDialog (image) {
-      this.image = image
+    showImageDialog () {
       this.imageDialog = true
     }
   }

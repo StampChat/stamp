@@ -5,10 +5,6 @@
       <relay-connect-dialog />
     </q-dialog>
 
-    <!-- New contact dialog -->
-    <q-dialog v-model="newContactOpen">
-      <new-contact-dialog />
-    </q-dialog>
     <q-tabs v-model="tab">
       <q-tab
         name="settings"
@@ -25,7 +21,7 @@
     <chat-list
       v-show="tab=='contacts'"
       :loaded="loaded"
-      @toggleMyDrawerOpen="toggleMyDrawerOpen"
+      v-bind="$attrs"
       :compact="false"
     />
 
@@ -112,9 +108,6 @@ export default {
     tweak (offset, viewportHeight) {
       const height = viewportHeight - offset + 'px'
       return { height, minHeight: height }
-    },
-    toggleContactDrawerOpen () {
-      this.contactDrawerOpen = !this.contactDrawerOpen
     },
     toggleContactBookOpen () {
       this.contactBookOpen = !this.contactBookOpen

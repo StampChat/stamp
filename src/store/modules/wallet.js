@@ -1,8 +1,6 @@
-import Vue from 'vue'
-
 import { calcId } from '../../cashweb/wallet/helpers'
 import { store as levelOutpointStore } from '../../adapters/level-outpoint-store'
-
+import { markRaw } from 'vue'
 import { HDPrivateKey } from 'bitcore-lib-xpi'
 
 export async function rehydrateWallet (wallet) {
@@ -12,7 +10,11 @@ export async function rehydrateWallet (wallet) {
   if (!wallet.feePerByte) {
     wallet.feePerByte = 2
   }
-  wallet.xPrivKey = HDPrivateKey.fromObject(wallet.xPrivKey)
+  Object.defineProperty(wallet, 'xPrivKey', {
+    value: markRaw(HDPrivateKey.fromObject(wallet.xPrivKey)),
+    writable: true,
+    configurable: false
+  })
   wallet.utxos = {}
   wallet.balance = 0
   // FIXME: This shouldn't be necessary, but the GUI needs real time
@@ -47,16 +49,16 @@ export default {
       state.utxos = {}
     },
     setXPrivKey (state, xPrivKey) {
-      state.xPrivKey = xPrivKey
+      state.xPrivKey = markRaw(xPrivKey)
     },
     removeUTXO (state, id) {
       state.balance -= state.utxos[id] || 0
-      Vue.delete(state.utxos, id)
+      delete state.utxos[id]
     },
     addUTXO (state, output) {
       state.balance += output.satoshis || 0
       const utxoId = calcId(output)
-      Vue.set(state.utxos, utxoId, output.satoshis)
+      state.utxos[utxoId] = output.satoshis
     }
   },
   getters: {

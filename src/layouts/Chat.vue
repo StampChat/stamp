@@ -25,7 +25,7 @@
           class="q-px-sm"
           flat
           dense
-          @click="toggleSettingsDrawerOpen"
+          @click="toggleMyDrawerOpen"
           icon="menu"
         />
         <q-avatar rounded>
@@ -121,7 +121,7 @@
       <!-- Message box -->
       <chat-input
         ref="chatInput"
-        v-model="message"
+        v-model:message="message"
         :stamp-amount="stampAmount"
         @sendMessage="sendMessage"
         @sendFileClicked="sendFileOpen = true"
@@ -160,6 +160,7 @@ export default {
       default: () => []
     }
   },
+  emits: ['toggleMyDrawerOpen', 'toggleContactDrawerOpen'],
   components: {
     ChatMessageStack,
     ChatMessageText,
@@ -171,6 +172,7 @@ export default {
   },
   data () {
     return {
+      // TODO: Timer isn't used delete
       timer: null,
       now: moment(),
       sendFileOpen: false,
@@ -182,15 +184,13 @@ export default {
       replyDigest: null
     }
   },
-  created () {
-    this.timer = setInterval(() => {
-      this.now = moment()
-    }, 60000)
-  },
-  destroyed () {
+  unmounted () {
     clearTimeout(this.timer)
   },
   mounted () {
+    this.timer = setInterval(() => {
+      this.now = moment()
+    }, 60000)
     this.scrollBottom()
   },
   methods: {
@@ -228,10 +228,10 @@ export default {
         // Not mounted yet
         return
       }
-      const scrollTarget = scrollArea.getScrollTarget()
       this.$nextTick(() =>
-        scrollArea.setScrollPosition(
-          scrollTarget.scrollHeight,
+        scrollArea.setScrollPercentage(
+          'vertical',
+          1.0,
           scrollDuration
         )
       )
@@ -265,9 +265,9 @@ export default {
             // Not mounted yet
             return
           }
-          const scrollTarget = scrollArea.getScrollTarget()
           scrollArea.setScrollPosition(
-            scrollTarget.scrollHeight - details.verticalSize,
+            'vertical',
+            1,
             scrollDuration
           )
         })
@@ -284,7 +284,7 @@ export default {
       }
       return previousMessage.senderAddress !== message.senderAddress
     },
-    toggleSettingsDrawerOpen () {
+    toggleMyDrawerOpen () {
       this.$emit('toggleMyDrawerOpen')
     },
     toggleContactDrawerOpen () {
@@ -364,7 +364,7 @@ export default {
     }
   },
   watch: {
-    messages () {
+    'messages.length' () {
       // Scroll to bottom if user was already there.
       if (this.bottom) {
         this.scrollBottom()

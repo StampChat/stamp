@@ -87,6 +87,7 @@ export default {
       default: () => ''
     }
   },
+  emits: ['mouseover-contact'],
   methods: {
     ...mapActions({
       deleteContact: 'contacts/deleteContact'

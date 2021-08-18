@@ -72,8 +72,7 @@ import { seedCopiedNotify } from '../../utils/notifications'
 
 export default {
   model: {
-    prop: 'accountData',
-    event: 'input'
+    accountData: Object
   },
   props: {
     accountData: {
@@ -81,14 +80,17 @@ export default {
       required: true
     }
   },
+  emits: ['update:account-data'],
   data () {
     return {
-      action: 'none'
+      action: 'none',
+      rawName: this.accountData.name,
+      rawSeed: this.accountData.seed
     }
   },
   methods: {
     generateMnemonic () {
-      this.seed = generateMnemonic()
+      this.rawSeed = generateMnemonic()
     },
     copySeed () {
       copyToClipboard(this.seed).then(() => {
@@ -108,29 +110,26 @@ export default {
     newCharacter () {
       this.generateMnemonic()
       this.action = 'new'
-      this.name = ''
+      this.rawName = ''
     },
     importCharacter () {
       this.action = 'import'
-      this.seed = ''
+      this.rawSeed = ''
     }
   },
   computed: {
     seed: {
       get () {
-        return this.accountData.seed
+        return this.rawSeed
       },
       set (val) {
-        console.log('seed', val)
-        this.accountData.seed = val.toLowerCase().trim()
-        this.accountData.valid = this.isValid
-        console.log(this.accountData)
-        this.$emit('input', this.accountData)
+        this.rawSeed = val.toLowerCase().trim()
+        this.$emit('update:account-data', { name: this.rawName, seed: this.rawSeed, valid: this.isValid })
       }
     },
     isValid () {
       if (this.action === 'new') {
-        return this.accountData.name.length > 0 && this.isSeedValid
+        return this.rawName.length > 0 && this.isSeedValid
       }
       if (this.action === 'import') {
         return this.isSeedValid
@@ -138,16 +137,15 @@ export default {
       return false
     },
     isSeedValid () {
-      return validateMnemonic(this.seed.toLowerCase().trim())
+      return validateMnemonic(this.rawSeed.toLowerCase().trim())
     },
     name: {
       get () {
-        return this.accountData.name
+        return this.rawName
       },
       set (val) {
-        this.accountData.name = val
-        this.accountData.valid = this.isValid
-        this.$emit('input', this.accountData)
+        this.rawName = val
+        this.$emit('update:account-data', { name: this.rawName, seed: this.rawSeed, valid: this.isValid })
       }
     }
   }

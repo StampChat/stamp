@@ -5,7 +5,7 @@
       :address="address"
       :messages="messages"
       :style="`height: inherit; min-height: inherit;`"
-      v-on="$listeners"
+      v-bind="$attrs"
     />
   </div>
 </template>

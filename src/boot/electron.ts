@@ -1,13 +1,12 @@
 import { boot } from 'quasar/wrappers'
-import { remote, ipcRenderer, shell } from 'electron'
 
-export default boot(({ Vue }) => {
-  Vue.prototype.updateBadge = (unread: number) => {
-    ipcRenderer.sendSync('update-badge', 1)
-    remote.app.setBadgeCount(unread)
+export default boot(({ app }) => {
+  app.config.globalProperties.updateBadge = (unread: number) => {
+    window.badge.updateBadge(1)
+    window.badge.setBadgeCount(unread)
   }
 
-  Vue.prototype.openURL = (url: string) => {
-    shell.openExternal(url)
+  app.config.globalProperties.openURL = (url: string) => {
+    window.url.open(url)
   }
 })

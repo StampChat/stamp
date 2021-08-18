@@ -31,7 +31,7 @@ export default {
     contactClick: {
       type: Function,
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      default: () => () => {}
+      default: () => () => { }
     }
   },
   data () {
@@ -42,7 +42,7 @@ export default {
   created () {
     document.addEventListener('keydown', this.navigateUsingArrowKeys)
   },
-  beforeDestroy () {
+  beforeUnmount () {
     document.removeEventListener('keydown', this.navigateUsingArrowKeys)
   },
   methods: {
