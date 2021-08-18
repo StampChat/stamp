@@ -5,7 +5,6 @@ import assert from 'assert'
 import { calcId } from './helpers'
 
 import { Address, Script, Transaction, crypto } from 'bitcore-lib-xpi'
-import { Lock } from './lock'
 
 const standardUtxoSize = 34
 const standardInputSize = 175 // A few extra bytes
@@ -46,7 +45,6 @@ export class Wallet {
     this.numAddresses = numAddresses
     this.numChangeAddresses = numChangeAddresses
 
-    this.constructionLock = new Lock()
     // Workaround for the way electrum-cash ensures a subscription isn't handled
     // twice.
     // Fixes: "MaxListenersExceededWarning: Possible EventEmitter memory leak
