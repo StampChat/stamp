@@ -705,7 +705,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         const outpointsList = stealthMessage.getOutpointsList()
         const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
         const ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
-        const stealthHDPrivKey = this.messageConstructor.constructHDStealthPrivateKey(ephemeralPubKey, wallet.identityPrivKey)
+        const stealthHDPrivKey = this.payloadConstructor.constructHDStealthPrivateKey(ephemeralPubKey, wallet.identityPrivKey)
         for (const [i, outpoint] of outpointsList.entries()) {
           const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
           const stealthTx = Transaction(stealthTxRaw)
