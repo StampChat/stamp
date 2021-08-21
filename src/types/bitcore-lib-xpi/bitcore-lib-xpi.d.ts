@@ -34,6 +34,7 @@ declare module 'bitcore-lib-xpi' {
             static fromDER (sig: Buffer): Signature;
             static fromString (data: string): Signature;
             SIGHASH_ALL: number;
+            toCompact (i: number, compressed: boolean): Buffer;
             toString (): string;
         }
     }
