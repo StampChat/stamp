@@ -10,7 +10,6 @@ import { PayloadConstructor } from './crypto'
 import VCard from 'vcf'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import { Wallet } from '../wallet'
-import { TextEncoder } from 'util'
 
 export class MessageConstructor {
   payloadConstructor: PayloadConstructor

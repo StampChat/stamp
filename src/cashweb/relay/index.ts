@@ -25,8 +25,6 @@ import { MessageStore } from './storage/storage'
 import { Wallet } from '../wallet'
 import { MessageWrapper } from '../types/messages'
 import { Outpoint, OutpointId } from '../types/outpoint'
-import { URL } from 'url'
-import { TextDecoder } from 'util'
 
 interface ReplyItem {
   type: 'reply'

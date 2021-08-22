@@ -7,8 +7,6 @@ import pop from '../pop'
 import { crypto, Address, Networks, PrivateKey } from 'bitcore-lib-xpi'
 import { Wallet } from '../wallet'
 import { OutpointId } from '../types/outpoint'
-import { TextDecoder, TextEncoder } from 'util'
-import { URL } from 'url'
 
 export class KeyserverHandler {
   keyservers: string[]
