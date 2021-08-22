@@ -5,7 +5,12 @@ declare module 'bitcore-lib-xpi' {
     // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
     export namespace crypto {
-        class BN { }
+        class BN {
+            static fromBuffer (buf: Buffer): BN
+
+            add (r: BN): BN
+            mod (r: BN): BN
+        }
 
         namespace ECDSA {
             function sign (message: Buffer, key: PrivateKey): Signature;
@@ -28,7 +33,14 @@ declare module 'bitcore-lib-xpi' {
             function getRandomBuffer (size: number): Buffer;
         }
 
-        namespace Point { }
+        class Point {
+            static pointToCompressed (point: Point): Buffer;
+
+            static getN (): BN
+
+            mul (bn: BN): Point
+            add (bn: BN | Point): Point
+        }
 
         class Signature {
             static fromDER (sig: Buffer): Signature;
@@ -80,6 +92,7 @@ declare module 'bitcore-lib-xpi' {
         inputs: Transaction.Input[];
         outputs: Transaction.Output[];
         readonly id: string;
+        readonly txid: string;
         readonly hash: string;
         nid: string;
         readonly outputAmount: number;
@@ -117,6 +130,8 @@ declare module 'bitcore-lib-xpi' {
         inspect (): string;
         serialize (): string;
 
+        toBuffer (): Buffer;
+
         _estimateSize (): number;
     }
 
@@ -135,6 +150,9 @@ declare module 'bitcore-lib-xpi' {
     export class PrivateKey {
         readonly publicKey: PublicKey;
         readonly network: Networks.Network;
+        readonly bn: crypto.BN;
+
+        static fromBuffer (data: Buffer, network: string): PrivateKey;
 
         toAddress (networkName?: string): Address;
         toPublicKey (): PublicKey;
@@ -142,17 +160,24 @@ declare module 'bitcore-lib-xpi' {
         toObject (): object;
         toJSON (): object;
         toWIF (): string;
+        toBuffer (): Buffer;
+        toBigNumber (): crypto.BN;
 
-        constructor (key?: string, network?: Networks.Network);
+        constructor (key?: string | crypto.BN, network?: Networks.Network);
     }
 
     export class PublicKey {
-        constructor (source: string);
+        readonly point: crypto.Point;
+        constructor (source: string | Buffer);
 
         static fromPrivateKey (privateKey: PrivateKey): PublicKey;
+        static fromPoint (point: crypto.Point): PublicKey;
+        static fromBuffer (buffer: Buffer): PublicKey;
 
         toBuffer (): Buffer;
         toDER (): Buffer;
+        toAddress (network: string): Address;
+        toBigNumber (): crypto.BN;
     }
 
     export class HDPrivateKey {
@@ -188,7 +213,7 @@ declare module 'bitcore-lib-xpi' {
     export namespace Script {
         const types: {
             DATA_OUT: string;
-        };
+        }
         function buildMultisigOut (publicKeys: PublicKey[], threshold: number, opts: object): Script;
         function buildWitnessMultisigOutFromScript (script: Script): Script;
         function buildMultisigIn (pubkeys: PublicKey[], threshold: number, signatures: Buffer[], opts: object): Script;
@@ -201,6 +226,8 @@ declare module 'bitcore-lib-xpi' {
         function buildPublicKeyHashIn (publicKey: PublicKey, signature: crypto.Signature | Buffer, sigtype: number): Script;
 
         function fromAddress (address: string | Address): Script;
+
+        function toAddress (network: string): Address;
 
         function empty (): Script;
     }
@@ -255,7 +282,7 @@ declare module 'bitcore-lib-xpi' {
         checkMinimalPush (i: number): boolean;
         getSignatureOperationsCount (accurate: boolean): number;
 
-        toAddress (): Address;
+        toAddress (network: string): Address;
     }
 
     export class Message {
@@ -282,15 +309,16 @@ declare module 'bitcore-lib-xpi' {
         interface Network {
             readonly name: string;
             readonly alias: string;
+            readonly prefix: string;
         }
 
-        const livenet: Network;
-        const mainnet: Network;
-        const testnet: Network;
+        const livenet: Network
+        const mainnet: Network
+        const testnet: Network
 
         function add (data: any): Network;
         function remove (network: Network): void;
-        function get (args: string | number | Network, keys: string | string[] | undefined): Network;
+        function get (args: string | number | Network, keys?: string | string[] | undefined): Network;
     }
 
     export class Address {
@@ -302,6 +330,7 @@ declare module 'bitcore-lib-xpi' {
 
         toCashAddress (): string;
         toXAddress (): string;
+        toBuffer (): Buffer;
     }
 
     export class Unit {
