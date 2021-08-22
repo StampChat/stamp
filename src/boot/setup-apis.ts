@@ -1,12 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { ElectrumClient } from 'electrum-cash'
 import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils/constants'
 import { Wallet } from '../cashweb/wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
 import { store as levelDbOutpointStore } from '../adapters/level-outpoint-store'
+import { boot } from 'quasar/wrappers'
+import { Outpoint, OutpointId } from 'src/cashweb/types/outpoint'
+import { VueConstructor } from 'vue/types/umd'
 
-function instrumentElectrumClient ({ resolve, reject, client, observables, reconnector }) {
-  console.log('instrumentElectrumclient?')
+function instrumentElectrumClient ({ resolve, reject, client, observables, reconnector }:
+  {
+    resolve: (value: ElectrumClient | PromiseLike<ElectrumClient>) => void,
+    reject: (reason?: any) => void,
+    client: ElectrumClient,
+    observables: { connected: boolean },
+    reconnector: () => void
+  }) {
   // We need a local variable that is unique to this client, so it doesn't fuck around
   let connectionAlive = false
   const resolved = false
@@ -55,12 +65,12 @@ function instrumentElectrumClient ({ resolve, reject, client, observables, recon
     reconnector()
   })
 
-  client.connection.on('end', (e) => {
+  client.connection.on('end', (e?: Error) => {
     notifyDisconnect()
     console.log(e)
   })
 
-  client.connection.on('error', (err) => {
+  client.connection.on('error', (err?: Error) => {
     console.error(err)
   })
 
@@ -70,13 +80,13 @@ function instrumentElectrumClient ({ resolve, reject, client, observables, recon
   client.connect().then(() => console.log('connected')).catch(err => console.error('unablet to connect to electrum host', err.message))
 }
 
-function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
+function createAndBindNewElectrumClient ({ Vue, observables, wallet }: { Vue: VueConstructor, observables: any, wallet: Wallet }) {
   const { url, port, scheme } = electrumServers[Math.floor(Math.random() * electrumServers.length)]
   console.log('Using electrum server:', url, port, scheme)
   try {
     const client = new ElectrumClient('Stamp Wallet', '1.4.1', url, port, scheme, 10000)
 
-    const electrumPromise = new Promise((resolve, reject) => {
+    const electrumPromise = new Promise<ElectrumClient>((resolve, reject) => {
       instrumentElectrumClient({
         resolve,
         reject,
@@ -86,7 +96,7 @@ function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
       })
     })
     // (Re)set state on Vue prototype
-    Vue.prototype.$electrumClientPromise = electrumPromise
+    Object.assign(Vue.prototype, { $electrumClientPromise: electrumPromise })
     console.log('setting electrum client')
     wallet.setElectrumClient(electrumPromise)
   } catch (err) {
@@ -94,26 +104,26 @@ function createAndBindNewElectrumClient ({ Vue, observables, wallet }) {
   }
 }
 
-async function getWalletClient ({ store }) {
+async function getWalletClient ({ store }: { store: any }) {
   const outpointStore = await levelDbOutpointStore
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.
   const storageAdapter = {
-    getOutpoint (id) {
+    getOutpoint (id: OutpointId) {
       return outpointStore.getOutpoint(id)
     },
-    deleteOutpoint (id) {
+    deleteOutpoint (id: OutpointId) {
       store.commit('wallet/removeUTXO', id)
       return outpointStore.deleteOutpoint(id)
     },
-    putOutpoint (outpoint) {
+    putOutpoint (outpoint: Outpoint) {
       store.commit('wallet/addUTXO', outpoint)
       return outpointStore.putOutpoint(outpoint)
     },
-    freezeOutpoint (id) {
+    freezeOutpoint (id: OutpointId) {
       return outpointStore.freezeOutpoint(id)
     },
-    unfreezeOutpoint (id) {
+    unfreezeOutpoint (id: OutpointId) {
       return outpointStore.unfreezeOutpoint(id)
     },
     getOutpoints () {
@@ -130,7 +140,8 @@ async function getWalletClient ({ store }) {
   return new Wallet(storageAdapter)
 }
 
-export default async ({ store, Vue }) => {
+export default boot(async ({ Vue, store }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await store.restored
   // TODO: WE should probably rename this file to something more specific
   // as its instantiating the wallet now also.
@@ -148,12 +159,14 @@ export default async ({ store, Vue }) => {
     wallet.setXPrivKey(xPrivKey)
   }
   const { client: relayClient, observables: relayObservables } = await getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumClient: Vue.prototype.$electrumClientPromise, store })
-  const relayToken = store.getters['relayClient/getToken']
+  const relayToken: string = store.getters['relayClient/getToken']
   console.log('relayToken', relayToken)
   relayClient.setToken(relayToken)
 
-  Vue.prototype.$wallet = wallet
-  Vue.prototype.$electrum = electrumObservables
-  Vue.prototype.$relayClient = relayClient
-  Vue.prototype.$relay = Vue.observable(relayObservables)
-}
+  Object.assign(Vue.prototype, {
+    $wallet: wallet,
+    $electrum: electrumObservables,
+    $relayClient: relayClient,
+    $relay: Vue.observable(relayObservables)
+  })
+})
