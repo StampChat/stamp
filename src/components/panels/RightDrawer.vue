@@ -182,7 +182,9 @@ export default {
     },
     contact: {
       type: Object,
-      default: () => ({})
+      default: () => ({
+        profile: { name: 'Unknown', avatar: '' }
+      })
     }
   },
   methods: {
