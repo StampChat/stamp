@@ -1,37 +1,39 @@
-import { PublicKey, crypto, Networks, Transaction, Script, Address, PrivateKey } from 'bitcore-lib-xpi'
+import { PublicKey, crypto, Transaction, Script, Address, PrivateKey } from 'bitcore-lib-xpi'
 import assert from 'assert'
+import atob from 'atob'
 
 import { Header, Message, PayloadEntry, Profile, ProfileEntry, Stamp, StampOutpoints } from './relay_pb'
 import stealth from './stealth_pb'
 import p2pkh from './p2pkh_pb'
-import filters from './filters_pb'
+import filters, { PriceFilter } from './filters_pb'
 import { PayloadConstructor } from './crypto'
 import VCard from 'vcf'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
+import { Wallet } from '../wallet'
+import { TextEncoder } from 'util'
 
 export class MessageConstructor {
-  constructor ({ networkName, wallet }) {
-    assert(wallet, 'Missing wallet while initializing MessageConstructor')
+  payloadConstructor: PayloadConstructor
+
+  constructor ({ networkName }: { networkName: string }) {
     assert(networkName, 'Missing networkName while initializing MessageConstructor')
     this.payloadConstructor = new PayloadConstructor({ networkName })
-    this.networkPrefix = Networks.get(networkName).prefix
-    this.wallet = wallet
   }
 
-  constructStampTransactions (wallet, payloadDigest, destPubKey, amount) {
+  constructStampTransactions (wallet: Wallet, payloadDigest: Buffer, destPubKey: PublicKey, amount: number) {
     assert(payloadDigest instanceof Buffer, 'digestPayload is wrong type')
 
     // Stamp output
     const stampHDPubKey = this.payloadConstructor.constructStampHDPublicKey(payloadDigest, destPubKey)
     // Assuming one txn and one output for now.
 
-    const stampAddressGenerator = (transactionNumber) => (outputNumber) => {
+    const stampAddressGenerator = (transactionNumber: number) => (outputNumber: number) => {
       const outpointPubKey = stampHDPubKey.deriveChild(44)
         .deriveChild(145)
         .deriveChild(transactionNumber)
         .deriveChild(outputNumber)
         .publicKey
-      const address = PublicKey(crypto.Point.pointToCompressed(outpointPubKey.point))
+      const address = new PublicKey(crypto.Point.pointToCompressed(outpointPubKey.point))
       transactionNumber += 1
       return address
     }
@@ -43,20 +45,20 @@ export class MessageConstructor {
     return wallet.constructTransactionSet({ addressGenerator: stampAddressGenerator, amount })
   }
 
-  constructStealthTransactions (wallet, ephemeralPrivKey, destPubKey, amount) {
+  constructStealthTransactions (wallet: Wallet, ephemeralPrivKey: PrivateKey, destPubKey: PublicKey, amount: number) {
     // Add ephemeral output
     // NOTE: We're only doing 1 stealth txn, and 1 output for now.
     // But the spec should allow doing confidential amounts.
     const stealthHDPubKey = this.payloadConstructor.constructHDStealthPublicKey(ephemeralPrivKey, destPubKey)
 
-    const stealthPubKeyGenerator = (transactionNumber) => (outputNumber) => {
+    const stealthPubKeyGenerator = (transactionNumber: number) => (outputNumber: number) => {
       const stealthPubKey = stealthHDPubKey
         .deriveChild(44)
         .deriveChild(145)
         .deriveChild(transactionNumber)
         .deriveChild(outputNumber)
         .publicKey
-      const stealthAddress = PublicKey(crypto.Point.pointToCompressed(stealthPubKey.point))
+      const stealthAddress = new PublicKey(crypto.Point.pointToCompressed(stealthPubKey.point))
 
       transactionNumber += 1
       return stealthAddress
@@ -66,8 +68,8 @@ export class MessageConstructor {
     return wallet.constructTransactionSet({ addressGenerator: stealthPubKeyGenerator, amount })
   }
 
-  constructMessage (wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount) {
-    const plainPayloadDigest = crypto.Hash.sha256(plainTextPayload)
+  constructMessage (wallet: Wallet, plainTextPayload: Uint8Array, sourcePrivateKey: PrivateKey, destinationPublicKey: PublicKey, stampAmount: number) {
+    const plainPayloadDigest = crypto.Hash.sha256(Buffer.from(plainTextPayload))
 
     // Construct salt
     const rawSourcePrivateKey = sourcePrivateKey.toBuffer()
@@ -80,7 +82,7 @@ export class MessageConstructor {
     const payload = this.payloadConstructor.encrypt(sharedKey, plainTextPayload)
 
     // Calculate payload hmac
-    const payloadDigest = crypto.Hash.sha256(payload)
+    const payloadDigest = crypto.Hash.sha256(Buffer.from(payload))
     const payloadHmac = this.payloadConstructor.constructPayloadHmac(sharedKey, payloadDigest)
 
     // Get transaction bundle from wallet
@@ -121,7 +123,7 @@ export class MessageConstructor {
     }
   }
 
-  constructReplyEntry ({ payloadDigest }) {
+  constructReplyEntry ({ payloadDigest }: { payloadDigest: string }) {
     assert(typeof payloadDigest === 'string', 'digestPayload is wrong type')
     const payloadDigestBuffer = Buffer.from(payloadDigest, 'hex')
 
@@ -131,22 +133,22 @@ export class MessageConstructor {
     return entry
   }
 
-  constructTextEntry ({ text }) {
+  constructTextEntry ({ text }: { text: string }) {
     // Add text entry
     const textEntry = new PayloadEntry()
     textEntry.setKind('text-utf8')
-    const rawText = new TextEncoder('utf-8').encode(text)
+    const rawText = new TextEncoder().encode(text)
     textEntry.setBody(rawText)
     return textEntry
   }
 
-  constructStealthEntry ({ wallet, amount, destPubKey }) {
+  constructStealthEntry ({ wallet, amount, destPubKey }: { wallet: Wallet, amount: number, destPubKey: PublicKey }) {
     // Construct payment entry
     const paymentEntry = new PayloadEntry()
     paymentEntry.setKind('stealth-payment')
 
     const stealthPaymentEntry = new stealth.StealthPaymentEntry()
-    const ephemeralPrivKey = PrivateKey()
+    const ephemeralPrivKey = new PrivateKey()
 
     const transactionBundle = this.constructStealthTransactions(wallet, ephemeralPrivKey, destPubKey, amount)
 
@@ -169,13 +171,16 @@ export class MessageConstructor {
     return { paymentEntry, transactionBundle }
   }
 
-  constructImageEntry ({ image }) {
+  constructImageEntry ({ image }: { image: string }) {
     // Construct text entry
     const imgEntry = new PayloadEntry()
     imgEntry.setKind('image')
 
     const arr = image.split(',')
-    const avatarType = arr[0].match(/:(.*?);/)[1]
+    assert(arr.length > 0)
+    const matches = arr[0].match(/:(.*?);/)
+    assert(matches && matches.length > 2)
+    const avatarType = matches[1]
     const bstr = atob(arr[1])
     let n = bstr.length
     const rawAvatar = new Uint8Array(n)
@@ -192,11 +197,11 @@ export class MessageConstructor {
     return imgEntry
   }
 
-  constructP2PKHEntry ({ address, amount, wallet }) {
+  constructP2PKHEntry ({ address, amount, wallet }: { address: string, amount: number, wallet: Wallet }) {
     const p2pkhEntry = new p2pkh.P2PKHEntry()
 
     const output = new Transaction.Output({
-      script: Script(new Address(address)),
+      script: new Script(new Address(address)),
       satoshis: amount
     })
 
@@ -213,7 +218,7 @@ export class MessageConstructor {
     return { entry: payloadEntry, transaction, usedIDs }
   }
 
-  constructPriceFilter (isPublic, acceptancePrice, notificationPrice) {
+  constructPriceFilter (isPublic: boolean, acceptancePrice: number, notificationPrice: number) {
     // Construct PriceFilter
     const priceFilter = new filters.PriceFilter()
     priceFilter.setPublic(isPublic)
@@ -223,7 +228,7 @@ export class MessageConstructor {
     return priceFilter
   }
 
-  constructProfileMetadata (profileObj, priceFilter, privKey) {
+  constructProfileMetadata (profileObj: { name: string, bio: string, avatar: string }, priceFilter: PriceFilter, privKey: PrivateKey) {
     // Construct vCard
     const vCard = new VCard()
     vCard.set('fn', profileObj.name)
@@ -239,7 +244,9 @@ export class MessageConstructor {
     imgEntry.setKind('avatar')
 
     const arr = profileObj.avatar.split(',')
-    const avatarType = arr[0].match(/:(.*?);/)[1]
+    const avatarMatches = arr[0].match(/:(.*?);/)
+    assert(avatarMatches && avatarMatches.length > 1)
+    const avatarType = avatarMatches[1]
     const bstr = atob(arr[1])
     let n = bstr.length
     const rawAvatar = new Uint8Array(n)
@@ -268,14 +275,13 @@ export class MessageConstructor {
     profile.addEntries(filterEntry)
 
     const rawProfile = profile.serializeBinary()
-    const hashbuf = crypto.Hash.sha256(rawProfile)
-    const ecdsa = crypto.ECDSA({ privkey: privKey, hashbuf })
-    ecdsa.sign()
+    const hashbuf = crypto.Hash.sha256(Buffer.from(rawProfile))
+    const sig = crypto.ECDSA.sign(hashbuf, privKey)
 
     const authWrapper = new AuthWrapper()
-    const sig = ecdsa.sig.toCompact(1).slice(1)
+    const rawSig = sig.toCompact(1, true).slice(1)
     authWrapper.setPublicKey(privKey.toPublicKey().toBuffer())
-    authWrapper.setSignature(sig)
+    authWrapper.setSignature(rawSig)
     authWrapper.setScheme(1)
     authWrapper.setPayload(rawProfile)
 

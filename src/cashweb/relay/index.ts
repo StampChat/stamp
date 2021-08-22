@@ -1,6 +1,6 @@
 import axios from 'axios'
-import { splitEvery } from 'ramda'
-import { Payload, Message, MessagePage, MessageSet, Profile } from './relay_pb'
+import { splitEvery, flatten } from 'ramda'
+import { Payload, Message, MessagePage, MessageSet, Profile, PayloadEntry } from './relay_pb'
 import stealth from './stealth_pb'
 import p2pkh from './p2pkh_pb'
 
@@ -16,23 +16,80 @@ import { PayloadConstructor } from './crypto'
 import { messageMixin } from './extension'
 import { calcId } from '../wallet/helpers'
 import assert from 'assert'
-import paymentrequest from '../bip70/paymentrequest_pb'
+import paymentrequest, { PaymentRequest } from '../bip70/paymentrequest_pb'
 
 import WebSocket from 'isomorphic-ws'
-import { PublicKey, crypto, Transaction, Networks, Address } from 'bitcore-lib-xpi'
+import { PublicKey, crypto, Transaction, Networks, Address, PrivateKey } from 'bitcore-lib-xpi'
+import type { ElectrumClient } from 'electrum-cash'
+import { MessageStore } from './storage/storage'
+import { Wallet } from '../wallet'
+import { MessageWrapper } from '../types/messages'
+import { Outpoint, OutpointId } from '../types/outpoint'
+import { URL } from 'url'
+import { TextDecoder } from 'util'
+
+interface ReplyItem {
+  type: 'reply'
+  payloadDigest: string
+}
+
+interface TextItem {
+  type: 'text'
+  text: string
+}
+
+interface P2PKHSendItem {
+  type: 'p2pkh'
+  address: string
+  amount: number
+}
+
+interface StealthItem {
+  type: 'stealth'
+  amount: number
+  txId?: string
+  outputIndex?: number
+}
+
+interface ImageItem {
+  type: 'image'
+  image: string,
+}
+type MessageItem = StealthItem | P2PKHSendItem | TextItem | ReplyItem | ImageItem
+
+// TODO: Fix this, UI should use the same type
+interface UIStealthOutput {
+  type: 'stealth'
+  txId: string
+  satoshis: number
+  outputIndex: number
+}
+
+interface UIStampOutput {
+  type: 'stamp',
+  txId: string
+  satoshis: number
+  outputIndex: number
+}
+
+type UIOutput = UIStealthOutput | UIStampOutput
 
 export class ReadOnlyRelayClient {
-  constructor (url, networkName) {
+  url: string
+  networkName: string
+  networkPrefix: string
+
+  constructor (url: string, networkName: string) {
     this.url = url
     this.networkName = networkName
     this.networkPrefix = Networks.get(networkName).prefix
   }
 
-  toAPIAddressString (address) {
+  toAPIAddressString (address: string | Address) {
     return new Address(new Address(address).hashBuffer, Networks.get(this.networkName, undefined)).toCashAddress()
   }
 
-  async getRelayData (address) {
+  async getRelayData (address: string) {
     const addressLegacy = this.toAPIAddressString(address)
 
     const url = `${this.url}/profiles/${addressLegacy}`
@@ -45,31 +102,36 @@ export class ReadOnlyRelayClient {
 
     // Get PubKey
     const pubKey = metadata.getPublicKey()
+    assert(typeof pubKey !== 'string', 'invalid type for pubKey')
+    const rawPayload = metadata.getPayload()
+    assert(typeof rawPayload !== 'string', 'invalid type for pubKey')
 
-    const payload = Profile.deserializeBinary(metadata.getPayload())
+    const payload = Profile.deserializeBinary(rawPayload)
 
     // Find vCard
-    function isVCard (entry) {
+    function isVCard (entry: PayloadEntry) {
       return entry.getKind() === 'vcard'
     }
     const entryList = payload.getEntriesList()
-    const rawCard = entryList.find(isVCard).getBody() // TODO: Cancel if not found
+    const rawCard = entryList.find(isVCard)?.getBody() // TODO: Cancel if not found
+    assert(typeof rawCard !== 'string')
     const strCard = new TextDecoder().decode(rawCard)
     const vCard = new VCard().parse(strCard)
 
-    const name = vCard.data.fn._data
+    const name = vCard.data.fn.valueOf()
 
     // const bio = vCard.data.note._data
     const bio = ''
 
     // Get avatar
-    function isAvatar (entry) {
+    function isAvatar (entry: PayloadEntry) {
       return entry.getKind() === 'avatar'
     }
     const avatarEntry = entryList.find(isAvatar)
-    const rawAvatar = avatarEntry.getBody()
+    const rawAvatar = avatarEntry?.getBody()
 
-    const value = avatarEntry.getHeadersList()[0].getValue()
+    const value = avatarEntry?.getHeadersList()[0].getValue()
+    assert(rawAvatar && typeof rawAvatar !== 'string')
     const avatarDataURL = 'data:' + value + ';base64,' + arrayBufferToBase64(rawAvatar)
 
     const profile = {
@@ -87,23 +149,93 @@ export class ReadOnlyRelayClient {
     }
     return relayData
   }
+}
 
-  async getAcceptancePrice (address) {
-    const addressLegacy = this.toAPIAddressString(address)
+export class RelayClient extends ReadOnlyRelayClient {
+  url: string
+  events: EventEmitter
+  wallet?: Wallet
+  electrumClientPromise: Promise<ElectrumClient>
+  getPubKey: (address: string) => PublicKey
+  messageStore: MessageStore
+  relayReconnectInterval: number
+  payloadConstructor: PayloadConstructor
+  messageConstructor: MessageConstructor
+  token?: string
 
-    // Get fee
-    let acceptancePrice
-    try {
-      const filters = await this.getFilter(addressLegacy)
-      const priceFilter = filters.getPriceFilter()
-      acceptancePrice = priceFilter.getAcceptancePrice()
-    } catch (err) {
-      acceptancePrice = 'Unknown'
-    }
-    return acceptancePrice
+  constructor (url: string, wallet: Wallet, electrumClientPromise: Promise<ElectrumClient>,
+    { networkName = 'testnet', relayReconnectInterval = 10_000, getPubKey, messageStore }:
+      { relayReconnectInterval?: number, networkName?: string, messageStore: MessageStore, getPubKey: (address: string) => PublicKey }) {
+    super(url, networkName)
+    assert(networkName, 'Missing networkName while initializing RelayClient')
+    assert(url, 'Missing url while initializing RelayClient')
+    assert(getPubKey, 'Missing getPubKey while initializing RelayClient')
+    assert(messageStore, 'Missing messageStore while initializing RelayClient')
+
+    this.url = url
+    this.events = new EventEmitter()
+    this.wallet = wallet
+    this.electrumClientPromise = electrumClientPromise
+    this.getPubKey = getPubKey
+    this.messageStore = messageStore
+    this.relayReconnectInterval = relayReconnectInterval
+    this.payloadConstructor = new PayloadConstructor({ networkName })
+    this.messageConstructor = new MessageConstructor({ networkName })
+    this.token = undefined
   }
 
-  async getRawPayload (address, digest) {
+  setToken (token: string) {
+    this.token = token
+  }
+
+  setWallet (wallet: Wallet) {
+    this.wallet = wallet
+  }
+
+  async profilePaymentRequest (address: string) {
+    const addressLegacy = this.toAPIAddressString(address)
+
+    const url = `${this.url}/profiles/${addressLegacy}`
+    return await pop.getPaymentRequest(url, 'put')
+  }
+
+  setUpWebsocket (address: string | Address) {
+    assert(this.token)
+    const addressLegacy = this.toAPIAddressString(address)
+
+    const url = new URL(`/ws/${addressLegacy}`, this.url)
+    url.protocol = 'wss'
+    url.searchParams.set('access_token', this.token)
+    const socket = new WebSocket(url.toString())
+    socket.binaryType = 'arraybuffer'
+
+    socket.onmessage = event => {
+      const buffer = event.data as ArrayBuffer
+      const message = Message.deserializeBinary(new Uint8Array(buffer))
+      this.receiveMessage(message).catch(err => console.error(err))
+    }
+
+    const disconnectHandler = () => {
+      this.events.emit('disconnected')
+      setTimeout(() => {
+        assert(this.token)
+        this.setUpWebsocket(address)
+      }, this.relayReconnectInterval)
+    }
+
+    socket.onerror = (err) => {
+      this.events.emit('error', err)
+    }
+    socket.onclose = () => {
+      disconnectHandler()
+    }
+    socket.onopen = () => {
+      this.events.emit('opened')
+    }
+  }
+
+  async getRawPayload (address: string, digest: Uint8Array) {
+    assert(this.token)
     const addressLegacy = this.toAPIAddressString(address)
 
     const url = `${this.url}/payloads/${addressLegacy}`
@@ -122,76 +254,8 @@ export class ReadOnlyRelayClient {
     })
     return response.data
   }
-}
 
-export class RelayClient extends ReadOnlyRelayClient {
-  constructor (url, wallet, electrumClientPromise, { networkName = 'testnet', relayReconnectInterval = 10_000, getPubKey, messageStore }) {
-    super(url, networkName)
-    assert(networkName, 'Missing networkName while initializing RelayClient')
-    assert(url, 'Missing url while initializing RelayClient')
-    assert(getPubKey, 'Missing getPubKey while initializing RelayClient')
-    assert(messageStore, 'Missing messageStore while initializing RelayClient')
-
-    this.url = url
-    this.events = new EventEmitter()
-    this.wallet = wallet
-    this.electrumClientPromise = electrumClientPromise
-    this.getPubKey = getPubKey
-    this.messageStore = messageStore
-    this.relayReconnectInterval = relayReconnectInterval
-    this.payloadConstructor = new PayloadConstructor({ networkName })
-    this.messageConstructor = new MessageConstructor({ networkName, wallet })
-  }
-
-  setToken (token) {
-    this.token = token
-  }
-
-  setWallet (wallet) {
-    this.wallet = wallet
-  }
-
-  async profilePaymentRequest (address) {
-    const addressLegacy = this.toAPIAddressString(address)
-
-    const url = `${this.url}/profiles/${addressLegacy}`
-    return await pop.getPaymentRequest(url, 'put')
-  }
-
-  setUpWebsocket (address) {
-    const addressLegacy = this.toAPIAddressString(address)
-
-    const url = new URL(`/ws/${addressLegacy}`, this.url)
-    url.protocol = 'wss'
-    url.searchParams.set('access_token', this.token)
-    const socket = new WebSocket(url.toString())
-    socket.binaryType = 'arraybuffer'
-
-    socket.onmessage = event => {
-      const buffer = event.data
-      const message = Message.deserializeBinary(buffer)
-      this.receiveMessage(message).catch(err => console.error(err))
-    }
-
-    const disconnectHandler = () => {
-      this.events.emit('disconnected')
-      setTimeout(() => {
-        this.setUpWebsocket(address, this.token)
-      }, this.relayReconnectInterval)
-    }
-
-    socket.onerror = (err) => {
-      this.events.emit('error', err)
-    }
-    socket.onclose = () => {
-      disconnectHandler()
-    }
-    socket.onopen = () => {
-      this.events.emit('opened')
-    }
-  }
-
-  async getPayload (address, digest) {
+  async getPayload (address: string, digest: Uint8Array) {
     const addressLegacy = this.toAPIAddressString(address)
 
     const rawPayload = await this.getRawPayload(addressLegacy, digest)
@@ -199,8 +263,9 @@ export class RelayClient extends ReadOnlyRelayClient {
     return payload
   }
 
-  async deleteMessage (digest) {
+  async deleteMessage (digest: string) {
     assert(typeof digest === 'string')
+    assert(this.wallet, 'Attempting to delete a message with no wallet available')
 
     try {
       const message = await this.messageStore.getMessage(digest)
@@ -228,7 +293,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     }
   }
 
-  async putProfile (address, metadata) {
+  async putProfile (address: string, metadata: AuthWrapper) {
     const addressLegacy = this.toAPIAddressString(address)
 
     const rawProfile = metadata.serializeBinary()
@@ -243,7 +308,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     })
   }
 
-  async getMessages (address, startTime, endTime, retries = 3) {
+  async getMessages (address: string, startTime: number, endTime?: number, retries = 3): Promise<MessagePage | void> {
     const addressLegacy = this.toAPIAddressString(address)
 
     const url = `${this.url}/messages/${addressLegacy}`
@@ -278,6 +343,7 @@ export class RelayClient extends ReadOnlyRelayClient {
 
       const paymentRequest = paymentrequest.PaymentRequest.deserializeBinary(response.data)
       const serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
+      assert(typeof serializedPaymentDetails !== 'string', 'serializedPaymentDetails is a string?')
       const paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
 
       const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
@@ -289,18 +355,18 @@ export class RelayClient extends ReadOnlyRelayClient {
     }
   }
 
-  async messagePaymentRequest (address) {
+  async messagePaymentRequest (address: string) {
     const addressLegacy = this.toAPIAddressString(address)
 
     const url = `${this.url}/messages/${addressLegacy}`
     return await pop.getPaymentRequest(url, 'get')
   }
 
-  async sendPayment (paymentUrl, payment) {
+  async sendPayment (paymentUrl: string, payment: PaymentRequest) {
     return await pop.sendPayment(paymentUrl, payment)
   }
 
-  async pushMessages (address, messageSet) {
+  async pushMessages (address: string, messageSet: MessageSet) {
     const addressLegacy = this.toAPIAddressString(address)
 
     const rawMetadata = messageSet.serializeBinary()
@@ -312,21 +378,28 @@ export class RelayClient extends ReadOnlyRelayClient {
     })
   }
 
-  async sendMessageImpl ({ address, items, stampAmount, errCount = 0, previousHash }) {
+  async sendMessageImpl ({ address, items, stampAmount, errCount = 0, previousHash }: { address: string, items: MessageItem[], stampAmount: number, errCount?: number, previousHash?: string }) {
     const wallet = this.wallet
-    const sourcePrivateKey = wallet.identityPrivKey
-    const destinationPublicKey = address === wallet.myAddressStr ? wallet.identityPrivKey.publicKey : this.getPubKey(address)
+    assert(wallet, 'Trying to call sendMessageImply with wallet unset')
+    const sourcePrivateKey = wallet?.identityPrivKey
+    assert(sourcePrivateKey, 'Missing identityPrivateKey')
+    const destinationPublicKey = address === wallet?.myAddressStr ? wallet?.identityPrivKey?.publicKey : this.getPubKey(address)
+    assert(destinationPublicKey, 'Unable to set destination public key')
+    const senderAddress = this.wallet?.myAddressStr
+    assert(senderAddress, 'Unable to set senderAddress')
 
-    const usedIDs = []
-    const outpoints = []
-    const transactions = []
+    const usedIDs = [] as OutpointId[]
+    const outpoints = [] as UIOutput[]
+    const transactions = [] as Transaction[]
+
     // Construct payload
     const entries = await Promise.all(items.map(
-      async item => {
+      async (item: MessageItem) => {
+        assert(this.wallet, 'wallet missing while trying to construct a message')
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'stealth') {
           const { paymentEntry, transactionBundle } = this.messageConstructor.constructStealthEntry({ ...item, wallet: this.wallet, destPubKey: destinationPublicKey })
-          outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
+          outpoints.push(...flatten(transactionBundle.map(({ transaction, vouts, usedIds }) => {
             transactions.push(transaction)
             usedIDs.push(...usedIds)
             return vouts.map(vout => ({
@@ -334,8 +407,8 @@ export class RelayClient extends ReadOnlyRelayClient {
               txId: transaction.txid,
               satoshis: transaction.outputs[vout].satoshis,
               outputIndex: vout
-            }))
-          }).flat(1)
+            } as UIOutput))
+          }))
           )
           return paymentEntry
         }
@@ -357,10 +430,9 @@ export class RelayClient extends ReadOnlyRelayClient {
 
           return entry
         }
+        assert(false, 'Unknown entry type')
       }
     ))
-
-    const senderAddress = this.wallet.myAddressStr
 
     // Construct payload
     const payload = new Payload()
@@ -376,7 +448,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       // Add localy
       this.events.emit('messageSending', { address, senderAddress, index: payloadDigestHex, items, outpoints, previousHash, transactions })
 
-      outpoints.push(...transactionBundle.map(({ transaction, vouts, usedIds }) => {
+      outpoints.push(...flatten(transactionBundle.map(({ transaction, vouts, usedIds }) => {
         transactions.push(transaction)
         usedIDs.push(...usedIds)
         return vouts.map(vout => ({
@@ -384,15 +456,16 @@ export class RelayClient extends ReadOnlyRelayClient {
           txId: transaction.txid,
           satoshis: transaction.outputs[vout].satoshis,
           outputIndex: vout
-        }))
-      }).flat(1)
+        } as UIStampOutput))
+      }))
       )
 
       const messageSet = new MessageSet()
       messageSet.addMessages(message)
 
       const destinationAddress = destinationPublicKey.toAddress(this.networkName).toCashAddress()
-      const electrumClient = await this.wallet.electrumClientPromise
+      const electrumClient = await this.wallet?.electrumClientPromise
+      assert(electrumClient, 'Unable to get electrumClient')
       Promise.all(transactions.map(async (transaction) => {
         console.log('Broadcasting a transaction', transaction.txid, transaction.toString())
         await electrumClient.request('blockchain.transaction.broadcast', transaction.toString())
@@ -409,7 +482,10 @@ export class RelayClient extends ReadOnlyRelayClient {
           if (err.response) {
             console.error(err.response)
           }
-          usedIDs.forEach(id => wallet.fixOutpoint(id))
+          usedIDs.forEach(id => {
+            assert(this.wallet)
+            this.wallet.fixOutpoint(id)
+          })
           errCount += 1
           console.log('error sending message', err)
           if (errCount >= 3) {
@@ -431,26 +507,26 @@ export class RelayClient extends ReadOnlyRelayClient {
 
   // Stub for original API
   // TODO: Fix clients to not use these APIs at all
-  async sendMessage ({ address, text, replyDigest, stampAmount }) {
+  async sendMessage ({ address, text, replyDigest, stampAmount }: { address: string, text: string, replyDigest: string, stampAmount: number }) {
     // Send locally
-    const items = [
+    const items: MessageItem[] = [
       {
         type: 'text',
         text
-      }
+      } as TextItem
     ]
     if (replyDigest) {
       items.unshift({
         type: 'reply',
         payloadDigest: replyDigest
-      })
+      } as ReplyItem)
     }
     await this.sendMessageImpl({ address, items, stampAmount })
   }
 
-  async sendStealthPayment ({ address, stampAmount, amount, memo }) {
+  async sendStealthPayment ({ address, stampAmount, amount, memo }: { address: string, stampAmount: number, amount: number, memo: string }) {
     // Send locally
-    const items = [
+    const items: MessageItem[] = [
       {
         type: 'stealth',
         amount
@@ -466,8 +542,8 @@ export class RelayClient extends ReadOnlyRelayClient {
     await this.sendMessageImpl({ address, items, stampAmount })
   }
 
-  async sendImage ({ address, image, caption, replyDigest, stampAmount }) {
-    const items = [
+  async sendImage ({ address, image, caption, replyDigest, stampAmount }: { address: string, image: string, caption: string, replyDigest: string, stampAmount: number }) {
+    const items: MessageItem[] = [
       {
         type: 'image',
         image
@@ -492,20 +568,22 @@ export class RelayClient extends ReadOnlyRelayClient {
 
   // Stub for original API
   // TODO: Fix clients to not use these APIs at all
-  async sendToPubKeyHash ({ address, amount }) {
+  async sendToPubKeyHash ({ address, amount }: { address: string, amount: number }) {
     // Send locally
-    const items = [
+    const items: MessageItem[] = [
       {
         type: 'p2pkh',
         address,
         amount
-      }
+      } as P2PKHSendItem
     ]
     console.log(items)
-    await this.sendMessageImpl({ address: this.wallet.myAddressStr, items })
+    assert(this.wallet?.myAddressStr, 'Unable to get myAddressString in sendToPubKeyHash')
+    await this.sendMessageImpl({ address: this.wallet.myAddressStr, items, stampAmount: 0 })
   }
 
-  receiveSelfSend ({ payload } = {}) {
+  receiveSelfSend ({ payload }: { payload: Payload }) {
+    assert(this.wallet)
     // Decode entries
     const entriesList = payload.getEntriesList()
 
@@ -515,12 +593,13 @@ export class RelayClient extends ReadOnlyRelayClient {
       const kind = entry.getKind()
       if (kind === 'p2pkh') {
         const entryData = entry.getBody()
+        assert(typeof entryData !== 'string', 'entryData of wrong type')
         const p2pkhMessage = p2pkh.P2PKHEntry.deserializeBinary(entryData)
 
         // Add stealth outputs
         const transactionRaw = p2pkhMessage.getTransaction()
         const p2pkhTxRaw = Buffer.from(transactionRaw)
-        const p2pkhTxR = Transaction(p2pkhTxRaw)
+        const p2pkhTxR = new Transaction(p2pkhTxRaw)
 
         for (const input of p2pkhTxR.inputs) {
           // Don't add these outputs to our wallet. They're the other persons
@@ -533,14 +612,16 @@ export class RelayClient extends ReadOnlyRelayClient {
     }
   }
 
-  async receiveMessage (message, receivedTime = Date.now()) {
+  async receiveMessage (rawMessage: Message, receivedTime = Date.now()) {
     // Parse message
-    Object.assign(Message.prototype, messageMixin(this.networkPrefix))
+    const message = messageMixin(this.networkPrefix, rawMessage)
     const preParsedMessage = message.parse()
 
     const senderAddress = preParsedMessage.sourcePublicKey.toAddress(this.networkName).toCashAddress() // TODO: Make generic
     const wallet = this.wallet
+    assert(wallet, 'Wallet not available when trying to receive message')
     const myAddress = wallet.myAddressStr
+    assert(myAddress, 'Address or wallet not set')
     const outbound = (senderAddress === myAddress)
     const serverTime = preParsedMessage.receivedTime
 
@@ -556,7 +637,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       console.log('Message not found locally', payloadDigestHex)
     }
 
-    const getPayload = async (payloadDigest, messagePayload) => {
+    const getPayload = async (payloadDigest: Uint8Array, messagePayload: Uint8Array) => {
       if (messagePayload.length !== 0) {
         return messagePayload
       }
@@ -564,7 +645,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         return new Uint8Array(await this.getRawPayload(myAddress, payloadDigest))
       } catch (err) {
         console.error(err)
-        // TODO: Handle
+        throw (err)
       }
     }
 
@@ -580,7 +661,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     // Just to be clear that this is where the message is now valid.
     const parsedMessage = preParsedMessage
 
-    const payloadDigest = crypto.Hash.sha256(rawCipherPayload)
+    const payloadDigest = crypto.Hash.sha256(Buffer.from(rawCipherPayload))
     if (!payloadDigest.equals(parsedMessage.payloadDigest)) {
       console.error('Payload received doesn\'t match digest. Refusing to process message', payloadDigest, parsedMessage.payloadDigest)
       return
@@ -593,14 +674,16 @@ export class RelayClient extends ReadOnlyRelayClient {
     const outpoints = []
 
     let stampValue = 0
+    const identityPrivKey = wallet.identityPrivKey
+    assert(identityPrivKey)
 
-    const stampRootHDPrivKey = this.payloadConstructor.constructStampHDPrivateKey(payloadDigest, wallet.identityPrivKey)
+    const stampRootHDPrivKey = this.payloadConstructor.constructStampHDPrivateKey(payloadDigest, identityPrivKey)
       .deriveChild(44)
       .deriveChild(145)
 
     for (const [i, stampOutpoint] of stampOutpoints.entries()) {
       const stampTxRaw = Buffer.from(stampOutpoint.getStampTx())
-      const stampTx = Transaction(stampTxRaw)
+      const stampTx = new Transaction(stampTxRaw)
       const txId = stampTx.txid
       const vouts = stampOutpoint.getVoutsList()
       const stampTxHDPrivKey = stampRootHDPrivKey.deriveChild(i)
@@ -614,7 +697,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       for (const [j, outputIndex] of vouts.entries()) {
         const output = stampTx.outputs[outputIndex]
         const satoshis = output.satoshis
-        const address = output.script.toAddress(this.networkName) // TODO: Make generic
+        const address = output.script.toAddress(this.networkName)
         stampValue += satoshis
 
         // Also note, we should use an HD key here.
@@ -634,31 +717,31 @@ export class RelayClient extends ReadOnlyRelayClient {
         }
 
         const stampOutput = {
+          type: 'stamp',
           address: address.toCashAddress(),
-          privKey: outbound ? null : outputPrivKey, // This is okay, we don't add it to the wallet.
           satoshis,
           txId,
-          outputIndex,
-          type: 'stamp',
-          payloadDigest
-        }
+          outputIndex
+        } as Outpoint
         outpoints.push(stampOutput)
         if (outbound) {
           // In order to update UTXO state more quickly, go ahead and remove the inputs from our set immediately
           continue
         }
-        wallet.putOutpoint(stampOutput)
+        wallet.putOutpoint({ ...stampOutput, privKey: outputPrivKey })
       }
     }
 
     // Ignore messages below acceptance price
     let stealthValue = 0
+    const identityPrivateKey = wallet.identityPrivKey
+    assert(identityPrivateKey)
 
-    const rawPayload = outbound ? parsedMessage.openSelf(wallet.identityPrivKey) : parsedMessage.open(wallet.identityPrivKey)
+    const rawPayload = outbound ? parsedMessage.openSelf(identityPrivateKey) : parsedMessage.open(identityPrivateKey)
     const payload = Payload.deserializeBinary(rawPayload)
 
     if (outbound && myAddress === destinationAddress) {
-      return this.receiveSelfSend({ payload, receivedTime })
+      return this.receiveSelfSend({ payload })
     }
 
     // Decode entries
@@ -666,7 +749,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     const newMsg = {
       outbound,
       status: 'confirmed',
-      items: [],
+      items: [] as MessageItem[],
       serverTime,
       receivedTime,
       outpoints,
@@ -683,12 +766,13 @@ export class RelayClient extends ReadOnlyRelayClient {
         newMsg.items.push({
           type: 'reply',
           payloadDigest
-        })
+        } as ReplyItem)
         continue
       }
 
       if (kind === 'text-utf8') {
         const entryData = entry.getBody()
+        assert(typeof entryData !== 'string')
         const text = new TextDecoder().decode(entryData)
         newMsg.items.push({
           type: 'text',
@@ -699,16 +783,17 @@ export class RelayClient extends ReadOnlyRelayClient {
 
       if (kind === 'stealth-payment') {
         const entryData = entry.getBody()
+        assert(typeof entryData !== 'string', 'entryData should not have string type')
         const stealthMessage = stealth.StealthPaymentEntry.deserializeBinary(entryData)
 
         // Add stealth outputs
         const outpointsList = stealthMessage.getOutpointsList()
         const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
-        const ephemeralPubKey = PublicKey.fromBuffer(ephemeralPubKeyRaw)
-        const stealthHDPrivKey = this.payloadConstructor.constructHDStealthPrivateKey(ephemeralPubKey, wallet.identityPrivKey)
+        const ephemeralPubKey = PublicKey.fromBuffer(Buffer.from(ephemeralPubKeyRaw))
+        const stealthHDPrivKey = this.payloadConstructor.constructHDStealthPrivateKey(ephemeralPubKey, identityPrivKey)
         for (const [i, outpoint] of outpointsList.entries()) {
           const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
-          const stealthTx = Transaction(stealthTxRaw)
+          const stealthTx = new Transaction(stealthTxRaw)
           const txId = stealthTx.txid
           const vouts = outpoint.getVoutsList()
 
@@ -743,14 +828,13 @@ export class RelayClient extends ReadOnlyRelayClient {
             stealthValue += satoshis
 
             const stampOutput = {
+              type: 'stealth',
               address: address.toCashAddress(),
               satoshis,
               outputIndex,
               privKey: outpointPrivKey,
-              txId,
-              type: 'stealth',
-              payloadDigest
-            }
+              txId
+            } as Outpoint
             outpoints.push(stampOutput)
             if (outbound) {
               // Don't add these outputs to our wallet. They're the other persons
@@ -782,22 +866,31 @@ export class RelayClient extends ReadOnlyRelayClient {
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
     const copartyAddress = copartyPubKey.toAddress(this.networkName).toCashAddress() // TODO: Make generic
     const payloadDigestHex = payloadDigest.toString('hex')
-    const finalizedMessage = { outbound, copartyAddress, copartyPubKey, index: payloadDigestHex, newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue }) }
+    const finalizedMessage = {
+      outbound,
+      senderAddress,
+      copartyAddress,
+      copartyPubKey,
+      index: payloadDigestHex,
+      newMsg: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue })
+    } as MessageWrapper
     await this.messageStore.saveMessage(finalizedMessage)
     this.events.emit('receivedMessage', finalizedMessage)
   }
 
   async refresh () {
     const wallet = this.wallet
-    const myAddressStr = wallet.myAddressStr
+    const myAddressStr = wallet?.myAddressStr
+    assert(myAddressStr, 'Missing wallet or myaddress')
     const lastReceived = await this.messageStore.mostRecentMessageTime()
     console.log('refreshing', lastReceived, myAddressStr)
-    const messagePage = await this.getMessages(myAddressStr, lastReceived || 0, null)
+    const messagePage = await this.getMessages(myAddressStr, lastReceived || 0)
+    assert(messagePage)
     const messageList = messagePage.getMessagesList()
     console.log('processing messages')
     const messageChunks = splitEvery(20, messageList)
     for (const messageChunk of messageChunks) {
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         setTimeout(() => {
           for (const message of messageChunk) {
             // TODO: Check correct destination
@@ -813,13 +906,17 @@ export class RelayClient extends ReadOnlyRelayClient {
     }
   }
 
-  async updateProfile (idPrivKey, profile, acceptancePrice) {
-    const priceFilter = this.messageConstructor.constructPriceFilter(true, acceptancePrice, acceptancePrice, idPrivKey)
+  async updateProfile (idPrivKey: PrivateKey, profile: {
+    name: string;
+    bio: string;
+    avatar: string;
+  }, acceptancePrice: number) {
+    const priceFilter = this.messageConstructor.constructPriceFilter(true, acceptancePrice, acceptancePrice)
     const metadata = this.messageConstructor.constructProfileMetadata(profile, priceFilter, idPrivKey)
     await this.putProfile(idPrivKey.toAddress(this.networkName).toCashAddress().toString(), metadata)
   }
 
-  async wipeWallet (messageDeleter) {
+  async wipeWallet (messageDeleter: (args: { address: string, payloadDigest: string }) => void) {
     const messageIterator = await this.messageStore.getIterator()
     // Todo, this rehydrate stuff is common to receiveMessage
     for await (const messageWrapper of messageIterator) {
@@ -828,7 +925,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       }
       const { index, copartyAddress } = messageWrapper
       await this.deleteMessage(messageWrapper.index)
-      messageDeleter({ address: copartyAddress, payloadDigest: index, index })
+      messageDeleter({ address: copartyAddress, payloadDigest: index })
     }
   }
 }

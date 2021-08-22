@@ -1,41 +1,42 @@
 import assert from 'assert'
 import { PrivateKey, PublicKey, crypto, HDPublicKey, HDPrivateKey } from 'bitcore-lib-xpi'
-
-import forge from 'node-forge'
+import * as forge from 'node-forge'
 
 export class PayloadConstructor {
-  constructor ({ networkName }) {
+  networkName: string
+
+  constructor ({ networkName }: { networkName: string }) {
     assert(networkName, 'Missing networkName while initializing PayloadConstructor')
     this.networkName = networkName
   }
 
-  constructPayloadHmac (sharedKey, payloadDigest) {
+  constructPayloadHmac (sharedKey: Buffer, payloadDigest: Uint8Array) {
     return crypto.Hash.sha256hmac(sharedKey, Buffer.from(payloadDigest))
   }
 
-  constructMergedKey (privateKey, publicKey) {
+  constructMergedKey (privateKey: PrivateKey, publicKey: PublicKey) {
     return PublicKey.fromPoint(publicKey.point.mul(privateKey.toBigNumber()))
   }
 
-  constructSharedKey (privateKey, publicKey, salt) {
+  constructSharedKey (privateKey: PrivateKey, publicKey: PublicKey, salt: Uint8Array) {
     const mergedKey = this.constructMergedKey(privateKey, publicKey)
     const rawMergedKey = mergedKey.toBuffer()
     const sharedKey = crypto.Hash.sha256hmac(Buffer.from(salt), rawMergedKey)
     return sharedKey
   }
 
-  constructStealthPublicKey (emphemeralPrivKey, destinationPublicKey) {
+  constructStealthPublicKey (emphemeralPrivKey: PrivateKey, destinationPublicKey: PublicKey) {
     const dhKeyPoint = destinationPublicKey.point.mul(emphemeralPrivKey.bn) // ebG
     const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
 
     const digest = crypto.Hash.sha256(dhKeyPointRaw) // H(ebG)
-    const digestPublicKey = PrivateKey.fromBuffer(digest).toPublicKey() // H(ebG)G
+    const digestPublicKey = PrivateKey.fromBuffer(digest, this.networkName).toPublicKey() // H(ebG)G
 
-    const stealthPublicKey = PublicKey(digestPublicKey.point.add(destinationPublicKey.point)) // H(ebG)G + bG
+    const stealthPublicKey = PublicKey.fromPoint(digestPublicKey.point.add(destinationPublicKey.point)) // H(ebG)G + bG
     return { stealthPublicKey, digest }
   }
 
-  constructHDStealthPublicKey (emphemeralPrivKey, destinationPublicKey) {
+  constructHDStealthPublicKey (emphemeralPrivKey: PrivateKey, destinationPublicKey: PublicKey) {
     const { stealthPublicKey, digest } = this.constructStealthPublicKey(emphemeralPrivKey, destinationPublicKey)
     return new HDPublicKey({
       publicKey: stealthPublicKey.toBuffer(),
@@ -47,7 +48,7 @@ export class PayloadConstructor {
     })
   }
 
-  constructStealthPrivateKey (emphemeralPubKey, destinationPrivateKey) {
+  constructStealthPrivateKey (emphemeralPubKey: PublicKey, destinationPrivateKey: PrivateKey) {
     const dhKeyPoint = emphemeralPubKey.point.mul(destinationPrivateKey.bn) // ebG
     const dhKeyPointRaw = crypto.Point.pointToCompressed(dhKeyPoint)
 
@@ -55,11 +56,11 @@ export class PayloadConstructor {
     const digestBn = crypto.BN.fromBuffer(digest)
 
     const stealthPrivBn = digestBn.add(destinationPrivateKey.bn).mod(crypto.Point.getN()) // H(ebG) + b
-    const stealthPrivateKey = PrivateKey(stealthPrivBn)
+    const stealthPrivateKey = new PrivateKey(stealthPrivBn)
     return { stealthPrivateKey, digest }
   }
 
-  constructHDStealthPrivateKey (emphemeralPubKey, destinationPrivateKey) {
+  constructHDStealthPrivateKey (emphemeralPubKey: PublicKey, destinationPrivateKey: PrivateKey) {
     const { stealthPrivateKey, digest } = this.constructStealthPrivateKey(emphemeralPubKey, destinationPrivateKey)
     return new HDPrivateKey({
       privateKey: stealthPrivateKey.toBuffer(),
@@ -71,15 +72,15 @@ export class PayloadConstructor {
     })
   }
 
-  constructStampPublicKey (payloadDigest, destinationPublicKey) {
-    const digestPrivateKey = PrivateKey.fromBuffer(payloadDigest)
+  constructStampPublicKey (payloadDigest: Uint8Array, destinationPublicKey: PublicKey) {
+    const digestPrivateKey = PrivateKey.fromBuffer(Buffer.from(payloadDigest), this.networkName)
     const digestPublicKey = digestPrivateKey.toPublicKey()
     const stampPoint = digestPublicKey.point.add(destinationPublicKey.point)
     const stampPublicKey = PublicKey.fromPoint(stampPoint)
     return stampPublicKey
   }
 
-  constructStampHDPublicKey (payloadDigest, destinationPublicKey) {
+  constructStampHDPublicKey (payloadDigest: Uint8Array, destinationPublicKey: PublicKey) {
     const stampPublicKey = this.constructStampPublicKey(payloadDigest, destinationPublicKey)
     return new HDPublicKey({
       publicKey: stampPublicKey.toBuffer(),
@@ -91,14 +92,14 @@ export class PayloadConstructor {
     })
   }
 
-  constructStampPrivateKey (payloadDigest, destinationPrivateKey) {
-    const digestBn = crypto.BN.fromBuffer(payloadDigest)
-    const stampPrivBn = digestBn.add(destinationPrivateKey.bn).mod(crypto.Point.getN())
-    const stampPrivKey = PrivateKey(stampPrivBn)
+  constructStampPrivateKey (payloadDigest: Uint8Array, destinationPrivateKey: PrivateKey) {
+    const digestBn = crypto.BN.fromBuffer(Buffer.from(payloadDigest))
+    const stampPrivBn = digestBn.add(destinationPrivateKey.toBigNumber()).mod(crypto.Point.getN())
+    const stampPrivKey = new PrivateKey(stampPrivBn)
     return stampPrivKey
   }
 
-  constructStampHDPrivateKey (payloadDigest, destinationPrivateKey) {
+  constructStampHDPrivateKey (payloadDigest: Uint8Array, destinationPrivateKey: PrivateKey) {
     const stampPrivateKey = this.constructStampPrivateKey(payloadDigest, destinationPrivateKey)
     return new HDPrivateKey({
       privateKey: stampPrivateKey.toBuffer(),
@@ -110,22 +111,22 @@ export class PayloadConstructor {
     })
   }
 
-  constructStampAddress (outpointDigest, privKey) {
-    const digestBn = crypto.BN.fromBuffer(outpointDigest)
-    const stampPrivBn = privKey.bn.add(digestBn).mod(crypto.Point.getN())
-    const stampAddress = PrivateKey(stampPrivBn).toAddress(this.networkName)
+  constructStampAddress (outpointDigest: Uint8Array, privKey: PrivateKey) {
+    const digestBn = crypto.BN.fromBuffer(Buffer.from(outpointDigest))
+    const stampPrivBn = privKey.toBigNumber().add(digestBn).mod(crypto.Point.getN())
+    const stampAddress = new PrivateKey(stampPrivBn).toAddress(this.networkName)
     return stampAddress
   }
 
-  encrypt (sharedKey, plainText) {
+  encrypt (sharedKey: Buffer, plainText: Uint8Array) {
     // Split shared key
-    const iv = new forge.util.ByteBuffer(sharedKey.slice(0, 16))
-    const key = new forge.util.ByteBuffer(sharedKey.slice(16))
+    const iv = forge.util.createBuffer(sharedKey.slice(0, 16))
+    const key = forge.util.createBuffer(sharedKey.slice(16))
 
     // Encrypt entries
-    const cipher = forge.aes.createEncryptionCipher(key, 'CBC')
-    cipher.start(iv)
-    const rawBuffer = new forge.util.ByteBuffer(plainText)
+    const cipher = forge.cipher.createCipher('AES-CBC', key)
+    cipher.start({ iv })
+    const rawBuffer = forge.util.createBuffer(plainText)
     cipher.update(rawBuffer)
     cipher.finish()
     const cipherText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
@@ -133,15 +134,15 @@ export class PayloadConstructor {
     return cipherText
   }
 
-  decrypt (sharedKey, cipherText) {
+  decrypt (sharedKey: Buffer, cipherText: Uint8Array) {
     // Split shared key
-    const iv = new forge.util.ByteBuffer(sharedKey.slice(0, 16))
-    const key = new forge.util.ByteBuffer(sharedKey.slice(16))
+    const iv = forge.util.createBuffer(sharedKey.slice(0, 16))
+    const key = forge.util.createBuffer(sharedKey.slice(16))
 
     // Encrypt entries
-    const cipher = forge.aes.createDecryptionCipher(key, 'CBC')
-    cipher.start(iv)
-    const rawBuffer = new forge.util.ByteBuffer(cipherText)
+    const cipher = forge.cipher.createDecipher('AES-CBC', key)
+    cipher.start({ iv })
+    const rawBuffer = forge.util.createBuffer(cipherText)
     cipher.update(rawBuffer)
     cipher.finish()
     const plainText = Uint8Array.from(Buffer.from(cipher.output.toHex(), 'hex')) // TODO: Faster
