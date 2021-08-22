@@ -9,7 +9,7 @@ const metadataKeys = {
   lastServerTime: 'lastServerTime'
 }
 
-class MessageIterator implements AsyncIterator<MessageWrapper> {
+class MessageIterator implements AsyncIterableIterator<MessageWrapper> {
   iterator: any;
   db: LevelDB;
 
@@ -18,7 +18,7 @@ class MessageIterator implements AsyncIterator<MessageWrapper> {
   }
 
   async next (): Promise<IteratorResult<MessageWrapper>> {
-    const value: MessageWrapper = await new Promise((resolve, reject) => {
+    const value = await new Promise<void | MessageWrapper>((resolve, reject) => {
       this.iterator.next((error: Error, key: string, value: string) => {
         if (error) {
           reject(error)
@@ -55,7 +55,7 @@ class MessageIterator implements AsyncIterator<MessageWrapper> {
     })
   }
 
-  [Symbol.asyncIterator] () {
+  [Symbol.asyncIterator] (): AsyncIterableIterator<MessageWrapper> {
     this.iterator = this.db.iterator({})
     return this
   }
@@ -123,17 +123,17 @@ export class LevelMessageStore implements MessageStore {
     }
   }
 
-  async deleteMessage (payloadDigest: string) {
+  async deleteMessage (payloadDigest: string): Promise<void> {
     await this.db.del(payloadDigest)
   }
 
-  async saveMessage (message: MessageWrapper) {
+  async saveMessage (message: MessageWrapper): Promise<void> {
     const index = message.index
     await this.mostRecentMessageTime(message.newMsg.serverTime)
     await this.db.put(index, JSON.stringify(message))
   }
 
-  async mostRecentMessageTime (newLastServerTime: number): Promise<number> {
+  async mostRecentMessageTime (newLastServerTime?: number): Promise<number> {
     const jsonNewLastServerTime = JSON.stringify(newLastServerTime || 0)
     try {
       const lastServerTimeString: string = await this.db.get(metadataKeys.lastServerTime)
@@ -176,13 +176,13 @@ export class LevelMessageStore implements MessageStore {
     }
   }
 
-  private async setSchemaVersion (schemaVersion: number) {
+  private async setSchemaVersion (schemaVersion: number): Promise<void> {
     await this.metadataDb.put(metadataKeys.schemaVersion, JSON.stringify(schemaVersion))
     // Update cache
     this.schemaVersion = schemaVersion
   }
 
-  async getIterator (): Promise<AsyncIterator<MessageWrapper>> {
+  async getIterator (): Promise<AsyncIterableIterator<MessageWrapper>> {
     return new MessageIterator(this.db)
   }
 }

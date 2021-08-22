@@ -22,7 +22,7 @@ class OutpointIterator implements AsyncIterableIterator<Outpoint> {
   }
 
   async next (): Promise<IteratorResult<Outpoint>> {
-    const value: Outpoint = await new Promise((resolve, reject) => {
+    const value = await new Promise<void | Outpoint>((resolve, reject) => {
       this.iterator.next((error: Error, key: string, value: string) => {
         if (error) {
           reject(error)

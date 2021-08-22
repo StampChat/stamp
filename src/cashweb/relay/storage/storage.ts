@@ -24,6 +24,6 @@ export interface MessageStore {
   getMessage (payloadDigest: string): Promise<MessageWrapper | undefined>;
   saveMessage (message: MessageWrapper): void;
   deleteMessage (payloadDigest: string): void;
-  mostRecentMessageTime (newLastServerTime: number): Promise<number>;
-  getIterator (): Promise<AsyncIterator<MessageWrapper>>;
+  mostRecentMessageTime (newLastServerTime?: number): Promise<number>;
+  getIterator (): Promise<AsyncIterableIterator<MessageWrapper>>;
 }
