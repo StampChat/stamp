@@ -224,10 +224,11 @@ export default {
         // Not mounted yet
         return
       }
+      const scrollTarget = scrollArea.getScrollTarget()
       this.$nextTick(() =>
-        scrollArea.setScrollPercentage(
+        scrollArea.setScrollPosition(
           'vertical',
-          1.0,
+          scrollTarget.scrollHeight,
           scrollDuration
         )
       )
@@ -261,9 +262,10 @@ export default {
             // Not mounted yet
             return
           }
+          const scrollTarget = scrollArea.getScrollTarget()
           scrollArea.setScrollPosition(
             'vertical',
-            1,
+            scrollTarget.scrollHeight,
             scrollDuration
           )
         })
