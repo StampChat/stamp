@@ -8,22 +8,24 @@
       />
     </q-dialog>
 
+    <!-- TODO: Renable these features at a later data. They don't work correctly, but were only for demo purposes. -->
+
     <!-- Clear history dialog -->
-    <q-dialog v-model="confirmClearOpen">
+    <!-- <q-dialog v-model="confirmClearOpen">
       <clear-history-dialog
         :address="address"
         :name="contact.profile.name"
       />
-    </q-dialog>
+    </q-dialog> -->
 
     <!-- Delete chat dialog -->
-    <q-dialog v-model="confirmDeleteOpen">
+    <!-- <q-dialog v-model="confirmDeleteOpen">
       <delete-chat-dialog
         :address="address"
         :name="contact.profile.name"
       />
     </q-dialog>
-
+ -->
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
       <contact-book-dialog :contact-click="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }" />
@@ -86,7 +88,9 @@
             <q-toggle v-model="notifications" />
           </q-item-section>
         </q-item>
-        <q-item
+
+        <!-- This does not work anymore due to the way it operates w/ setting message text which was previously refactored. -->
+        <!-- <q-item
           clickable
           v-ripple
           @click="contactBookOpen = true"
@@ -98,9 +102,9 @@
           <q-item-section>
             Share Contact
           </q-item-section>
-        </q-item>
+        </q-item> -->
 
-        <q-separator />
+        <!-- <q-separator />
         <q-item
           clickable
           v-ripple
@@ -113,23 +117,10 @@
           <q-item-section>
             Clear History
           </q-item-section>
-        </q-item>
-        <q-item
-          clickable
-          v-ripple
-        >
-          <q-item-section avatar>
-            <q-icon
-              name="block"
-              color="red"
-            />
-          </q-item-section>
+        </q-item> -->
 
-          <q-item-section>
-            Block
-          </q-item-section>
-        </q-item>
-        <q-item
+        <!-- TODO: Enable per-chat deletion. This currently does not work remotely, so it is being disabled. -->
+        <!-- <q-item
           clickable
           v-ripple
           @click="confirmDeleteOpen = true"
@@ -144,7 +135,7 @@
           <q-item-section>
             Delete
           </q-item-section>
-        </q-item>
+        </q-item> -->
       </q-list>
     </q-scroll-area>
   </div>
