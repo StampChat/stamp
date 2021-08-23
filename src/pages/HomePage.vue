@@ -35,6 +35,16 @@
             report bugs to Shammah, from your default contacts.
           </div>
           <div class="text-h6">
+            v0.0.15 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Fix scrolling behavior on Quasar 2</li>
+              <li>Fix attaching images to messages</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.14 Changelog
           </div>
           <div class="text-body1">
