@@ -249,7 +249,6 @@ export default {
         this.messagesToShow += 30
         return
       }
-      this.scrollBottom()
       // Set this afterwards, incase we were at the bottom already.
       // We want to ensure that we scroll!
       this.bottom = details.verticalSize - details.verticalPosition - details.verticalContainerSize <= 10
