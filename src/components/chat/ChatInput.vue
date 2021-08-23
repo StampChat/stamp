@@ -60,8 +60,7 @@
                   style="width: 150px"
                   label="Stamp Price"
                   suffix="sats"
-                  :value="stampAmount"
-                  @input="stampAmountChanged"
+                  v-model="innerStampAmount"
                   input-class="text-right"
                 />
               </q-item-section>
@@ -125,7 +124,7 @@ export default {
       default: () => defaultStampAmount
     }
   },
-  emits: ['update:message', 'sendMessage', 'sendMoneyClicked', 'sendFileClicked', 'stampAmountChanged'],
+  emits: ['update:message', 'update:stampAmount', 'sendMessage', 'sendMoneyClicked', 'sendFileClicked'],
   methods: {
     focus () {
       this.$refs.inputBox.focus()
@@ -138,9 +137,6 @@ export default {
     },
     sendFileClicked () {
       this.$emit('sendFileClicked')
-    },
-    stampAmountChanged (value) {
-      this.$emit('stampAmountChanged', value)
     },
     addEmoji (value) {
       // TODO: This needs to be cursor position aware
@@ -157,6 +153,14 @@ export default {
         // TODO: Remove emojify
         const emojifiedValue = val.replace(/(:.*:)/g, replacer)
         this.$emit('update:message', emojifiedValue)
+      }
+    },
+    innerStampAmount: {
+      get () {
+        return this.stampAmount
+      },
+      set (val) {
+        this.$emit('update:stampAmount', val)
       }
     }
   }

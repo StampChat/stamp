@@ -122,11 +122,10 @@
       <chat-input
         ref="chatInput"
         v-model:message="message"
-        :stamp-amount="stampAmount"
+        v-model:stamp-amount="stampAmount"
         @sendMessage="sendMessage"
         @sendFileClicked="sendFileOpen = true"
         @sendMoneyClicked="sendMoneyOpen = true"
-        @stampAmountChanged="stampAmountChanged"
       />
     </q-footer>
   </q-layout>
@@ -211,10 +210,6 @@ export default {
         this.message = ''
         this.replyDigest = null
       }
-    },
-    stampAmountChanged (stampAmount) {
-      const stampAmountNumber = Math.max(stampLowerLimit, Number(stampAmount))
-      this.setStampAmount({ address: this.address, stampAmount: stampAmountNumber })
     },
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
@@ -302,9 +297,6 @@ export default {
       getMessageByPayload: 'chats/getMessageByPayload',
       getProfile: 'myProfile/getProfile'
     }),
-    stampAmount () {
-      return Number(this.getStampAmount()(this.address))
-    },
     replyItem () {
       if (!this.replyDigest) {
         return null
@@ -339,6 +331,15 @@ export default {
     },
     contactProfile () {
       return this.getContactVuex(this.address).profile
+    },
+    stampAmount: {
+      set (stampAmount) {
+        const stampAmountNumber = Math.max(stampLowerLimit, Number(stampAmount))
+        this.setStampAmount({ address: this.address, stampAmount: stampAmountNumber })
+      },
+      get () {
+        return Number(this.getStampAmount()(this.address))
+      }
     }
   },
   watch: {
