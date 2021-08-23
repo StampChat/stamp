@@ -68,7 +68,16 @@ export const defaultAvatars = ['bunny_cyborg.png', 'croc_music.png', 'kitty_stan
 export const defaultStampAmount = 5000
 export const stampLowerLimit = 1000
 
-export const defaultContacts = []
+export const defaultContacts = [
+  {
+    name: 'Give Lotus Chat',
+    address: 'lotus_16PSJJK5XfnDCV3sdi3BsgDTa1dS4xezFuH6duwbo'
+  },
+  {
+    name: 'Shammah',
+    address: 'lotus_16PSJPAVocAM5behRWxqwQnpEVRPJrV4XxbthBhJR'
+  }
+]
 
 // Notification constants
 export const notificationTimeout = 4000
