@@ -35,6 +35,18 @@
             report bugs to Shammah, from your default contacts.
           </div>
           <div class="text-h6">
+            v0.0.14 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Upgrade to quasar v2, vuejs v3, and vuex v4</li>
+              <li>Convert wallet and messaging libraries to typescript</li>
+              <li>Rewrite vuex local storage module</li>
+              <li>Fix a significant number of bugs which were revealed during typescript conversion</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.13 Changelog
           </div>
           <div class="text-body1">
