@@ -30,7 +30,7 @@
                 <q-icon name="attach_file" />
               </q-item-section>
               <q-item-section>
-                Attach File
+                Attach Image
               </q-item-section>
             </q-item>
 

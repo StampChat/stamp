@@ -1,7 +1,5 @@
 <template>
-  <q-card
-    class="q-px-sm q-pb-md dialog-medium"
-  >
+  <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section class="row items-center q-pb-none">
       <div class="text-h6">
         Send File
@@ -21,7 +19,6 @@
         v-model="filePath"
         filled=""
         style="display:none"
-        @input="parseImage"
       />
       <q-img
         v-if="image !== null"
@@ -79,20 +76,23 @@ export default {
     ...mapGetters({
       getStampAmount: 'chats/getStampAmount'
     }),
-    parseImage () {
+    async sendImage () {
+      const stampAmount = this.getStampAmount()(this.address)
+      console.log(this.image)
+      await this.$relayClient.sendImage({ address: this.address, image: this.image, caption: this.caption, stampAmount })
+    }
+  },
+  watch: {
+    filePath (val) {
       // TODO: Check it's an image
-      if (this.filePath == null) {
+      if (val == null) {
         return
       }
       const reader = new FileReader()
-      reader.readAsDataURL(this.filePath)
-      reader.onload = () => {
-        this.image = reader.result
+      reader.readAsDataURL(val)
+      reader.onload = (evt) => {
+        this.image = evt.target.result
       }
-    },
-    async sendImage () {
-      const stampAmount = this.getStampAmount()(this.address)
-      await this.$relayClient.sendImage({ address: this.address, image: this.image, caption: this.caption, stampAmount })
     }
   }
 }
