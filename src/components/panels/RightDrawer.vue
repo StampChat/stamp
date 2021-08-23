@@ -77,6 +77,7 @@
         <q-item
           clickable
           v-ripple
+          @click="() => notifications = !notifications"
         >
           <q-item-section avatar>
             <q-icon name="notifications_none" />
