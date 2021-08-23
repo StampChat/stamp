@@ -94,7 +94,7 @@ export class KeyserverHandler {
     const metadata = await this._uniformSample(legacyAddress)
     assert(metadata, 'Missing metadata from keyserver')
     const rawAddressMetadata = metadata.getPayload()
-    assert(typeof rawAddressMetadata !== 'string')
+    assert(typeof rawAddressMetadata !== 'string', 'rawAddressMetadata is a string?')
     const payload = AddressMetadata.deserializeBinary(rawAddressMetadata)
 
     // Find vCard
@@ -107,7 +107,7 @@ export class KeyserverHandler {
       return null
     }
     const entryData = entry.getBody()
-    assert(typeof entryData !== 'string')
+    assert(typeof entryData !== 'string', 'entryData is a string')
     const relayUrl = new TextDecoder().decode(entryData)
     return relayUrl
   }

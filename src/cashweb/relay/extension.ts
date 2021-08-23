@@ -97,7 +97,7 @@ export function messageMixin (networkPrefix: string, message: Message): Message 
           }
           return crypto.Hash.sha256(payloadBuffer)
         case 32:
-          assert(typeof payloadDigest !== 'string')
+          assert(typeof payloadDigest !== 'string', 'payload digest is a string')
           if (payload.length) {
             const computedPayloadDigest = crypto.Hash.sha256(payloadBuffer)
             const computedDigest = Buffer.from(computedPayloadDigest)

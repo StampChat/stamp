@@ -176,9 +176,9 @@ export class MessageConstructor {
     imgEntry.setKind('image')
 
     const arr = image.split(',')
-    assert(arr.length > 0)
+    assert(arr.length > 0, 'image string is invalid.')
     const matches = arr[0].match(/:(.*?);/)
-    assert(matches && matches.length > 2)
+    assert(matches && matches.length > 2, 'matches is the wrong length')
     const avatarType = matches[1]
     const bstr = atob(arr[1])
     let n = bstr.length
