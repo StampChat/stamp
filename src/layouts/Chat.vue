@@ -174,7 +174,6 @@ export default {
     return {
       // TODO: Timer isn't used delete
       timer: null,
-      now: moment(),
       sendFileOpen: false,
       sendMoneyOpen: false,
       bottom: true,
@@ -188,9 +187,6 @@ export default {
     clearTimeout(this.timer)
   },
   mounted () {
-    this.timer = setInterval(() => {
-      this.now = moment()
-    }, 60000)
     this.scrollBottom()
   },
   methods: {
