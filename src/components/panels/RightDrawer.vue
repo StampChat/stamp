@@ -145,16 +145,16 @@
 <script>
 import { mapGetters, mapActions, mapMutations } from 'vuex'
 import ContactCard from './ContactCard.vue'
-import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
-import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
+// import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
+// import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import SendBitcoinDialog from '../dialogs/SendBitcoinDialog.vue'
 
 export default {
   components: {
     ContactCard,
-    ClearHistoryDialog,
-    DeleteChatDialog,
+    // ClearHistoryDialog,
+    // DeleteChatDialog,
     ContactBookDialog,
     SendBitcoinDialog
   },

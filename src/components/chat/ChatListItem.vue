@@ -5,12 +5,15 @@
     clickable
     @click="setActiveChat(chatAddress)"
   >
-    <q-item-section avatar>
+    <q-item-section
+      avatar
+      v-if="loaded"
+    >
       <q-avatar rounded>
         <img :src="contact.avatar">
         <q-badge
           v-show="compact"
-          v-if="!!numUnread && loaded"
+          v-if="!!numUnread"
           floating
           color="secondary"
           :label="numUnread"
@@ -23,7 +26,6 @@
       <q-item-label
         caption
         lines="2"
-        v-if="loaded"
       >
         {{ latestMessageBody }}
       </q-item-label>
@@ -34,13 +36,13 @@
       top
     >
       <q-badge
-        v-if="!!valueUnread && loaded"
+        v-if="!!valueUnread "
         color="primary"
         :label="valueUnread"
         class="q-my-xs"
       />
       <q-badge
-        v-if="!!numUnread && loaded"
+        v-if="!!numUnread"
         color="secondary"
         :label="numUnread"
         class="q-my-xs"

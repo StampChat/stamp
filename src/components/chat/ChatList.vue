@@ -5,7 +5,13 @@
         <q-separator />
         <chat-list-link
           title="Stamp News"
-          route="/"
+          route="/home"
+        />
+        <chat-list-link
+          title="Create/Import Account"
+          route="/setup"
+          icon="login"
+          v-if="!loaded"
         />
         <q-separator />
         <chat-list-item
@@ -17,7 +23,7 @@
           :loaded="loaded"
           :compact="compact"
         />
-        <q-item v-if="getSortedChatOrder.length === 0">
+        <q-item v-if="getSortedChatOrder.length === 0 && loaded">
           <q-item-section>
             <q-item-label>{{ $t('chatList.noContactMessage') }}</q-item-label>
           </q-item-section>

@@ -5,8 +5,12 @@
       <relay-connect-dialog />
     </q-dialog>
 
-    <q-tabs v-model="tab">
+    <q-tabs
+      v-model="tab"
+      v-if="loaded"
+    >
       <q-tab
+        v-if="loaded"
         name="settings"
         icon="settings"
       />
@@ -16,7 +20,10 @@
       />
     </q-tabs>
 
-    <settings-panel v-show="tab=='settings'" />
+    <settings-panel
+      v-if="loaded"
+      v-show="tab=='settings'"
+    />
 
     <chat-list
       v-show="tab=='contacts'"
@@ -25,7 +32,7 @@
       :compact="false"
     />
 
-    <q-list>
+    <q-list v-if="loaded">
       <q-separator />
       <q-item clickable>
         <q-item-section @click="receiveECash">
@@ -85,6 +92,7 @@ export default {
       type: Boolean,
       required: true
     }
+
   },
   data () {
     return {

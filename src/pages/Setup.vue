@@ -1,63 +1,84 @@
 <template>
-  <q-page>
-    <div class="q-pa-none">
-      <q-stepper
-        v-model="step"
-        ref="stepper"
-        color="primary"
-        contracted
-        alternative-labels
-      >
-        <q-step
-          :name="1"
-          :title="$t('setup.eula')"
-          icon="flaky"
-          :done="step > 1"
+  <q-layout
+    view="lhh LpR lff"
+    container
+    class="hide-scrollbar absolute full-width"
+  >
+    <q-header>
+      <q-toolbar class="q-pl-sm">
+        <q-btn
+          class="q-px-sm"
+          flat
+          dense
+          @click="$emit('toggleMyDrawerOpen')"
+          icon="menu"
+        />
+        <q-toolbar-title class="h6">
+          Welcome
+        </q-toolbar-title>
+      </q-toolbar>
+    </q-header>
+
+    <q-page-container>
+      <q-page>
+        <q-stepper
+          v-model="step"
+          ref="stepper"
+          color="primary"
+          contracted
+          alternative-labels
         >
-          <eula-step />
-        </q-step>
-        <q-step
-          :name="2"
-          :title="$t('setup.setupWallet')"
-          icon="vpn_key"
-          :done="step > 2"
-        >
-          <account-step v-model:account-data="accountData" />
-        </q-step>
-        <q-step
-          :name="3"
-          :title="$t('setup.deposit')"
-          icon="attach_money"
-          :done="step > 3"
-        >
-          <deposit-step />
-        </q-step>
-        <template #navigation>
-          <q-stepper-navigation>
-            <q-btn
-              @click="next()"
-              color="primary"
-              :label="nextButtonLabel"
-              :disable="!forwardEnabled"
-            />
-            <q-btn
-              v-if="step > 1"
-              color="primary"
-              @click="previous()"
-              :label="$t('setup.back')"
-              class="q-ml-sm"
-            />
-          </q-stepper-navigation>
-          <q-banner
-            inline-actions
-            class="text-white bg-red"
+          <q-step
+            :name="1"
+            :title="$t('setup.eula')"
+            icon="flaky"
+            :done="step > 1"
           >
-            {{ $t('setup.seedWarning') }}
-          </q-banner>
-        </template>
-      </q-stepper>
-    </div>
-  </q-page>
+            <eula-step />
+          </q-step>
+          <q-step
+            :name="2"
+            :title="$t('setup.setupWallet')"
+            icon="vpn_key"
+            :done="step > 2"
+          >
+            <account-step v-model:account-data="accountData" />
+          </q-step>
+          <q-step
+            :name="3"
+            :title="$t('setup.deposit')"
+            icon="attach_money"
+            :done="step > 3"
+          >
+            <deposit-step />
+          </q-step>
+          <template #navigation>
+            <q-stepper-navigation>
+              <q-btn
+                @click="next()"
+                color="primary"
+                :label="nextButtonLabel"
+                :disable="!forwardEnabled"
+              />
+              <q-btn
+                v-if="step > 1"
+                color="primary"
+                @click="previous()"
+                :label="$t('setup.back')"
+                class="q-ml-sm"
+              />
+            </q-stepper-navigation>
+            <q-banner
+              inline-actions
+              class="text-white bg-red"
+            >
+              {{ $t('setup.seedWarning') }}
+            </q-banner>
+          </template>
+        </q-stepper>
+      </q-page>
+    </q-page-container>
+  </q-layout>
 </template>
 
 <script>
@@ -106,6 +127,7 @@ export default {
       }
     }
   },
+  emits: ['setupCompleted', 'toggleMyDrawerOpen'],
   methods: {
     ...mapActions({
       setRelayToken: 'relayClient/setToken',
@@ -339,9 +361,12 @@ export default {
       this.setSeedPhrase(this.seed)
     },
     async setupSettings () {
+      // Reset all messaging
+      await this.resetChats()
       await this.setUpKeyserver()
       await this.setupRelay()
       await this.updateInterval(this.settings.networking.updateInterval * 1_000)
+      await this.$emit('setupCompleted')
     },
     next () {
       switch (this.step) {
@@ -349,6 +374,7 @@ export default {
           this.$refs.stepper.next()
           break
         case 2:
+          this.selectRandomAvatar()
           this.newWallet()
             .then(() => this.setupRelayData())
             .then(() => this.$refs.stepper.next())
@@ -408,11 +434,6 @@ export default {
           return 'Unknown'
       }
     }
-  },
-  created () {
-    // Reset all messaging
-    this.resetChats()
-    this.selectRandomAvatar()
   }
 }
 </script>

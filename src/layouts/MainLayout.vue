@@ -28,6 +28,7 @@
         <router-view
           @toggleContactDrawerOpen="toggleContactDrawerOpen"
           @toggleMyDrawerOpen="toggleMyDrawerOpen"
+          @setupCompleted="setupConnections"
         />
       </q-page>
     </q-page-container>
@@ -72,6 +73,7 @@ export default {
       refreshContacts: 'contacts/refreshContacts'
     }),
     ...mapGetters({
+      getRelayToken: 'relayClient/getToken',
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getDarkMode: 'appearance/getDarkMode'
     }),
@@ -104,6 +106,79 @@ export default {
       this.$router.push(`/chat/${newAddress}`).catch(() => {
         // Don't care. Probably duplicate route
       })
+    },
+    setupConnections () {
+      // Not currently setup. User needs to go through setup flow first
+      if (!this.getRelayToken()) {
+        return
+      }
+      console.log('Loading')
+      // Setup everything at once. This are independent processes
+      try {
+        this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
+      } catch (err) {
+        console.error(err)
+      }
+
+      // Add default contacts
+      for (const defaultContact of defaultContacts) {
+        this.addDefaultContact(defaultContact)
+      }
+      this.$nextTick(this.refreshContacts)
+
+      // const lastReceived = this.lastReceived
+      const t0 = performance.now()
+      const refreshMessages = () => {
+        // Wait for a connected electrum client
+        if (!this.$electrum.connected) {
+          setTimeout(refreshMessages, 100)
+          return
+        }
+        this.$relayClient
+          .refresh()
+          .then(() => {
+            const t1 = performance.now()
+            console.log(`Loading messages took ${t1 - t0}ms`)
+            this.loaded = true
+          })
+          .catch((err) => {
+            console.error(err)
+            setTimeout(refreshMessages, 100)
+          })
+      }
+      refreshMessages()
+
+      const handler = new KeyserverHandler({ wallet: this.$wallet, keyservers: keyservers, networkName })
+      // Update keyserver data if it doesn't exist.
+      handler.getRelayUrl(this.$wallet.myAddressStr).catch(() => {
+        handler.updateKeyMetadata(
+          this.$relayClient.url,
+          this.$wallet.identityPrivKey
+        )
+      })
+
+      // Update profile if it doesn't exist.
+      this.$relayClient.getRelayData(this.$wallet.myAddressStr).catch(() => {
+        const relayData = this.getRelayData()
+        this.$relayClient
+          .updateProfile(
+            this.$wallet.identityPrivKey,
+            relayData.profile,
+            relayData.inbox.acceptancePrice
+          )
+          .catch((err) => {
+            console.error(err)
+            // TODO: Move specialization down error displayer
+            if (err.response.status === 413) {
+              errorNotify(new Error(this.$t('profileDialog.avatarTooLarge')))
+              this.$q.loading.hide()
+              throw err
+            }
+            errorNotify(new Error(this.$t('profileDialog.unableContactRelay')))
+            throw err
+          })
+      })
+      this.$q.loading.hide()
     }
   },
   computed: {
@@ -139,75 +214,7 @@ export default {
   },
   created () {
     this.$q.dark.set(this.getDarkMode())
-    console.log('Loading')
-
-    // Setup everything at once. This are independent processes
-    try {
-      this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
-    } catch (err) {
-      console.error(err)
-    }
-
-    // Add default contacts
-    for (const defaultContact of defaultContacts) {
-      this.addDefaultContact(defaultContact)
-    }
-    this.$nextTick(this.refreshContacts)
-
-    // const lastReceived = this.lastReceived
-    const t0 = performance.now()
-    const refreshMessages = () => {
-      // Wait for a connected electrum client
-      if (!this.$electrum.connected) {
-        setTimeout(refreshMessages, 100)
-        return
-      }
-      this.$relayClient
-        .refresh()
-        .then(() => {
-          const t1 = performance.now()
-          console.log(`Loading messages took ${t1 - t0}ms`)
-          this.loaded = true
-        })
-        .catch((err) => {
-          console.error(err)
-          setTimeout(refreshMessages, 100)
-        })
-    }
-    refreshMessages()
-
-    const handler = new KeyserverHandler({ wallet: this.$wallet, keyservers: keyservers, networkName })
-    // Update keyserver data if it doesn't exist.
-    handler.getRelayUrl(this.$wallet.myAddressStr).catch(() => {
-      handler.updateKeyMetadata(
-        this.$relayClient.url,
-        this.$wallet.identityPrivKey
-      )
-    })
-
-    // Update profile if it doesn't exist.
-    this.$relayClient.getRelayData(this.$wallet.myAddressStr).catch(() => {
-      const relayData = this.getRelayData()
-      this.$relayClient
-        .updateProfile(
-          this.$wallet.identityPrivKey,
-          relayData.profile,
-          relayData.inbox.acceptancePrice
-        )
-        .catch((err) => {
-          console.error(err)
-          // TODO: Move specialization down error displayer
-          if (err.response.status === 413) {
-            errorNotify(new Error(this.$t('profileDialog.avatarTooLarge')))
-            this.$q.loading.hide()
-            throw err
-          }
-          errorNotify(new Error(this.$t('profileDialog.unableContactRelay')))
-          throw err
-        })
-    })
-
-    this.$q.loading.hide()
+    this.setupConnections()
   },
   mounted () {
     document.addEventListener('keydown', this.shortcutKeyListener)

@@ -14,7 +14,7 @@
           icon="menu"
         />
         <q-toolbar-title class="h6">
-          Welcome
+          News
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
@@ -34,98 +34,20 @@
             cryptomessenger. It is currently, highly experimental. Please do
             report bugs to Shammah, from your default contacts.
           </div>
-          <div class="text-h6">
-            v0.0.15 Changelog
-          </div>
-          <div class="text-body1">
-            <ul>
-              <li>Fix scrolling behavior on Quasar 2</li>
-              <li>Fix attaching images to messages</li>
-            </ul>
-          </div>
-
-          <div class="text-h6">
-            v0.0.14 Changelog
-          </div>
-          <div class="text-body1">
-            <ul>
-              <li>Upgrade to quasar v2, vuejs v3, and vuex v4</li>
-              <li>Convert wallet and messaging libraries to typescript</li>
-              <li>Rewrite vuex local storage module</li>
-              <li>Fix a significant number of bugs which were revealed during typescript conversion</li>
-            </ul>
-          </div>
-
-          <div class="text-h6">
-            v0.0.13 Changelog
-          </div>
-          <div class="text-body1">
-            <ul>
-              <li>Fix issue where received stamps and stealth amounts were adding invalid utxos to wallet due to using the transactionss TxHash instead of TxId</li>
-              <li>Fix sending Lotus to legacy wallets via P2PKH transactions</li>
-            </ul>
-          </div>
-
-          <div class="text-h6">
-            v0.0.12 Changelog
-          </div>
-          <div class="text-body1">
-            <ul>
-              <li>Use XAddresses</li>
-              <li>Use `Lotus` and `XPI` units</li>
-            </ul>
-          </div>
-
-          <div class="text-h6">
-            v0.0.11 Changelog
-          </div>
-          <div class="text-body1">
-            <ul>
-              <li>Change licensing to be GPL for UI, and MIT for libraries</li>
-              <li>Fix balance button on UI</li>
-              <li>Various improcements to transaction construction and change creation</li>
-              <li>Update quasar and other dependencies</li>
-            </ul>
-          </div>
-
-          <div class="text-h6">
-            v0.0.10 Changelog
-          </div>
-          <div class="text-body1">
-            <ul>
-              <li>Ensure UTXOs are unable to be used twice during transaction construction</li>
-              <li>Select UTXOs and fee rates to avoid creating change almost always</li>
-            </ul>
-          </div>
-
-          <div class="text-h6">
-            v0.0.9 Changelog
-          </div>
-          <div class="text-body1">
-            <ul>
-              <li>Fix various issues with transaction construction which were causing coin burns</li>
-            </ul>
-          </div>
-
-          <div class="text-h6">
-            v0.0.8 Changelog
-          </div>
-          <div class="text-body1">
-            <ul>
-              <li>Use Stamp icon on EULA screen</li>
-              <li>Add stamp icon to assets and use it for default news icon</li>
-              <li>Fix copy on news page to say Stamp</li>
-              <li>Add HostFat to default contacts</li>
-              <li>Update EULA copy</li>
-              <li>Remove add/remove UTXO log lines which slow down client</li>
-              <li>Remove the need to recalculate wallet balance from all UTXOs</li>
-              <li>Increase chunk size when reloading messages</li>
-              <li>Implement a quick-and-dirty way to reset your remote wallet</li>
-              <li>Fix bugs in forwardUTXOsToAddress when deleting messages</li>
-              <li>Add recording of p2pkh transactions in remote outbox</li>
-              <li>Refresh contacts on start, including fetching profile image</li>
-            </ul>
-          </div>
+          <q-btn
+            v-if="loaded"
+            icon="login"
+            label="Sign up"
+            @click="$router.push('/setup').catch(() => {
+            // Don't care. Probably duplicate route
+            })"
+          />
+          <q-btn
+            label="See Changelog"
+            @click="$router.push('/changelog').catch(() => {
+            // Don't care. Probably duplicate route
+            })"
+          />
         </q-scroll-area>
         <q-page-sticky
           position="bottom-right"
