@@ -133,7 +133,6 @@
 </template>
 
 <script>
-import moment from 'moment'
 import { mapGetters, mapActions } from 'vuex'
 
 import ChatInput from '../components/chat/ChatInput.vue'
@@ -177,7 +176,6 @@ export default {
       sendFileOpen: false,
       sendMoneyOpen: false,
       bottom: true,
-      top: false,
       messagesToShow: 30,
       message: '',
       replyDigest: null
@@ -225,13 +223,16 @@ export default {
         return
       }
       const scrollTarget = scrollArea.getScrollTarget()
-      this.$nextTick(() =>
-        scrollArea.setScrollPosition(
+      if (!this.bottom && scrollTarget.scrollTop <= 10) {
+        return
+      }
+      this.$nextTick(() => {
+        scrollArea.setScrollPercentage(
           'vertical',
-          scrollTarget.scrollHeight,
+          1.0,
           scrollDuration
         )
-      )
+      })
     },
     getContact (outbound) {
       if (outbound) {
@@ -242,36 +243,16 @@ export default {
     },
     scrollHandler (details) {
       if (
-        // Ten pixels from bottom
-        details.verticalSize - details.verticalPosition - details.verticalContainerSize <= 10
-      ) {
-        this.bottom = true
-      } else {
-        this.bottom = false
-      }
-
-      if (
         // Ten pixels from top
         details.verticalPosition <= 10
       ) {
-        this.top = true
         this.messagesToShow += 30
-        this.$nextTick(() => {
-          const scrollArea = this.$refs.chatScroll
-          if (!scrollArea) {
-            // Not mounted yet
-            return
-          }
-          const scrollTarget = scrollArea.getScrollTarget()
-          scrollArea.setScrollPosition(
-            'vertical',
-            scrollTarget.scrollHeight,
-            scrollDuration
-          )
-        })
-      } else {
-        this.top = false
+        return
       }
+      this.scrollBottom()
+      // Set this afterwards, incase we were at the bottom already.
+      // We want to ensure that we scroll!
+      this.bottom = details.verticalSize - details.verticalPosition - details.verticalContainerSize <= 10
     },
     setReply (payloadDigest) {
       this.replyDigest = payloadDigest
@@ -364,9 +345,7 @@ export default {
   watch: {
     'messages.length' () {
       // Scroll to bottom if user was already there.
-      if (this.bottom) {
-        this.scrollBottom()
-      }
+      this.scrollBottom()
     },
     active (newActive) {
       if (!newActive) {
@@ -375,13 +354,8 @@ export default {
 
       // Focus input box
       this.$refs.chatInput.focus()
-
-      const scrollArea = this.$refs.chatScroll
-      const scrollTarget = scrollArea.getScrollTarget()
       // Scroll to bottom only if the view was effectively in it's initial state.
-      if (scrollTarget.scrollTop === 0) {
-        this.scrollBottom()
-      }
+      this.scrollBottom()
       // TODO: Scroll to last unread
     }
   }
