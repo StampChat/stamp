@@ -1,7 +1,7 @@
 <template>
   <div class="col q-gutter-y-md">
     <q-resize-observer @resize="setQRSize" />
-    <div class="p-mx-none">
+    <div class="p-mx-none text-">
       <qrcode-vue
         class="center"
         :value="displayAddress"
@@ -9,7 +9,11 @@
         :size="150"
       />
     </div>
-
+    <q-btn
+      class="center"
+      label="Get Free Lotus"
+      @click="openFaucet"
+    />
     <q-input
       class="fit"
       filled
@@ -81,18 +85,17 @@ export default {
           // fail
         })
     },
-    openFaucet (event) {
-      event.preventDefault()
-      this.openURL('https://developer.bitcoin.com/faucets/bch/')
-    },
     setQRSize (size) {
       this.qrSize = size.height
+    },
+    openFaucet () {
+      this.openURL(`https://faucet.lotuslounge.org/?address=${this.$wallet.displayAddress}`)
     }
   },
   computed: {
     ...mapGetters({ balance: 'wallet/balance' }),
     displayAddress () {
-      return (this.legacy ? this.$wallet.myAddressStr : this.$wallet.displayAddress) + `?amount=${this.recomendedBalance}`
+      return (this.legacy ? this.$wallet.myAddressStr : this.$wallet.displayAddress)
     },
     percentageBalance () {
       const percentage = this.balance / this.recomendedBalance
