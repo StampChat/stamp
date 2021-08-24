@@ -7,7 +7,7 @@
   >
     <q-item-section
       avatar
-      v-if="loaded"
+      v-if="$status.setup"
     >
       <q-avatar rounded>
         <img :src="contact.avatar">
@@ -103,10 +103,6 @@ export default {
       // Not passed when all read
       required: false,
       default: () => ''
-    },
-    loaded: {
-      type: Boolean,
-      required: true
     },
     compact: {
       type: Boolean,

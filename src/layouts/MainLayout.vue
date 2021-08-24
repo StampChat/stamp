@@ -6,7 +6,7 @@
       :breakpoint="800"
       show-if-above
     >
-      <left-drawer :loaded="loaded" />
+      <left-drawer />
     </q-drawer>
     <q-drawer
       v-model="contactDrawerOpen"
@@ -58,7 +58,6 @@ export default {
   data () {
     return {
       trueSplitterRatio: compactCutoff,
-      loaded: false,
       myDrawerOpen: !!this.activeChatAddr,
       contactDrawerOpen: false,
       contactBookOpen: false,
@@ -112,6 +111,8 @@ export default {
       if (!this.getRelayToken()) {
         return
       }
+      this.$status.setup = true
+
       console.log('Loading')
       // Setup everything at once. This are independent processes
       try {
@@ -139,7 +140,7 @@ export default {
           .then(() => {
             const t1 = performance.now()
             console.log(`Loading messages took ${t1 - t0}ms`)
-            this.loaded = true
+            this.$status.loaded = true
           })
           .catch((err) => {
             console.error(err)

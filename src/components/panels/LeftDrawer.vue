@@ -7,10 +7,10 @@
 
     <q-tabs
       v-model="tab"
-      v-if="loaded"
+      v-if="$status.setup"
     >
       <q-tab
-        v-if="loaded"
+        v-if="$status.setup"
         name="settings"
         icon="settings"
       />
@@ -21,18 +21,17 @@
     </q-tabs>
 
     <settings-panel
-      v-if="loaded"
+      v-if="$status.setup"
       v-show="tab=='settings'"
     />
 
     <chat-list
       v-show="tab=='contacts'"
-      :loaded="loaded"
       v-bind="$attrs"
       :compact="false"
     />
 
-    <q-list v-if="loaded">
+    <q-list v-if="$status.setup">
       <q-separator />
       <q-item clickable>
         <q-item-section @click="receiveECash">
@@ -86,13 +85,6 @@ export default {
     ChatList,
     SettingsPanel,
     RelayConnectDialog
-  },
-  props: {
-    loaded: {
-      type: Boolean,
-      required: true
-    }
-
   },
   data () {
     return {
@@ -167,6 +159,9 @@ export default {
     formattedBalance () {
       return formatBalance(this.balance)
     }
+  },
+  created () {
+    console.log(this.$status.setup)
   }
 }
 </script>

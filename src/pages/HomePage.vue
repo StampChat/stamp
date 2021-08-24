@@ -35,7 +35,7 @@
             report bugs to Shammah, from your default contacts.
           </div>
           <q-btn
-            v-if="loaded"
+            v-if="!$status.setup"
             icon="login"
             label="Sign up"
             @click="$router.push('/setup').catch(() => {

@@ -11,7 +11,7 @@
           title="Create/Import Account"
           route="/setup"
           icon="login"
-          v-if="!loaded"
+          v-if="!$status.setup"
         />
         <q-separator />
         <chat-list-item
@@ -20,10 +20,9 @@
           :chat-address="contact.address"
           :value-unread="formatBalance(contact.totalUnreadValue)"
           :num-unread="contact.totalUnreadMessages"
-          :loaded="loaded"
           :compact="compact"
         />
-        <q-item v-if="getSortedChatOrder.length === 0 && loaded">
+        <q-item v-if="getSortedChatOrder.length === 0 && $status.setup">
           <q-item-section>
             <q-item-label>{{ $t('chatList.noContactMessage') }}</q-item-label>
           </q-item-section>
@@ -41,10 +40,6 @@ import { formatBalance } from '../../utils/formatting'
 
 export default {
   props: {
-    loaded: {
-      type: Boolean,
-      required: true
-    },
     compact: {
       type: Boolean,
       required: true

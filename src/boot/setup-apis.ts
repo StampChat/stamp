@@ -147,14 +147,21 @@ export default boot(async ({ store, app }) => {
   const electrumObservables = reactive({ connected: false })
   createAndBindNewElectrumClient({ app, observables: electrumObservables, wallet })
   const xPrivKey = store.getters['wallet/getXPrivKey']
+  const status = reactive({
+    loaded: false,
+    setup: false
+  })
+  app.config.globalProperties.$status = status
   console.log('xPrivKey', xPrivKey)
   // Check if setup was finished.
   // TODO: There should be a better way to do this.
   const profile = store.getters['myProfile/getProfile']
   console.log('profile.name', profile.name)
+  status.setup = xPrivKey && profile.name
   if (xPrivKey && profile.name) {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
+    status.setup = true
   }
   const { client: relayClient, observables: relayObservables } = await getRelayClient({ relayUrl: defaultRelayUrl, wallet, electrumClient: app.config.globalProperties.$electrumClientPromise, store })
   const relayToken: string = store.getters['relayClient/getToken']
