@@ -129,7 +129,7 @@ export default {
   },
   wipeWallet: {
     cancel: 'Cancel',
-    wipe: 'Wipe',
+    wipe: 'Wipe All Remote Content',
     spinnerText: 'Deleting All Messages'
   },
   seedPhraseDialog: {

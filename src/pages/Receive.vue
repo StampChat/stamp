@@ -52,15 +52,13 @@
         </q-input>
       </div>
     </q-card-section>
-    <q-card-section>
+    <q-card-actions align="right">
       <q-btn
-        color="primary"
+        color="warning"
         @click="seedPhraseOpen = true"
       >
         {{ $t('receiveBitcoinDialog.showSeed') }}
       </q-btn>
-    </q-card-section>
-    <q-card-actions align="right">
       <q-btn
         :label="$t('receiveBitcoinDialog.close')"
         color="primary"

@@ -77,15 +77,15 @@
     </q-slide-transition>
     <q-card-actions align="right">
       <q-btn
+        label="Cancel"
+        color="negative"
+        @click="cancel"
+      />
+      <q-btn
         :disable="contact === null"
         label="Add"
         color="primary"
         @click="addContact()"
-      />
-      <q-btn
-        label="Cancel"
-        color="negative"
-        @click="cancel"
       />
     </q-card-actions>
   </q-card>

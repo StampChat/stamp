@@ -13,15 +13,15 @@
     />
     <q-card-actions align="right">
       <q-btn
-        :disable="identical"
-        :label="$t('profileDialog.update')"
+        :label="$t('profileDialog.cancel')"
         color="negative"
-        @click="updateRelayData"
+        @click="cancel"
       />
       <q-btn
-        :label="$t('profileDialog.cancel')"
+        :disable="identical"
+        :label="$t('profileDialog.update')"
         color="primary"
-        @click="cancel"
+        @click="updateRelayData"
       />
     </q-card-actions>
   </q-card>

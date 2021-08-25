@@ -58,15 +58,15 @@
     </q-splitter>
     <q-card-actions align="right">
       <q-btn
-        @click="save"
-        :label="$t('settings.saveSettings')"
-        color="primary"
-        class="q-ma-sm"
-      />
-      <q-btn
         @click="cancel"
         :label="$t('settings.cancelSettings')"
         color="negative"
+        class="q-ma-sm"
+      />
+      <q-btn
+        @click="save"
+        :label="$t('settings.saveSettings')"
+        color="primary"
         class="q-ma-sm"
       />
     </q-card-actions>

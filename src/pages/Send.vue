@@ -27,15 +27,15 @@
     </q-card-section>
     <q-card-actions align="right">
       <q-btn
+        :label="$t('sendAddressDialog.cancel')"
+        color="negative"
+        @click="cancel"
+      />
+      <q-btn
         :disable="!isValid"
         :label="$t('sendAddressDialog.send')"
         color="primary"
         @click="send()"
-      />
-      <q-btn
-        :label="$t('sendAddressDialog.cancel')"
-        color="negative"
-        @click="cancel"
       />
     </q-card-actions>
   </q-card>
