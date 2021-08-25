@@ -27,6 +27,23 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
+            v0.0.16 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Fix bug with stamp amounts not being settable after upgrading to Quasar 2</li>
+              <li>Fix more issues with scrolling on Quasar 2</li>
+              <li>Clean up Ok/Cancel button placements</li>
+              <li>Fix storage migrations when schema changes</li>
+              <li>Move setup dialog to after main layout loads so homepage can be seen</li>
+              <li>Add confirmation route for remote wiping wallet</li>
+              <li>Added a link to the lotus lounge faucet from the deposit screen</li>
+              <li>Clicking anywhere on the contact "notivations" button now toggles it</li>
+              <li>Remove several non-functioning widgets in the UI</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.15 Changelog
           </div>
           <div class="text-body1">
