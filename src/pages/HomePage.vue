@@ -26,28 +26,37 @@
           @scroll="scrollHandler"
           class="q-px-sm absolute full-width full-height"
         >
-          <div class="text-h6">
-            Welcome to Stamp
-          </div>
-          <div class="text-body1">
-            Stamp is a decentralized, secure, and free for all,
-            cryptomessenger. It is currently, highly experimental. Please do
-            report bugs to Shammah, from your default contacts.
-          </div>
-          <q-btn
-            v-if="!$status.setup"
-            icon="login"
-            label="Sign up"
-            @click="$router.push('/setup').catch(() => {
-            // Don't care. Probably duplicate route
-            })"
-          />
-          <q-btn
-            label="See Changelog"
-            @click="$router.push('/changelog').catch(() => {
-            // Don't care. Probably duplicate route
-            })"
-          />
+          <q-card class="q-ma-none">
+            <q-card-actions>
+              <q-btn
+                align="left"
+                v-if="!$status.setup"
+                icon="login"
+                label="Sign up"
+                @click="$router.push('/setup').catch(() => {
+                // Don't care. Probably duplicate route
+                })"
+              />
+              <q-btn
+                alight="right"
+                color="primary"
+                label="See Changelog"
+                @click="$router.push('/changelog').catch(() => {
+                // Don't care. Probably duplicate route
+                })"
+              />
+            </q-card-actions>
+            <q-card-section>
+              <div class="text-h6">
+                Welcome to Stamp
+              </div>
+              <div class="text-body1">
+                Stamp is a decentralized, secure, and free for all,
+                cryptomessenger. It is currently, highly experimental. Please do
+                report bugs to Shammah, from your default contacts.
+              </div>
+            </q-card-section>
+          </q-card>
         </q-scroll-area>
         <q-page-sticky
           position="bottom-right"
