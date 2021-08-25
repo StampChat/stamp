@@ -159,9 +159,6 @@ export default {
     formattedBalance () {
       return formatBalance(this.balance)
     }
-  },
-  created () {
-    console.log(this.$status.setup)
   }
 }
 </script>

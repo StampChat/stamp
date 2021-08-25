@@ -34,7 +34,6 @@ import { errorNotify } from '../utils/notifications'
 
 export default {
   data () {
-    console.log('relay data', this.getRelayData())
     const relayData = this.getRelayData()
     return {
       name: relayData.profile.name,
