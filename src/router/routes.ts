@@ -30,7 +30,8 @@ export function createRoutes<S> (store: Store<S>): RouteRecordRaw[] {
         { path: 'receive', component: () => import('pages/Receive.vue') },
         { path: 'send', component: () => import('pages/Send.vue') },
         { path: 'add-contact', component: () => import('pages/AddContact.vue') },
-        { path: 'setup', component: () => import('pages/Setup.vue') }
+        { path: 'setup', component: () => import('pages/Setup.vue') },
+        { path: 'wipe-wallet', component: () => import('pages/WipeWallet.vue') }
       ],
       beforeEnter: redirectIfNoProfile
     }

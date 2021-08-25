@@ -116,7 +116,6 @@
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 import ContactCard from './ContactCard.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
-import { errorNotify } from '../../utils/notifications'
 import { openPage } from '../../utils/routes'
 
 export default {
@@ -169,16 +168,7 @@ export default {
       openPage(this.$router, this.$route.path, '/add-contact')
     },
     deleteForever () {
-      this.$q.loading.show({
-        delay: 100,
-        message: this.$t('SettingPanel.wipeAndSave')
-      })
-      this.$relayClient.wipeWallet(({ address, payloadDigest, index }) => {
-        this.deleteMessage({ address, payloadDigest, index })
-      }).then(() => this.$q.loading.hide()).catch((err) => {
-        errorNotify(err)
-        this.$q.loading.hide()
-      })
+      openPage(this.$router, this.$route.path, '/wipe-wallet')
     }
   },
   computed: {

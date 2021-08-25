@@ -127,6 +127,11 @@ export default {
     unableContactRelay: 'Unable to contact relay server.',
     pushingProfile: 'Pushing new Profile...'
   },
+  wipeWallet: {
+    cancel: 'Cancel',
+    wipe: 'Wipe',
+    spinnerText: 'Deleting All Messages'
+  },
   seedPhraseDialog: {
     seedPhrase: 'Seed Phrase',
     close: 'Close'
