@@ -133,8 +133,9 @@ export default {
     },
     getStampAmount: (state) => (address) => {
       const apiAddress = toAPIAddress(address)
+      const chat = state.chats[apiAddress]
 
-      return state.chats[apiAddress].stampAmount || defaultStampAmount
+      return chat ? chat.stampAmount || defaultStampAmount : defaultStampAmount
     },
     getActiveChat (state) {
       return state.activeChatAddr

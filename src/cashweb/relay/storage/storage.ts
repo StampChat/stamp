@@ -26,4 +26,5 @@ export interface MessageStore {
   deleteMessage (payloadDigest: string): void;
   mostRecentMessageTime (newLastServerTime?: number): Promise<number>;
   getIterator (): Promise<AsyncIterableIterator<MessageWrapper>>;
+  clear (): Promise<void>;
 }

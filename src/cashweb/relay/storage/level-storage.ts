@@ -185,4 +185,12 @@ export class LevelMessageStore implements MessageStore {
   async getIterator (): Promise<AsyncIterableIterator<MessageWrapper>> {
     return new MessageIterator(this.db)
   }
+
+  /**
+   * This will delete everything in the store! Don't call it by accident!
+   */
+  async clear () {
+    await this.db.clear()
+    await this.metadataDb.clear()
+  }
 }

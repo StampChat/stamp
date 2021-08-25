@@ -5,6 +5,9 @@ import { rehydrateWallet } from './modules/wallet'
 import { path, pathOr, mapObjIndexed } from 'ramda'
 import { rehydrateContacts } from './modules/contacts'
 import { displayNetwork } from '../utils/constants'
+import { store as outpointStore } from '../adapters/level-outpoint-store'
+import { store as messageStore } from '../adapters/level-message-store'
+
 import level from 'level'
 
 const parseState = (value) => {
@@ -15,7 +18,7 @@ const parseState = (value) => {
   }
 }
 
-const STORE_SCHEMA_VERSION = 4
+const STORE_SCHEMA_VERSION = 1
 
 const storeKeys = [
   'wallet', 'relayClient', 'chats', 'storeMetadata', 'myProfile', 'contacts', 'appearance'
@@ -25,7 +28,7 @@ const storePlugin = (store) => {
   const storage = level('vuex-store')
   let lastSave = -1
 
-  const reduceState = (state) => {
+  const reduceState = (state, defaults = false) => {
     return {
       wallet: {
         xPrivKey: path(['wallet', 'xPrivKey'], state),
@@ -35,30 +38,36 @@ const storePlugin = (store) => {
         balance: 0
       },
       relayClient: {
-        token: path(['relayClient', 'token'], state)
+        token: defaults
+          ? null
+          : path(['relayClient', 'token'], state)
       },
       chats: {
         activeChatAddr: pathOr(null, ['chats', 'activeChatAddr'], state),
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        chats: mapObjIndexed((addressData) => {
-          return ({
-            ...addressData,
-            // Overwrite messages because storing them would be prohibitive.
-            messages: {}
-          })
-        }, pathOr({}, ['chats', 'chats'], state))
+        chats: defaults
+          ? {}
+          : mapObjIndexed((addressData) => {
+            return ({
+              ...addressData,
+              // Overwrite messages because storing them would be prohibitive.
+              messages: {}
+            })
+          }, pathOr({}, ['chats', 'chats'], state))
       },
       contacts: {
         updateInterval: pathOr(600000, ['contacts', 'updateInterval'], state),
-        contacts: mapObjIndexed((contactData) => {
-          return ({
-            ...contactData,
-            profile: {
-              ...contactData.profile,
-              avatar: undefined
-            }
-          })
-        }, pathOr({}, ['contacts', 'contacts'], state))
+        contacts: defaults
+          ? {}
+          : mapObjIndexed((contactData) => {
+            return ({
+              ...contactData,
+              profile: {
+                ...contactData.profile,
+                avatar: undefined
+              }
+            })
+          }, pathOr({}, ['contacts', 'contacts'], state))
       },
       myProfile: state.myProfile || {
         profile: { name: null, bio: null, avatar: null }, inbox: { acceptancePrice: null }
@@ -67,8 +76,8 @@ const storePlugin = (store) => {
         darkMode: false
       },
       storeMetadata: {
-        networkName: displayNetwork,
-        version: STORE_SCHEMA_VERSION
+        networkName: state.storeMetata ? state.storeMetata.version : displayNetwork,
+        version: state.storeMetata ? state.storeMetata.version : 0
       }
     }
   }
@@ -85,14 +94,19 @@ const storePlugin = (store) => {
       }
     }
 
-    if (newState.storeMetadata && (newState.storeMetadata.networkName !== displayNetwork || newState.storeMetadata.version !== STORE_SCHEMA_VERSION)) {
-      Object.assign(newState, {
-        wallet: {
-          seedPhrase: path(['wallet', 'seedPhrase'], newState)
-        }
-      })
-      store.replaceState(newState)
-      return
+    const invalidStore = newState.storeMetadata &&
+      (newState.storeMetadata.networkName !== displayNetwork || newState.storeMetadata.version !== STORE_SCHEMA_VERSION)
+    console.log(newState.storeMetadata, invalidStore, newState.storeMetadata.networkName, newState.storeMetadata.version !== STORE_SCHEMA_VERSION)
+
+    if (invalidStore) {
+      console.warn('Clearing local storage due to network or store schema change')
+      store.replaceState(reduceState(newState, true))
+      // Wipe indexDB
+      storage.clear()
+      const messageDb = await messageStore
+      messageDb.clear()
+      const outpointDb = await outpointStore
+      outpointDb.clear()
     }
 
     rehydrateContacts(newState.contacts)

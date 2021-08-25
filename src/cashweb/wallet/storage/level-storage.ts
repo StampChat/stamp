@@ -197,4 +197,11 @@ export class LevelOutpointStore implements OutpointStore {
       this.cache.set(calcId(outpoint), outpoint)
     }
   }
+
+  /**
+ * This will delete everything in the store! Don't call it by accident!
+ */
+  async clear () {
+    await this.db.clear()
+  }
 }

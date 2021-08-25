@@ -31,4 +31,5 @@ export interface OutpointStore {
 
   getOutpointIterator (): Promise<AsyncIterableIterator<Outpoint>>;
   getFrozenOutpointIterator (): Promise<AsyncIterableIterator<Outpoint>>;
+  clear (): Promise<void>
 }

@@ -135,6 +135,9 @@ async function getWalletClient ({ store }: { store: Store<any> }) {
     },
     getFrozenOutpointIterator () {
       return outpointStore.getFrozenOutpointIterator()
+    },
+    clear () {
+      return outpointStore.clear()
     }
   }
 
