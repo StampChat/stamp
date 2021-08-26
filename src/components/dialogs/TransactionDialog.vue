@@ -7,7 +7,6 @@
     </q-card-section>
     <q-card-section>
       <q-tabs
-        v-if="outpoints.length !== 1"
         v-model="tab"
         class="text-primary"
       >
@@ -32,7 +31,7 @@
             <q-item-label>{{ outpoints[n-1].txId }}</q-item-label>
             <span class="text-bold"> Type </span>
             <q-item-label>{{ outpoints[n-1].type }}</q-item-label>
-            <span class="text-bold"> Address </span> {{ outpoints[n-1].address }}
+            <span class="text-bold"> Address </span> {{ extractAddress(outpoints[n-1].address) }}
             <span class="text-bold"> Amount </span> {{ outpoints[n-1].satoshis }}
           </q-item-section>
         </q-tab-panel>
@@ -51,9 +50,7 @@
 </template>
 
 <script>
-import { Script } from 'bitcore-lib-xpi'
-
-import { networkName } from '../../utils/constants'
+import { toDisplayAddress } from 'src/utils/address'
 
 export default {
   props: {
@@ -73,12 +70,8 @@ export default {
     }
   },
   methods: {
-    extractAddress (output) {
-      const script = new Script(output.script)
-      if (script.isPublicKeyHashOut()) {
-        return script.toAddress(networkName) // TODO: Make generic
-      }
-      return 'Non-p2pkh'
+    extractAddress (outpointAddress) {
+      return toDisplayAddress(outpointAddress)
     }
   }
 }
