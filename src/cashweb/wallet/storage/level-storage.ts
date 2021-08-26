@@ -202,5 +202,6 @@ export class LevelOutpointStore implements OutpointStore {
  */
   async clear () {
     await this.db.clear()
+    await this.getMetadataDatabase().clear()
   }
 }

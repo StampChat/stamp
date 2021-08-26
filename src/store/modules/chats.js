@@ -77,15 +77,16 @@ export async function rehydateChat (chatState) {
   }
 }
 
+export const defaultChatsState = {
+  activeChatAddr: null,
+  chats: {},
+  messages: {},
+  lastReceived: null
+}
+
 export default {
   namespaced: true,
-  state: {
-    activeChatAddr: null,
-    chats: {
-    },
-    messages: {},
-    lastReceived: null
-  },
+  state: defaultChatsState,
   getters: {
     getMessageByPayload: (state) => (payloadDigest) => {
       if (!state.messages) {

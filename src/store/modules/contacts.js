@@ -15,12 +15,14 @@ export function rehydrateContacts (contactState) {
   contactState.contacts = contactState.contacts || {}
 }
 
+export const defaultContactsState = {
+  contacts: {},
+  updateInterval: defaultUpdateInterval
+}
+
 export default {
   namespaced: true,
-  state: {
-    contacts: {},
-    updateInterval: defaultUpdateInterval
-  },
+  state: defaultContactsState,
   getters: {
     getUpdateInterval (state) {
       return state.updateInterval

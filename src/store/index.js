@@ -1,9 +1,10 @@
+/* eslint-disable indent */
 import { createStore } from 'vuex'
 import modules from './modules'
-import { rehydateChat } from './modules/chats'
+import { rehydateChat, defaultChatsState } from './modules/chats'
 import { rehydrateWallet } from './modules/wallet'
 import { path, pathOr, mapObjIndexed } from 'ramda'
-import { rehydrateContacts } from './modules/contacts'
+import { rehydrateContacts, defaultContactsState } from './modules/contacts'
 import { displayNetwork } from '../utils/constants'
 import { store as outpointStore } from '../adapters/level-outpoint-store'
 import { store as messageStore } from '../adapters/level-message-store'
@@ -18,7 +19,7 @@ const parseState = (value) => {
   }
 }
 
-const STORE_SCHEMA_VERSION = 1
+const STORE_SCHEMA_VERSION = 2
 
 const storeKeys = [
   'wallet', 'relayClient', 'chats', 'storeMetadata', 'myProfile', 'contacts', 'appearance'
@@ -38,52 +39,52 @@ const storePlugin = (store) => {
         balance: 0
       },
       relayClient: {
-        token: defaults
-          ? null
-          : path(['relayClient', 'token'], state)
+        token: path(['relayClient', 'token'], state)
       },
-      chats: {
-        activeChatAddr: pathOr(null, ['chats', 'activeChatAddr'], state),
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        chats: defaults
-          ? {}
-          : mapObjIndexed((addressData) => {
-            return ({
-              ...addressData,
-              // Overwrite messages because storing them would be prohibitive.
-              messages: {}
-            })
-          }, pathOr({}, ['chats', 'chats'], state))
-      },
-      contacts: {
-        updateInterval: pathOr(600000, ['contacts', 'updateInterval'], state),
-        contacts: defaults
-          ? {}
-          : mapObjIndexed((contactData) => {
-            return ({
-              ...contactData,
-              profile: {
-                ...contactData.profile,
-                avatar: undefined
-              }
-            })
-          }, pathOr({}, ['contacts', 'contacts'], state))
-      },
-      myProfile: state.myProfile || {
-        profile: { name: null, bio: null, avatar: null }, inbox: { acceptancePrice: null }
-      },
+      chats: defaults
+        // eslint-disable-next-line multiline-ternary
+        ? defaultChatsState : {
+          activeChatAddr: pathOr(null, ['chats', 'activeChatAddr'], state),
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          chats: defaults
+            ? {}
+            : mapObjIndexed((addressData) => {
+              return ({
+                ...addressData,
+                // Overwrite messages because storing them would be prohibitive.
+                messages: {}
+              })
+            }, pathOr({}, ['chats', 'chats'], state))
+        },
+      contacts: defaults
+        ? defaultContactsState
+        : {
+          updateInterval: pathOr(600000, ['contacts', 'updateInterval'], state),
+          contacts: defaults
+            ? {}
+            : mapObjIndexed((contactData) => {
+              return ({
+                ...contactData,
+                profile: {
+                  ...contactData.profile,
+                  avatar: undefined
+                }
+              })
+            }, pathOr({}, ['contacts', 'contacts'], state))
+        },
+      myProfile: state.myProfile || { profile: { name: null, bio: null, avatar: null }, inbox: { acceptancePrice: null } },
       appearance: state.appearance || {
         darkMode: false
       },
       storeMetadata: {
-        networkName: state.storeMetata ? state.storeMetata.version : displayNetwork,
-        version: state.storeMetata ? state.storeMetata.version : 0
+        networkName: state.storeMetata && !defaults ? state.storeMetata.version : displayNetwork,
+        version: state.storeMetata && !defaults ? state.storeMetata.version : STORE_SCHEMA_VERSION
       }
     }
   }
 
   const restoreState = async () => {
-    const newState = reduceState(store.state)
+    let newState = reduceState(store.state)
     for (const partitionedKey of storeKeys) {
       try {
         const gottenValue = await storage.get(partitionedKey)
@@ -100,13 +101,13 @@ const storePlugin = (store) => {
 
     if (invalidStore) {
       console.warn('Clearing local storage due to network or store schema change')
-      store.replaceState(reduceState(newState, true))
+      newState = reduceState(newState, true)
       // Wipe indexDB
-      storage.clear()
+      await storage.clear()
       const messageDb = await messageStore
-      messageDb.clear()
+      await messageDb.clear()
       const outpointDb = await outpointStore
-      outpointDb.clear()
+      await outpointDb.clear()
     }
 
     rehydrateContacts(newState.contacts)
