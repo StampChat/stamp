@@ -123,8 +123,8 @@ export default {
         return this.rawSeed
       },
       set (val) {
-        this.rawSeed = val.toLowerCase().trim()
-        this.$emit('update:account-data', { name: this.rawName, seed: this.rawSeed, valid: this.isValid })
+        this.rawSeed = val
+        this.$emit('update:account-data', { name: this.rawName, seed: this.rawSeed.toLowerCase().trim(), valid: this.isValid })
       }
     },
     isValid () {
