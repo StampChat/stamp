@@ -218,13 +218,13 @@ export default {
         return
       }
       const scrollTarget = scrollArea.getScrollTarget()
-      if (!this.bottom && scrollTarget.scrollTop <= 10) {
+      if (!this.bottom && scrollTarget.scrollTop >= 10) {
         return
       }
       this.$nextTick(() => {
-        scrollArea.setScrollPercentage(
+        scrollArea.setScrollPosition(
           'vertical',
-          1.0,
+          scrollTarget.scrollHeight,
           scrollDuration
         )
       })
