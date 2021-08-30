@@ -3,7 +3,7 @@
   "version": "0.0.16",
   "description": " A Lotus powered internet cryptomessenger",
   "productName": "Stamp",
-  "author": "harry@cryptonumismatics.org",
+  "author": "shammah@cryptonumismatics.org",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore ./",
