@@ -8,6 +8,6 @@ export default boot(({ app }) => {
   }
 
   app.config.globalProperties.openURL = (url: string) => {
-    Browser.open({ url })
+    Browser.open({ url, windowName: '_blank' })
   }
 })
