@@ -61,14 +61,11 @@
                   style="border-radius: 10px 10px 0px 0px"
                 >
                   <q-toolbar-title>{{ $t('profile.uploadAvatar') }}</q-toolbar-title>
-
-                  <q-input
-                    @input="val => { avatarPath = val[0] }"
-                    ref="displayPicker"
+                  <q-file
+                    ref="filePicker"
+                    v-model="avatarPath"
+                    filled=""
                     style="display:none"
-                    type="file"
-                    label="Standard"
-                    @change="parseImage"
                   />
                   <q-btn
                     type="file"
@@ -76,12 +73,11 @@
                     round
                     dense
                     icon="add_a_photo"
-                    @click="$refs.displayPicker.$el.click()"
+                    @click="$refs.filePicker.$el.click()"
                   />
                 </q-toolbar>
                 <div>
                   <q-img
-                    ref="image"
                     :src="internalAvatar"
                     spinner-color="white"
                   />
@@ -188,16 +184,6 @@ export default {
     cycleAvatarRight () {
       this.defaultAvatarIndex = (this.defaultAvatarIndex + 1) % defaultAvatars.length
       this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
-    },
-    parseImage () {
-      if (this.avatarPath == null) {
-        return
-      }
-      const reader = new FileReader()
-      reader.readAsDataURL(this.avatarPath)
-      reader.onload = () => {
-        this.internalAvatar = reader.result
-      }
     }
   },
   watch: {
@@ -208,10 +194,20 @@ export default {
       this.$emit('update:bio', value)
     },
     internalAvatar (value) {
-      this.$emit('update:avatar', this.parseImage(value))
+      this.$emit('update:avatar', value)
     },
     internalAcceptancePrice (value) {
       this.$emit('update:acceptancePrice', value)
+    },
+    avatarPath (val) {
+      if (val == null) {
+        return
+      }
+      const reader = new FileReader()
+      reader.readAsDataURL(val)
+      reader.onload = (evt) => {
+        this.internalAvatar = evt.target.result
+      }
     }
   },
   created () {

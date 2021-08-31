@@ -244,9 +244,11 @@ export class MessageConstructor {
     imgEntry.setKind('avatar')
 
     const arr = profileObj.avatar.split(',')
-    const avatarMatches = arr[0].match(/:(.*?);/)
-    assert(avatarMatches && avatarMatches.length > 1)
-    const avatarType = avatarMatches[1]
+    assert(arr.length > 0, 'image string is invalid.')
+    const matches = arr[0].match(/:(.*?);/)
+    console.log(matches)
+    assert(matches && matches.length > 1, 'matches is the wrong length')
+    const avatarType = matches[1]
     const bstr = atob(arr[1])
     let n = bstr.length
     const rawAvatar = new Uint8Array(n)
