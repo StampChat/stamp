@@ -16,13 +16,14 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapGetters } from 'vuex'
 import { addressColorFromStr } from '../../../utils/formatting'
 
 export default {
   name: 'ChatMessageReply',
   components: {
-    ChatMessage: () => import('./ChatMessage.vue')
+    ChatMessage: defineAsyncComponent(() => import('./ChatMessage.vue'))
   },
   props: {
     address: {
