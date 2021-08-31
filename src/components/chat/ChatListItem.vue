@@ -8,6 +8,7 @@
     <q-item-section
       avatar
       v-if="$status.setup"
+      side
     >
       <q-avatar rounded>
         <img :src="contact.avatar">
@@ -33,7 +34,6 @@
     <q-item-section
       v-show="!compact"
       side
-      top
     >
       <q-badge
         v-if="!!valueUnread "
@@ -74,10 +74,11 @@ export default {
       if (info === null) {
         return ''
       }
+      const slicedText = info.text.split(' ').map(word => word.slice(0, 15)).join(' ')
       if (info.outbound) {
-        return 'You: ' + info.text
+        return 'You: ' + slicedText
       } else {
-        return this.contact.name + ': ' + info.text
+        return 'Them:' + slicedText
       }
     },
     contact () {
