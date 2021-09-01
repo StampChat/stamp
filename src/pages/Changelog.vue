@@ -27,6 +27,23 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
+            v0.0.17 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Make references to sending Lotus to be more thematic</li>
+              <li>Redenominate the UI to Lotus everywhere with 2 decimals</li>
+              <li>Updating your avatar now works correctly</li>
+              <li>Reply components now show contents of the messages they replied to (Except for in group chat)</li>
+              <li>Clip long words in userlist captions to prevent widget overflows</li>
+              <li>More fixes to restoring state on schema version change</li>
+              <li>Fix display of addresses in the Transactions Dialog</li>
+              <li>Fix seed phrase entry to allow spaces</li>
+              <li>One (final?) fix to the scrolling behavior</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.16 Changelog
           </div>
           <div class="text-body1">
