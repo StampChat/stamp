@@ -2,7 +2,7 @@
   <div class="column full-height">
     <!-- Send Lotus dialog -->
     <q-dialog v-model="sendBitcoinOpen">
-      <send-bitcoin-dialog
+      <send-lotus-dialog
         :address="address"
         :contact="contact.profile"
       />
@@ -148,7 +148,7 @@ import ContactCard from './ContactCard.vue'
 // import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
 // import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
-import SendBitcoinDialog from '../dialogs/SendBitcoinDialog.vue'
+import SendLotusDialog from '../dialogs/SendLotusDialog.vue'
 
 export default {
   components: {
@@ -156,7 +156,7 @@ export default {
     // ClearHistoryDialog,
     // DeleteChatDialog,
     ContactBookDialog,
-    SendBitcoinDialog
+    SendLotusDialog
   },
   props: {
     address: {

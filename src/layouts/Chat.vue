@@ -13,7 +13,7 @@
 
     <!-- Send money dialog -->
     <q-dialog v-model="sendMoneyOpen">
-      <send-bitcoin-dialog
+      <send-lotus-dialog
         :address="address"
         :contact="contactProfile"
       />
@@ -125,7 +125,7 @@
         v-model:stamp-amount="stampAmount"
         @sendMessage="sendMessage"
         @sendFileClicked="sendFileOpen = true"
-        @sendMoneyClicked="sendMoneyOpen = true"
+        @giveLotusClicked="sendMoneyOpen = true"
       />
     </q-footer>
   </q-layout>
@@ -140,7 +140,7 @@ import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import ChatMessageText from '../components/chat/messages/ChatMessageText.vue'
 import ChatMessageImage from '../components/chat/messages/ChatMessageImage.vue'
 import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.vue'
-import SendBitcoinDialog from '../components/dialogs/SendBitcoinDialog.vue'
+import SendLotusDialog from '../components/dialogs/SendLotusDialog.vue'
 import { insufficientStampNotify } from '../utils/notifications'
 import { addressColorFromStr } from '../utils/formatting'
 import { stampLowerLimit } from '../utils/constants'
@@ -166,7 +166,7 @@ export default {
     ChatMessageStealth,
     SendFileDialog,
     ChatInput,
-    SendBitcoinDialog
+    SendLotusDialog
   },
   data () {
     return {

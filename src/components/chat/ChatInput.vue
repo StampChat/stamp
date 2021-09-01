@@ -11,13 +11,16 @@
             <q-item
               clickable
               v-close-popup
-              @click="sendMoneyClicked"
+              @click="giveLotusClicked"
             >
-              <q-item-section avatar>
-                <q-icon name="attach_money" />
+              <q-item-section
+                avatar
+                side
+              >
+                <q-icon name="local_florist" />
               </q-item-section>
               <q-item-section>
-                Attach Stealth Funds
+                Give Lotus Secretly
               </q-item-section>
             </q-item>
 
@@ -26,7 +29,10 @@
               v-close-popup
               @click="sendFileClicked"
             >
-              <q-item-section avatar>
+              <q-item-section
+                avatar
+                side
+              >
                 <q-icon name="attach_file" />
               </q-item-section>
               <q-item-section>
@@ -124,7 +130,7 @@ export default {
       default: () => defaultStampAmount
     }
   },
-  emits: ['update:message', 'update:stampAmount', 'sendMessage', 'sendMoneyClicked', 'sendFileClicked'],
+  emits: ['update:message', 'update:stampAmount', 'sendMessage', 'giveLotusClicked', 'sendFileClicked'],
   methods: {
     focus () {
       this.$refs.inputBox.focus()
@@ -132,8 +138,8 @@ export default {
     sendMessage () {
       this.$emit('sendMessage', this.innerMessage)
     },
-    sendMoneyClicked () {
-      this.$emit('sendMoneyClicked')
+    giveLotusClicked () {
+      this.$emit('giveLotusClicked')
     },
     sendFileClicked () {
       this.$emit('sendFileClicked')

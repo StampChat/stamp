@@ -1,12 +1,16 @@
 <template>
-  <div>
+  <q-banner
+    rounded
+    class="bg-grey-3"
+  >
+    You received
     <q-icon
-      name="attach_money"
+      name="local_florist"
       size="sm"
       dense
     />
     {{ formatSats(amount) }}
-  </div>
+  </q-banner>
 </template>
 
 <script>
