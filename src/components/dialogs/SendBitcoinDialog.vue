@@ -12,8 +12,8 @@
         type="number"
         filled
         dense
-        hint="Set the amount of Lotus to be sent (satoshis)."
-        placeholder="Enter number of satoshis..."
+        hint="Set the amount of Lotus to be sent."
+        placeholder="Enter number of Lotus..."
         ref="amount"
       />
     </q-card-section>
@@ -72,7 +72,8 @@ export default {
     }),
     async sendStealthPayment () {
       const stampAmount = this.getStampAmount()(this.address)
-      await this.$relayClient.sendStealthPayment({ address: this.address, amount: Number(this.amount), memo: this.memo, stampAmount })
+      const amount = Number(this.amount * 1000000)
+      await this.$relayClient.sendStealthPayment({ address: this.address, amount, memo: this.memo, stampAmount })
     }
   },
   mounted () {

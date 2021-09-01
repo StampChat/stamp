@@ -64,7 +64,7 @@ export default {
   sendAddressDialog: {
     sendToAddress: 'Send to Address',
     enterBitcoinCashAddress: 'Enter Lotus address...',
-    enterAmount: 'Enter Amount',
+    enterAmount: 'Enter Amount (Lotus)',
     cancel: 'Cancel',
     send: 'Send'
   },

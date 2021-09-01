@@ -55,7 +55,7 @@
               v-model="stampAmount"
               borderless
               input-class="text-right"
-              suffix="sats"
+              suffix="Lotus"
             />
           </q-item-section>
         </q-item>
@@ -194,14 +194,14 @@ export default {
     },
     stampAmount: {
       get () {
-        return this.getStampAmount(this.address)
+        return Number(this.getStampAmount(this.address) / 1000000).toFixed(2)
       },
       set (amount) {
         const amountNumber = Number(amount)
         if (isNaN(amountNumber)) {
           return
         }
-        this.setStampAmount({ address: this.address, stampAmount: amountNumber })
+        this.setStampAmount({ address: this.address, stampAmount: Number(amountNumber) * 1000000 })
       }
     }
   },

@@ -59,7 +59,7 @@
                   outlined
                   style="width: 150px"
                   label="Stamp Price"
-                  suffix="sats"
+                  suffix="XPI"
                   v-model="innerStampAmount"
                   input-class="text-right"
                 />
@@ -157,10 +157,10 @@ export default {
     },
     innerStampAmount: {
       get () {
-        return this.stampAmount
+        return Number(this.stampAmount / 1000000).toFixed(2)
       },
       set (val) {
-        this.$emit('update:stampAmount', val)
+        this.$emit('update:stampAmount', Number(val) * 1000000)
       }
     }
   }

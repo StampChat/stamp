@@ -191,10 +191,10 @@ export default {
     },
     stampAmount () {
       if (!this.message || !this.message.outpoints) {
-        return '0 sats'
+        return '0 Lotus'
       }
       const amount = stampPrice(this.message.outpoints)
-      return amount + ' sats'
+      return Number(amount / 1000000).toFixed(2) + ' Lotus'
     }
   }
 }

@@ -129,12 +129,6 @@ export default {
 
       return this.setActiveChat(address)
     },
-    formatBalance (balance) {
-      if (!balance) {
-        return
-      }
-      return formatBalance(balance)
-    },
     receiveECash () {
       openPage(this.$router, this.$route.path, '/receive')
     }
@@ -157,6 +151,9 @@ export default {
       return this.$electrum.connected
     },
     formattedBalance () {
+      if (!this.balance) {
+        return
+      }
       return formatBalance(this.balance)
     }
   }

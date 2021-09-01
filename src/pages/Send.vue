@@ -75,7 +75,8 @@ export default {
   methods: {
     async send () {
       try {
-        await this.$relayClient.sendToPubKeyHash({ address: this.address, amount: this.amount })
+        const satoshiAmount = Number(this.amount * 1000000)
+        await this.$relayClient.sendToPubKeyHash({ address: this.address, amount: satoshiAmount })
         sentTransactionNotify()
       } catch (err) {
         console.error(err)

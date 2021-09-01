@@ -65,8 +65,8 @@ export const pendingRelayData = {
 export const defaultAvatars = ['bunny_cyborg.png', 'croc_music.png', 'kitty_standard.png', 'panda_ninja.png', 'dog_posh.png']
 
 // Chat constants
-export const defaultStampAmount = 5000
-export const stampLowerLimit = 1000
+export const defaultStampAmount = 500000
+export const stampLowerLimit = 5000
 
 export const defaultContacts = [
   {

@@ -36,6 +36,7 @@
 import moment from 'moment'
 import ChatMessage from './ChatMessage.vue'
 import { stampPrice } from '../../../cashweb/wallet/helpers'
+import { formatBalance } from '../../..//utils/formatting.js'
 
 export default {
   components: {
@@ -105,7 +106,7 @@ export default {
     stampAmount () {
       // TODO: Don't sum again inside the chat message?
       const amount = this.messages.reduce((total, msg) => total + stampPrice(msg.outpoints), 0)
-      return amount + ' sats'
+      return formatBalance(amount)
     }
   }
 }

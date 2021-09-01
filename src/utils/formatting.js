@@ -6,21 +6,7 @@ export function formatBalance (balance) {
     return String(balance) + ' sats'
   }
 
-  if (balance < 1_000_000) {
-    return String(balance / 1_000) + ' kilosats'
-  }
-
-  if (balance < 1_000_000_000) {
-    return String(balance / 1_000_000) + ' Lotus'
-  }
-
-  if (balance < 1_000_000_000_000) {
-    return String(balance / 1_000_000_000) + ' KiloLotus'
-  }
-
-  if (balance < 1_000_000_000_000_000_000) {
-    return String(balance / 1_000_000_000_000) + ' MegaLotus'
-  }
+  return (balance / 1_000_000).toFixed(2) + ' Lotus'
 }
 
 export function addressColor (address) {
