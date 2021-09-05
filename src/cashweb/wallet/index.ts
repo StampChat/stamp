@@ -13,8 +13,8 @@ const standardUtxoSize = 34
 const standardInputSize = 175 // A few extra bytes
 const minimumNewInputAmount = 5120
 const dustLimit = 546
-const minFeePerByte = 1
-const maxFeePerByte = 2
+const minFeePerByte = 2
+const maxFeePerByte = 3
 // Don't build transactions larger than this
 const maximumTransactionSize = 100000
 
@@ -359,7 +359,7 @@ export class Wallet {
     return transactionOverHead + transaction.outputs.length * 35 + transaction.inputs.length * maxScriptSize
   }
 
-  finalizeTransaction ({ transaction, signingKeys }: { transaction: Transaction, signingKeys: PrivateKey[] }) {
+  finalizeTransaction ({ transaction, signingKeys, shuffleChange = true }: { transaction: Transaction, signingKeys: PrivateKey[], shuffleChange?: boolean }) {
     // Add change outputs using our HD wallet.  We want multiple outputs following a
     // power distribution, so we don't have to combine lots of outputs at later times
     // in order to create specific amounts.
@@ -369,7 +369,7 @@ export class Wallet {
     const amountOOM = OOM(transaction.outputs[0].satoshis)
     // Amount to skip
     // TODO: Still probably leaks some information about which outputs are non-change
-    // NOTE: We are not using Bitcore to set change
+    // NOTE: We are not using Bitcore to set change or estimate the transaction size. It's implementation is incorrect and gen
     let skipAmount = 0
     // Create change outputs randomly in decreasing orders of magnitude
     for (const changeAddress of changeAddresses) {
@@ -404,26 +404,42 @@ export class Wallet {
       transaction = transaction.addOutput(output)
     }
 
-    transaction = transaction.sign(signingKeys)
-    // Shift any remainder to other outputs randomly
-    // NOTE: we don't change the number of outputs here, but we also don't want to execute anythign if there are no outputs
-    // eslint-disable-next-line no-unmodified-loop-condition
-    const outputIndex = 1
-    // Add any excess money back to the first (largest) change output before shuffling.
-    // If there's no change output, we'll have to just eat the loss
-    if (transaction.outputs.length > 1) {
+    if (transaction.outputs.length === 1) {
+      // If we didn't add an output due to the OOM skipping above, *and* there's
+      // significant change, add a change output to avoid burning too many coins
+      // and generating an absurdfee error.
+
       const delta = transaction.inputAmount - transaction.outputAmount
+      const finalSize = this._estimateSize(transaction) + standardUtxoSize
+      const properFee = Math.ceil(finalSize * minFeePerByte)
+      const changeOutputAmount = delta - properFee
+      if (changeOutputAmount >= minimumNewInputAmount) {
+        const output = new Transaction.Output({
+          script: Script.buildPublicKeyHashOut(changeAddresses[0]).toHex(),
+          satoshis: changeOutputAmount
+        })
+        transaction = transaction.addOutput(output)
+        console.log('Generating one-off change output due to random output logic skipping creating any output', output)
+      }
+    } else if (transaction.outputs.length > 1) {
+      // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
+
+      // Shift any remainder to other outputs randomly
+      // NOTE: we don't change the number of outputs here, but we also don't want to execute anythign if there are no outputs
+      // Add any excess money back to the first (largest) change output before shuffling.
+      // If there's no change output, we'll have to just eat the loss
+      // Randomly pick a change output.
+      const delta = transaction.inputAmount - transaction.outputAmount
+      const outputIndex = Math.floor(Math.random() * (transaction.outputs.length - 1)) + 1
       const finalSize = this._estimateSize(transaction)
       const properFee = Math.ceil(finalSize * minFeePerByte)
       const amountToAdd = delta - properFee
       // Add a small amount to the current output
-      console.log('Amount available', delta, 'Fee required', properFee, 'Will add', amountToAdd, 'To output #', outputIndex)
       transaction.outputs[outputIndex].satoshis += amountToAdd
       transaction._outputAmount += amountToAdd
+      console.log('Shuffling excess change into existing output', delta, 'Fee required', properFee, 'Will add', amountToAdd, 'To output #', outputIndex)
     }
-
-    const newIndex = shuffleArray(transaction.outputs).findIndex((v) => v === 0)
-
+    const newIndex = shuffleChange ? shuffleArray(transaction.outputs).findIndex((v) => v === 0) : 0
     // Sign transaction
     transaction = transaction.sign(signingKeys)
     const finalTxnSize = this._estimateSize(transaction)
@@ -609,7 +625,7 @@ export class Wallet {
 
     // A good round number greater than the current dustLimit.
     // We may want to make it some computed value in the future.
-    this.finalizeTransaction({ transaction, signingKeys })
+    this.finalizeTransaction({ transaction, signingKeys, shuffleChange: false })
     const finalTxnSize = transaction._estimateSize()
     // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
     console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
