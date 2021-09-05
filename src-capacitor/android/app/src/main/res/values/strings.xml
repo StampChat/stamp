@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Mercury Messenger</string>
-    <string name="title_activity_main">Mercury Messenger</string>
+    <string name="app_name">Stamp</string>
+    <string name="title_activity_main">Stamp</string>
     <string name="package_name">org.cashweb.stamp</string>
     <string name="custom_url_scheme">org.cashweb.stamp</string>
 </resources>

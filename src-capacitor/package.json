@@ -1,8 +1,8 @@
 {
   "name": "stamp",
-  "version": "0.0.13",
+  "version": "0.0.17",
   "description": " A Lotus powered internet cryptomessenger",
-  "author": "harry@cryptonumismatics.org",
+  "author": "shammah@cryptonumismatics.org",
   "private": true,
   "dependencies": {
     "@capacitor/cli": "^2.0.0",
