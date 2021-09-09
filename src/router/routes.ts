@@ -1,21 +1,6 @@
-import type { RouteRecordRaw, RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
-import { Store } from 'vuex'
+import type { RouteRecordRaw } from 'vue-router'
 
-const unprotectedRoutes = ['/home', '/setup', '/changelog']
-
-export function createRoutes<S> (store: Store<S>): RouteRecordRaw[] {
-  async function redirectIfNoProfile (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) {
-    await ((store as unknown) as { restored: Promise<unknown> }).restored
-
-    const profile = store.getters['myProfile/getProfile']
-    console.log('Navigating to ', to.fullPath)
-    if (profile.name || unprotectedRoutes.includes(to.fullPath)) {
-      next()
-    } else {
-      next('/setup')
-    }
-  }
-
+export function createRoutes (): RouteRecordRaw[] {
   const routes: RouteRecordRaw[] = [
     {
       path: '/',
@@ -32,8 +17,7 @@ export function createRoutes<S> (store: Store<S>): RouteRecordRaw[] {
         { path: 'add-contact', component: () => import('pages/AddContact.vue') },
         { path: 'setup', component: () => import('pages/Setup.vue') },
         { path: 'wipe-wallet', component: () => import('pages/WipeWallet.vue') }
-      ],
-      beforeEnter: redirectIfNoProfile
+      ]
     }
   ]
   return routes

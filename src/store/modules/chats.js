@@ -210,9 +210,13 @@ export default {
       state.chats[apiAddress].totalUnreadValue = 0
     },
     reset (state) {
-      state.order = []
-      state.activeChatAddr = null
-      state.chats = {}
+      state.chats = Object.fromEntries(Object.entries(state.chats).map(
+        ([address, chatData]) => ([address, {
+          ...chatData,
+          messages: []
+        }])
+      ))
+      state.messages = {}
       state.lastReceived = null
     },
     openChat (state, address) {

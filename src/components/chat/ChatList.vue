@@ -14,14 +14,16 @@
           v-if="!$status.setup"
         />
         <q-separator />
-        <chat-list-item
-          v-for="(contact) in getSortedChatOrder"
-          :key="contact.address"
-          :chat-address="contact.address"
-          :value-unread="formatBalance(contact.totalUnreadValue)"
-          :num-unread="contact.totalUnreadMessages"
-          :compact="compact"
-        />
+        <template v-if="$status.setup">
+          <chat-list-item
+            v-for="(contact) in getSortedChatOrder"
+            :key="contact.address"
+            :chat-address="contact.address"
+            :value-unread="formatBalance(contact.totalUnreadValue)"
+            :num-unread="contact.totalUnreadMessages"
+            :compact="compact"
+          />
+        </template>
         <q-item v-if="getSortedChatOrder.length === 0 && $status.setup">
           <q-item-section>
             <q-item-label>{{ $t('chatList.noContactMessage') }}</q-item-label>
