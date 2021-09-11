@@ -27,6 +27,17 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
+            v0.0.18 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Added support for adding a contact via links to https://web.stampchat.io/#/chat/&lt;address&gt; This can be used to on-board new users directly though a link.</li>
+              <li>Fix Stamp Android packaging to properly say "Stamp"</li>
+              <li>Fix an issue with change generation under certain cases omitting a change output and creating a very high fee transaction.</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.17 Changelog
           </div>
           <div class="text-body1">

@@ -19,7 +19,7 @@ const parseState = (value) => {
   }
 }
 
-const STORE_SCHEMA_VERSION = 3
+const STORE_SCHEMA_VERSION = 4
 
 const storeKeys = [
   'wallet', 'relayClient', 'chats', 'storeMetadata', 'myProfile', 'contacts', 'appearance'
