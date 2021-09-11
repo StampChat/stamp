@@ -75,20 +75,26 @@ type UIOutput = UIStealthOutput | UIStampOutput
 export class ReadOnlyRelayClient {
   url: string
   networkName: string
+  displayNetwork: string
   networkPrefix: string
 
-  constructor (url: string, networkName: string) {
+  constructor (url: string, networkName: string, displayNetwork: string) {
     this.url = url
     this.networkName = networkName
     this.networkPrefix = Networks.get(networkName).prefix
+    this.displayNetwork = displayNetwork
   }
 
-  toAPIAddressString (address: string | Address) {
+  toAPIAddress (address: string | Address): string {
     return new Address(new Address(address).hashBuffer, Networks.get(this.networkName, undefined)).toCashAddress()
   }
 
-  async getRelayData (address: string) {
-    const addressLegacy = this.toAPIAddressString(address)
+  toXAddress (address: string | Address): string {
+    return new Address(new Address(address).hashBuffer, Networks.get(this.displayNetwork, undefined)).toXAddress()
+  }
+
+  async getRelayData (address: string | Address) {
+    const addressLegacy = this.toAPIAddress(address)
 
     const url = `${this.url}/profiles/${addressLegacy}`
     const response = await axios({
@@ -164,7 +170,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   constructor (url: string, wallet: Wallet, electrumClientPromise: Promise<ElectrumClient>,
     { networkName = 'testnet', relayReconnectInterval = 10_000, getPubKey, messageStore }:
       { relayReconnectInterval?: number, networkName?: string, messageStore: MessageStore, getPubKey: (address: string) => PublicKey }) {
-    super(url, networkName)
+    super(url, networkName, 'livenet')
     assert(networkName, 'Missing networkName while initializing RelayClient')
     assert(url, 'Missing url while initializing RelayClient')
     assert(getPubKey, 'Missing getPubKey while initializing RelayClient')
@@ -191,7 +197,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   async profilePaymentRequest (address: string) {
-    const addressLegacy = this.toAPIAddressString(address)
+    const addressLegacy = this.toAPIAddress(address)
 
     const url = `${this.url}/profiles/${addressLegacy}`
     return await pop.getPaymentRequest(url, 'put')
@@ -199,7 +205,7 @@ export class RelayClient extends ReadOnlyRelayClient {
 
   setUpWebsocket (address: string | Address) {
     assert(this.token, 'missing tokenw hile setting up websocket')
-    const addressLegacy = this.toAPIAddressString(address)
+    const addressLegacy = this.toAPIAddress(address)
 
     const url = new URL(`/ws/${addressLegacy}`, this.url)
     url.protocol = 'wss'
@@ -234,7 +240,7 @@ export class RelayClient extends ReadOnlyRelayClient {
 
   async getRawPayload (address: string, digest: Uint8Array) {
     assert(this.token, 'missing tokenw hile setting calling getRawPayload')
-    const addressLegacy = this.toAPIAddressString(address)
+    const addressLegacy = this.toAPIAddress(address)
 
     const url = `${this.url}/payloads/${addressLegacy}`
 
@@ -254,7 +260,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   async getPayload (address: string, digest: Uint8Array) {
-    const addressLegacy = this.toAPIAddressString(address)
+    const addressLegacy = this.toAPIAddress(address)
 
     const rawPayload = await this.getRawPayload(addressLegacy, digest)
     const payload = Payload.deserializeBinary(rawPayload)
@@ -273,8 +279,8 @@ export class RelayClient extends ReadOnlyRelayClient {
       const changeAddresses = Object.keys(this.wallet.changeAddresses)
       const changeAddress = changeAddresses[changeAddresses.length * Math.random() << 0]
       await this.wallet.forwardUTXOsToAddress({ utxos: message.message.outpoints, address: changeAddress })
-
-      const url = `${this.url}/messages/${this.wallet.myAddressStr}`
+      assert(this.wallet.myAddress, 'Missing address? Wallet not loaded.')
+      const url = `${this.url}/messages/${this.toXAddress(this.wallet.myAddress)}`
       await axios({
         method: 'delete',
         url,
@@ -292,7 +298,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   async putProfile (address: string, metadata: AuthWrapper) {
-    const addressLegacy = this.toAPIAddressString(address)
+    const addressLegacy = this.toAPIAddress(address)
 
     const rawProfile = metadata.serializeBinary()
     const url = `${this.url}/profiles/${addressLegacy}`
@@ -307,7 +313,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   async getMessages (address: string, startTime: number, endTime?: number, retries = 3): Promise<MessagePage | void> {
-    const addressLegacy = this.toAPIAddressString(address)
+    const addressLegacy = this.toAPIAddress(address)
 
     const url = `${this.url}/messages/${addressLegacy}`
     try {
@@ -354,7 +360,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   async messagePaymentRequest (address: string) {
-    const addressLegacy = this.toAPIAddressString(address)
+    const addressLegacy = this.toAPIAddress(address)
 
     const url = `${this.url}/messages/${addressLegacy}`
     return await pop.getPaymentRequest(url, 'get')
@@ -365,7 +371,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }
 
   async pushMessages (address: string, messageSet: MessageSet) {
-    const addressLegacy = this.toAPIAddressString(address)
+    const addressLegacy = this.toAPIAddress(address)
 
     const rawMetadata = messageSet.serializeBinary()
     const url = `${this.url}/messages/${addressLegacy}`
@@ -381,9 +387,9 @@ export class RelayClient extends ReadOnlyRelayClient {
     assert(wallet, 'Trying to call sendMessageImply with wallet unset')
     const sourcePrivateKey = wallet?.identityPrivKey
     assert(sourcePrivateKey, 'Missing identityPrivateKey')
-    const destinationPublicKey = address === wallet?.myAddressStr ? wallet?.identityPrivKey?.publicKey : this.getPubKey(address)
+    const destinationPublicKey = address === wallet?.myAddress?.toXAddress() ? wallet?.identityPrivKey?.publicKey : this.getPubKey(address)
     assert(destinationPublicKey, 'Unable to set destination public key')
-    const senderAddress = this.wallet?.myAddressStr
+    const senderAddress = this.wallet?.myAddress?.toXAddress()
     assert(senderAddress, 'Unable to set senderAddress')
 
     const usedIDs = [] as OutpointId[]
@@ -576,8 +582,9 @@ export class RelayClient extends ReadOnlyRelayClient {
       } as P2PKHSendItem
     ]
     console.log(items)
-    assert(this.wallet?.myAddressStr, 'Unable to get myAddressString in sendToPubKeyHash')
-    await this.sendMessageImpl({ address: this.wallet.myAddressStr, items, stampAmount: 0 })
+    const myAddressStr = this.wallet?.myAddress?.toXAddress()
+    assert(myAddressStr, 'Unable to get myAddressString in sendToPubKeyHash')
+    await this.sendMessageImpl({ address: myAddressStr, items, stampAmount: 0 })
   }
 
   receiveSelfSend ({ payload }: { payload: Payload }) {
@@ -612,13 +619,12 @@ export class RelayClient extends ReadOnlyRelayClient {
 
   async receiveMessage (rawMessage: Message, receivedTime = Date.now()) {
     // Parse message
-    const message = messageMixin(this.networkPrefix, rawMessage)
+    const message = messageMixin(this.displayNetwork, rawMessage)
     const preParsedMessage = message.parse()
-
-    const senderAddress = preParsedMessage.sourcePublicKey.toAddress(this.networkName).toCashAddress() // TODO: Make generic
+    const senderAddress = preParsedMessage.sourcePublicKey.toAddress(this.displayNetwork).toXAddress() // TODO: Make generic
     const wallet = this.wallet
     assert(wallet, 'Wallet not available when trying to receive message')
-    const myAddress = wallet.myAddressStr
+    const myAddress = wallet.myAddress?.toXAddress()
     assert(myAddress, 'Address or wallet not set')
     const outbound = (senderAddress === myAddress)
     const serverTime = preParsedMessage.receivedTime
@@ -664,7 +670,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       return
     }
 
-    const destinationAddress = parsedMessage.destinationPublicKey.toAddress(this.networkName).toCashAddress()
+    const destinationAddress = parsedMessage.destinationPublicKey.toAddress(this.displayNetwork).toXAddress()
 
     // Add UTXO
     const stampOutpoints = parsedMessage.stamp.getStampOutpointsList()
@@ -865,7 +871,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     }
 
     const copartyPubKey = outbound ? parsedMessage.destinationPublicKey : parsedMessage.sourcePublicKey
-    const copartyAddress = copartyPubKey.toAddress(this.networkName).toCashAddress() // TODO: Make generic
+    const copartyAddress = copartyPubKey.toAddress(this.displayNetwork).toXAddress() // TODO: Make generic
     const payloadDigestHex = payloadDigest.toString('hex')
     const finalizedMessage = {
       outbound,
@@ -881,7 +887,7 @@ export class RelayClient extends ReadOnlyRelayClient {
 
   async refresh () {
     const wallet = this.wallet
-    const myAddressStr = wallet?.myAddressStr
+    const myAddressStr = wallet?.myAddress ? this.toAPIAddress(wallet?.myAddress) : undefined
     assert(myAddressStr, 'Missing wallet or myaddress')
     const lastReceived = await this.messageStore.mostRecentMessageTime()
     console.log('refreshing', lastReceived, myAddressStr)

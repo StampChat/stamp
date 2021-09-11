@@ -94,7 +94,7 @@ export default {
       return formatBalance(this.balance)
     },
     displayAddress () {
-      return this.legacy ? this.$wallet.myAddressStr : this.$wallet.displayAddress
+      return this.legacy ? this.$wallet.myAddress.toXAddress() : this.$wallet.displayAddress
     }
   },
   methods: {

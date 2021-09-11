@@ -31,7 +31,7 @@
 export default {
   methods: {
     connect () {
-      this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
+      this.$relayClient.setUpWebsocket(this.$wallet.myAddress)
     }
   }
 }

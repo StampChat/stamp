@@ -315,7 +315,7 @@ export default {
     },
     replyName () {
       const replyAddress = this.getMessageByPayload(this.replyDigest).senderAddress
-      if (replyAddress === this.$wallet.myAddressStr) {
+      if (replyAddress === this.$wallet.myAddress.toXAddress()) {
         return this.getProfile.name
       }
       const contact = this.getContactVuex(replyAddress)
@@ -323,7 +323,7 @@ export default {
     },
     replyColor () {
       const replyAddress = this.getMessageByPayload(this.replyDigest).senderAddress
-      if (replyAddress === this.$wallet.myAddressStr) {
+      if (replyAddress === this.$wallet.myAddress.toXAddress()) {
         return 'black'
       }
 

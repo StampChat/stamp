@@ -54,7 +54,7 @@ export default {
       return message || { items: [], senderAddress: 'undefined' }
     },
     name () {
-      if (this.message.senderAddress === this.$wallet.myAddressStr) {
+      if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
         return this.getProfile.name
       }
       const contact = this.getContact()(this.message.senderAddress)
@@ -64,7 +64,7 @@ export default {
       return contact.profile.name
     },
     nameColor () {
-      if (this.message.senderAddress === this.$wallet.myAddressStr) {
+      if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
         return 'text-black'
       }
       return addressColorFromStr(this.address)

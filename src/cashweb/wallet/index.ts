@@ -53,7 +53,6 @@ type ElectrumListUnspentOutput = { tx_hash: string, tx_pos: number, value: numbe
 export class Wallet {
   storage: OutpointStore
   networkName: string
-  displayNetworkName: string
   numAddresses: number
   numChangeAddresses: number
   electrumClientPromise: Promise<ElectrumClient> | undefined
@@ -65,10 +64,9 @@ export class Wallet {
 
   scriptHashSubscriber: (response: Error | RequestResponse) => void;
 
-  constructor (storage: OutpointStore, { networkName = 'cash-livenet', displayNetworkName = 'livenet', numAddresses = 20, numChangeAddresses = 20 } = {}) {
+  constructor (storage: OutpointStore, { networkName = 'livenet', numAddresses = 20, numChangeAddresses = 20 } = {}) {
     this.storage = storage
     this.networkName = networkName
-    this.displayNetworkName = displayNetworkName
     this.numAddresses = numAddresses
     this.numChangeAddresses = numChangeAddresses
 
@@ -140,7 +138,7 @@ export class Wallet {
         .deriveChild(0)
         .deriveChild(i)
         .privateKey
-      const address = privKey.toAddress(this.networkName).toCashAddress()
+      const address = privKey.toAddress(this.networkName).toXAddress()
       this.setAddress({ address, privKey })
 
       // Index by script hash
@@ -154,7 +152,7 @@ export class Wallet {
         .deriveChild(1)
         .deriveChild(j)
         .privateKey
-      const address = privKey.toAddress(this.networkName).toCashAddress()
+      const address = privKey.toAddress(this.networkName).toXAddress()
       this.setChangeAddress({ address, privKey })
 
       // Index by script hash
@@ -651,17 +649,10 @@ export class Wallet {
     return this.identityPrivKey?.toAddress(this.networkName)
   }
 
-  get myAddressStr () {
-    // TODO: This should be in the relay client, not the wallet...
-    // TODO: Not just testnet
-    return this.identityPrivKey?.toAddress(this.networkName)
-      .toCashAddress()
-  }
-
   get displayAddress () {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
-    return this.identityPrivKey?.toAddress(this.displayNetworkName)
+    return this.identityPrivKey?.toAddress(this.networkName)
       .toXAddress()
   }
 

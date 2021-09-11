@@ -3,7 +3,7 @@ import { createRouter, createMemoryHistory, createWebHistory, createWebHashHisto
 import { KeyserverHandler } from 'src/cashweb/keyserver/handler'
 import { ReadOnlyRelayClient } from 'src/cashweb/relay'
 import { toAPIAddress } from 'src/utils/address'
-import { keyservers, networkName } from 'src/utils/constants'
+import { keyservers, networkName, displayNetwork } from 'src/utils/constants'
 import type { RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
 import { Store } from 'vuex'
 import { createRoutes } from './routes'
@@ -20,7 +20,7 @@ async function addContactFromNavigation<S> (store: Store<S>, address: string) {
     if (!relayURL) {
       return
     }
-    const relayClient = new ReadOnlyRelayClient(relayURL, networkName)
+    const relayClient = new ReadOnlyRelayClient(relayURL, networkName, displayNetwork)
     const relayData = await relayClient.getRelayData(apiAddress)
     if (!relayData) {
       return

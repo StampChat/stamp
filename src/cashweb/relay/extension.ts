@@ -84,7 +84,7 @@ interface ExtendedMessage {
   parse (): ParsedMessage
 }
 
-export function messageMixin (networkPrefix: string, message: Message): Message & ExtendedMessage {
+export function messageMixin (networkName: string, message: Message): Message & ExtendedMessage {
   return Object.assign(message, {
     digest () {
       const payloadDigest = message.getPayloadDigest()
@@ -144,7 +144,7 @@ export function messageMixin (networkPrefix: string, message: Message): Message 
         payloadHmac,
         payloadSize,
         typeof payload === 'string' ? new Uint8Array() : payload,
-        networkPrefix)
+        networkName)
     }
   })
 }

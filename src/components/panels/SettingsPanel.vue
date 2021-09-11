@@ -177,7 +177,7 @@ export default {
       getInbox: 'myProfile/getInbox'
     }),
     getMyAddressStr () {
-      return this.$wallet.myAddressStr
+      return this.$wallet.myAddress.toXAddress()
     },
     drawerOpenModel: {
       get () {

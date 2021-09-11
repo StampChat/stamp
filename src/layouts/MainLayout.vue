@@ -116,7 +116,7 @@ export default {
       console.log('Loading')
       // Setup everything at once. This are independent processes
       try {
-        this.$relayClient.setUpWebsocket(this.$wallet.myAddressStr)
+        this.$relayClient.setUpWebsocket(this.$wallet.myAddress)
       } catch (err) {
         console.error(err)
       }
@@ -151,7 +151,7 @@ export default {
 
       const handler = new KeyserverHandler({ wallet: this.$wallet, keyservers: keyservers, networkName })
       // Update keyserver data if it doesn't exist.
-      handler.getRelayUrl(this.$wallet.myAddressStr).catch(() => {
+      handler.getRelayUrl(this.$wallet.myAddress.toXAddress()).catch(() => {
         handler.updateKeyMetadata(
           this.$relayClient.url,
           this.$wallet.identityPrivKey
@@ -159,7 +159,7 @@ export default {
       })
 
       // Update profile if it doesn't exist.
-      this.$relayClient.getRelayData(this.$wallet.myAddressStr).catch(() => {
+      this.$relayClient.getRelayData(this.$wallet.myAddress).catch(() => {
         const relayData = this.getRelayData()
         this.$relayClient
           .updateProfile(

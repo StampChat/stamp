@@ -4,7 +4,7 @@ import { ReadOnlyRelayClient } from '../../cashweb/relay'
 import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl, keyservers, networkName } from '../../utils/constants'
 import { KeyserverHandler } from '../../cashweb/keyserver/handler'
 import moment from 'moment'
-import { toAPIAddress } from '../../utils/address'
+import { toDisplayAddress } from '../../utils/address'
 
 export function rehydrateContacts (contactState) {
   if (!contactState) {
@@ -28,22 +28,22 @@ export default {
       return state.updateInterval
     },
     getNotify: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       return state.contacts[apiAddress] ? state.contacts[apiAddress].notify : false
     },
     getRelayURL: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       return state.contacts[apiAddress] ? state.contacts[apiAddress].relayURL : defaultRelayUrl
     },
     isContact: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       return (apiAddress in state.contacts)
     },
     getContact: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       return state.contacts[apiAddress] ? state.contacts[apiAddress] : { ...pendingRelayData, profile: { ...pendingRelayData.profile } }
     },
@@ -54,17 +54,17 @@ export default {
       if (!address) {
         return { ...pendingRelayData.profile }
       }
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       return state.contacts[apiAddress] ? state.contacts[apiAddress].profile : { ...pendingRelayData.profile }
     },
     getAcceptancePrice: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       return state.contacts[apiAddress].inbox.acceptancePrice
     },
     getPubKey: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
       if (!state.contacts[apiAddress] || !state.contacts[apiAddress].profile) {
         return undefined
       }
@@ -75,7 +75,7 @@ export default {
   mutations: {
     addContact (state, { address, contact }) {
       const fixedContact = { ...contact, profile: { ...contact.profile, pubKey: contact.profile.pubKey } }
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       state.contacts[apiAddress] = fixedContact
     },
@@ -83,7 +83,7 @@ export default {
       state.updateInterval = interval
     },
     updateContact (state, { address, profile, inbox }) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
       if (!(address in state.contacts)) {
         return
       }
@@ -92,7 +92,7 @@ export default {
       state.contacts[apiAddress].inbox = inbox || state.contacts[apiAddress].inbox
     },
     setNotify (state, { address, value }) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       if (!state.contacts[apiAddress]) {
         return
@@ -100,12 +100,12 @@ export default {
       state.contacts[apiAddress].notify = value
     },
     deleteContact (state, address) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       delete state.contacts[apiAddress]
     },
     setPubKey (state, { address, pubKey }) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       state.contacts[apiAddress].profile.pubKey = pubKey
     }

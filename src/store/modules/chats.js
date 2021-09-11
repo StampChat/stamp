@@ -3,7 +3,7 @@ import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../cashweb/wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
-import { toAPIAddress } from '../../utils/address'
+import { toDisplayAddress } from '../../utils/address'
 
 const defaultContactObject = {
   inputMessage: '',
@@ -95,7 +95,7 @@ export default {
       return state.messages[payloadDigest]
     },
     getNumUnread: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       return state.chats[apiAddress] ? state.chats[apiAddress].totalUnreadMessages : 0
     },
@@ -128,12 +128,12 @@ export default {
       return sortedOrder
     },
     lastRead: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       return apiAddress in state.chats ? state.chats[apiAddress].lastRead : 0
     },
     getStampAmount: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
       const chat = state.chats[apiAddress]
 
       return chat ? chat.stampAmount || defaultStampAmount : defaultStampAmount
@@ -142,7 +142,7 @@ export default {
       return state.activeChatAddr
     },
     getLatestMessage: (state) => (address) => {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
       const nopInfo = {
         outbound: false,
         text: ''
@@ -193,12 +193,12 @@ export default {
   },
   mutations: {
     deleteMessage (state, { address, index }) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       state.chats[apiAddress].messages.splice(index, 1)
     },
     readAll (state, address) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       const values = state.chats[apiAddress].messages
       if (values.length === 0) {
@@ -220,7 +220,7 @@ export default {
       state.lastReceived = null
     },
     openChat (state, address) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       if (!(apiAddress in state.chats)) {
         state.chats[apiAddress] = { ...defaultContactObject, messages: [], address: apiAddress }
@@ -231,7 +231,7 @@ export default {
         state.activeChatAddr = null
         return
       }
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       if (!(apiAddress in state.chats)) {
         state.chats[apiAddress] = { ...defaultContactObject, messages: [], address: apiAddress }
@@ -239,7 +239,7 @@ export default {
       state.activeChatAddr = address
     },
     sendMessageLocal (state, { address, senderAddress, index, items, outpoints = [], status = 'pending', previousHash = null }) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       const timestamp = Date.now()
       const newMsg = {
@@ -284,14 +284,14 @@ export default {
       state.chats[apiAddress] = { ...defaultContactObject, messages: [message], address: apiAddress }
     },
     clearChat (state, address) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       if (apiAddress in state.chats) {
         state.chats[apiAddress].messages = []
       }
     },
     deleteChat (state, address) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       if (state.activeChatAddr === apiAddress) {
         state.activeChatAddr = null
@@ -299,7 +299,7 @@ export default {
       delete state.chats[apiAddress]
     },
     receiveMessage (state, { address, index, message: newMsg }) {
-      const apiAddress = toAPIAddress(address)
+      const apiAddress = toDisplayAddress(address)
 
       assert(newMsg.outbound !== undefined, 'outbound is not defined')
       assert(newMsg.status !== undefined, 'status is not defined')

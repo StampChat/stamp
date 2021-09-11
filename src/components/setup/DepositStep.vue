@@ -59,6 +59,7 @@ import { mapGetters } from 'vuex'
 import { recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
 import { formatBalance } from '../../utils/formatting'
+import { toAPIAddress, toDisplayAddress } from '../../utils/address'
 
 export default {
   components: {
@@ -89,13 +90,13 @@ export default {
       this.qrSize = size.height
     },
     openFaucet () {
-      this.openURL(`https://faucet.lotuslounge.org/?address=${this.$wallet.displayAddress}`)
+      this.openURL(`https://faucet.lotuslounge.org/?address=${toDisplayAddress(this.$wallet.myAddress)}`)
     }
   },
   computed: {
     ...mapGetters({ balance: 'wallet/balance' }),
     displayAddress () {
-      return (this.legacy ? this.$wallet.myAddressStr : this.$wallet.displayAddress)
+      return (this.legacy ? toAPIAddress(this.$wallet.myAddress) : toDisplayAddress(this.$wallet.myAddress))
     },
     percentageBalance () {
       const percentage = this.balance / this.recomendedBalance
