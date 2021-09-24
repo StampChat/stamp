@@ -54,7 +54,7 @@ export default {
     })
 
     // Construct tx
-    const { transaction, usedIDs } = await wallet.constructTransaction({ outputs })
+    const { transaction, usedUtxos } = await wallet.constructTransaction({ outputs })
     const rawTransaction = transaction.toBuffer()
 
     // Send payment and receive token
@@ -63,6 +63,6 @@ export default {
     payment.setMerchantData(paymentDetails.getMerchantData())
     const paymentUrl = paymentDetails.getPaymentUrl()
 
-    return { payment, paymentUrl, usedIDs }
+    return { payment, paymentUrl, usedUtxos }
   }
 }

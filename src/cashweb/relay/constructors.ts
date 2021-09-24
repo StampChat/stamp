@@ -205,7 +205,7 @@ export class MessageConstructor {
       satoshis: amount
     })
 
-    const { transaction, usedIDs } = wallet.constructTransaction({ outputs: [output] })
+    const { transaction, usedUtxos } = wallet.constructTransaction({ outputs: [output] })
     const rawTransaction = transaction.toBuffer()
 
     p2pkhEntry.setTransaction(rawTransaction)
@@ -215,7 +215,7 @@ export class MessageConstructor {
     payloadEntry.setKind('p2pkh')
     payloadEntry.setBody(p2pkhEntryRaw)
 
-    return { entry: payloadEntry, transaction, usedIDs }
+    return { entry: payloadEntry, transaction, usedUtxos }
   }
 
   constructPriceFilter (isPublic: boolean, acceptancePrice: number, notificationPrice: number) {

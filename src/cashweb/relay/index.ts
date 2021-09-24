@@ -24,7 +24,7 @@ import type { ElectrumClient } from 'electrum-cash'
 import { MessageStore } from './storage/storage'
 import { Wallet } from '../wallet'
 import { MessageWrapper } from '../types/messages'
-import { Outpoint, OutpointId } from '../types/outpoint'
+import { Outpoint } from '../types/outpoint'
 
 interface ReplyItem {
   type: 'reply'
@@ -392,7 +392,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     const senderAddress = this.wallet?.myAddress?.toXAddress()
     assert(senderAddress, 'Unable to set senderAddress')
 
-    const usedIDs = [] as OutpointId[]
+    const stagedUtxos = [] as Outpoint[]
     const outpoints = [] as UIOutput[]
     const transactions = [] as Transaction[]
 
@@ -403,9 +403,9 @@ export class RelayClient extends ReadOnlyRelayClient {
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'stealth') {
           const { paymentEntry, transactionBundle } = this.messageConstructor.constructStealthEntry({ ...item, wallet: this.wallet, destPubKey: destinationPublicKey })
-          outpoints.push(...flatten(transactionBundle.map(({ transaction, vouts, usedIds }) => {
+          outpoints.push(...flatten(transactionBundle.map(({ transaction, vouts, usedUtxos }) => {
             transactions.push(transaction)
-            usedIDs.push(...usedIds)
+            stagedUtxos.push(...usedUtxos)
             return vouts.map(vout => ({
               type: 'stealth',
               txId: transaction.txid,
@@ -427,10 +427,10 @@ export class RelayClient extends ReadOnlyRelayClient {
           return this.messageConstructor.constructImageEntry({ ...item })
         }
         if (item.type === 'p2pkh') {
-          const { entry, transaction, usedIDs } = this.messageConstructor.constructP2PKHEntry({ ...item, wallet: this.wallet })
+          const { entry, transaction, usedUtxos } = this.messageConstructor.constructP2PKHEntry({ ...item, wallet: this.wallet })
 
           transactions.push(transaction)
-          usedIDs.push(...usedIDs)
+          usedUtxos.push(...usedUtxos)
 
           return entry
         }
@@ -449,12 +449,9 @@ export class RelayClient extends ReadOnlyRelayClient {
       const { message, transactionBundle, payloadDigest } = this.messageConstructor.constructMessage(wallet, plainTextPayload, sourcePrivateKey, destinationPublicKey, stampAmount)
       const payloadDigestHex = payloadDigest.toString('hex')
 
-      // Add localy
-      this.events.emit('messageSending', { address, senderAddress, index: payloadDigestHex, items, outpoints, previousHash, transactions })
-
-      outpoints.push(...flatten(transactionBundle.map(({ transaction, vouts, usedIds }) => {
+      outpoints.push(...flatten(transactionBundle.map(({ transaction, vouts, usedUtxos }) => {
         transactions.push(transaction)
-        usedIDs.push(...usedIds)
+        stagedUtxos.push(...usedUtxos)
         return vouts.map(vout => ({
           type: 'stamp',
           txId: transaction.txid,
@@ -464,43 +461,50 @@ export class RelayClient extends ReadOnlyRelayClient {
       }))
       )
 
+      // Add localy
+      this.events.emit('messageSending', { address, senderAddress, index: payloadDigestHex, items, outpoints, previousHash, transactions })
+
       const messageSet = new MessageSet()
       messageSet.addMessages(message)
 
       const destinationAddress = destinationPublicKey.toAddress(this.networkName).toCashAddress()
       const electrumClient = await this.wallet?.electrumClientPromise
       assert(electrumClient, 'Unable to get electrumClient')
-      Promise.all(transactions.map(async (transaction) => {
-        console.log('Broadcasting a transaction', transaction.txid, transaction.toString())
-        await electrumClient.request('blockchain.transaction.broadcast', transaction.toString())
-        console.log('Finished broadcasting tx', transaction.txid)
-      }))
+      Promise.all(stagedUtxos.map(async (outpoint) => {
+        console.log('Testing UTXO', calcId(outpoint))
+        await wallet.checkOutpoint(outpoint)
+      })).then(() => {
+        Promise.all(transactions.map(async (transaction) => {
+          console.log('Broadcasting a transaction', transaction.txid, transaction.toString())
+          await electrumClient.request('blockchain.transaction.broadcast', transaction.toString())
+          console.log('Finished broadcasting tx', transaction.txid)
+        }))
+      })
         .then(() => this.pushMessages(destinationAddress, messageSet))
         .then(async () => {
           this.events.emit('messageSent', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
           // TODO: we shouldn't be dealing with this here. Leaky abstraction
-          await Promise.all(usedIDs.map(id => wallet.storage.deleteOutpoint(id)))
+          await Promise.all(stagedUtxos.map(utxo => wallet.storage.deleteOutpoint(calcId(utxo))))
         })
         .catch(async (err) => {
           console.error(err)
           if (err.response) {
             console.error(err.response)
           }
-          usedIDs.forEach(id => {
-            assert(this.wallet, 'wallet unset while fixing outpoints')
-            this.wallet.fixOutpoint(id)
+          stagedUtxos.forEach(utxo => {
+            wallet.unfreezeOutpoint(calcId(utxo))
           })
-          errCount += 1
-          console.log('error sending message', err)
           if (errCount >= 3) {
             this.events.emit('messageSendError', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
             console.log(`unable to send message after ${errCount} retries`)
             return
           }
+          console.log('error sending message', err)
+
           // TODO: Currently, we can lose stealth transaction data if the stamp inputs fail.
           // Also, retries messages are not deleted from the message output window.
           // Both of these issues need to be fixed.
-          await this.sendMessageImpl({ address, items, stampAmount, errCount, previousHash: payloadDigestHex })
+          await this.sendMessageImpl({ address, items, stampAmount, errCount: errCount + 1, previousHash: payloadDigestHex })
         })
     } catch (err) {
       console.error(err)

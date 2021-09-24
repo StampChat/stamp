@@ -6,7 +6,8 @@ import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
 import { crypto, Address, Networks, PrivateKey } from 'bitcore-lib-xpi'
 import { Wallet } from '../wallet'
-import { OutpointId } from '../types/outpoint'
+import { Outpoint } from '../types/outpoint'
+import { calcId } from '../wallet/helpers'
 
 export class KeyserverHandler {
   keyservers: string[]
@@ -147,11 +148,11 @@ export class KeyserverHandler {
     const { paymentDetails } = await this.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper) ?? { paymentDetails: undefined }
     assert(paymentDetails, 'Missing payment details')
     // Construct payment
-    const { paymentUrl, payment, usedIDs } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
+    const { paymentUrl, payment, usedUtxos } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
 
     const paymentUrlFull = new URL(paymentUrl, serverUrl)
     const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
-    await Promise.all(usedIDs.map((id: OutpointId) => this.wallet?.storage.deleteOutpoint(id)))
+    await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
 
     await this.putMetadata(idAddress, serverUrl, authWrapper, token)
   }

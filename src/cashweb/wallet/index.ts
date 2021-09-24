@@ -7,7 +7,7 @@ import { Address, Script, Transaction, crypto, PrivateKey, HDPrivateKey, PublicK
 import { OutpointStore } from './storage/storage'
 import type { ElectrumClient, RequestResponse } from 'electrum-cash'
 
-import { Outpoint, OutpointId } from '../types/outpoint'
+import { Outpoint } from '../types/outpoint'
 
 const standardUtxoSize = 34
 const standardInputSize = 175 // A few extra bytes
@@ -111,6 +111,7 @@ export class Wallet {
     const updateUTXOTime = Date.now()
     await this.startListeners()
     const startListenersTime = Date.now()
+    this.updateAllOutpoints().then(() => console.log('finished updating outpoints'))
     console.log(`initAddresses UTXOs took ${initAddressTime - t0} ms`)
     console.log(`updateUTXOTime UTXOs took ${updateUTXOTime - t0} ms`)
     console.log(`startListenersTime UTXOs took ${startListenersTime - t0} ms`)
@@ -246,41 +247,53 @@ export class Wallet {
     await P.map(scriptHashes, scriptHash => client.subscribe(this.scriptHashSubscriber, 'blockchain.scripthash.subscribe', scriptHash), { concurrency: 5 })
   }
 
-  async fixOutpoint (utxoId: OutpointId) {
-    // TODO: This needs some thought to ensure we do not delete outpoints that
-    // are possibly just out of sync with the mempool.
+  async updateAllOutpoints () {
+    // Check HD Wallet
+    const utxos = [...this.storage.getOutpoints().values()]
+    await P.map(utxos, utxo => this.fixOutpoint(utxo), { concurrency: 5 })
+  }
 
-    // Unfreeze UTXO if confirmed to be unspent else delete
-    // WARNING: This is not thread-safe, do not call when others hold the UTXO
+  async checkOutpoint (utxo: Outpoint) {
+    const utxoId = calcId(utxo)
+    console.log(`Checking UTXO ${utxoId}`)
     const client = await this.electrumClientPromise
-    assert(client, 'missing client in fixOutpoint')
-    const utxo = await this.storage.getOutpoint(utxoId)
-    if (!utxo) {
-      console.log(`Missing UTXO for ${utxoId}`)
+    assert(client, 'missing client in fixOutpointId')
+    const scriptHash = toElectrumScriptHash(utxo.address)
+    const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
+    assert(elOutputs, `Null response from blockchain.scripthash.listunspent for ${scriptHash}`)
+    if (elOutputs instanceof Error) {
+      throw elOutputs
+    }
+    assert(elOutputs instanceof Array, 'output of blockchain.scripthash.listunspent was not an array!')
+    const unspentOutputs = elOutputs as ElectrumListUnspentOutput[]
+    if (!unspentOutputs.some(output => {
+      return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
+    })) {
+      console.log(`UTXO missing on-chain, deleting missing UTXO ${utxoId}`)
+      this.storage.deleteOutpoint(utxoId)
+      // Found utxo
       return
     }
-    console.log(`Fixing UTXO ${utxoId}`)
+    console.log(`UTXO is valid ${utxoId}`)
+  }
+
+  async fixOutpoint (utxo: Outpoint) {
+    const utxoId = calcId(utxo)
+    // TODO: This needs some thought to ensure we do not delete outpoints that
+    // are possibly just out of sync with the mempool.
     try {
-      const scriptHash = toElectrumScriptHash(utxo.address)
-      const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-      assert(elOutputs, `Null response from blockchain.scripthash.listunspent for ${scriptHash}`)
-      if (elOutputs instanceof Error) {
-        throw elOutputs
-      }
-      assert(elOutputs instanceof Array, 'output of blockchain.scripthash.listunspent was not an array!')
-      const unspentOutputs = elOutputs as ElectrumListUnspentOutput[]
-      if (unspentOutputs.some(output => {
-        return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
-      })) {
-        console.log(`Unfreezing UTXO ${utxoId}`)
-        this.storage.unfreezeOutpoint(utxoId)
-        // Found utxo
+      // Unfreeze UTXO if confirmed to be unspent else delete
+      // WARNING: This is not thread-safe, do not call when others hold the UTXO
+      const utxo = await this.storage.getOutpoint(utxoId)
+      if (!utxo) {
+        console.log(`Missing UTXO for ${utxoId}`)
         return
       }
-      console.log(`Deleting UTXO ${utxoId}`)
-      this.storage.deleteOutpoint(utxoId)
+      await this.checkOutpoint(utxo)
+      await this.unfreezeOutpoint(utxoId)
     } catch (err) {
-      console.error('error deserializing utxo address', err, utxo)
+      console.error('error deserializing utxo address', err, utxoId)
+      throw err
     }
   }
 
@@ -300,24 +313,23 @@ export class Wallet {
   async forwardUTXOsToAddress ({ utxos, address }: { utxos: Outpoint[], address: string }) {
     let transaction = new Transaction()
 
-    const outpointIds = utxos.map(utxo => calcId(utxo))
     const signingKeys = []
     let satoshis = 0
 
-    const usedIDs = []
-    for (const outpointId of outpointIds) {
-      const outpoint: BuildableOutput | undefined = this.storage.getOutpoint(outpointId)
+    const stagedUtxos = []
+    for (const passedInUtxo of utxos) {
+      const outpoint: BuildableOutput | undefined = this.storage.getOutpoint(calcId(passedInUtxo))
       if (!outpoint) {
         continue
       }
-      usedIDs.push(outpointId)
+      stagedUtxos.push(outpoint)
       outpoint.script = Script.buildPublicKeyHashOut(outpoint.address).toHex()
       signingKeys.push(outpoint.privKey)
       transaction = transaction.from([Transaction.UnspentOutput.fromObject(outpoint)])
       satoshis += outpoint.satoshis
     }
 
-    if (usedIDs.length === 0) {
+    if (stagedUtxos.length === 0) {
       return { transaction: null, usedIDs: [] }
     }
 
@@ -336,16 +348,16 @@ export class Wallet {
       assert(electrumClient, 'missing client in forwardUTXOsToAddress')
       await electrumClient.request('blockchain.transaction.broadcast', txHex)
       // TODO: we shouldn't be dealing with this here. Leaky abstraction
-      usedIDs.map(id => this.storage.deleteOutpoint(id))
+      stagedUtxos.map(utxo => this.storage.deleteOutpoint(calcId(utxo)))
     } catch (err) {
       console.error(err)
       // Fix UTXOs if tx broadcast fails
-      usedIDs.forEach(id => {
-        this.fixOutpoint(id)
+      stagedUtxos.forEach(utxo => {
+        this.fixOutpoint(utxo)
       })
       throw new Error('Error broadcasting forwarding transaction')
     }
-    return { transaction, usedIDs }
+    return { transaction, usedUtxos: stagedUtxos }
   }
 
   // Bitcore estimate size is horribly broken. This slightly overestimates the transaction size
@@ -373,7 +385,7 @@ export class Wallet {
     for (const changeAddress of changeAddresses) {
       const estimatedFutureSize = this._estimateSize(transaction) + standardUtxoSize
       const delta = transaction.inputAmount - transaction.outputAmount - skipAmount
-      console.log(`Available amount for change and fees = ${delta}`)
+      console.log(`Available amount for change and fees = ${delta} `)
       if (delta < dustLimit + estimatedFutureSize * minFeePerByte) {
         console.log(`Can't make another output given currently available funds ${delta} < ${dustLimit + estimatedFutureSize * minFeePerByte}`)
         // We can't make more outputs without going over the fee.
@@ -541,7 +553,6 @@ export class Wallet {
       // Wait until succeeding to update the transactionNumber
       transactionNumber += 1
 
-      const stagedIds = stagedUtxos.map(utxo => calcId(utxo))
       amountLeft -= amountToUse
       const outputIndex = this.finalizeTransaction({ transaction, signingKeys })
       // We can't make this transaction any bigger
@@ -551,7 +562,7 @@ export class Wallet {
       transactionBundle.push({
         transaction,
         vouts: [outputIndex],
-        usedIds: stagedIds
+        usedUtxos: stagedUtxos
       })
     }
     return transactionBundle
@@ -566,7 +577,7 @@ export class Wallet {
 
     transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ amount, addressGenerator, utxos, transactionOffset: transactionBundle.length }))
     for (const transaction of transactionBundle) {
-      transaction.usedIds.forEach(utxoId => this.storage.freezeOutpoint(utxoId))
+      transaction.usedUtxos.forEach(utxoId => this.storage.freezeOutpoint(calcId(utxoId)))
     }
     return transactionBundle
   }
@@ -582,7 +593,6 @@ export class Wallet {
 
     // Coin selection
     const signingKeys = []
-    const usedUtxos = []
 
     const amountRequired = transaction.outputAmount
     const sortedUtxos: BuildableOutput[] = [...this.storage.getOutpoints().values()]
@@ -593,6 +603,7 @@ export class Wallet {
     const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
 
     let satoshis = 0
+    const usedUtxos = []
     for (const utxo of utxoSetToUse) {
       const txnSize = this._estimateSize(transaction)
       if (satoshis > amountRequired + txnSize * minFeePerByte) {
@@ -628,7 +639,7 @@ export class Wallet {
     // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
     console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
     console.log(transaction)
-    return { transaction, usedIDs: usedUtxos.map(utxo => calcId(utxo)) }
+    return { transaction, usedUtxos }
   }
 
   get feePerByte () {

@@ -133,7 +133,8 @@ export class LevelOutpointStore implements OutpointStore {
   freezeOutpoint (outpointId: OutpointId) {
     const outpoint = this.getOutpoint(outpointId)
     if (outpoint === undefined) {
-      throw Error('missing key')
+      console.error(`trying to freeze non-existant outpoint ${outpointId}`)
+      return
     }
     outpoint.frozen = true
     this.putOutpoint(outpoint)
@@ -142,7 +143,8 @@ export class LevelOutpointStore implements OutpointStore {
   unfreezeOutpoint (outpointId: OutpointId) {
     const outpoint = this.getOutpoint(outpointId)
     if (outpoint === undefined) {
-      throw Error('missing key')
+      console.error(`trying to unfreeze non-existant outpoint ${outpointId}`)
+      return
     }
     outpoint.frozen = false
     this.putOutpoint(outpoint)
