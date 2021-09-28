@@ -27,6 +27,15 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
+            v0.0.19 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Check all UTXOs before sending messages as a precautionary measure to avoid losing coins.</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.18 Changelog
           </div>
           <div class="text-body1">
