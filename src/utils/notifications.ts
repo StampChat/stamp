@@ -3,7 +3,7 @@ import { notificationTimeout } from './constants'
 
 // Error notifications
 
-function negativeNotify (text) {
+function negativeNotify (text: string) {
   Notify.create({
     message: '<div class="text-center"> ' + text + ' </div>',
     html: true,
@@ -11,7 +11,7 @@ function negativeNotify (text) {
   })
 }
 
-export function errorNotify (err) {
+export function errorNotify (err: { response?: any; message: string }) {
   console.error(err)
   if (err.response) {
     console.error(err.response)
@@ -21,7 +21,7 @@ export function errorNotify (err) {
 
 // Info notifications
 
-export function infoNotify (text) {
+export function infoNotify (text: string) {
   Notify.create({
     message: '<div class="text-center"> ' + text + ' </div>',
     html: true,
@@ -47,18 +47,27 @@ export function sentTransactionNotify () {
     html: true,
     color: 'accent',
     actions: [
-      { label: 'View', color: 'secondary', handler: () => { /* ... */ } }
+      {
+        label: 'View',
+        color: 'secondary',
+        handler: () => {
+          /* ... */
+        }
+      }
     ]
   })
 }
-export function desktopNotify (title, body, icon, callback) {
+export function desktopNotify (
+  title: string,
+  body: string,
+  icon: string,
+  callback: () => void
+) {
   const notify = new window.Notification(title, {
-    title,
     body,
     icon
   })
   notify.onclick = () => {
-    window.show()
     callback()
     notify.close()
   }
