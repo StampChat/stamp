@@ -271,8 +271,7 @@ export class Wallet {
     })) {
       console.log(`UTXO missing on-chain, deleting missing UTXO ${utxoId}`)
       this.storage.deleteOutpoint(utxoId)
-      // Found utxo
-      return
+      throw new Error('UTXO not found on-chain')
     }
     console.log(`UTXO is valid ${utxoId}`)
   }
