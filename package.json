@@ -6,7 +6,8 @@
   "author": "shammah@cryptonumismatics.org",
   "private": true,
   "scripts": {
-    "lint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore ./",
+    "lint": "eslint 'src/**/*.{ts,js,vue}'",
+    "lint:fix": "npm run lint -- --fix",
     "dev": "quasar dev -m electron -- --no-sandbox --disable-setuid-sandbox",
     "build": "quasar build -m electron -b builder",
     "test": "echo \"See package.json => scripts for available tests.\" && exit 0",
