@@ -1,12 +1,40 @@
+import type { Module } from 'vuex'
 import { PublicKey } from 'bitcore-lib-xpi'
 
 import { ReadOnlyRelayClient } from '../../cashweb/relay'
-import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl, keyservers, networkName } from '../../utils/constants'
+import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl, keyservers, networkName, displayNetwork } from '../../utils/constants'
 import { KeyserverHandler } from '../../cashweb/keyserver/handler'
 import moment from 'moment'
 import { toDisplayAddress } from '../../utils/address'
 
-export function rehydrateContacts (contactState) {
+type Profile = {
+  name?: string,
+  bio?: string,
+  avatar?: string,
+  pubKey: number[]
+}
+
+type ContactState = {
+  lastUpdateTime: number,
+  notify: boolean,
+  relayURL: string,
+  profile: Profile,
+  inbox: {
+    acceptancePrice?: number;
+  }
+}
+
+type State = {
+  contacts: Record<string, ContactState | undefined>,
+  updateInterval: number,
+}
+
+export const defaultContactsState = {
+  contacts: {},
+  updateInterval: defaultUpdateInterval
+}
+
+export function rehydrateContacts (contactState?: State) {
   if (!contactState) {
     return
   }
@@ -15,34 +43,31 @@ export function rehydrateContacts (contactState) {
   contactState.contacts = contactState.contacts || {}
 }
 
-export const defaultContactsState = {
-  contacts: {},
-  updateInterval: defaultUpdateInterval
-}
+type RootState = any
 
-export default {
+const module: Module<State, RootState> = {
   namespaced: true,
   state: defaultContactsState,
   getters: {
     getUpdateInterval (state) {
       return state.updateInterval
     },
-    getNotify: (state) => (address) => {
+    getNotify: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
 
-      return state.contacts[apiAddress] ? state.contacts[apiAddress].notify : false
+      return state.contacts[apiAddress] ? state.contacts[apiAddress]?.notify : false
     },
-    getRelayURL: (state) => (address) => {
+    getRelayURL: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
 
-      return state.contacts[apiAddress] ? state.contacts[apiAddress].relayURL : defaultRelayUrl
+      return state.contacts[apiAddress] ? state.contacts[apiAddress]?.relayURL : defaultRelayUrl
     },
-    isContact: (state) => (address) => {
+    isContact: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
 
       return (apiAddress in state.contacts)
     },
-    getContact: (state) => (address) => {
+    getContact: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
 
       return state.contacts[apiAddress] ? state.contacts[apiAddress] : { ...pendingRelayData, profile: { ...pendingRelayData.profile } }
@@ -50,25 +75,26 @@ export default {
     getContacts: (state) => {
       return state.contacts
     },
-    getContactProfile: (state) => (address) => {
+    getContactProfile: (state) => (address: string) => {
       if (!address) {
         return { ...pendingRelayData.profile }
       }
       const apiAddress = toDisplayAddress(address)
 
-      return state.contacts[apiAddress] ? state.contacts[apiAddress].profile : { ...pendingRelayData.profile }
+      return state.contacts[apiAddress] ? state.contacts[apiAddress]?.profile : { ...pendingRelayData.profile }
     },
-    getAcceptancePrice: (state) => (address) => {
+    getAcceptancePrice: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
 
-      return state.contacts[apiAddress].inbox.acceptancePrice
+      return state.contacts[apiAddress]?.inbox.acceptancePrice
     },
-    getPubKey: (state) => (address) => {
+    getPubKey: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
-      if (!state.contacts[apiAddress] || !state.contacts[apiAddress].profile) {
+      const contact = state.contacts[apiAddress]
+      if (!contact || !contact?.profile) {
         return undefined
       }
-      const arr = Uint8Array.from(Object.values(state.contacts[apiAddress].profile.pubKey))
+      const arr = Uint8Array.from(Object.values(contact.profile.pubKey))
       return PublicKey.fromBuffer(arr)
     }
   },
@@ -82,22 +108,23 @@ export default {
     setUpdateInterval (state, interval) {
       state.updateInterval = interval
     },
-    updateContact (state, { address, profile, inbox }) {
+    updateContact (state, { address, profile, inbox }: ContactState & { address: string }) {
       const apiAddress = toDisplayAddress(address)
-      if (!(address in state.contacts)) {
+      const contact = state.contacts[apiAddress]
+      if (!contact) {
         return
       }
-      state.contacts[apiAddress].lastUpdateTime = moment().valueOf()
-      state.contacts[apiAddress].profile = profile || state.contacts[apiAddress].profile
-      state.contacts[apiAddress].inbox = inbox || state.contacts[apiAddress].inbox
+      contact.lastUpdateTime = moment().valueOf()
+      contact.profile = profile || contact.profile
+      contact.inbox = inbox || contact.inbox
     },
     setNotify (state, { address, value }) {
       const apiAddress = toDisplayAddress(address)
-
-      if (!state.contacts[apiAddress]) {
+      const contact = state.contacts[apiAddress]
+      if (!contact) {
         return
       }
-      state.contacts[apiAddress].notify = value
+      contact.notify = value
     },
     deleteContact (state, address) {
       const apiAddress = toDisplayAddress(address)
@@ -106,8 +133,11 @@ export default {
     },
     setPubKey (state, { address, pubKey }) {
       const apiAddress = toDisplayAddress(address)
-
-      state.contacts[apiAddress].profile.pubKey = pubKey
+      const contact = state.contacts[apiAddress]
+      if (!contact) {
+        return
+      }
+      contact.profile.pubKey = pubKey
     }
   },
   actions: {
@@ -139,7 +169,7 @@ export default {
       commit('addContact', { address: defaultContact.address, contact })
       commit('chats/openChat', defaultContact.address, { root: true })
     },
-    deleteChat ({ commit }, address) {
+    deleteChat ({ commit }, address: string) {
       commit('chats/deleteChat', address, { root: true })
     },
     refreshContacts ({ getters, dispatch }) {
@@ -166,8 +196,11 @@ export default {
       try {
         const handler = new KeyserverHandler({ networkName, keyservers })
         const relayURL = await handler.getRelayUrl(address)
+        if (!relayURL) {
+          throw new Error(`Unable to find relay url for ${address}`)
+        }
 
-        const relayClient = new ReadOnlyRelayClient(relayURL, networkName)
+        const relayClient = new ReadOnlyRelayClient(relayURL, networkName, displayNetwork)
         const relayData = await relayClient.getRelayData(address)
         commit('updateContact', { address, profile: relayData.profile, inbox: relayData.inbox })
       } catch (err) {
@@ -176,3 +209,5 @@ export default {
     }
   }
 }
+
+export default module

@@ -172,7 +172,7 @@ declare module 'bitcore-lib-xpi' {
 
         static fromPrivateKey (privateKey: PrivateKey): PublicKey;
         static fromPoint (point: crypto.Point): PublicKey;
-        static fromBuffer (buffer: Buffer): PublicKey;
+        static fromBuffer (buffer: Buffer | Uint8Array): PublicKey;
 
         toBuffer (): Buffer;
         toDER (): Buffer;
