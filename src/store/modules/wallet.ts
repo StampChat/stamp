@@ -1,9 +1,20 @@
+import type { Module } from 'vuex'
+
 import { calcId } from '../../cashweb/wallet/helpers'
 import { store as levelOutpointStore } from '../../adapters/level-outpoint-store'
 import { markRaw } from 'vue'
 import { HDPrivateKey } from 'bitcore-lib-xpi'
+import { Outpoint } from 'src/cashweb/types/outpoint'
 
-export async function rehydrateWallet (wallet) {
+type State = {
+  xPrivKey?: HDPrivateKey,
+  utxos: Record<string, number | undefined>,
+  seedPhrase?: string,
+  balance: number,
+  feePerByte: 2
+}
+
+export async function rehydrateWallet (wallet: State) {
   if (!wallet || !wallet.xPrivKey) {
     return
   }
@@ -31,13 +42,13 @@ export async function rehydrateWallet (wallet) {
   }
 }
 
-export default {
+type RootState = any;
+
+const module: Module<State, RootState> = {
   namespaced: true,
   state: {
-    xPrivKey: null,
     utxos: {},
     feePerByte: 2,
-    seedPhrase: null,
     balance: 0
   },
   mutations: {
@@ -45,18 +56,18 @@ export default {
       state.seedPhrase = seedPhrase
     },
     reset (state) {
-      state.xPrivKey = null
+      state.xPrivKey = undefined
       state.utxos = {}
     },
     setXPrivKey (state, xPrivKey) {
       state.xPrivKey = markRaw(xPrivKey)
     },
     removeUTXO (state, id) {
-      state.balance -= state.utxos[id] || 0
+      state.balance -= state.utxos[id] ?? 0
       delete state.utxos[id]
     },
-    addUTXO (state, output) {
-      state.balance += output.satoshis || 0
+    addUTXO (state, output: Outpoint) {
+      state.balance += output.satoshis
       const utxoId = calcId(output)
       state.utxos[utxoId] = output.satoshis
     }
@@ -73,3 +84,5 @@ export default {
     }
   }
 }
+
+export default module

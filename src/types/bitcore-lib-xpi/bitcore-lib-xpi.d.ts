@@ -186,6 +186,8 @@ declare module 'bitcore-lib-xpi' {
 
         constructor (data?: string | Buffer | unknown);
 
+        static fromObject (o: unknown): HDPrivateKey;
+
         derive (arg: string | number, hardened?: boolean): HDPrivateKey;
         deriveChild (arg: string | number, hardened?: boolean): HDPrivateKey;
         deriveNonCompliantChild (arg: string | number, hardened?: boolean): HDPrivateKey;
