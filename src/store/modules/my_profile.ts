@@ -1,6 +1,22 @@
-export default {
+
+import type { Module } from 'vuex'
+
+type State = {
+  profile: {
+    name?: string,
+    bio?: string,
+    avatar?: string,
+  },
+  inbox: {
+    acceptancePrice?: number;
+  }
+}
+
+type RootState = any;
+
+const module: Module<State, RootState> = {
   namespaced: true,
-  state: { profile: { name: null, bio: null, avatar: null }, inbox: { acceptancePrice: null } },
+  state: { profile: {}, inbox: {} },
   getters: {
     getRelayData (state) {
       return state
@@ -19,3 +35,5 @@ export default {
     }
   }
 }
+
+export default module
