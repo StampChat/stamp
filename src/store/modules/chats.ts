@@ -1,20 +1,60 @@
 import assert from 'assert'
+import type { Module } from 'vuex'
+
 import { defaultStampAmount } from '../../utils/constants'
 import { stampPrice } from '../../cashweb/wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'
+import { Outpoint } from 'src/cashweb/types/outpoint'
+import { Message, MessageItem, MessageWrapper, TextItem } from 'src/cashweb/types/messages'
+import { PublicKey } from 'bitcore-lib-xpi'
 
-const defaultContactObject = {
-  inputMessage: '',
-  lastRead: null,
+type ChatMessage = {
+  outbound: boolean;
+  status: string;
+  receivedTime: number;
+  serverTime: number;
+  items: MessageItem[];
+  outpoints: Outpoint[];
+  senderAddress: string;
+  payloadDigest: string;
+}
+
+type ChatState = {
+  address: string,
+  messages: ChatMessage[],
+  totalUnreadMessages: number;
+  totalUnreadValue: number;
+  totalValue: number;
+  lastReceived: number;
+  lastRead: number;
+  stampAmount: number;
+};
+
+const defaultContactObject: Omit<ChatState, 'messages' | 'address'> = {
   stampAmount: defaultStampAmount,
   totalUnreadMessages: 0,
   totalUnreadValue: 0,
-  totalValue: 0
+  totalValue: 0,
+  lastReceived: 0,
+  lastRead: 0
 }
 
-export async function rehydateChat (chatState) {
+type State = {
+  activeChatAddr?: string,
+  chats: Record<string, ChatState | undefined>,
+  messages: Record<string, Message | undefined>,
+  lastReceived: number | null,
+}
+
+export const defaultChatsState: State = {
+  chats: {},
+  messages: {},
+  lastReceived: null
+}
+
+export async function rehydateChat (chatState: State) {
   if (!chatState) {
     return
   }
@@ -22,14 +62,10 @@ export async function rehydateChat (chatState) {
   chatState.messages = chatState.messages || {}
 
   if (chatState.chats) {
-    for (const contactAddress in chatState.chats) {
-      const contact = chatState.chats[contactAddress]
+    for (const [contactAddress, contact] of Object.entries(chatState.chats)) {
+      assert(contact, 'This is impossible, but typescript has a type hole that has to be asserted around')
       contact.address = contactAddress
       contact.messages = []
-      if (contact.messsages) {
-        delete contact.messsages
-        contact.messages = []
-      }
       contact.totalUnreadMessages = 0
       contact.totalUnreadValue = 0
       contact.totalValue = 0
@@ -57,54 +93,59 @@ export async function rehydateChat (chatState) {
       chatState.messages = {}
     }
     if (!chatState.chats[copartyAddress]) {
-      chatState.chats[copartyAddress] = { ...defaultContactObject, messages: [], copartyAddress }
+      chatState.chats[copartyAddress] = { ...defaultContactObject, messages: [], address: copartyAddress }
     }
     chatState.messages[index] = message
-    chatState.chats[copartyAddress].messages.push(message)
-    chatState.chats[copartyAddress].lastReceived = message.serverTime
-    const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-    if (!newMsg.outbound && chatState.chats[copartyAddress].lastRead < message.serverTime) {
-      chatState.chats[copartyAddress].totalUnreadValue += messageValue
-      chatState.chats[copartyAddress].totalUnreadMessages += 1
+    const chat = chatState.chats[copartyAddress]
+    assert(chat, 'Missing chat for message')
+    chat.messages.push(message)
+    chat.lastReceived = message.serverTime
+    const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, entry) => {
+      switch (entry.type) {
+        case 'stealth':
+          return totalValue + entry.amount
+        default:
+          return totalValue
+      }
+    }, 0)
+    if (!newMsg.outbound && chat.lastRead && chat.lastRead < message.serverTime) {
+      chat.totalUnreadValue += messageValue
+      chat.totalUnreadMessages += 1
     }
     chatState.lastReceived = message.serverTime
-    chatState.chats[copartyAddress].totalValue += messageValue
+    chat.totalValue += messageValue
   }
 
   // Resort chats
   for (const contactAddress in chatState.chats) {
-    chatState.chats[contactAddress].messages.sort((messageA, messageB) => messageA.serverTime - messageB.serverTime)
+    chatState.chats[contactAddress]?.messages.sort((messageA, messageB) => messageA.serverTime - messageB.serverTime)
   }
 }
 
-export const defaultChatsState = {
-  activeChatAddr: null,
-  chats: {},
-  messages: {},
-  lastReceived: null
-}
+type RootState = any;
 
-export default {
+const module: Module<State, RootState> = {
   namespaced: true,
   state: defaultChatsState,
   getters: {
-    getMessageByPayload: (state) => (payloadDigest) => {
+    getMessageByPayload: (state) => (payloadDigest: string) => {
       if (!state.messages) {
         return null
       }
       return state.messages[payloadDigest]
     },
-    getNumUnread: (state) => (address) => {
+    getNumUnread: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
 
-      return state.chats[apiAddress] ? state.chats[apiAddress].totalUnreadMessages : 0
+      return state.chats[apiAddress] ? state.chats[apiAddress]?.totalUnreadMessages : 0
     },
     totalUnread (state) {
-      return Object.values(state.chats).map((chat) => chat.totalUnreadMessages).reduce((acc, val) => acc + val, 0)
+      return Object.values(state.chats).map((chat) => chat?.totalUnreadMessages ?? 0).reduce((acc, val) => acc + val, 0)
     },
     getSortedChatOrder (state) {
       const sortedOrder = Object.values(state.chats).sort(
         (contactA, contactB) => {
+          assert(contactA && contactB, 'Make typescript happy')
           if (contactB.totalUnreadValue - contactA.totalUnreadValue !== 0) {
             return contactB.totalUnreadValue - contactA.totalUnreadValue
           }
@@ -113,8 +154,8 @@ export default {
             return contactB.totalValue - contactA.totalValue
           }
 
-          if (contactB.lastRead - contactA.lastRead !== 0) {
-            return contactB.lastRead - contactA.lastRead
+          if (contactB.lastRead !== contactA.lastRead) {
+            return (contactB.lastRead ?? 0) - (contactA.lastRead ?? 0)
           }
 
           if (contactB.totalUnreadMessages - contactA.totalUnreadMessages !== 0) {
@@ -127,33 +168,40 @@ export default {
       )
       return sortedOrder
     },
-    lastRead: (state) => (address) => {
+    lastRead: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
 
-      return apiAddress in state.chats ? state.chats[apiAddress].lastRead : 0
+      return state.chats[apiAddress]?.lastRead ?? 0
     },
-    getStampAmount: (state) => (address) => {
+    getStampAmount: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
       const chat = state.chats[apiAddress]
+      if (!chat) {
+        return defaultStampAmount
+      }
 
-      return chat ? chat.stampAmount || defaultStampAmount : defaultStampAmount
+      return chat.stampAmount ?? defaultStampAmount
     },
     getActiveChat (state) {
       return state.activeChatAddr
     },
-    getLatestMessage: (state) => (address) => {
+    getLatestMessage: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
       const nopInfo = {
         outbound: false,
         text: ''
       }
-      const nMessages = Object.keys(state.chats[apiAddress].messages).length
+      const chat = state.chats[apiAddress]
+      if (!chat) {
+        return nopInfo
+      }
+
+      const nMessages = Object.keys(chat.messages).length
       if (nMessages === 0) {
         return nopInfo
       }
 
-      const lastMessageKey = Object.keys(state.chats[apiAddress].messages)[nMessages - 1]
-      const lastMessage = state.chats[apiAddress].messages[lastMessageKey]
+      const lastMessage = chat.messages[chat.messages.length - 1]
       const items = lastMessage.items
       const lastItem = items[items.length - 1]
 
@@ -194,27 +242,33 @@ export default {
   mutations: {
     deleteMessage (state, { address, index }) {
       const apiAddress = toDisplayAddress(address)
-
-      state.chats[apiAddress].messages.splice(index, 1)
+      state.chats[apiAddress]?.messages.splice(index, 1)
     },
     readAll (state, address) {
       const apiAddress = toDisplayAddress(address)
-
-      const values = state.chats[apiAddress].messages
-      if (values.length === 0) {
-        state.chats[apiAddress].lastRead = null
-      } else {
-        state.chats[apiAddress].lastRead = Math.max(values[values.length - 1].serverTime, state.chats[apiAddress].lastRead)
+      const chat = state.chats[apiAddress]
+      if (!chat) {
+        console.error('Trying to readAll messages from non-existant contact')
+        return
       }
-      state.chats[apiAddress].totalUnreadMessages = 0
-      state.chats[apiAddress].totalUnreadValue = 0
+      const values = chat.messages
+      if (values.length === 0) {
+        chat.lastRead = 0
+      } else {
+        chat.lastRead = Math.max(values[values.length - 1].serverTime, chat.lastRead ?? 0)
+      }
+      chat.totalUnreadMessages = 0
+      chat.totalUnreadValue = 0
     },
     reset (state) {
       state.chats = Object.fromEntries(Object.entries(state.chats).map(
-        ([address, chatData]) => ([address, {
-          ...chatData,
-          messages: []
-        }])
+        ([address, chatData]) => {
+          assert(chatData, 'Not possible')
+          return [address, {
+            ...chatData,
+            messages: []
+          }]
+        }
       ))
       state.messages = {}
       state.lastReceived = null
@@ -228,7 +282,6 @@ export default {
     },
     setActiveChat (state, address) {
       if (!address) {
-        state.activeChatAddr = null
         return
       }
       const apiAddress = toDisplayAddress(address)
@@ -267,18 +320,21 @@ export default {
         return
       }
 
+      const chat = state.chats[apiAddress]
+      assert(chat, 'Missing chat bug received message')
+
       if (previousHash in state.messages) {
         // we have the message already, just need to update some fields and return
-        const msgIndex = state.chats[apiAddress].messages.findIndex((msg) => msg.messageHash === previousHash)
-        state.chats[apiAddress].messages.splice(msgIndex, 1)
+        const msgIndex = chat.messages.findIndex((msg) => msg.payloadDigest === previousHash)
+        chat.messages.splice(msgIndex, 1)
         delete state.messages[index]
         return
       }
 
       state.messages[index] = message
       if (apiAddress in state.chats) {
-        state.chats[apiAddress].messages.push(message)
-        state.chats[apiAddress].lastRead = Date.now()
+        chat.messages.push(message)
+        chat.lastRead = Date.now()
         return
       }
       state.chats[apiAddress] = { ...defaultContactObject, messages: [message], address: apiAddress }
@@ -286,19 +342,21 @@ export default {
     clearChat (state, address) {
       const apiAddress = toDisplayAddress(address)
 
-      if (apiAddress in state.chats) {
-        state.chats[apiAddress].messages = []
+      const chat = state.chats[apiAddress]
+      if (!chat) {
+        return
       }
+      chat.messages = []
     },
     deleteChat (state, address) {
       const apiAddress = toDisplayAddress(address)
 
       if (state.activeChatAddr === apiAddress) {
-        state.activeChatAddr = null
+        state.activeChatAddr = undefined
       }
       delete state.chats[apiAddress]
     },
-    receiveMessage (state, { address, index, message: newMsg }) {
+    receiveMessage (state, { address, index, message: newMsg }: { address: string, index: string, message: Message }) {
       const apiAddress = toDisplayAddress(address)
 
       assert(newMsg.outbound !== undefined, 'outbound is not defined')
@@ -324,40 +382,41 @@ export default {
         // We do need reactivity to create a new chat
         state.chats[apiAddress] = { ...defaultContactObject, messages: [], address: apiAddress }
       }
+      const chat = state.chats[apiAddress]
+      assert(chat, 'not possible')
 
       // TODO: Better indexing
-      state.chats[apiAddress].messages.push(message)
-      state.chats[apiAddress].lastReceived = message.serverTime
-      const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, { amount = 0 }) => totalValue + amount, 0)
-      if (apiAddress !== state.activeChatAddr && state.chats[apiAddress].lastRead < message.serverTime) {
-        state.chats[apiAddress].totalUnreadValue += messageValue
-        state.chats[apiAddress].totalUnreadMessages += 1
+      chat.messages.push(message)
+      chat.lastReceived = message.serverTime
+      const messageValue = stampPrice(message.outpoints) + message.items.reduce((totalValue, entry) => {
+        switch (entry.type) {
+          case 'stealth':
+            return totalValue + entry.amount
+          default:
+            return totalValue
+        }
+      }, 0)
+      if (apiAddress !== state.activeChatAddr && chat.lastRead < message.serverTime) {
+        chat.totalUnreadValue += messageValue
+        chat.totalUnreadMessages += 1
       }
       state.lastReceived = message.serverTime
-      state.chats[apiAddress].totalValue += messageValue
+      chat.totalValue += messageValue
     },
     setStampAmount (state, { address, stampAmount }) {
-      state.chats[address].stampAmount = stampAmount
+      const chat = state.chats[address]
+      if (!chat) {
+        console.error('attempting to set stamp amount for non-existant contact')
+        return
+      }
+      chat.stampAmount = stampAmount
     }
   },
   actions: {
     reset ({ commit }) {
       commit('reset')
     },
-    readAll (state, address) {
-      const values = Object.values(state.data[address].messages)
-      if (values.length === 0) {
-        state.data[address].lastRead = null
-      } else {
-        state.data[address].lastRead = values[values.length - 1].serverTime
-      }
-      state.data[address].totalUnreadMessages = 0
-      state.data[address].totalUnreadValue = 0
-    },
-    shareContact ({ commit, rootGetters, dispatch }, { currentAddr, shareAddr }) {
-      const contact = rootGetters['contacts/getContactProfile'](currentAddr)
-      const text = 'Name: ' + contact.name + '\n' + 'Address: ' + currentAddr
-      commit('setInputMessage', { address: shareAddr, text })
+    shareContact ({ dispatch }, { shareAddr }) {
       dispatch('setActiveChat', shareAddr)
     },
     setActiveChat ({ commit, dispatch }, address) {
@@ -369,7 +428,7 @@ export default {
       assert(typeof stampAmount === 'number', 'stampAmount wrong type')
       commit('setStampAmount', { address, stampAmount })
     },
-    receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, message: newMsg }) {
+    receiveMessage ({ dispatch, commit, rootGetters, getters }, { outbound, copartyAddress, copartyPubKey, index, message: newMsg, stampValue }: MessageWrapper & { copartyPubKey: PublicKey, stampValue: number, totalAmount: number }) {
       // Check whether contact exists
       if (!rootGetters['contacts/isContact'](copartyAddress)) {
         // Add dummy contact
@@ -383,11 +442,11 @@ export default {
       const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
       const lastRead = getters.lastRead(copartyAddress)
 
-      const acceptable = (newMsg.stampValue >= acceptancePrice)
+      const acceptable = (stampValue >= acceptancePrice)
       // If not focused (and not outbox message) then notify
       if (!document.hasFocus() && !outbound && acceptable && lastRead < newMsg.serverTime) {
         const contact = rootGetters['contacts/getContact'](copartyAddress)
-        const textItem = newMsg.items.find(item => item.type === 'text') || { text: '' }
+        const textItem: TextItem = newMsg.items.find(item => item.type === 'text') as TextItem ?? { text: '' }
         if (contact && contact.notify) {
           desktopNotify(contact.profile.name, textItem.text, contact.profile.avatar, () => {
             dispatch('setActiveChat', copartyAddress)
@@ -398,3 +457,5 @@ export default {
     }
   }
 }
+
+export default module

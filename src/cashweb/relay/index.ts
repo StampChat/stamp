@@ -23,47 +23,18 @@ import { PublicKey, crypto, Transaction, Networks, Address, PrivateKey } from 'b
 import type { ElectrumClient } from 'electrum-cash'
 import { MessageStore } from './storage/storage'
 import { Wallet } from '../wallet'
-import { MessageWrapper } from '../types/messages'
+import { ReplyItem, TextItem, P2PKHSendItem, MessageItem } from '../types/messages'
 import { Outpoint } from '../types/outpoint'
 
-interface ReplyItem {
-  type: 'reply'
-  payloadDigest: string
-}
-
-interface TextItem {
-  type: 'text'
-  text: string
-}
-
-interface P2PKHSendItem {
-  type: 'p2pkh'
-  address: string
-  amount: number
-}
-
-interface StealthItem {
-  type: 'stealth'
-  amount: number
-  txId?: string
-  outputIndex?: number
-}
-
-interface ImageItem {
-  type: 'image'
-  image: string,
-}
-type MessageItem = StealthItem | P2PKHSendItem | TextItem | ReplyItem | ImageItem
-
 // TODO: Fix this, UI should use the same type
-interface UIStealthOutput {
+export interface UIStealthOutput {
   type: 'stealth'
   txId: string
   satoshis: number
   outputIndex: number
 }
 
-interface UIStampOutput {
+export interface UIStampOutput {
   type: 'stamp',
   txId: string
   satoshis: number
@@ -883,8 +854,9 @@ export class RelayClient extends ReadOnlyRelayClient {
       copartyAddress,
       copartyPubKey,
       index: payloadDigestHex,
-      message: Object.freeze({ ...newMsg, stampValue, totalValue: stampValue + stealthValue })
-    } as MessageWrapper
+      stampValue,
+      message: Object.freeze({ ...newMsg, totalValue: stampValue + stealthValue })
+    }
     await this.messageStore.saveMessage(finalizedMessage)
     this.events.emit('receivedMessage', finalizedMessage)
   }
