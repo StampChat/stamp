@@ -10,6 +10,7 @@ import { Outpoint, OutpointId } from 'src/cashweb/types/outpoint'
 import { reactive } from 'vue'
 import type { App } from 'vue'
 import { Store } from 'vuex'
+import { RootState } from 'src/store/modules'
 
 function instrumentElectrumClient ({ resolve, reject, client, observables, reconnector }:
   {
@@ -144,7 +145,7 @@ async function getWalletClient ({ store }: { store: Store<any> }) {
   return new Wallet(storageAdapter)
 }
 
-export default boot(async ({ store, app }) => {
+export default boot<RootState>(async ({ store, app }) => {
   await (store as any).restored
   const wallet = await getWalletClient({ store })
   const electrumObservables = reactive({ connected: false })
