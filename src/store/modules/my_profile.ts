@@ -1,7 +1,7 @@
 
 import type { Module } from 'vuex'
 
-type State = {
+export type State = {
   profile: {
     name?: string,
     bio?: string,
@@ -12,9 +12,7 @@ type State = {
   }
 }
 
-type RootState = any;
-
-const module: Module<State, RootState> = {
+const module: Module<State, unknown> = {
   namespaced: true,
   state: { profile: {}, inbox: {} },
   getters: {
