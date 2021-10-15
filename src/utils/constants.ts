@@ -1,4 +1,3 @@
-
 import { ElectrumTransport } from 'electrum-cash'
 
 // Electrum constants
@@ -39,8 +38,8 @@ export const relayUrlOptions = ['https://mainnet-relay.cashweb.io']
 export const defaultRelayData = {
   profile: {
     name: '',
-    bio: null,
-    avatar: null,
+    bio: '',
+    avatar: '',
     pubKey: null
   },
   inbox: {
@@ -51,7 +50,7 @@ export const defaultRelayData = {
 export const pendingRelayData = {
   profile: {
     name: 'Loading...',
-    bio: null,
+    bio: '',
     avatar: null,
     pubKey: null
   },
@@ -62,7 +61,13 @@ export const pendingRelayData = {
 }
 
 // Avatar constants
-export const defaultAvatars = ['bunny_cyborg.png', 'croc_music.png', 'kitty_standard.png', 'panda_ninja.png', 'dog_posh.png']
+export const defaultAvatars = [
+  'bunny_cyborg.png',
+  'croc_music.png',
+  'kitty_standard.png',
+  'panda_ninja.png',
+  'dog_posh.png'
+]
 
 // Chat constants
 export const defaultStampAmount = 500000

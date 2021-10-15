@@ -81,7 +81,7 @@
   </q-layout>
 </template>
 
-<script>
+<script lang="ts">
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 
 import { HDPrivateKey } from 'bitcore-lib-xpi'
@@ -98,7 +98,9 @@ import DepositStep from '../components/setup/DepositStep.vue'
 import EulaStep from '../components/setup/EULAStep.vue'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
+import WalletGenWorker from 'worker-loader!../workers/xpriv_generate'
+import { BuildableOutput } from 'src/cashweb/wallet'
+import { Payment } from 'src/cashweb/bip70/paymentrequest_pb'
 
 export default {
   components: {
@@ -116,7 +118,8 @@ export default {
       },
       relayData: defaultRelayData,
       relayUrl: defaultRelayUrl,
-      avatar: null,
+      avatar: '',
+      seed: '',
       settings: {
         networking: {
           updateInterval: this.getUpdateInterval() / 1_000
@@ -148,21 +151,21 @@ export default {
     }),
     selectRandomAvatar () {
       const avatarName = defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)]
-      const toDataURL = (callback) => {
+      const toDataURL = (callback: (dataURL: string) => void) => {
         const img = new Image()
         img.crossOrigin = 'Anonymous'
         img.onload = function () {
-          const canvas = document.createElement('CANVAS')
+          const canvas = document.createElement('canvas')
           const ctx = canvas.getContext('2d')
-          canvas.height = this.naturalHeight
-          canvas.width = this.naturalWidth
-          ctx.drawImage(this, 0, 0)
+          canvas.height = img.naturalHeight
+          canvas.width = img.naturalWidth
+          ctx?.drawImage(img, 0, 0)
           const dataURL = canvas.toDataURL()
           callback(dataURL)
         }
         img.src = require(`../assets/avatars/${avatarName}`)
       }
-      toDataURL((dataUrl) => {
+      toDataURL((dataUrl: string) => {
         this.avatar = dataUrl
       })
     },
@@ -174,7 +177,7 @@ export default {
         delay: 100,
         message: this.$t('setup.generatingWallet')
       })
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         // Setup worker
         // TODO: What was the point of doing this in a worker?
         const worker = new WalletGenWorker()
@@ -201,7 +204,7 @@ export default {
     async setupRelayData () {
       // Set profile
       const ksHandler = new KeyserverHandler({ wallet: this.$wallet, keyservers: keyservers, networkName })
-      const idAddress = this.$wallet.myAddress
+      const idAddress = this.$wallet.myAddress?.toCashAddress() ?? ''
 
       // Check for existing metadata
       this.$q.loading.show({
@@ -212,12 +215,7 @@ export default {
       // Try find relay URL on keyserver
       try {
         const foundRelayUrl = await ksHandler.getRelayUrl(idAddress)
-        this.relayUrl = foundRelayUrl
-
-        // No URL entry
-        if (!foundRelayUrl) {
-          this.relayUrl = defaultRelayUrl
-        }
+        this.relayUrl = foundRelayUrl ?? defaultRelayUrl
       } catch (err) {
         // No URL found
         if (err.response && err.response.status === 404) {
@@ -239,7 +237,7 @@ export default {
       })
       // Get profile from relay server
       // We do this first to prevent uploading broken URL to keyserver
-      const { client: relayClient } = await getRelayClient({ relayUrl: this.relayUrl, store: this.$store, wallet: this.$wallet })
+      const { client: relayClient } = await getRelayClient({ relayUrl: this.relayUrl, store: this.$store, wallet: this.$wallet, electrumClient: this.$electrum })
       try {
         this.relayData = await relayClient.getRelayData(idAddress)
         return
@@ -247,8 +245,8 @@ export default {
         this.relayData = {
           ...defaultRelayData,
           profile: {
+            ...defaultRelayData.profile,
             name: this.accountData.name || 'Stamp User',
-            bio: '',
             avatar: this.avatar
           }
         }
@@ -272,6 +270,9 @@ export default {
           message: this.$t('setup.uploadingMetaData')
         })
         const idPrivKey = this.$wallet.identityPrivKey
+
+        if (!idPrivKey) return
+
         await ksHandler.updateKeyMetadata(this.relayUrl, idPrivKey)
         this.$q.loading.hide()
       } catch (err) {
@@ -280,7 +281,7 @@ export default {
       }
     },
     async setupRelay () {
-      const { client: relayClient } = await getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClientPromise: this.$electrumClientPromise, wallet: this.$wallet })
+      const { client: relayClient } = await getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClient: this.$electrumClientPromise, wallet: this.$wallet })
 
       // Set filter
       this.$q.loading.show({
@@ -289,19 +290,24 @@ export default {
       })
 
       const idAddress = this.$wallet.myAddress
+
+      if (!idAddress) return
+
       // We might have spent our only UTXO above, so this will possibly take a few tries.
       let triesLeft = 3
       while (triesLeft > 0) {
         try {
-          const relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress().toString())
+          const relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toCashAddress().toString())
           // Send payment
           this.$q.loading.show({
             delay: 100,
             message: this.$t('setup.sendingPayment')
           })
 
+          if (!relayPaymentRequest) return
+
           // Get token from relay server
-          const { paymentUrl, payment, usedIDs } = await pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
+          const { paymentUrl, payment, usedUtxos }: {paymentUrl: string, payment: Payment, usedUtxos: BuildableOutput[] } = await pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
 
           const paymentUrlFull = new URL(paymentUrl, this.relayUrl)
           console.log('Sending payment to', paymentUrlFull.href)
@@ -309,14 +315,14 @@ export default {
           relayClient.setToken(token)
           this.setRelayToken(token)
           this.$relayClient.setToken(token)
-          await Promise.all(usedIDs.map(id => this.$wallet.storage.deleteOutpoint(id)))
+          await Promise.all(usedUtxos.map(output => this.$wallet.storage.deleteOutpoint(output.id)))
         } catch (err) {
           // TODO: errors should not be stringly typed. Fix this
           // later. Also retry here should be more explicit. This is
           // basically so that things work when the person only had one UTXO to begin with.
           if (err.message === 'insufficient funds') {
             triesLeft--
-            await new Promise((resolve) => {
+            await new Promise<void>((resolve) => {
               setTimeout(() => resolve(), 1000)
             })
             continue
@@ -332,6 +338,8 @@ export default {
 
       // Create metadata
       const idPrivKey = this.$wallet.identityPrivKey
+
+      if (!idPrivKey) return
 
       const acceptancePrice = this.relayData.inbox.acceptancePrice
 
@@ -405,15 +413,15 @@ export default {
         case 2:
           return this.isWalletValid
         case 3:
-          return this.isRelayValid && this.isWalletSufficient
+          return this.isRelayValid() && this.isWalletSufficient()
         default:
           return true
       }
     },
-    isWalletValid () {
+    isWalletValid (): boolean {
       return this.accountData.valid
     },
-    isRelayValid () {
+    isRelayValid (): boolean {
       console.log('name', this.relayData.profile.name)
       console.log('avatar', !!this.relayData.profile.avatar)
       console.log('price', this.relayData.inbox.acceptancePrice)
@@ -422,7 +430,7 @@ export default {
     isWalletSufficient () {
       return !!this.balance && this.balance >= recomendedBalance
     },
-    nextButtonLabel () {
+    nextButtonLabel (): string {
       switch (this.step) {
         case 1:
           return this.$t('agree')

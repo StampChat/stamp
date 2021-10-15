@@ -46,7 +46,7 @@ type AddressData = { address: string, change: boolean } & PrivateKeyData
 type ElectrumScriptHash = string;
 type AddressGenerator = (txnNumber: number) => (output: number) => PublicKey
 // UnspendOutpout.fromObject can work with this
-type BuildableOutput = Outpoint & { script?: string }
+export type BuildableOutput = Outpoint & { script?: string }
 // eslint-disable-next-line camelcase, @typescript-eslint/naming-convention
 type ElectrumListUnspentOutput = { tx_hash: string, tx_pos: number, value: number }
 
