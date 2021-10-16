@@ -36,12 +36,22 @@ export const relayReconnectInterval = 10_000
 export const defaultAcceptancePrice = 100
 export const defaultRelayUrl = 'https://mainnet-relay.cashweb.io'
 export const relayUrlOptions = ['https://mainnet-relay.cashweb.io']
-export const defaultRelayData = {
+export const defaultRelayData: {
+  profile: {
+    name: string,
+    bio: string,
+    avatar: string,
+    pubKey?: Uint8Array,
+  },
+  inbox: {
+    acceptancePrice?: number;
+  },
+  notify: boolean
+} = {
   profile: {
     name: '',
-    bio: null,
-    avatar: null,
-    pubKey: null
+    bio: '',
+    avatar: ''
   },
   inbox: {
     acceptancePrice: defaultAcceptancePrice
@@ -51,7 +61,7 @@ export const defaultRelayData = {
 export const pendingRelayData = {
   profile: {
     name: 'Loading...',
-    bio: null,
+    bio: '',
     avatar: null,
     pubKey: null
   },
