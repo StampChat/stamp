@@ -3,15 +3,12 @@
   "compilerOptions": {
     "baseUrl": ".",
     "target": "es2017",
-    "lib": [
-      "es2019",
-      "DOM"
-    ]
+    "lib": ["es2019", "DOM"]
   },
   "include": [
     "src/**/*",
     "local_modules/bn.js/lib/bn.js",
     "local_modules/bitcore-lib-xpi/index.js",
     "src-pwa/register-service-worker.js"
-, "local_modules/cashweb"  ],
+  ]
 }

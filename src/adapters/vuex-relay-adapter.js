@@ -1,4 +1,4 @@
-import { RelayClient } from '../../local_modules/cashweb/relay'
+import { RelayClient } from '../../local_modules/cashweb/lib/relay'
 import { defaultRelayUrl, networkName } from '../utils/constants'
 import { store as levelDbStore } from '../adapters/level-message-store'
 import { toRaw, reactive } from 'vue'

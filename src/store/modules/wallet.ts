@@ -1,10 +1,10 @@
 import type { Module } from 'vuex'
 
-import { calcId } from '../../../local_modules/cashweb/wallet/helpers'
+import { calcId } from '../cashweb'
 import { store as levelOutpointStore } from '../../adapters/level-outpoint-store'
 import { markRaw } from 'vue'
 import { HDPrivateKey } from 'bitcore-lib-xpi'
-import { Outpoint } from 'local_modules/cashweb/types/outpoint'
+import { Outpoint } from 'app/local_modules/cashweb/lib/types/outpoint'
 
 type State = {
   xPrivKey?: HDPrivateKey,

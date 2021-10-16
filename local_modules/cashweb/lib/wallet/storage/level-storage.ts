@@ -4,7 +4,8 @@ import { join } from 'path'
 
 import { OutpointStore, OutpointResult, OutpointReturnResult } from './storage'
 import { calcId } from '../helpers'
-import { Outpoint, OutpointId } from 'local_modules/cashweb/types/outpoint'
+import { Outpoint, OutpointId } from '../../types/outpoint'
+import { validateError } from '../../utils'
 
 const metadataKeys = {
   schemaVersion: 'schemaVersion',
@@ -160,7 +161,7 @@ export class LevelOutpointStore implements OutpointStore {
       const valueString: string = await db.get(metadataKeys.schemaVersion)
       return JSON.parse(valueString)
     } catch (err) {
-      if (err.type === 'NotFoundError') {
+      if (validateError(err) && err.type === 'NotFoundError') {
         return 0
       }
       throw err

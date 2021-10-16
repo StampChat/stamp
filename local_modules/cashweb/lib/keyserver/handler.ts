@@ -1,13 +1,15 @@
-import axios from 'axios'
 import assert from 'assert'
-
-import { Entry, AddressMetadata } from './keyserver_pb'
+import axios from 'axios'
+import { Address, crypto, Networks, PrivateKey } from 'bitcore-lib-xpi'
+import { URL } from 'url'
+import { TextDecoder, TextEncoder } from 'util'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
-import { crypto, Address, Networks, PrivateKey } from 'bitcore-lib-xpi'
-import { Wallet } from '../wallet'
 import { Outpoint } from '../types/outpoint'
+import { validateBinary } from '../utils'
+import { Wallet } from '../wallet'
 import { calcId } from '../wallet/helpers'
+import { AddressMetadata, Entry } from './keyserver_pb'
 
 export class KeyserverHandler {
   keyservers: string[]
@@ -64,6 +66,9 @@ export class KeyserverHandler {
         responseType: 'arraybuffer'
       }
     )
+
+    assert(validateBinary(response.data), 'invalid type for legacy address payload')
+    
     if (response.status === 200) {
       const metadata = AuthWrapper.deserializeBinary(response.data)
       return metadata

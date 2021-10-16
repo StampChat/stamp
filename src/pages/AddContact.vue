@@ -93,7 +93,7 @@
 
 <script>
 import { mapActions } from 'vuex'
-import { KeyserverHandler } from '../../local_modules/cashweb/keyserver/handler'
+import { KeyserverHandler } from 'cashweb'
 import { toAPIAddress } from '../utils/address'
 import { keyservers, networkName } from '../utils/constants'
 

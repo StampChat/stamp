@@ -1,30 +1,30 @@
+import assert from 'assert'
 import axios from 'axios'
-import { splitEvery, flatten } from 'ramda'
-import { Payload, Message, MessagePage, MessageSet, Profile, PayloadEntry } from './relay_pb'
-import stealth from './stealth_pb'
-import p2pkh from './p2pkh_pb'
-
-import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
-import pop from '../pop'
+import { Address, crypto, Networks, PrivateKey, PublicKey, Transaction } from 'bitcore-lib-xpi'
+import type { ElectrumClient } from 'electrum-cash'
+import EventEmitter from 'events'
+import WebSocket from 'isomorphic-ws'
+import { flatten, splitEvery } from 'ramda'
+import { URL } from 'url'
+import { TextDecoder } from 'util'
 // TODO: Relay code should not depend on Stamp base code. Fix this import
 import VCard from 'vcf'
-import EventEmitter from 'events'
+import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
+import paymentrequest, { PaymentRequest } from '../bip70/paymentrequest_pb'
+import pop from '../pop'
+import { MessageItem, P2PKHSendItem, ReplyItem, TextItem } from '../types/messages'
+import { Outpoint } from '../types/outpoint'
+import { validateBinary, validateError } from '../utils'
+import { Wallet } from '../wallet'
+import { calcId } from '../wallet/helpers'
 import { MessageConstructor } from './constructors'
-import { entryToImage, arrayBufferToBase64 } from './images'
-
 import { PayloadConstructor } from './crypto'
 import { messageMixin } from './extension'
-import { calcId } from '../wallet/helpers'
-import assert from 'assert'
-import paymentrequest, { PaymentRequest } from '../bip70/paymentrequest_pb'
-
-import WebSocket from 'isomorphic-ws'
-import { PublicKey, crypto, Transaction, Networks, Address, PrivateKey } from 'bitcore-lib-xpi'
-import type { ElectrumClient } from 'electrum-cash'
+import { arrayBufferToBase64, entryToImage } from './images'
+import p2pkh from './p2pkh_pb'
+import { Message, MessagePage, MessageSet, Payload, PayloadEntry, Profile } from './relay_pb'
+import stealth from './stealth_pb'
 import { MessageStore } from './storage/storage'
-import { Wallet } from '../wallet'
-import { ReplyItem, TextItem, P2PKHSendItem, MessageItem } from '../types/messages'
-import { Outpoint } from '../types/outpoint'
 
 // TODO: Fix this, UI should use the same type
 export interface UIStealthOutput {
@@ -73,6 +73,8 @@ export class ReadOnlyRelayClient {
       url,
       responseType: 'arraybuffer'
     })
+
+    assert(validateBinary(response.data), 'invalid type for legacy address payload')
     const metadata = AuthWrapper.deserializeBinary(response.data)
 
     // Get PubKey
@@ -234,6 +236,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     const addressLegacy = this.toAPIAddress(address)
 
     const rawPayload = await this.getRawPayload(addressLegacy, digest)
+    assert(validateBinary(rawPayload), 'invalid type for rawPayload')
     const payload = Payload.deserializeBinary(rawPayload)
     return payload
   }
@@ -251,6 +254,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       const changeAddress = changeAddresses[changeAddresses.length * Math.random() << 0]
       await this.wallet.forwardUTXOsToAddress({ utxos: message.message.outpoints, address: changeAddress })
       assert(this.wallet.myAddress, 'Missing address? Wallet not loaded.')
+      assert(this.token, 'Missing token? Not authenticated.')
       const url = `${this.url}/messages/${this.toXAddress(this.wallet.myAddress)}`
       await axios({
         method: 'delete',
@@ -273,6 +277,7 @@ export class RelayClient extends ReadOnlyRelayClient {
 
     const rawProfile = metadata.serializeBinary()
     const url = `${this.url}/profiles/${addressLegacy}`
+    assert(this.token, 'Missing token? Not authenticated.')
     await axios({
       method: 'put',
       url: url,
@@ -287,6 +292,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     const addressLegacy = this.toAPIAddress(address)
 
     const url = `${this.url}/messages/${addressLegacy}`
+    assert(this.token, 'Missing token? Not authenticated.')
     try {
       const response = await axios({
         method: 'get',
@@ -301,9 +307,12 @@ export class RelayClient extends ReadOnlyRelayClient {
         responseType: 'arraybuffer'
       })
       assert(response.status === 200, 'We should not be here')
+      assert(validateBinary(response.data), 'invalid type for legacy address payload')
       const messagePage = MessagePage.deserializeBinary(response.data)
       return messagePage
     } catch (err) {
+      assert(validateError(err), 'invalid error')
+      assert(validateError(err.response), 'invalid error response')
       const response = err.response
       if (response.status !== 402) {
         throw err
@@ -479,7 +488,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         })
     } catch (err) {
       console.error(err)
-      const payloadDigestHex = err.payloadDigest.toString('hex')
+      const payloadDigestHex = validateError(err) && err.payloadDigest?.toString('hex')
       this.events.emit('messageSendError', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
     }
   }
@@ -621,7 +630,10 @@ export class RelayClient extends ReadOnlyRelayClient {
         return messagePayload
       }
       try {
-        return new Uint8Array(await this.getRawPayload(myAddress, payloadDigest))
+        assert(validateBinary(payloadDigest), 'invalid type for payloadDigest')
+        const rawPayload = await this.getRawPayload(myAddress, payloadDigest)
+        assert(validateBinary(rawPayload), 'invalid type for getRawPayload')
+        return new Uint8Array(rawPayload)
       } catch (err) {
         console.error(err)
         throw (err)
@@ -881,7 +893,7 @@ export class RelayClient extends ReadOnlyRelayClient {
           await this.receiveMessage(message)
         }
       } catch (err) {
-        console.error('Unable to deserialize message:', err.message)
+        console.error('Unable to deserialize message:', validateError(err) && err.message)
       }
       await new Promise<void>((resolve) => {
         setTimeout(() => {

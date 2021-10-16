@@ -42,7 +42,7 @@ import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
 import { defaultContacts, keyservers, networkName } from '../utils/constants'
-import { KeyserverHandler } from '../../local_modules/cashweb/keyserver/handler'
+import { KeyserverHandler } from 'cashweb'
 import { errorNotify } from '../utils/notifications'
 
 const compactWidth = 70

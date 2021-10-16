@@ -1,4 +1,4 @@
-import { LevelMessageStore } from '../../local_modules/cashweb/relay/storage/level-storage'
+import { LevelMessageStore } from 'cashweb'
 // import { Platform } from 'quasar'
 
 async function createStore (): Promise<LevelMessageStore> {

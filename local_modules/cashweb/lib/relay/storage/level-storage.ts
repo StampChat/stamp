@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MessageStore, MessageResult, MessageReturnResult } from './storage'
-import { MessageWrapper } from 'local_modules/cashweb/types/messages'
+import { MessageWrapper } from '../../types/messages'
 import level, { LevelDB } from 'level'
 import { join } from 'path'
+import { validateError } from '../../utils'
 
 const metadataKeys = {
   schemaVersion: 'schemaVersion',
@@ -116,7 +117,7 @@ export class LevelMessageStore implements MessageStore {
       const value = await this.db.get(payloadDigest)
       return JSON.parse(value)
     } catch (err) {
-      if (err.type === 'NotFoundError') {
+      if (validateError(err) && err.type === 'NotFoundError') {
         return
       }
       throw err
@@ -149,7 +150,7 @@ export class LevelMessageStore implements MessageStore {
       }
       return Math.max(newLastServerTime, lastServerTime)
     } catch (err) {
-      if (err.type === 'NotFoundError') {
+      if (validateError(err) && err.type === 'NotFoundError') {
         if (newLastServerTime) {
           await this.db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
           return newLastServerTime
@@ -169,7 +170,7 @@ export class LevelMessageStore implements MessageStore {
       const value: string = await this.metadataDb.get(metadataKeys.schemaVersion)
       return JSON.parse(value)
     } catch (err) {
-      if (err.type === 'NotFoundError') {
+      if (validateError(err) && err.type === 'NotFoundError') {
         return 0
       }
       throw err
