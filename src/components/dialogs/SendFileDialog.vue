@@ -21,7 +21,7 @@
         style="display:none"
       />
       <q-img
-        v-if="image !== null"
+        v-if="image"
         :src="image"
         spinner-color="white"
       />

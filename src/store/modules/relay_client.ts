@@ -1,17 +1,12 @@
 import type { Module } from 'vuex'
 
-type State = {
-  token: string | null;
+export type State = {
+  token?: string;
 };
 
-// TODO: replace after RootState is typed
-type RootState = any;
-
-const module: Module<State, RootState> = {
+const module: Module<State, unknown> = {
   namespaced: true,
-  state: {
-    token: null
-  },
+  state: {},
   mutations: {
     setToken (state, token: string) {
       state.token = token

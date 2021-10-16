@@ -54,7 +54,7 @@
         </q-item>
       </q-card-section>
       <q-card-section
-        v-else-if="contact !== null"
+        v-else-if="contact"
         class="q-py-none"
       >
         <q-item>
