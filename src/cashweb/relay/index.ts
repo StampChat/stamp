@@ -16,7 +16,7 @@ import { PayloadConstructor } from './crypto'
 import { messageMixin } from './extension'
 import { calcId } from '../wallet/helpers'
 import assert from 'assert'
-import paymentrequest, { PaymentRequest } from '../bip70/paymentrequest_pb'
+import paymentrequest, { Payment } from '../bip70/paymentrequest_pb'
 
 import WebSocket from 'isomorphic-ws'
 import { PublicKey, crypto, Transaction, Networks, Address, PrivateKey } from 'bitcore-lib-xpi'
@@ -25,6 +25,7 @@ import { MessageStore } from './storage/storage'
 import { Wallet } from '../wallet'
 import { ReplyItem, TextItem, P2PKHSendItem, MessageItem } from '../types/messages'
 import { Outpoint } from '../types/outpoint'
+import { defaultAcceptancePrice } from 'src/utils/constants'
 
 // TODO: Fix this, UI should use the same type
 export interface UIStealthOutput {
@@ -93,7 +94,7 @@ export class ReadOnlyRelayClient {
     const strCard = new TextDecoder().decode(rawCard)
     const vCard = new VCard().parse(strCard)
 
-    const name = vCard.data.fn.valueOf()
+    const name = vCard.data.fn.valueOf().toString()
 
     // const bio = vCard.data.note._data
     const bio = ''
@@ -120,7 +121,8 @@ export class ReadOnlyRelayClient {
     }
     const relayData = {
       profile,
-      inbox
+      inbox,
+      notify: true
     }
     return relayData
   }
@@ -321,7 +323,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       const serializedPaymentDetails = paymentRequest.getSerializedPaymentDetails()
       assert(typeof serializedPaymentDetails !== 'string', 'serializedPaymentDetails is a string?')
       const paymentDetails = paymentrequest.PaymentDetails.deserializeBinary(serializedPaymentDetails)
-
+      assert(this.wallet, 'Wallet not properly setup?')
       const { paymentUrl, payment } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
       const paymentUrlFull = new URL(paymentUrl, this.url)
       console.log('Sending payment to', paymentUrlFull.href)
@@ -338,7 +340,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     return await pop.getPaymentRequest(url, 'get')
   }
 
-  async sendPayment (paymentUrl: string, payment: PaymentRequest) {
+  async sendPayment (paymentUrl: string, payment: Payment) {
     return await pop.sendPayment(paymentUrl, payment)
   }
 
@@ -898,8 +900,9 @@ export class RelayClient extends ReadOnlyRelayClient {
     name: string;
     bio: string;
     avatar: string;
-  }, acceptancePrice: number) {
-    const priceFilter = this.messageConstructor.constructPriceFilter(true, acceptancePrice, acceptancePrice)
+  }, acceptancePrice?: number) {
+    const checkedPrice = acceptancePrice ?? defaultAcceptancePrice
+    const priceFilter = this.messageConstructor.constructPriceFilter(true, checkedPrice, checkedPrice)
     const metadata = this.messageConstructor.constructProfileMetadata(profile, priceFilter, idPrivKey)
     await this.putProfile(idPrivKey.toAddress(this.networkName).toCashAddress().toString(), metadata)
   }
