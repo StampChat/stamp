@@ -159,7 +159,7 @@ export class LevelOutpointStore implements OutpointStore {
     try {
       const valueString: string = await db.get(metadataKeys.schemaVersion)
       return JSON.parse(valueString)
-    } catch (err) {
+    } catch (err: any) {
       if (err.type === 'NotFoundError') {
         return 0
       }

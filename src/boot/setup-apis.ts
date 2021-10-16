@@ -101,7 +101,7 @@ function createAndBindNewElectrumClient ({ app, observables, wallet }: { app: Ap
     Object.assign(app.config.globalProperties, { $electrumClientPromise: electrumPromise })
     console.log('setting electrum client')
     wallet.setElectrumClient(electrumPromise)
-  } catch (err) {
+  } catch (err: any) {
     console.log(err.message)
   }
 }

@@ -303,7 +303,8 @@ export class RelayClient extends ReadOnlyRelayClient {
       assert(response.status === 200, 'We should not be here')
       const messagePage = MessagePage.deserializeBinary(response.data)
       return messagePage
-    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       const response = err.response
       if (response.status !== 402) {
         throw err
@@ -477,7 +478,8 @@ export class RelayClient extends ReadOnlyRelayClient {
           // Both of these issues need to be fixed.
           await this.sendMessageImpl({ address, items, stampAmount, errCount: errCount + 1, previousHash: payloadDigestHex })
         })
-    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       console.error(err)
       const payloadDigestHex = err.payloadDigest.toString('hex')
       this.events.emit('messageSendError', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
@@ -880,7 +882,8 @@ export class RelayClient extends ReadOnlyRelayClient {
           // Ideally, we move this to a webworker in the future.
           await this.receiveMessage(message)
         }
-      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         console.error('Unable to deserialize message:', err.message)
       }
       await new Promise<void>((resolve) => {

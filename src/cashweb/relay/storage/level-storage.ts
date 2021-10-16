@@ -115,7 +115,7 @@ export class LevelMessageStore implements MessageStore {
     try {
       const value = await this.db.get(payloadDigest)
       return JSON.parse(value)
-    } catch (err) {
+    } catch (err: any) {
       if (err.type === 'NotFoundError') {
         return
       }
@@ -148,7 +148,7 @@ export class LevelMessageStore implements MessageStore {
         await this.db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
       }
       return Math.max(newLastServerTime, lastServerTime)
-    } catch (err) {
+    } catch (err: any) {
       if (err.type === 'NotFoundError') {
         if (newLastServerTime) {
           await this.db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
@@ -168,7 +168,7 @@ export class LevelMessageStore implements MessageStore {
     try {
       const value: string = await this.metadataDb.get(metadataKeys.schemaVersion)
       return JSON.parse(value)
-    } catch (err) {
+    } catch (err: any) {
       if (err.type === 'NotFoundError') {
         return 0
       }
