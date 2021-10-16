@@ -1,4 +1,4 @@
-import { PayloadConstructor } from '../../../src/cashweb/relay/crypto'
+import { PayloadConstructor } from '../../../local_modules/cashweb/relay/crypto'
 import { PrivateKey } from 'bitcore-lib-cash'
 
 const payloadConstructor = new PayloadConstructor({networkName: 'test-net'})

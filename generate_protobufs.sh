@@ -1,4 +1,4 @@
-cd ./src/cashweb/keyserver
+cd ./local_modules/cashweb/keyserver
 bash ./generate_protobufs.sh
 cd ../relay
 bash ./generate_protobufs.sh

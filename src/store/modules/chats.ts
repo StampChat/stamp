@@ -2,12 +2,12 @@ import assert from 'assert'
 import type { Module } from 'vuex'
 
 import { defaultStampAmount } from '../../utils/constants'
-import { stampPrice } from '../../cashweb/wallet/helpers'
+import { stampPrice } from '../../../local_modules/cashweb/wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'
-import { Outpoint } from 'src/cashweb/types/outpoint'
-import { Message, MessageItem, MessageWrapper, TextItem } from 'src/cashweb/types/messages'
+import { Outpoint } from 'local_modules/cashweb/types/outpoint'
+import { Message, MessageItem, MessageWrapper, TextItem } from 'local_modules/cashweb/types/messages'
 import { PublicKey } from 'bitcore-lib-xpi'
 
 type ChatMessage = {

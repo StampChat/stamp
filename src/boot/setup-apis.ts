@@ -2,11 +2,11 @@
 
 import { ElectrumClient } from 'electrum-cash'
 import { electrumPingInterval, electrumServers, defaultRelayUrl } from '../utils/constants'
-import { Wallet } from '../cashweb/wallet'
+import { Wallet } from '../../local_modules/cashweb/wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
 import { store as levelDbOutpointStore } from '../adapters/level-outpoint-store'
 import { boot } from 'quasar/wrappers'
-import { Outpoint, OutpointId } from 'src/cashweb/types/outpoint'
+import { Outpoint, OutpointId } from 'local_modules/cashweb/types/outpoint'
 import { reactive } from 'vue'
 import type { App } from 'vue'
 import { Store } from 'vuex'

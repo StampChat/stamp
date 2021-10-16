@@ -1,9 +1,9 @@
 import type { Module } from 'vuex'
 import { PublicKey } from 'bitcore-lib-xpi'
 
-import { ReadOnlyRelayClient } from '../../cashweb/relay'
+import { ReadOnlyRelayClient } from '../../../local_modules/cashweb/relay'
 import { defaultUpdateInterval, pendingRelayData, defaultRelayUrl, keyservers, networkName, displayNetwork } from '../../utils/constants'
-import { KeyserverHandler } from '../../cashweb/keyserver/handler'
+import { KeyserverHandler } from '../../../local_modules/cashweb/keyserver/handler'
 import moment from 'moment'
 import { toDisplayAddress } from '../../utils/address'
 

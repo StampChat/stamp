@@ -106,6 +106,6 @@ yarn generate:protobuffers
 
 # Licensing
 
-The Stamp GUI is licensed under GPLv3. However, the subfolder `src/cashweb/` is
+The Stamp GUI is licensed under GPLv3. However, the subfolder `local_modules/cashweb/` is
 licensed under MIT. This subfolder is a set of libraries for interacting with
 CashWeb backends.

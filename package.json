@@ -35,6 +35,7 @@
     "axios": "^0.21.1",
     "bip39": "^3.0.2",
     "bitcore-lib-xpi": "file:./local_modules/bitcore-lib-xpi",
+    "cashweb": "file:./local_modules/cashweb",
     "bluebird": "^3.7.2",
     "bn.js": "file:./local_modules/bn.js",
     "btoa": "^1.2.1",

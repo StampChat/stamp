@@ -4,7 +4,7 @@ import { join } from 'path'
 
 import { OutpointStore, OutpointResult, OutpointReturnResult } from './storage'
 import { calcId } from '../helpers'
-import { Outpoint, OutpointId } from 'src/cashweb/types/outpoint'
+import { Outpoint, OutpointId } from 'local_modules/cashweb/types/outpoint'
 
 const metadataKeys = {
   schemaVersion: 'schemaVersion',

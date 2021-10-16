@@ -1,7 +1,7 @@
 
 import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
-import { KeyserverHandler } from 'src/cashweb/keyserver/handler'
-import { ReadOnlyRelayClient } from 'src/cashweb/relay'
+import { KeyserverHandler } from '../../local_modules/cashweb/keyserver/handler'
+import { ReadOnlyRelayClient } from '../../local_modules/cashweb/relay'
 import { toAPIAddress } from 'src/utils/address'
 import { keyservers, networkName, displayNetwork } from 'src/utils/constants'
 import type { RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
