@@ -2,7 +2,7 @@ import assert from 'assert'
 import type { Module } from 'vuex'
 
 import { defaultStampAmount } from '../../utils/constants'
-import { stampPrice } from '../cashweb'
+import { stampPrice } from 'cashweb'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'

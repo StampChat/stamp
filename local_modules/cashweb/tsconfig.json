@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "esnext",
     "lib": ["esnext"],
     "module": "commonjs",
@@ -7,6 +8,7 @@
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "allowJs": true
   },
   "include": ["./lib/**/*.ts"]

@@ -1,6 +1,6 @@
 import type { Module } from 'vuex'
 
-import { calcId } from '../cashweb'
+import { calcId } from 'cashweb'
 import { store as levelOutpointStore } from '../../adapters/level-outpoint-store'
 import { markRaw } from 'vue'
 import { HDPrivateKey } from 'bitcore-lib-xpi'
