@@ -27,6 +27,18 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
+            v0.0.20 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Fixes signup issue when attempting to create an account.</li>
+              <li>Convert more code to typescript and fix misc associated issues.</li>
+              <li>Paralellize message downloading and deletion.</li>
+              <li>Fix remote wallet wipe functionality.</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.19 Changelog
           </div>
           <div class="text-body1">
