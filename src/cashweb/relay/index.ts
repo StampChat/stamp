@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { splitEvery, flatten } from 'ramda'
+import { flatten, splitEvery } from 'ramda'
 import { Payload, Message, MessagePage, MessageSet, Profile, PayloadEntry } from './relay_pb'
 import stealth from './stealth_pb'
 import p2pkh from './p2pkh_pb'
@@ -23,9 +23,10 @@ import { PublicKey, crypto, Transaction, Networks, Address, PrivateKey } from 'b
 import type { ElectrumClient } from 'electrum-cash'
 import { MessageStore } from './storage/storage'
 import { Wallet } from '../wallet'
-import { ReplyItem, TextItem, P2PKHSendItem, MessageItem } from '../types/messages'
+import { ReplyItem, TextItem, P2PKHSendItem, MessageItem, MessageWrapper } from '../types/messages'
 import { Outpoint } from '../types/outpoint'
 import { defaultAcceptancePrice } from 'src/utils/constants'
+import { pAll } from './pAll'
 
 // TODO: Fix this, UI should use the same type
 export interface UIStealthOutput {
@@ -875,24 +876,19 @@ export class RelayClient extends ReadOnlyRelayClient {
     assert(messagePage, 'no messagePage available?')
     const messageList = messagePage.getMessagesList()
     console.log('processing messages')
-    const messageChunks = splitEvery(20, messageList)
-    for (const messageChunk of messageChunks) {
-      try {
-        for (const message of messageChunk) {
-          // TODO: Check correct destination
-          // Here we are ensuring that their are yields between messages to the event loop.
-          // Ideally, we move this to a webworker in the future.
-          await this.receiveMessage(message)
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
-        console.error('Unable to deserialize message:', err.message)
-      }
-      await new Promise<void>((resolve) => {
-        setTimeout(() => {
-          resolve()
-        }, 0)
-      })
+    const messageChunks = splitEvery(50, messageList)
+    try {
+      const guiUpdatingMessageList = flatten(
+        messageChunks.map((c) =>
+          [
+            ...c.map((m) => () => this.receiveMessage(m)), () => new Promise<void>((resolve) => {
+              setTimeout(() => { resolve() }, 0)
+            })
+          ]))
+      await pAll(guiUpdatingMessageList, 20)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error('Unable to deserialize message:', err.message)
     }
   }
 
@@ -910,14 +906,35 @@ export class RelayClient extends ReadOnlyRelayClient {
   async wipeWallet (messageDeleter: (args: { address: string, payloadDigest: string }) => void) {
     const messageIterator = await this.messageStore.getIterator()
     // Todo, this rehydrate stuff is common to receiveMessage
+    let messages: (() => Promise<void>)[] = []
+    const deleteMessage = (messageWrapper: MessageWrapper) => async () => {
+      const { index, copartyAddress } = messageWrapper
+      console.log('deleting message', index)
+      try {
+        messageDeleter({ address: copartyAddress, payloadDigest: index })
+        console.log('remote deleting message', index)
+
+        await this.deleteMessage(messageWrapper.index)
+      } catch (err) {
+        console.log(err)
+      }
+    }
+
     for await (const messageWrapper of messageIterator) {
       if (!messageWrapper.message) {
         continue
       }
-      const { index, copartyAddress } = messageWrapper
-      await this.deleteMessage(messageWrapper.index)
-      messageDeleter({ address: copartyAddress, payloadDigest: index })
+      messages.push(deleteMessage(messageWrapper))
+      if ((messages.length + 1) % 100 === 0) {
+        await pAll(messages, 20)
+        messages = []
+        // Allow other parts of the GUI/App to process
+        await new Promise<void>((resolve) => {
+          setTimeout(() => { resolve() }, 0)
+        })
+      }
     }
+    await pAll(messages, 20)
   }
 }
 
