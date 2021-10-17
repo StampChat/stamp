@@ -1,4 +1,5 @@
 export { KeyserverHandler } from "./keyserver/handler";
+export { default as pop } from "./pop";
 export { ReadOnlyRelayClient, RelayClient } from "./relay";
 export { LevelMessageStore } from "./relay/storage/level-storage";
 export {

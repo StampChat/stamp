@@ -83,33 +83,24 @@
 
 <script lang="ts">
 import assert from 'assert'
-
+import { generateMnemonic } from 'bip39'
+import { HDPrivateKey } from 'bitcore-lib-xpi'
+import { calcId, KeyserverHandler, pop } from 'cashweb'
+import { QStepper } from 'quasar'
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
-import { QStepper } from 'quasar'
-
-import { HDPrivateKey } from 'bitcore-lib-xpi'
-import { generateMnemonic } from 'bip39'
-
-import pop, { KeyserverHandler } from 'cashweb'
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import WalletGenWorker from 'worker-loader!../workers/xpriv_generate'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
-import {
-  defaultRelayData,
-  defaultRelayUrl,
-  defaultAvatars,
-  recomendedBalance,
-  keyservers,
-  networkName
-} from '../utils/constants'
-import { errorNotify } from '../utils/notifications'
-
 import AccountStep from '../components/setup/AccountStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
 import EulaStep from '../components/setup/EULAStep.vue'
-
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import WalletGenWorker from 'worker-loader!../workers/xpriv_generate'
-import { calcId } from 'src/cashweb/wallet/helpers'
+import {
+  defaultAvatars, defaultRelayData,
+  defaultRelayUrl, keyservers,
+  networkName, recomendedBalance
+} from '../utils/constants'
+import { errorNotify } from '../utils/notifications'
 
 export default defineComponent({
   components: {
