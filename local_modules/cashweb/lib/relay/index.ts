@@ -12,7 +12,6 @@ import type { ElectrumClient } from "electrum-cash";
 import EventEmitter from "events";
 import WebSocket from "isomorphic-ws";
 import { flatten, splitEvery } from "ramda";
-import { defaultAcceptancePrice } from "src/utils/constants";
 import { URL } from "url";
 import { TextDecoder } from "util";
 import VCard from "vcf";
@@ -27,7 +26,11 @@ import {
   TextItem,
 } from "../types/messages";
 import { Outpoint } from "../types/outpoint";
-import { validateBinary, validateError } from "../utils";
+import {
+  defaultAcceptancePrice,
+  validateBinary,
+  validateError,
+} from "../utils";
 import { Wallet } from "../wallet";
 import { calcId } from "../wallet/helpers";
 import { MessageConstructor } from "./constructors";

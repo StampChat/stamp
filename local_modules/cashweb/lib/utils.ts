@@ -7,3 +7,5 @@ export function validateBinary(input: unknown): input is Uint8Array {
 export function validateError(input: unknown): input is BaseError {
   return typeof input === "object";
 }
+
+export const defaultAcceptancePrice = 100;
