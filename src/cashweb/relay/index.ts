@@ -245,30 +245,26 @@ export class RelayClient extends ReadOnlyRelayClient {
     assert(typeof digest === 'string', 'message digest was not a string in deleteMessage')
     assert(this.wallet, 'Attempting to delete a message with no wallet available')
 
-    try {
-      const message = await this.messageStore.getMessage(digest)
-      assert(message, 'message not found?')
+    const message = await this.messageStore.getMessage(digest)
+    assert(message, 'message not found?')
 
-      // Send utxos to a change address
-      const changeAddresses = Object.keys(this.wallet.changeAddresses)
-      const changeAddress = changeAddresses[changeAddresses.length * Math.random() << 0]
-      await this.wallet.forwardUTXOsToAddress({ utxos: message.message.outpoints, address: changeAddress })
-      assert(this.wallet.myAddress, 'Missing address? Wallet not loaded.')
-      const url = `${this.url}/messages/${this.toXAddress(this.wallet.myAddress)}`
-      await axios({
-        method: 'delete',
-        url,
-        headers: {
-          Authorization: this.token
-        },
-        params: {
-          digest
-        }
-      })
-    } catch (err) {
-      // TODO: Notify user of error
-      console.error(err)
-    }
+    // Send utxos to a change address
+    const changeAddresses = Object.keys(this.wallet.changeAddresses)
+    const changeAddress = changeAddresses[changeAddresses.length * Math.random() << 0]
+    await this.wallet.forwardUTXOsToAddress({ utxos: message.message.outpoints, address: changeAddress })
+    assert(this.wallet.myAddress, 'Missing address? Wallet not loaded.')
+    const url = `${this.url}/messages/${this.toAPIAddress(this.wallet.myAddress)}`
+    await axios({
+      method: 'delete',
+      url,
+      headers: {
+        Authorization: this.token
+      },
+      params: {
+        digest
+      }
+    })
+    this.messageStore.deleteMessage(digest)
   }
 
   async putProfile (address: string, metadata: AuthWrapper) {
@@ -909,12 +905,12 @@ export class RelayClient extends ReadOnlyRelayClient {
     let messages: (() => Promise<void>)[] = []
     const deleteMessage = (messageWrapper: MessageWrapper) => async () => {
       const { index, copartyAddress } = messageWrapper
-      console.log('deleting message', index)
       try {
-        messageDeleter({ address: copartyAddress, payloadDigest: index })
         console.log('remote deleting message', index)
-
         await this.deleteMessage(messageWrapper.index)
+
+        console.log('deleting message', index)
+        messageDeleter({ address: copartyAddress, payloadDigest: index })
       } catch (err) {
         console.log(err)
       }
@@ -925,7 +921,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         continue
       }
       messages.push(deleteMessage(messageWrapper))
-      if ((messages.length + 1) % 100 === 0) {
+      if ((messages.length + 1) % 500 === 0) {
         await pAll(messages, 20)
         messages = []
         // Allow other parts of the GUI/App to process
