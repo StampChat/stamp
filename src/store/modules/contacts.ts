@@ -23,7 +23,7 @@ type ContactState = {
   }
 }
 
-type State = {
+export type State = {
   contacts: Record<string, ContactState | undefined>,
   updateInterval: number,
 }
@@ -33,18 +33,18 @@ export const defaultContactsState = {
   updateInterval: defaultUpdateInterval
 }
 
-export function rehydrateContacts (contactState?: State) {
+export type RestorableState = State;
+
+export function rehydrateContacts (contactState?: RestorableState): State {
   if (!contactState) {
-    return
+    return defaultContactsState
   }
 
   // This is currentlœy a shim, we don't need any special rehydrate contact at this time.
-  contactState.contacts = contactState.contacts || {}
+  return { ...contactState, contacts: contactState.contacts ?? defaultContactsState.contacts }
 }
 
-type RootState = any
-
-const module: Module<State, RootState> = {
+const module: Module<State, unknown> = {
   namespaced: true,
   state: defaultContactsState,
   getters: {

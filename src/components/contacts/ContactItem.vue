@@ -28,7 +28,7 @@
     </q-item>
     <q-item
       v-ripple
-      v-else-if="contact !== null"
+      v-else-if="contact"
       v-close-popup
     >
       <q-item-section

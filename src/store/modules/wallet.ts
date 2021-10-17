@@ -6,28 +6,28 @@ import { markRaw } from 'vue'
 import { HDPrivateKey } from 'bitcore-lib-xpi'
 import { Outpoint } from 'app/local_modules/cashweb/lib/types/outpoint'
 
-type State = {
+export type State = {
   xPrivKey?: HDPrivateKey,
   utxos: Record<string, number | undefined>,
   seedPhrase?: string,
   balance: number,
-  feePerByte: 2
+  feePerByte: number,
 }
 
-export async function rehydrateWallet (wallet: State) {
+const defaultWalletState = {
+  feePerByte: 2,
+  utxos: {},
+  balance: 0
+}
+
+export type RestorableState = Omit<State, 'xPrivKey'> & { xPrivKey: unknown }
+
+export async function rehydrateWallet (wallet: RestorableState): Promise<State> {
   if (!wallet || !wallet.xPrivKey) {
-    return
+    return defaultWalletState
   }
-  if (!wallet.feePerByte) {
-    wallet.feePerByte = 2
-  }
-  Object.defineProperty(wallet, 'xPrivKey', {
-    value: markRaw(HDPrivateKey.fromObject(wallet.xPrivKey)),
-    writable: true,
-    configurable: false
-  })
-  wallet.utxos = {}
-  wallet.balance = 0
+  let balance = 0
+  const utxos: Record<string, number> = {}
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.
   const store = await levelOutpointStore
@@ -37,14 +37,19 @@ export async function rehydrateWallet (wallet: State) {
     if (!outpoint.address) {
       continue
     }
-    wallet.utxos[id] = outpoint.satoshis
-    wallet.balance += outpoint.satoshis
+    utxos[id] = outpoint.satoshis
+    balance += outpoint.satoshis
+  }
+  return {
+    feePerByte: wallet.feePerByte || 2,
+    balance,
+    utxos,
+    seedPhrase: wallet.seedPhrase,
+    xPrivKey: markRaw(HDPrivateKey.fromObject(wallet.xPrivKey))
   }
 }
 
-type RootState = any;
-
-const module: Module<State, RootState> = {
+const module: Module<State, unknown> = {
   namespaced: true,
   state: {
     utxos: {},

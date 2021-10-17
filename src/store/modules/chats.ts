@@ -41,7 +41,7 @@ const defaultContactObject: Omit<ChatState, 'messages' | 'address'> = {
   lastRead: 0
 }
 
-type State = {
+export type State = {
   activeChatAddr?: string,
   chats: Record<string, ChatState | undefined>,
   messages: Record<string, Message | undefined>,
@@ -54,26 +54,40 @@ export const defaultChatsState: State = {
   lastReceived: null
 }
 
-export async function rehydateChat (chatState: State) {
+export type RestorableState = {
+  activeChatAddr?: string,
+  chats: Record<string, ChatState | undefined>,
+  messages: Record<string, Message | undefined>,
+  lastReceived: number | null,
+}
+
+export async function rehydateChat (chatState: RestorableState): Promise<State> {
   if (!chatState) {
-    return
+    return defaultChatsState
   }
 
-  chatState.messages = chatState.messages || {}
+  const chats: Record<string, ChatState> = {}
+  const messages: Record<string, Message> = {}
 
   if (chatState.chats) {
     for (const [contactAddress, contact] of Object.entries(chatState.chats)) {
       assert(contact, 'This is impossible, but typescript has a type hole that has to be asserted around')
-      contact.address = contactAddress
-      contact.messages = []
-      contact.totalUnreadMessages = 0
-      contact.totalUnreadValue = 0
-      contact.totalValue = 0
+      chats[contactAddress] = {
+        address: contactAddress,
+        messages: [],
+        totalUnreadMessages: 0,
+        totalUnreadValue: 0,
+        totalValue: 0,
+        lastReceived: contact.lastReceived,
+        lastRead: contact.lastRead,
+        stampAmount: contact.stampAmount
+      }
     }
   }
   const localStore = await store
 
   const messageIterator = await localStore.getIterator()
+
   // Todo, this rehydrate stuff is common to receiveMessage
   for await (const messageWrapper of messageIterator) {
     if (!messageWrapper.message) {
@@ -89,14 +103,11 @@ export async function rehydateChat (chatState: State) {
     assert(newMsg.senderAddress !== undefined, 'senderAddress is not defined')
 
     const message = { payloadDigest: index, ...newMsg }
-    if (!chatState.messages) {
-      chatState.messages = {}
+    if (!chats[copartyAddress]) {
+      chats[copartyAddress] = { ...defaultContactObject, messages: [], address: copartyAddress }
     }
-    if (!chatState.chats[copartyAddress]) {
-      chatState.chats[copartyAddress] = { ...defaultContactObject, messages: [], address: copartyAddress }
-    }
-    chatState.messages[index] = message
-    const chat = chatState.chats[copartyAddress]
+    const chat = chats[copartyAddress]
+    messages[index] = message
     assert(chat, 'Missing chat for message')
     chat.messages.push(message)
     chat.lastReceived = message.serverTime
@@ -118,13 +129,17 @@ export async function rehydateChat (chatState: State) {
 
   // Resort chats
   for (const contactAddress in chatState.chats) {
-    chatState.chats[contactAddress]?.messages.sort((messageA, messageB) => messageA.serverTime - messageB.serverTime)
+    chats[contactAddress]?.messages.sort((messageA, messageB) => messageA.serverTime - messageB.serverTime)
+  }
+  return {
+    chats,
+    messages,
+    activeChatAddr: chatState.activeChatAddr,
+    lastReceived: chatState.lastReceived
   }
 }
 
-type RootState = any;
-
-const module: Module<State, RootState> = {
+const module: Module<State, unknown> = {
   namespaced: true,
   state: defaultChatsState,
   getters: {
@@ -240,11 +255,18 @@ const module: Module<State, RootState> = {
     }
   },
   mutations: {
-    deleteMessage (state, { address, index }) {
+    deleteMessage (state, { address, index }: { address: string, index: string }) {
       const apiAddress = toDisplayAddress(address)
-      state.chats[apiAddress]?.messages.splice(index, 1)
+
+      delete state.messages[index]
+      const chat = state.chats[apiAddress]
+      if (!chat) {
+        return
+      }
+      const msgIndex = chat.messages.findIndex((msg) => msg.payloadDigest === index)
+      chat.messages.splice(msgIndex, 1)
     },
-    readAll (state, address) {
+    readAll (state, address: string) {
       const apiAddress = toDisplayAddress(address)
       const chat = state.chats[apiAddress]
       if (!chat) {

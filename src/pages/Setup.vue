@@ -81,15 +81,26 @@
   </q-layout>
 </template>
 
-<script>
+<script lang="ts">
+import assert from 'assert'
+
+import { defineComponent } from 'vue'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
+import { QStepper } from 'quasar'
 
 import { HDPrivateKey } from 'bitcore-lib-xpi'
 import { generateMnemonic } from 'bip39'
 
 import pop, { KeyserverHandler } from 'cashweb'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
-import { defaultRelayData, defaultRelayUrl, defaultAvatars, recomendedBalance, keyservers, networkName } from '../utils/constants'
+import {
+  defaultRelayData,
+  defaultRelayUrl,
+  defaultAvatars,
+  recomendedBalance,
+  keyservers,
+  networkName
+} from '../utils/constants'
 import { errorNotify } from '../utils/notifications'
 
 import AccountStep from '../components/setup/AccountStep.vue'
@@ -97,9 +108,10 @@ import DepositStep from '../components/setup/DepositStep.vue'
 import EulaStep from '../components/setup/EULAStep.vue'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import WalletGenWorker from 'worker-loader!../workers/xpriv_generate.js'
+import WalletGenWorker from 'worker-loader!../workers/xpriv_generate'
+import { calcId } from 'src/cashweb/wallet/helpers'
 
-export default {
+export default defineComponent({
   components: {
     AccountStep,
     DepositStep,
@@ -115,7 +127,8 @@ export default {
       },
       relayData: defaultRelayData,
       relayUrl: defaultRelayUrl,
-      avatar: null,
+      avatar: '',
+      seed: '',
       settings: {
         networking: {
           updateInterval: this.getUpdateInterval() / 1_000
@@ -146,22 +159,23 @@ export default {
       updateInterval: 'contacts/setUpdateInterval'
     }),
     selectRandomAvatar () {
-      const avatarName = defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)]
-      const toDataURL = (callback) => {
+      const avatarName =
+        defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)]
+      const toDataURL = (callback: (dataURL: string) => void) => {
         const img = new Image()
         img.crossOrigin = 'Anonymous'
         img.onload = function () {
-          const canvas = document.createElement('CANVAS')
+          const canvas = document.createElement('canvas')
           const ctx = canvas.getContext('2d')
-          canvas.height = this.naturalHeight
-          canvas.width = this.naturalWidth
-          ctx.drawImage(this, 0, 0)
+          canvas.height = img.naturalHeight
+          canvas.width = img.naturalWidth
+          ctx?.drawImage(img, 0, 0)
           const dataURL = canvas.toDataURL()
           callback(dataURL)
         }
         img.src = require(`../assets/avatars/${avatarName}`)
       }
-      toDataURL((dataUrl) => {
+      toDataURL((dataUrl: string) => {
         this.avatar = dataUrl
       })
     },
@@ -173,7 +187,7 @@ export default {
         delay: 100,
         message: this.$t('setup.generatingWallet')
       })
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         // Setup worker
         // TODO: What was the point of doing this in a worker?
         const worker = new WalletGenWorker()
@@ -199,8 +213,12 @@ export default {
     },
     async setupRelayData () {
       // Set profile
-      const ksHandler = new KeyserverHandler({ wallet: this.$wallet, keyservers: keyservers, networkName })
-      const idAddress = this.$wallet.myAddress
+      const ksHandler = new KeyserverHandler({
+        wallet: this.$wallet,
+        keyservers: keyservers,
+        networkName
+      })
+      const idAddress = this.$wallet.myAddress?.toCashAddress() ?? ''
 
       // Check for existing metadata
       this.$q.loading.show({
@@ -211,20 +229,18 @@ export default {
       // Try find relay URL on keyserver
       try {
         const foundRelayUrl = await ksHandler.getRelayUrl(idAddress)
-        this.relayUrl = foundRelayUrl
-
-        // No URL entry
-        if (!foundRelayUrl) {
-          this.relayUrl = defaultRelayUrl
-        }
-      } catch (err) {
+        this.relayUrl = foundRelayUrl ?? defaultRelayUrl
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         // No URL found
         if (err.response && err.response.status === 404) {
           this.relayUrl = defaultRelayUrl
-
-          this.$refs.stepper.next()
+          const stepper = (this.$refs.stepper as QStepper)
+          stepper.next()
         } else {
-          const keyserverErr = new Error(this.$t('setup.errorContactKeyServer'))
+          const keyserverErr = new Error(
+            this.$t('setup.errorContactKeyServer')
+          )
           errorNotify(keyserverErr)
         }
       } finally {
@@ -238,16 +254,22 @@ export default {
       })
       // Get profile from relay server
       // We do this first to prevent uploading broken URL to keyserver
-      const { client: relayClient } = await getRelayClient({ relayUrl: this.relayUrl, store: this.$store, wallet: this.$wallet })
+      const { client: relayClient } = await getRelayClient({
+        relayUrl: this.relayUrl,
+        store: this.$store,
+        wallet: this.$wallet,
+        electrumClient: this.$electrum
+      })
       try {
         this.relayData = await relayClient.getRelayData(idAddress)
         return
-      } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         this.relayData = {
           ...defaultRelayData,
           profile: {
+            ...defaultRelayData.profile,
             name: this.accountData.name || 'Stamp User',
-            bio: '',
             avatar: this.avatar
           }
         }
@@ -263,7 +285,11 @@ export default {
     },
     async setUpKeyserver () {
       // Set profile
-      const ksHandler = new KeyserverHandler({ wallet: this.$wallet, networkName, keyservers: keyservers })
+      const ksHandler = new KeyserverHandler({
+        wallet: this.$wallet,
+        networkName,
+        keyservers: keyservers
+      })
 
       try {
         this.$q.loading.show({
@@ -271,15 +297,24 @@ export default {
           message: this.$t('setup.uploadingMetaData')
         })
         const idPrivKey = this.$wallet.identityPrivKey
+
+        assert(idPrivKey, 'Wallet not initialized')
+
         await ksHandler.updateKeyMetadata(this.relayUrl, idPrivKey)
         this.$q.loading.hide()
-      } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         errorNotify(err)
         throw err
       }
     },
     async setupRelay () {
-      const { client: relayClient } = await getRelayClient({ relayUrl: this.relayUrl, store: this.$store, electrumClientPromise: this.$electrumClientPromise, wallet: this.$wallet })
+      const { client: relayClient } = await getRelayClient({
+        relayUrl: this.relayUrl,
+        store: this.$store,
+        electrumClient: this.$electrumClientPromise,
+        wallet: this.$wallet
+      })
 
       // Set filter
       this.$q.loading.show({
@@ -288,11 +323,16 @@ export default {
       })
 
       const idAddress = this.$wallet.myAddress
+      assert(idAddress, 'idAddress should be defined at this point')
+
       // We might have spent our only UTXO above, so this will possibly take a few tries.
       let triesLeft = 3
       while (triesLeft > 0) {
         try {
-          const relayPaymentRequest = await relayClient.profilePaymentRequest(idAddress.toLegacyAddress().toString())
+          const relayPaymentRequest = await relayClient.profilePaymentRequest(
+            idAddress.toCashAddress().toString()
+          )
+          assert(relayPaymentRequest, 'relayPaymentRequest should be defined at this point')
           // Send payment
           this.$q.loading.show({
             delay: 100,
@@ -300,7 +340,14 @@ export default {
           })
 
           // Get token from relay server
-          const { paymentUrl, payment, usedIDs } = await pop.constructPaymentTransaction(this.$wallet, relayPaymentRequest.paymentDetails)
+          const {
+            paymentUrl,
+            payment,
+            usedUtxos
+          } = await pop.constructPaymentTransaction(
+            this.$wallet,
+            relayPaymentRequest.paymentDetails
+          )
 
           const paymentUrlFull = new URL(paymentUrl, this.relayUrl)
           console.log('Sending payment to', paymentUrlFull.href)
@@ -308,14 +355,19 @@ export default {
           relayClient.setToken(token)
           this.setRelayToken(token)
           this.$relayClient.setToken(token)
-          await Promise.all(usedIDs.map(id => this.$wallet.storage.deleteOutpoint(id)))
-        } catch (err) {
+          await Promise.all(
+            // TODO: This should not be touching wallet storage directly.
+            usedUtxos.map((output) =>
+              this.$wallet.storage.deleteOutpoint(calcId(output)))
+          )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
           // TODO: errors should not be stringly typed. Fix this
           // later. Also retry here should be more explicit. This is
           // basically so that things work when the person only had one UTXO to begin with.
           if (err.message === 'insufficient funds') {
             triesLeft--
-            await new Promise((resolve) => {
+            await new Promise<void>((resolve) => {
               setTimeout(() => resolve(), 1000)
             })
             continue
@@ -331,6 +383,7 @@ export default {
 
       // Create metadata
       const idPrivKey = this.$wallet.identityPrivKey
+      assert(idPrivKey, 'idPrivKey should be defined at this point')
 
       const acceptancePrice = this.relayData.inbox.acceptancePrice
 
@@ -340,13 +393,18 @@ export default {
       })
 
       try {
-        await this.$relayClient.updateProfile(idPrivKey, this.relayData.profile, acceptancePrice)
-      } catch (err) {
+        await this.$relayClient.updateProfile(
+          idPrivKey,
+          this.relayData.profile,
+          acceptancePrice
+        )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         console.error(err)
         this.$q.loading.hide()
         // TODO: ProfileDialog uses different localization for no particular reason.
         // TODO: move specialization down to errorNotify
-        if (err.response.status === 413) {
+        if (err.response?.status === 413) {
           errorNotify(new Error(this.$t('setup.profileImageLargeError')))
           throw err
         }
@@ -364,19 +422,23 @@ export default {
       await this.resetChats()
       await this.setUpKeyserver()
       await this.setupRelay()
-      await this.updateInterval(this.settings.networking.updateInterval * 1_000)
+      await this.updateInterval(
+        this.settings.networking.updateInterval * 1_000
+      )
       await this.$emit('setupCompleted')
     },
     next () {
+      const stepper = (this.$refs.stepper as QStepper)
+
       switch (this.step) {
         case 1:
-          this.$refs.stepper.next()
+          stepper.next()
           break
         case 2:
           this.selectRandomAvatar()
           this.newWallet()
             .then(() => this.setupRelayData())
-            .then(() => this.$refs.stepper.next())
+            .then(() => stepper.next())
             .catch((err) => errorNotify(err))
           break
         case 3:
@@ -387,7 +449,8 @@ export default {
       }
     },
     previous () {
-      this.$refs.stepper.previous()
+      const stepper = (this.$refs.stepper as QStepper)
+      stepper.previous()
     }
   },
   computed: {
@@ -409,19 +472,23 @@ export default {
           return true
       }
     },
-    isWalletValid () {
+    isWalletValid (): boolean {
       return this.accountData.valid
     },
-    isRelayValid () {
+    isRelayValid (): boolean {
       console.log('name', this.relayData.profile.name)
       console.log('avatar', !!this.relayData.profile.avatar)
       console.log('price', this.relayData.inbox.acceptancePrice)
-      return !!(this.relayData.profile.name && this.relayData.profile.avatar && this.relayData.inbox.acceptancePrice)
+      return !!(
+        this.relayData.profile.name &&
+        this.relayData.profile.avatar &&
+        this.relayData.inbox.acceptancePrice
+      )
     },
     isWalletSufficient () {
       return !!this.balance && this.balance >= recomendedBalance
     },
-    nextButtonLabel () {
+    nextButtonLabel (): string {
       switch (this.step) {
         case 1:
           return this.$t('agree')
@@ -434,5 +501,5 @@ export default {
       }
     }
   }
-}
+})
 </script>

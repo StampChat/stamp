@@ -15,7 +15,7 @@
       :breakpoint="800"
     >
       <right-drawer
-        v-if="activeChatAddr !== null"
+        v-if="activeChatAddr"
         :address="activeChatAddr"
         :contact="getContact(activeChatAddr)"
       />

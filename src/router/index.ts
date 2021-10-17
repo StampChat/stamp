@@ -6,6 +6,7 @@ import { keyservers, networkName, displayNetwork } from 'src/utils/constants'
 import type { RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
 import { Store } from 'vuex'
 import { createRoutes } from './routes'
+import { RootState } from 'src/store/modules'
 
 const unprotectedRoutes = ['/home', '/setup', '/changelog']
 
@@ -29,7 +30,7 @@ async function addContactFromNavigation<S> (store: Store<S>, address: string) {
 }
 
 // Note: ssrContext is also available
-export default <S> ({ store }: { store: Store<S> }) => {
+export default ({ store }: { store: Store<RootState> }) => {
   async function redirectIfNoProfile (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) {
     await ((store as unknown) as { restored: Promise<unknown> }).restored
     const profile = store.getters['myProfile/getProfile']

@@ -114,7 +114,7 @@ export class MessageConstructor {
       message.setSalt(salt)
       message.setStamp(stamp)
       return { message, transactionBundle, payloadDigest }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err)
       throw Object({
         payloadDigest,

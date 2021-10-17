@@ -1,13 +1,10 @@
 import type { Module } from 'vuex'
 
-type State = {
+export type State = {
   darkMode: boolean;
 };
 
-// TODO: replace after RootState is typed
-type RootState = any
-
-const module: Module<State, RootState> = {
+const module: Module<State, unknown> = {
   namespaced: true,
   state: {
     darkMode: false
