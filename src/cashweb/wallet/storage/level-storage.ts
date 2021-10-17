@@ -80,11 +80,13 @@ export class LevelOutpointStore implements OutpointStore {
   private schemaVersion?: number
   private openedDb?: LevelDB
   private cache: Map<OutpointId, Outpoint>
+  private deletedOutpoints: Set<OutpointId>
 
   constructor (location: string) {
     this.outpointDbLocation = join(location, 'outpoints')
     this.metadataDbLocation = join(location, 'metadata')
     this.cache = new Map<OutpointId, Outpoint>()
+    this.deletedOutpoints = new Set<OutpointId>()
   }
 
   get db () {
@@ -122,15 +124,22 @@ export class LevelOutpointStore implements OutpointStore {
     this.cache.delete(id)
     // TODO: Handle errors here.
     this.db.del(id)
+    this.deletedOutpoints.add(id)
   }
 
   putOutpoint (outpoint: Outpoint) {
     const index = calcId(outpoint)
+    if (this.deletedOutpoints.has(index)) {
+      return
+    }
     this.cache.set(index, outpoint)
     this.db.put(index, JSON.stringify(outpoint))
   }
 
   freezeOutpoint (outpointId: OutpointId) {
+    if (this.deletedOutpoints.has(outpointId)) {
+      return
+    }
     const outpoint = this.getOutpoint(outpointId)
     if (outpoint === undefined) {
       console.error(`trying to freeze non-existant outpoint ${outpointId}`)

@@ -680,7 +680,12 @@ export class Wallet {
 
   unfreezeOutpoint (id: string) {
     // TODO: Nobody should be calling this outside of the wallet
-    return this.storage.unfreezeOutpoint(id)
+    try {
+      return this.storage.unfreezeOutpoint(id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.log('non-existant utxo being unfrozen')
+    }
   }
 
   putOutpoint (utxo: Outpoint) {
@@ -695,11 +700,6 @@ export class Wallet {
   }
 
   deleteOutpoint (id: string) {
-    const outpoint = this.storage.getOutpoint(id)
-    if (!outpoint) {
-      console.log(id, 'missing from UTXO set?')
-      return
-    }
     // TODO: Nobody should be calling this outside of the wallet
     this.storage.deleteOutpoint(id)
   }
