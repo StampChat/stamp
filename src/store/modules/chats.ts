@@ -183,6 +183,35 @@ const module: Module<State, unknown> = {
       )
       return sortedOrder
     },
+    getFractions: (state) => (timing: number) => {
+      const chatList = Object.values(state.chats)
+      const rewards: Record<string, number> = {}
+      for (const chat of chatList) {
+        assert(chat)
+        const totalValue =
+          chat.messages.reduce(
+            (total, { outbound, outpoints, items, receivedTime }) => {
+              if (receivedTime < Date.now() - timing) {
+                return total
+              }
+              if (outbound) {
+                return total
+              }
+              const messageValue = stampPrice(outpoints) + items.reduce((totalValue, entry) => {
+                switch (entry.type) {
+                  case 'stealth':
+                    return totalValue + entry.amount
+                  default:
+                    return totalValue
+                }
+              }, 0)
+              return total + messageValue
+            }, 0
+          )
+        rewards[chat.address] = totalValue
+      }
+      return { rewards, totalValue: Object.values(rewards).reduce((total, value) => total + value, 0) }
+    },
     lastRead: (state) => (address: string) => {
       const apiAddress = toDisplayAddress(address)
 

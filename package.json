@@ -1,8 +1,8 @@
 {
-  "name": "stamp",
+  "name": "lotusbot",
   "version": "0.0.20",
   "description": " A Lotus powered internet cryptomessenger",
-  "productName": "Stamp",
+  "productName": "LotusBot",
   "author": "shammah@cryptonumismatics.org",
   "private": true,
   "scripts": {
