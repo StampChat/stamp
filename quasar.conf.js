@@ -226,7 +226,13 @@ module.exports = configure(function (ctx) {
         extraFiles: [
           { from: 'src-electron/icons', to: 'resources/icons' }
         ],
-        publish: []
+        publish: [],
+
+        linux: {
+          category: 'Utility',
+          target: 'AppImage',
+          icon: 'src-electron/icons/linux-512x512.png'
+        }
       },
 
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
