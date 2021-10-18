@@ -1,6 +1,5 @@
+import { RelayClient, Wallet } from 'cashweb'
 import { ElectrumClient } from 'electrum-cash'
-import RelayClient from 'src/cashweb/relay'
-import { Wallet } from 'src/cashweb/wallet'
 import { RootState } from 'src/store/modules'
 import { Store } from 'vuex'
 

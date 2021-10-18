@@ -1,14 +1,11 @@
 import assert from 'assert'
+import { PublicKey } from 'bitcore-lib-xpi'
+import { Message, MessageItem, MessageWrapper, Outpoint, stampPrice, TextItem } from 'cashweb'
 import type { Module } from 'vuex'
-
-import { defaultStampAmount } from '../../utils/constants'
-import { stampPrice } from 'cashweb'
-import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'
-import { Outpoint } from 'app/local_modules/cashweb/lib/types/outpoint'
-import { Message, MessageItem, MessageWrapper, TextItem } from 'app/local_modules/cashweb/lib/types/messages'
-import { PublicKey } from 'bitcore-lib-xpi'
+import { defaultStampAmount } from '../../utils/constants'
+import { desktopNotify } from '../../utils/notifications'
 
 type ChatMessage = {
   outbound: boolean;

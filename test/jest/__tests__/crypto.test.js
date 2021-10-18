@@ -1,61 +1,77 @@
-import { PayloadConstructor } from '../../../local_modules/cashweb/relay/crypto'
-import { PrivateKey } from 'bitcore-lib-cash'
+import { PrivateKey } from "bitcore-lib-cash";
+import { PayloadConstructor } from "cashweb";
 
-const payloadConstructor = new PayloadConstructor({networkName: 'test-net'})
+const payloadConstructor = new PayloadConstructor({ networkName: "test-net" });
 
-function getRandomInt (max) {
-  return Math.floor(Math.random() * Math.floor(max))
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
 }
 
-test('Encrypt', () => {
-  const length = 8
-  const plainText = new Uint8Array(new ArrayBuffer(length))
+test("Encrypt", () => {
+  const length = 8;
+  const plainText = new Uint8Array(new ArrayBuffer(length));
   for (let i = 0; i < length; i++) {
-    plainText[i] = getRandomInt(255)
+    plainText[i] = getRandomInt(255);
   }
 
-  const salt = new Uint8Array(new ArrayBuffer(32))
+  const salt = new Uint8Array(new ArrayBuffer(32));
   for (let i = 0; i < length; i++) {
-    salt[i] = getRandomInt(255)
+    salt[i] = getRandomInt(255);
   }
 
-  const privateKey = PrivateKey()
-  const destinationPublicKey = PrivateKey().toPublicKey()
-  const sharedKey = payloadConstructor.constructSharedKey(privateKey, destinationPublicKey, salt)
+  const privateKey = PrivateKey();
+  const destinationPublicKey = PrivateKey().toPublicKey();
+  const sharedKey = payloadConstructor.constructSharedKey(
+    privateKey,
+    destinationPublicKey,
+    salt
+  );
 
-  payloadConstructor.encrypt(sharedKey, plainText)
-})
+  payloadConstructor.encrypt(sharedKey, plainText);
+});
 
-test('Decrypt', () => {
-  const length = 300
-  const prePlainText = new Uint8Array(new ArrayBuffer(length))
+test("Decrypt", () => {
+  const length = 300;
+  const prePlainText = new Uint8Array(new ArrayBuffer(length));
   for (let i = 0; i < length; i++) {
-    prePlainText[i] = getRandomInt(255)
+    prePlainText[i] = getRandomInt(255);
   }
 
-  const salt = new Uint8Array(new ArrayBuffer(32))
+  const salt = new Uint8Array(new ArrayBuffer(32));
   for (let i = 0; i < length; i++) {
-    salt[i] = getRandomInt(255)
+    salt[i] = getRandomInt(255);
   }
 
-  const privateKey = PrivateKey()
-  const destinationPublicKey = PrivateKey().toPublicKey()
-  const sharedKey = payloadConstructor.constructSharedKey(privateKey, destinationPublicKey, salt)
-  const cipherText = payloadConstructor.encrypt(sharedKey, prePlainText)
-  const postPlainText = payloadConstructor.decrypt(sharedKey, cipherText)
+  const privateKey = PrivateKey();
+  const destinationPublicKey = PrivateKey().toPublicKey();
+  const sharedKey = payloadConstructor.constructSharedKey(
+    privateKey,
+    destinationPublicKey,
+    salt
+  );
+  const cipherText = payloadConstructor.encrypt(sharedKey, prePlainText);
+  const postPlainText = payloadConstructor.decrypt(sharedKey, cipherText);
 
-  expect(postPlainText).toStrictEqual(prePlainText)
-})
+  expect(postPlainText).toStrictEqual(prePlainText);
+});
 
-test('StealthKey', () => {
-  const destPrivKey = PrivateKey()
-  const destPubKey = destPrivKey.toPublicKey()
+test("StealthKey", () => {
+  const destPrivKey = PrivateKey();
+  const destPubKey = destPrivKey.toPublicKey();
 
-  const ephemeralPrivKey = PrivateKey()
-  const ephemeralPubKey = ephemeralPrivKey.toPublicKey()
+  const ephemeralPrivKey = PrivateKey();
+  const ephemeralPubKey = ephemeralPrivKey.toPublicKey();
 
-  const { stealthPublicKey } = payloadConstructor.constructStealthPublicKey(ephemeralPrivKey, destPubKey)
-  const { stealthPrivateKey } = payloadConstructor.constructStealthPrivateKey(ephemeralPubKey, destPrivKey)
+  const { stealthPublicKey } = payloadConstructor.constructStealthPublicKey(
+    ephemeralPrivKey,
+    destPubKey
+  );
+  const { stealthPrivateKey } = payloadConstructor.constructStealthPrivateKey(
+    ephemeralPubKey,
+    destPrivKey
+  );
 
-  expect(stealthPublicKey.toBuffer()).toStrictEqual(stealthPrivateKey.toPublicKey().toBuffer())
-})
+  expect(stealthPublicKey.toBuffer()).toStrictEqual(
+    stealthPrivateKey.toPublicKey().toBuffer()
+  );
+});

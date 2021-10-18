@@ -1,6 +1,7 @@
 export { KeyserverHandler } from "./keyserver/handler";
 export { default as pop } from "./pop";
 export { ReadOnlyRelayClient, RelayClient } from "./relay";
+export { PayloadConstructor } from "./relay/crypto";
 export { LevelMessageStore } from "./relay/storage/level-storage";
 export {
   Message,
