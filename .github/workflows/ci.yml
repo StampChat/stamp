@@ -23,9 +23,6 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      - name: Install snapcraft
-        run: sudo snap install snapcraft --classic
-
       - name: Build and publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -234,7 +234,7 @@ module.exports = configure(function (ctx) {
 
         linux: {
           category: "Utility",
-          target: ["AppImage", "snap"],
+          target: ["AppImage"],
           icon: "src-electron/icons/linux-512x512.png",
         },
       },
