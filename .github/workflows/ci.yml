@@ -21,8 +21,8 @@ jobs:
         run: yarn install
 
       - name: Run lint and build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           yarn lint
           yarn build:publish
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
