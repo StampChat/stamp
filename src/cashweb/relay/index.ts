@@ -893,6 +893,8 @@ export class RelayClient extends ReadOnlyRelayClient {
     } catch (err: any) {
       console.error('Unable to deserialize message:', err.message)
     }
+    // Sanity check after downloading in case relay server was ultimately out of sync with blockchain somehow.
+    this.wallet?.updateAllOutpoints()
   }
 
   async updateProfile (idPrivKey: PrivateKey, profile: {

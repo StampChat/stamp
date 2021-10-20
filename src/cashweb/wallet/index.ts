@@ -111,7 +111,6 @@ export class Wallet {
     const updateUTXOTime = Date.now()
     await this.startListeners()
     const startListenersTime = Date.now()
-    this.updateAllOutpoints().then(() => console.log('finished updating outpoints'))
     console.log(`initAddresses UTXOs took ${initAddressTime - t0} ms`)
     console.log(`updateUTXOTime UTXOs took ${updateUTXOTime - t0} ms`)
     console.log(`startListenersTime UTXOs took ${startListenersTime - t0} ms`)
