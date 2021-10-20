@@ -227,9 +227,14 @@ module.exports = configure(function (ctx) {
           provider: "github",
         },
 
+        win: {
+          target: "zip,tar.gz",
+          icon: "src-electron/icons/linux-512x512.png",
+        },
+
         linux: {
           category: "Utility",
-          target: "AppImage",
+          target: "AppImage,snap",
           icon: "src-electron/icons/linux-512x512.png",
         },
       },
