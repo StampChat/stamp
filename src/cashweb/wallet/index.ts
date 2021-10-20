@@ -262,7 +262,7 @@ export class Wallet {
     const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
     assert(elOutputs, `Null response from blockchain.scripthash.listunspent for ${scriptHash}`)
     if (elOutputs instanceof Error) {
-      throw elOutputs
+      return false
     }
     assert(elOutputs instanceof Array, 'output of blockchain.scripthash.listunspent was not an array!')
     const unspentOutputs = elOutputs as ElectrumListUnspentOutput[]
@@ -271,9 +271,10 @@ export class Wallet {
     })) {
       console.log(`UTXO missing on-chain, deleting missing UTXO ${utxoId}`)
       this.storage.deleteOutpoint(utxoId)
-      throw new Error('UTXO not found on-chain')
+      return false
     }
     console.log(`UTXO is valid ${utxoId}`)
+    return true
   }
 
   async fixOutpoint (utxo: Outpoint) {
@@ -288,7 +289,9 @@ export class Wallet {
         console.log(`Missing UTXO for ${utxoId}`)
         return
       }
-      await this.checkOutpoint(utxo)
+      if (!await this.checkOutpoint(utxo)) {
+        return
+      }
       await this.unfreezeOutpoint(utxoId)
     } catch (err) {
       console.error('error deserializing utxo address', err, utxoId)
@@ -696,10 +699,12 @@ export class Wallet {
     assert(utxo.txId !== undefined, 'putOupoint utxo wrong format')
     assert(utxo.outputIndex !== undefined, 'putOupoint utxo wrong format')
     // TODO: Nobody should be calling this outside of the wallet
+    console.log(`adding outpoint ${calcId(utxo)}`)
     return this.storage.putOutpoint(utxo)
   }
 
   deleteOutpoint (id: string) {
+    console.log(`deleting outpoint ${id}`)
     // TODO: Nobody should be calling this outside of the wallet
     this.storage.deleteOutpoint(id)
   }

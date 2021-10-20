@@ -441,16 +441,23 @@ export class RelayClient extends ReadOnlyRelayClient {
       const destinationAddress = destinationPublicKey.toAddress(this.networkName).toCashAddress()
       const electrumClient = await this.wallet?.electrumClientPromise
       assert(electrumClient, 'Unable to get electrumClient')
+      // Ensure all outpoints are on-chain before trying to send message. Don't
+      // want to burn other transactions if our state is out of sync with the
+      // blockchain.
       Promise.all(stagedUtxos.map(async (outpoint) => {
-        console.log('Testing UTXO', calcId(outpoint))
-        await wallet.checkOutpoint(outpoint)
-      })).then(() => {
-        Promise.all(transactions.map(async (transaction) => {
-          console.log('Broadcasting a transaction', transaction.txid, transaction.toString())
-          await electrumClient.request('blockchain.transaction.broadcast', transaction.toString())
-          console.log('Finished broadcasting tx', transaction.txid)
-        }))
-      })
+        return wallet.checkOutpoint(outpoint)
+      }))
+        .then((checks) => checks.every(c => c)).then((o) => {
+          if (!o) {
+            throw new Error('Invalid UTXOs found while trying to broadcast message')
+          }
+        })
+        .then(() =>
+          Promise.all(transactions.map(async (transaction) => {
+            console.log('Broadcasting a transaction', transaction.txid, transaction.toString())
+            await electrumClient.request('blockchain.transaction.broadcast', transaction.toString())
+            console.log('Finished broadcasting tx', transaction.txid)
+          })))
         .then(() => this.pushMessages(destinationAddress, messageSet))
         .then(async () => {
           this.events.emit('messageSent', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
