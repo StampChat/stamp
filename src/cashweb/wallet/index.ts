@@ -179,7 +179,7 @@ export class Wallet {
     const foundIds = []
 
     // Remove missing utxos
-    const outpoints = await this.storage.getOutpoints()
+    const outpoints = this.storage.getOutpoints()
     for (const [outpointId, outpoint] of outpoints) {
       if (outpoint.address !== address) {
         continue
@@ -705,6 +705,9 @@ export class Wallet {
 
   deleteOutpoint (id: string) {
     console.log(`deleting outpoint ${id}`)
+    if (!this.storage.getOutpoint(id)) {
+      console.log(`id not found in UTXO storage ${id}`)
+    }
     // TODO: Nobody should be calling this outside of the wallet
     this.storage.deleteOutpoint(id)
   }

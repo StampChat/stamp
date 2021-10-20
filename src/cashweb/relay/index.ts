@@ -462,7 +462,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         .then(async () => {
           this.events.emit('messageSent', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
           // TODO: we shouldn't be dealing with this here. Leaky abstraction
-          await Promise.all(stagedUtxos.map(utxo => wallet.storage.deleteOutpoint(calcId(utxo))))
+          await Promise.all(stagedUtxos.map(utxo => wallet.deleteOutpoint(calcId(utxo))))
         })
         .catch(async (err) => {
           console.error(err)
