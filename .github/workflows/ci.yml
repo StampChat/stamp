@@ -26,8 +26,7 @@ jobs:
       - name: Install snapcraft
         run: sudo snap install snapcraft --classic
 
-      - name: Build
+      - name: Build and publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          yarn build:publish
+        run: yarn build:publish
