@@ -20,9 +20,14 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Run lint and build
+      - name: Lint
+        run: yarn lint
+
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+
+      - name: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          yarn lint
           yarn build:publish
