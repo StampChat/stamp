@@ -24,3 +24,5 @@ jobs:
         run: |
           yarn lint
           yarn build:publish
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
