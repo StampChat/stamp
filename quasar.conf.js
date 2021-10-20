@@ -7,8 +7,8 @@
 // https://quasar.dev/quasar-cli/quasar-conf-js
 /* eslint-env node */
 /* eslint-disable @typescript-eslint/no-var-requires */
-const path = require('path')
-const { configure } = require('quasar/wrappers')
+const path = require("path");
+const { configure } = require("quasar/wrappers");
 
 module.exports = configure(function (ctx) {
   return {
@@ -16,20 +16,15 @@ module.exports = configure(function (ctx) {
     // --> boot files are part of "main.js"
     // https://quasar.dev/quasar-cli/cli-documentation/boot-files
     boot: [
-      'i18n',
-      'axios',
-      'network-prefix',
-      'setup-apis',
-      ctx.mode.electron ? 'electron' : 'capacitor'
+      "i18n",
+      "axios",
+      "network-prefix",
+      "setup-apis",
+      ctx.mode.electron ? "electron" : "capacitor",
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
-    css: [
-      'dialogs.scss',
-      'dark-mode.scss',
-      'light-mode.scss',
-      'app.scss'
-    ],
+    css: ["dialogs.scss", "dark-mode.scss", "light-mode.scss", "app.scss"],
 
     // https://github.com/quasarframework/quasar/tree/dev/extras
     extras: [
@@ -41,20 +36,20 @@ module.exports = configure(function (ctx) {
       // 'line-awesome',
       // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
 
-      'roboto-font', // optional, you are not bound to it
-      'material-icons' // optional, you are not bound to it
+      "roboto-font", // optional, you are not bound to it
+      "material-icons", // optional, you are not bound to it
     ],
 
     // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-framework
     framework: {
-      iconSet: 'material-icons', // Quasar icon set
-      lang: 'en-US', // Quasar language pack
+      iconSet: "material-icons", // Quasar icon set
+      lang: "en-US", // Quasar language pack
 
-      components: ['QSkeleton', 'QScrollObserver'],
+      components: ["QSkeleton", "QScrollObserver"],
       directives: [],
 
       // Quasar plugins
-      plugins: ['Notify', 'Loading', 'Dialog']
+      plugins: ["Notify", "Loading", "Dialog"],
     },
 
     // https://quasar.dev/quasar-cli/cli-documentation/supporting-ie
@@ -65,7 +60,7 @@ module.exports = configure(function (ctx) {
       tsCheckerConfig: {
         eslint: {
           enabled: true,
-          files: './src/**/*.{ts,tsx,js,jsx,vue}',
+          files: "./src/**/*.{ts,tsx,js,jsx,vue}",
         },
       },
     },
@@ -89,9 +84,9 @@ module.exports = configure(function (ctx) {
     build: {
       // this is a configuration passed on
       // to the underlying Webpack
-      devtool: 'source-map',
+      devtool: "source-map",
 
-      vueRouterMode: 'hash', // available values: 'hash', 'history'
+      vueRouterMode: "hash", // available values: 'hash', 'history'
 
       // rtl: false, // https://quasar.dev/options/rtl-support
       // preloadChunks: true,
@@ -103,54 +98,58 @@ module.exports = configure(function (ctx) {
       // extractCSS: false,
 
       // https://quasar.dev/quasar-cli/cli-documentation/handling-webpack
-      chainWebpack (chain) {
-        const nodePolyfillWebpackPlugin = require('node-polyfill-webpack-plugin')
-        chain.plugin('node-polyfill').use(nodePolyfillWebpackPlugin)
+      chainWebpack(chain) {
+        const nodePolyfillWebpackPlugin = require("node-polyfill-webpack-plugin");
+        chain.plugin("node-polyfill").use(nodePolyfillWebpackPlugin);
         // example for its content (adds linting)
-        const ESLintPlugin = require('eslint-webpack-plugin');
-        chain.plugin('eslint-webpack-plugin')
-          .use(ESLintPlugin, [{ extensions: ['js'] }])
+        const ESLintPlugin = require("eslint-webpack-plugin");
+        chain
+          .plugin("eslint-webpack-plugin")
+          .use(ESLintPlugin, [{ extensions: ["js"] }]);
       },
 
-      extendWebpack (cfg) {
-        cfg.resolve.modules = [path.resolve(__dirname, 'local_modules'), ...cfg.resolve.modules]
+      extendWebpack(cfg) {
+        cfg.resolve.modules = [
+          path.resolve(__dirname, "local_modules"),
+          ...cfg.resolve.modules,
+        ];
         // linting is slow in TS projects, we execute it only for production builds
         cfg.resolve.fallback = {
           fs: false,
           tls: false,
-          net: false
-        }
+          net: false,
+        };
 
         if (ctx.prod) {
           // Ensure we are copying our local_modules folder into place
           // before yarn install --production runs. Otherwise, we
           // will have issues.
-          const CopyWebpackPlugin = require('copy-webpack-plugin')
+          const CopyWebpackPlugin = require("copy-webpack-plugin");
           cfg.plugins.push(
             new CopyWebpackPlugin({
               patterns: [
                 {
-                  from: 'local_modules',
-                  to: path.join(cfg.output.path, 'local_modules')
-                }
-              ]
+                  from: "local_modules",
+                  to: path.join(cfg.output.path, "local_modules"),
+                },
+              ],
             })
-          )
+          );
 
           cfg.module.rules.push({
             test: /\.xpriv_generate\.js$/,
-            loader: 'worker-loader',
-            exclude: /node_modules/
-          })
+            loader: "worker-loader",
+            exclude: /node_modules/,
+          });
         }
-      }
+      },
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
     devServer: {
       https: false,
       port: 8080,
-      open: true // opens browser window automatically
+      open: true, // opens browser window automatically
     },
 
     // animations: 'all', // --- includes all animations
@@ -159,49 +158,49 @@ module.exports = configure(function (ctx) {
 
     // https://quasar.dev/quasar-cli/developing-ssr/configuring-ssr
     ssr: {
-      pwa: false
+      pwa: false,
     },
 
     // https://quasar.dev/quasar-cli/developing-pwa/configuring-pwa
     pwa: {
-      workboxPluginMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
+      workboxPluginMode: "GenerateSW", // 'GenerateSW' or 'InjectManifest'
       workboxOptions: {}, // only for GenerateSW
       manifest: {
-        name: 'Stamp',
-        short_name: 'Stamp',
-        description: ' A Lotus powered internet cryptomessenger',
-        display: 'standalone',
-        orientation: 'portrait',
-        background_color: '#ffffff',
-        theme_color: '#027be3',
+        name: "Stamp",
+        short_name: "Stamp",
+        description: " A Lotus powered internet cryptomessenger",
+        display: "standalone",
+        orientation: "portrait",
+        background_color: "#ffffff",
+        theme_color: "#027be3",
         icons: [
           {
-            src: 'icons/icon-128x128.png',
-            sizes: '128x128',
-            type: 'image/png'
+            src: "icons/icon-128x128.png",
+            sizes: "128x128",
+            type: "image/png",
           },
           {
-            src: 'icons/icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            src: "icons/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
           },
           {
-            src: 'icons/icon-256x256.png',
-            sizes: '256x256',
-            type: 'image/png'
+            src: "icons/icon-256x256.png",
+            sizes: "256x256",
+            type: "image/png",
           },
           {
-            src: 'icons/icon-384x384.png',
-            sizes: '384x384',
-            type: 'image/png'
+            src: "icons/icon-384x384.png",
+            sizes: "384x384",
+            type: "image/png",
           },
           {
-            src: 'icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
-      }
+            src: "icons/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+        ],
+      },
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
@@ -212,36 +211,34 @@ module.exports = configure(function (ctx) {
     // Full list of options: https://quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor
     capacitor: {
       hideSplashscreen: true,
-      iosStatusBarPadding: true
+      iosStatusBarPadding: true,
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
     electron: {
-      bundler: 'builder', // 'packager' or 'builder'
+      bundler: "builder", // 'packager' or 'builder'
 
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'org.cashweb.stamp',
-        extraFiles: [
-          { from: 'src-electron/icons', to: 'resources/icons' }
-        ],
-        publish: [],
+        appId: "org.cashweb.stamp",
+        extraFiles: [{ from: "src-electron/icons", to: "resources/icons" }],
+        publish: {
+          provider: "github",
+        },
 
         linux: {
-          category: 'Utility',
-          target: 'AppImage',
-          icon: 'src-electron/icons/linux-512x512.png'
-        }
+          category: "Utility",
+          target: "AppImage",
+          icon: "src-electron/icons/linux-512x512.png",
+        },
       },
 
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
 
-      extendWebpackMain (cfg) {
-      },
+      extendWebpackMain(cfg) {},
 
-      extendWebpackPreload (cfg) {
-      },
-    }
-  }
-})
+      extendWebpackPreload(cfg) {},
+    },
+  };
+});
