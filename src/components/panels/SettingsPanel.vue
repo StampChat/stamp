@@ -107,6 +107,20 @@
 
           <q-item-section>{{ $t('SettingPanel.wipeAndSave') }}</q-item-section>
         </q-item>
+
+        <q-item
+          clickable
+          v-ripple
+          @click="$router.push('/changelog').catch(() => {
+            // Don't care. Probably duplicate route
+          })"
+        >
+          <q-item-section avatar>
+            <q-icon name="change_history" />
+          </q-item-section>
+
+          <q-item-section>{{ $t('SettingPanel.changeLog') }}</q-item-section>
+        </q-item>
       </q-list>
     </q-scroll-area>
   </div>

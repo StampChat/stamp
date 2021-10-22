@@ -53,7 +53,8 @@ export default {
     recieveBitcoinCash: 'Receive Lotus',
     profile: 'Profile',
     settings: 'Settings',
-    wipeAndSave: 'Remote Wipe Wallet'
+    wipeAndSave: 'Remote Wipe Wallet',
+    changeLog: 'Changelog'
   },
   receiveBitcoinDialog: {
     walletStatus: 'Wallet Status',

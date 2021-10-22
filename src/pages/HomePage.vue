@@ -37,14 +37,6 @@
                 // Don't care. Probably duplicate route
                 })"
               />
-              <q-btn
-                alight="right"
-                color="primary"
-                label="See Changelog"
-                @click="$router.push('/changelog').catch(() => {
-                // Don't care. Probably duplicate route
-                })"
-              />
             </q-card-actions>
             <q-card-section>
               <div class="text-h6">
