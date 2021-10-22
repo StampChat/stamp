@@ -59,7 +59,7 @@ const module: Module<State, unknown> = {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
       console.log('fetching messages')
       await keyserver.createBroadcast(topic, [entry], satoshis)
-      await dispatch('refreshMessages', { wallet, topic: getters.getSelectedTopic() })
+      await dispatch('refreshMessages', { wallet, topic: getters.getSelectedTopic })
     }
   }
 }
