@@ -2,12 +2,29 @@ import axios from 'axios'
 import assert from 'assert'
 
 import { Entry, AddressMetadata } from './keyserver_pb'
-import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
+import { AuthWrapper, AuthWrapperSet, BurnOutputs } from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
-import { crypto, Address, Networks, PrivateKey } from 'bitcore-lib-xpi'
+import { crypto, Address, Networks, PrivateKey, Transaction, Script, PublicKey } from 'bitcore-lib-xpi'
 import { Wallet } from '../wallet'
 import { Outpoint } from '../types/outpoint'
 import { calcId } from '../wallet/helpers'
+import { Opcode } from 'app/local_modules/bitcore-lib-xpi'
+import { BroadcastEntry, BroadcastMessage, AgoraPost } from './broadcast_pb'
+import { AgoraMessage, AgoraMessageEntry } from '../types/agora'
+
+function calculateBurnAmount (burnOutputs: BurnOutputs[]) {
+  return burnOutputs.reduce((total, burn) => {
+    // TODO: Validate format
+    const index = burn.getIndex()
+    const tx = burn.getTx()
+    assert(typeof tx !== 'string', 'Tx returned as string from protobuf library')
+    const parsedTx = new Transaction(Buffer.from(tx))
+    const output = parsedTx.outputs[index]
+    const script = new Uint8Array(output.script.toBuffer())
+    const isDownVote = script[6] === Opcode.map.OP_0
+    return total + (isDownVote ? -parsedTx.outputs[index].satoshis : parsedTx.outputs[index].satoshis)
+  }, 0)
+}
 
 export class KeyserverHandler {
   keyservers: string[]
@@ -155,5 +172,145 @@ export class KeyserverHandler {
     await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
 
     await this.putMetadata(idAddress, serverUrl, authWrapper, token)
+  }
+
+  private constructBurnTransaction (wallet: Wallet, hash: Buffer, vote: number) {
+    const upvote = vote > 0
+    const satoshis = vote < 0 ? -vote : vote
+
+    // Create burn output
+    const script = new Script(undefined)
+      .add(Opcode.map.OP_RETURN)
+      .add(Buffer.from([80, 79, 78, 68])) // POND
+      .add(upvote ? Opcode.map.OP_1 : Opcode.map.OP_0)
+      .add(hash)
+
+    const output = new Transaction.Output({
+      script,
+      satoshis
+    })
+    return wallet.constructTransaction({ outputs: [output] })
+  }
+
+  async createBroadcast (topic: string, entries: AgoraMessageEntry[], vote: number) {
+    assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
+
+    const broadcastMessage = new BroadcastMessage()
+    broadcastMessage.setTopic(topic)
+    broadcastMessage.setTimestamp(Date.now())
+
+    // Construct payload
+    const protoEntries: BroadcastEntry[] = []
+    for (const entry of entries) {
+      const textEntry = new BroadcastEntry()
+      textEntry.setKind(entry.kind)
+      if (entry.kind === 'post') {
+        const payload = new AgoraPost()
+        payload.setTitle(entry.title)
+        entry.url && payload.setUrl(entry.url)
+        entry.message && payload.setMessage(entry.message)
+
+        textEntry.setPayload(payload.serializeBinary())
+        protoEntries.push(textEntry)
+        continue
+      }
+      assert(false, 'unsupported entry type')
+    }
+    broadcastMessage.setEntriesList(protoEntries)
+
+    const serializedMessage = broadcastMessage.serializeBinary()
+    const payloadDigest = crypto.Hash.sha256(Buffer.from(serializedMessage))
+    const { transaction: burnTransaction, usedUtxos } = this.constructBurnTransaction(this.wallet, payloadDigest, vote)
+
+    const burnOutput = new BurnOutputs()
+    burnOutput.setTx(burnTransaction.toBuffer())
+    burnOutput.setIndex(0)
+
+    const idPrivKey = this.wallet?.identityPrivKey
+    assert(idPrivKey, 'Missing private key in createBroadcast')
+    const idPubKey = idPrivKey.toPublicKey().toBuffer()
+
+    const signature = crypto.ECDSA.sign(payloadDigest, idPrivKey)
+    const sig = signature.toCompact(1, true).slice(1)
+
+    const authWrapper = new AuthWrapper()
+    authWrapper.setPublicKey(idPubKey)
+    authWrapper.setSignature(sig)
+
+    authWrapper.setPublicKey(idPubKey)
+    authWrapper.setPayload(serializedMessage)
+    authWrapper.setBurnAmount(vote)
+    authWrapper.setScheme(AuthWrapper.SignatureScheme.ECDSA)
+    authWrapper.setTransactionsList([burnOutput])
+    const server = this.chooseServer()
+
+    const url = `${server}/messages`
+    await axios({
+      method: 'put',
+      url: url,
+      data: authWrapper.serializeBinary()
+    })
+    await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
+  }
+
+  async getBroadcastMessages (topic: string, from?: number, to?: number) {
+    const server = this.chooseServer()
+    const url = `${server}/messages`
+    const response = await axios(
+      {
+        method: 'get',
+        url: url,
+        params: {
+          from: from ?? Date.now() - 1000 * 60 * 60 * 24,
+          to: to ?? Date.now(),
+          topic
+        },
+        responseType: 'arraybuffer'
+      }
+    )
+    if (response.status !== 200) {
+      return
+    }
+    if (response.status !== 200) {
+      throw new Error('unable to fetch broadcast messages')
+    }
+    const authwrapperSet = AuthWrapperSet.deserializeBinary(response.data)
+    const wrappers = authwrapperSet.getItemsList()
+    const messages: AgoraMessage[] = []
+    for (const wrapper of wrappers) {
+      const payload = wrapper.getPayload()
+      assert(typeof payload !== 'string', 'payload type should not be a string')
+      const message = BroadcastMessage.deserializeBinary(payload)
+      const pubKey = Buffer.from(wrapper.getPublicKey())
+      const address = PublicKey.fromBuffer(pubKey).toAddress(this.networkName).toXAddress()
+      const entries = message.getEntriesList()
+      const parsedEntries: AgoraMessageEntry[] = []
+      const satoshisBurned = calculateBurnAmount(wrapper.getTransactionsList())
+      assert(satoshisBurned === wrapper.getBurnAmount())
+      const payloadHash = crypto.Hash.sha256(Buffer.from(payload)).toString('hex')
+      const parsedMessage: AgoraMessage = {
+        poster: address,
+        satoshis: satoshisBurned,
+        topic: message.getTopic(),
+        entries: parsedEntries,
+        payloadHash
+      }
+      for (const entry of entries) {
+        const kind = entry.getKind()
+        const payload = entry.getPayload()
+        assert(typeof payload !== 'string', `invalid payload type returned from protobufs ${payload}`)
+
+        if (kind === 'post') {
+          const post = AgoraPost.deserializeBinary(payload).toObject()
+          parsedEntries.push({
+            kind: 'post',
+            ...post
+          })
+          continue
+        }
+      }
+      messages.push(parsedMessage)
+    }
+    return messages
   }
 }

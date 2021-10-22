@@ -78,6 +78,10 @@ const module: Module<State, unknown> = {
     getContacts: (state) => {
       return state.contacts
     },
+    haveContact: (state) => (address: string) => {
+      const apiAddress = toDisplayAddress(address)
+      return !!state.contacts[apiAddress]
+    },
     getContactProfile: (state) => (address: string) => {
       if (!address) {
         return { ...pendingRelayData.profile }

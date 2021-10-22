@@ -6,8 +6,9 @@ export function createRoutes (): RouteRecordRaw[] {
       path: '/',
       component: () => import('layouts/MainLayout.vue'),
       children: [
-        { path: '', component: () => import('pages/HomePage.vue') },
-        { path: 'home', component: () => import('pages/HomePage.vue') },
+        { path: '', component: () => import('src/pages/Agora.vue') },
+        { path: 'agora', component: () => import('src/pages/Agora.vue') },
+        { path: 'create-post', component: () => import('pages/CreatePost.vue') },
         { path: 'changelog', component: () => import('pages/Changelog.vue') },
         { path: 'chat/:address', component: () => import('pages/Chat.vue') },
         { path: 'settings', component: () => import('pages/Settings.vue') },

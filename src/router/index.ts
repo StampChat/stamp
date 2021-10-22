@@ -9,7 +9,7 @@ import { Store } from 'vuex'
 import { createRoutes } from './routes'
 import { RootState } from 'src/store/modules'
 
-const unprotectedRoutes = ['/home', '/setup', '/changelog']
+const unprotectedRoutes = ['/', '/agora', '/setup', '/changelog']
 
 async function addContactFromNavigation<S> (store: Store<S>, address: string) {
   try {

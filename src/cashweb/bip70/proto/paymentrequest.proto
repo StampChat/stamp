@@ -5,7 +5,7 @@
 // to avoid conflicts, register extensions via pull-req at
 // https://github.com/bitcoin/bips/blob/master/bip-0070/extensions.mediawiki
 //
-
+syntax = "proto2";
 package bip70;
 option java_package = "org.bitcoin.protocols.payments";
 option java_outer_classname = "Protos";
