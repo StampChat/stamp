@@ -2,11 +2,13 @@ import { Address, crypto } from 'bitcore-lib-xpi'
 import { colorSalt } from './constants'
 
 export function formatBalance (balance: number) {
-  if (balance < 1_000) {
-    return String(balance) + ' sats'
+  const isNegative = balance < 0 ? '-' : ''
+  const sats = Math.abs(balance)
+  if (sats < 1_000) {
+    return isNegative + String(sats) + ' sats'
   }
 
-  return (balance / 1_000_000).toFixed(2) + ' Lotus'
+  return isNegative + (sats / 1_000_000).toFixed(2) + ' Lotus'
 }
 
 export function addressColor (address: Address) {
