@@ -272,8 +272,8 @@ declare module 'bitcore-lib-xpi' {
 
         isStandard (): boolean;
 
-        prepend (obj: unkown): this;
-        add (obj: unkown): this;
+        prepend (obj: unknown): this;
+        add (obj: unknown): this;
 
         hasCodeseparators (): boolean;
         removeCodeseparators (): this;
