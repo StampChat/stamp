@@ -4,8 +4,9 @@
       <q-list>
         <q-separator />
         <chat-list-link
-          title="Stamp News"
-          route="/home"
+          title="The Agora"
+          route="/agora"
+          icon="foundation"
         />
         <chat-list-link
           title="Create/Import Account"

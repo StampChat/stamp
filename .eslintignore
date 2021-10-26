@@ -11,6 +11,8 @@
 
 /src/cashweb/keyserver/keyserver_pb.js
 /src/cashweb/keyserver/keyserver_pb.d.ts
+/src/cashweb/keyserver/broadcast_pb.js
+/src/cashweb/keyserver/broadcast_pb.d.ts
 /src/cashweb/relay/relay_pb.js
 /src/cashweb/relay/relay_pb.d.ts
 /src/cashweb/relay/p2pkh_pb.js

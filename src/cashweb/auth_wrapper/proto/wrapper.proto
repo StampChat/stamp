@@ -1,6 +1,16 @@
 syntax = "proto3";
 package wrapper;
 
+// BurnOutputs represents a transaction and the output which burns some lotus
+// to commit to the auth wrapper's payload. This ensures that some amount was
+// paid to relay a message.
+message BurnOutputs {
+  // Transaction which burns some XPI to commit to the message
+  bytes tx = 1;
+  // Index of the op_return which contains the commitment to for the authwrapper
+  uint32 index = 2;
+}
+
 // AuthWrapper provides integrity, authentication, and non-repuditation by
 // providing a standard structure for covering blobs with signatures.
 message AuthWrapper {
@@ -21,4 +31,15 @@ message AuthWrapper {
   bytes payload = 4;
   // The SHA256 digest of the payload.
   bytes payload_digest = 5;
+  // Net amount of lotus burned in the transaction set associated with this auth
+  // wrapper.
+  int64 burn_amount = 6;
+  // Full serialized bitcoin transactions which committed to the payload_digest
+  repeated BurnOutputs transactions = 7;
+}
+
+// Set of auth wrappers for returning multiple items to the client as needed.
+message AuthWrapperSet {
+  // Set of auth wrappers that can be used in certain get responses
+  repeated AuthWrapper items = 1;
 }
