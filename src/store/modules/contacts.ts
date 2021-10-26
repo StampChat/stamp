@@ -68,6 +68,9 @@ const module: Module<State, unknown> = {
       return (apiAddress in state.contacts)
     },
     getContact: (state) => (address: string) => {
+      if (!address) {
+        return { ...pendingRelayData, profile: { ...pendingRelayData.profile } }
+      }
       const apiAddress = toDisplayAddress(address)
 
       return state.contacts[apiAddress] ? state.contacts[apiAddress] : { ...pendingRelayData, profile: { ...pendingRelayData.profile } }
