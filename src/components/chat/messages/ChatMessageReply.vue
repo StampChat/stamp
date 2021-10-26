@@ -51,7 +51,7 @@ export default {
     }),
     message () {
       const message = this.getMessageByPayloadVuex()(this.payloadDigest)
-      return message || { items: [], senderAddress: 'undefined' }
+      return message || { items: [], senderAddress: undefined }
     },
     name () {
       if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
