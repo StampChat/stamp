@@ -92,7 +92,6 @@
                     horizontal
                   >
                     <router-link
-                      class="col-grow"
                       :to="`/chat/${message.poster}`"
                     >
                       <div
@@ -104,9 +103,16 @@
                         {{ message.poster }}
                       </div>
                     </router-link>
-                    <div class="col-shrink text-right">
-                      {{ message.topic }}
-                    </div>
+                    <q-space />
+                    <q-btn
+                      fab
+                      no-caps
+                      flat
+                      stretch
+                      padding="1px"
+                      @click.prevent="setTopic(message.topic)"
+                      :label="message.topic"
+                    />
                   </q-card-section>
 
                   <q-separator horizontal />
@@ -174,6 +180,10 @@ export default defineComponent({
     markedMessage (text: string) {
       const html = DOMPurify.sanitize(marked(text))
       return html
+    },
+    setTopic (text: string) {
+      this.selectedTopic = text
+      this.refreshContent()
     }
   },
   computed: {
