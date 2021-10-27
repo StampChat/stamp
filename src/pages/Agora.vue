@@ -123,7 +123,7 @@
                       <span v-if="!entry.url">{{ entry.title }}</span>
                     </q-card-section>
                     <q-card-section class="q-ma-none q-pa-sm col-grow">
-                      {{ entry.message }}
+                      <span v-html="markedMessage(entry.message)" />
                     </q-card-section>
                   </template>
                 </q-card-section>
@@ -137,6 +137,9 @@
 </template>
 
 <script lang="ts">
+import marked from 'marked'
+import DOMPurify from 'dompurify'
+
 import { AgoraMessage } from 'src/cashweb/types/agora'
 import { defineComponent } from 'vue'
 import { mapGetters, mapActions, mapMutations } from 'vuex'
@@ -167,6 +170,10 @@ export default defineComponent({
     },
     refreshContent () {
       this.refreshMessages({ wallet: this.$wallet, topic: this.selectedTopic })
+    },
+    markedMessage (text: string) {
+      const html = DOMPurify.sanitize(marked(text))
+      return html
     }
   },
   computed: {
