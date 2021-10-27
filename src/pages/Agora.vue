@@ -84,7 +84,7 @@
                 </q-card-section>
                 <q-separator vertical />
                 <q-card-section
-                  class="q-ma-none q-pa-none col-grow"
+                  class="q-ma-none q-pa-none col"
                   vertical
                 >
                   <q-card-section
