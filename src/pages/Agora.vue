@@ -91,7 +91,11 @@
                     class="q-ma-none q-pa-sm col-grow"
                     horizontal
                   >
-                    <router-link
+                    <q-btn
+                      no-caps
+                      flat
+                      stretch
+                      padding="1px"
                       :to="`/chat/${message.poster}`"
                     >
                       <div
@@ -102,10 +106,9 @@
                       <div v-else>
                         {{ message.poster }}
                       </div>
-                    </router-link>
+                    </q-btn>
                     <q-space />
                     <q-btn
-                      fab
                       no-caps
                       flat
                       stretch
