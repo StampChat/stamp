@@ -14,8 +14,31 @@
           icon="menu"
         />
         <q-toolbar-title class="h6">
-          The Agora
+          Agora
         </q-toolbar-title>
+        <q-space />
+        <q-btn
+          icon="refresh"
+          flat
+          @click="refreshContent"
+        />
+        <q-input
+          filled
+          class="q-mx-sm q-pa-none"
+          v-model="selectedTopic"
+          label="Topic"
+          style="width: 250px"
+          @keyup.enter.prevent="refreshContent"
+          clearable
+        />
+        <q-btn
+          flat
+          class="q-mx-sm q-pa-sm"
+          label="Create Post"
+          @click="$router.push('/create-post').catch(() => {
+            // Don't care. Probably duplicate route
+          })"
+        />
       </q-toolbar>
     </q-header>
 
@@ -25,51 +48,6 @@
           ref="chatScroll"
           class="q-px-sm absolute full-width full-height"
         >
-          <div class="q-ma-sm row">
-            <q-btn
-              class="col-shrink"
-              align="left"
-              v-if="!$status.setup"
-              icon="login"
-              label="Sign up"
-              @click="$router.push('/setup').catch(() => {
-              // Don't care. Probably duplicate route
-              })"
-            />
-            <q-btn
-              class="col-shrink"
-              color="primary"
-              v-if="!$status.setup"
-              label="See Changelog"
-              @click="$router.push('/changelog').catch(() => {
-              // Don't care. Probably duplicate route
-              })"
-            />
-            <q-space />
-            <q-btn
-              icon="refresh"
-              flat
-              @click="refreshContent"
-            />
-            <q-input
-              filled
-              class="col-shrink q-mx-sm q-pa-none"
-              v-model="selectedTopic"
-              label="Topic"
-              style="width: 250px"
-              @keyup.enter.prevent="refreshContent"
-              clearable
-            />
-            <q-btn
-              class="col-shrink q-mx-sm q-pa-sm"
-              label="Create Post"
-              v-if="!!$status.setup"
-              @click="$router.push('/create-post').catch(() => {
-              // Don't care. Probably duplicate route
-              })"
-            />
-          </div>
-
           <template
             v-for="(message) in messages"
             :key="message.payloadHash"

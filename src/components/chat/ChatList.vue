@@ -9,7 +9,7 @@
           icon="foundation"
         />
         <chat-list-link
-          title="Create/Import Account"
+          title="Login/Sign Up"
           route="/setup"
           icon="login"
           v-if="!$status.setup"
