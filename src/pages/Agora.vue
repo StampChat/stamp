@@ -124,7 +124,7 @@
                     </q-card-section>
                     <q-card-section class="q-ma-none q-pa-sm col-grow">
                       <span
-                        v-bind:class="{ mdstyle: true }"
+                        class="mdstyle"
                         v-html="markedMessage(entry.message)"
                       />
                     </q-card-section>
@@ -205,16 +205,16 @@ export default defineComponent({
 </script>
 
 <style scoped>
-  /deep/ .mdstyle img {
+  :deep() .mdstyle img {
     max-width: 100%;
     max-height: 448px;
   }
-  /deep/ .mdstyle pre, code, table {
+  :deep() .mdstyle pre, code, table {
     /*overflow-wrap: break-word;*/
     max-width: 100%;
     white-space: pre-wrap;
   }
-  /deep/ .mdstyle p {
+  :deep() .mdstyle p {
     max-width: 100%;
     word-break: break-all;
   }
