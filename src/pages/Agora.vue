@@ -110,7 +110,7 @@
                         {{ getContactProfile(message.poster).name }}
                       </div>
                       <div v-else>
-                        {{ message.poster }}
+                        {{ formatAddress(message.poster) }}
                       </div>
                     </q-btn>
                     <q-space />
@@ -195,6 +195,9 @@ export default defineComponent({
     setTopic (text: string) {
       this.selectedTopic = text
       this.refreshContent()
+    },
+    formatAddress (address:string) {
+      return address.substring(6, 12) + '...' + address.substring(address.length - 6, address.length)
     }
   },
   computed: {
