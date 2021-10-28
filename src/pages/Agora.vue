@@ -152,7 +152,6 @@ import DOMPurify from 'dompurify'
 import { AgoraMessage } from 'src/cashweb/types/agora'
 import { defineComponent } from 'vue'
 import { mapGetters, mapActions, mapMutations } from 'vuex'
-import { formatBalance } from '../utils/formatting'
 
 export default defineComponent({
   props: {},
@@ -175,7 +174,7 @@ export default defineComponent({
       this.$emit('toggleMyDrawerOpen')
     },
     formatSatoshis (value: number) {
-      return formatBalance(value)
+      return (value / 1_000_000).toFixed(2)
     },
     refreshContent () {
       this.refreshMessages({ wallet: this.$wallet, topic: this.selectedTopic })
