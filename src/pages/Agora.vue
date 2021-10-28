@@ -46,6 +46,11 @@
               })"
             />
             <q-space />
+            <q-btn
+              icon="refresh"
+              flat
+              @click="refreshContent"
+            />
             <q-input
               filled
               class="col-shrink q-mx-sm q-pa-none"
@@ -53,6 +58,7 @@
               label="Topic"
               style="width: 250px"
               @keyup.enter.prevent="refreshContent"
+              clearable
             />
             <q-btn
               class="col-shrink q-mx-sm q-pa-sm"
@@ -202,8 +208,12 @@ export default defineComponent({
       )
     },
     selectedTopic: {
-      set (newVal: string) {
-        this.setSelectedTopic(newVal)
+      set (newVal?: string) {
+        this.setSelectedTopic(newVal ?? '')
+        // If the contents were cleared then we should refresh.
+        if (!newVal) {
+          this.refreshContent()
+        }
       },
       get (): string {
         return this.getSelectedTopic
