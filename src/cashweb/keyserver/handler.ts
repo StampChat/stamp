@@ -253,6 +253,44 @@ export class KeyserverHandler {
     await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
   }
 
+  parseWrapper (wrapper: AuthWrapper) {
+    const payload = wrapper.getPayload()
+    assert(typeof payload !== 'string', 'payload type should not be a string')
+    const message = BroadcastMessage.deserializeBinary(payload)
+    const pubKey = Buffer.from(wrapper.getPublicKey())
+    const address = PublicKey.fromBuffer(pubKey).toAddress(this.networkName).toXAddress()
+    const entries = message.getEntriesList()
+    const parsedEntries: AgoraMessageEntry[] = []
+    const satoshisBurned = calculateBurnAmount(wrapper.getTransactionsList())
+    assert(satoshisBurned === wrapper.getBurnAmount())
+    const payloadDigest = crypto.Hash.sha256(Buffer.from(payload)).toString('hex')
+    const parsedMessage: AgoraMessage = {
+      poster: address,
+      satoshis: satoshisBurned,
+      topic: message.getTopic(),
+      entries: parsedEntries,
+      payloadDigest
+    }
+    for (const entry of entries) {
+      const kind = entry.getKind()
+      const payload = entry.getPayload()
+      assert(typeof payload !== 'string', `invalid payload type returned from protobufs ${payload}`)
+
+      if (kind === 'post') {
+        const post = AgoraPost.deserializeBinary(payload)
+
+        parsedEntries.push({
+          kind: 'post',
+          title: post.getTitle(),
+          url: post.getUrl(),
+          message: post.getMessage()
+        })
+        continue
+      }
+    }
+    return parsedMessage
+  }
+
   async getBroadcastMessages (topic: string, from?: number, to?: number) {
     const server = this.chooseServer()
     const url = `${server}/messages`
@@ -278,39 +316,30 @@ export class KeyserverHandler {
     const wrappers = authwrapperSet.getItemsList()
     const messages: AgoraMessage[] = []
     for (const wrapper of wrappers) {
-      const payload = wrapper.getPayload()
-      assert(typeof payload !== 'string', 'payload type should not be a string')
-      const message = BroadcastMessage.deserializeBinary(payload)
-      const pubKey = Buffer.from(wrapper.getPublicKey())
-      const address = PublicKey.fromBuffer(pubKey).toAddress(this.networkName).toXAddress()
-      const entries = message.getEntriesList()
-      const parsedEntries: AgoraMessageEntry[] = []
-      const satoshisBurned = calculateBurnAmount(wrapper.getTransactionsList())
-      assert(satoshisBurned === wrapper.getBurnAmount())
-      const payloadDigest = crypto.Hash.sha256(Buffer.from(payload)).toString('hex')
-      const parsedMessage: AgoraMessage = {
-        poster: address,
-        satoshis: satoshisBurned,
-        topic: message.getTopic(),
-        entries: parsedEntries,
-        payloadDigest
-      }
-      for (const entry of entries) {
-        const kind = entry.getKind()
-        const payload = entry.getPayload()
-        assert(typeof payload !== 'string', `invalid payload type returned from protobufs ${payload}`)
-
-        if (kind === 'post') {
-          const post = AgoraPost.deserializeBinary(payload).toObject()
-          parsedEntries.push({
-            kind: 'post',
-            ...post
-          })
-          continue
-        }
-      }
-      messages.push(parsedMessage)
+      const message = this.parseWrapper(wrapper)
+      messages.push(message)
     }
     return messages
+  }
+
+  async getBroadcastMessage (payloadDigest: string) {
+    const server = this.chooseServer()
+    const url = `${server}/messages/${payloadDigest}`
+    const response = await axios(
+      {
+        method: 'get',
+        url: url,
+        responseType: 'arraybuffer'
+      }
+    )
+    if (response.status !== 200) {
+      return
+    }
+    if (response.status !== 200) {
+      throw new Error('unable to fetch broadcast messages')
+    }
+    const authWrapper = AuthWrapper.deserializeBinary(response.data)
+    const message = this.parseWrapper(authWrapper)
+    return message
   }
 }
