@@ -35,9 +35,7 @@
           flat
           class="q-mx-sm q-pa-sm"
           label="Create Post"
-          @click="$router.push('/create-post').catch(() => {
-            // Don't care. Probably duplicate route
-          })"
+          to="/create-post"
         />
       </q-toolbar>
     </q-header>
@@ -55,6 +53,8 @@
             <a-message
               :message="message"
               @set-topic="setTopic"
+              :show-parent="true"
+              :show-replies="false"
             />
           </template>
         </q-scroll-area>

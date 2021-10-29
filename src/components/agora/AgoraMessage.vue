@@ -30,6 +30,7 @@
             disable
           />
         </q-card-section>
+        <q-separator />
       </q-card-section>
       <q-separator vertical />
       <q-card-section
@@ -80,13 +81,61 @@
             >{{ entry.title }}</a>
             <span v-if="!entry.url">{{ entry.title }}</span>
           </q-card-section>
-          <q-card-section class="q-ma-none q-pa-sm col-grow">
+          <q-card-section
+            class="q-ma-none q-pa-sm col-grow"
+            v-if="renderBody"
+          >
             <span
               class="mdstyle"
               v-html="markedMessage(entry.message)"
             />
           </q-card-section>
         </template>
+        <q-separator />
+        <q-card-section
+          horizontal
+        >
+          <q-card-section class="q-pa-none text-center">
+            <q-btn
+              flat
+              no-caps
+              icon="forum"
+              padding="1"
+              :label="`${message.replies.length} replies`"
+              :to="`/agora/${message.payloadDigest}`"
+            />
+          </q-card-section>
+          <q-card-section class="q-pa-none text-center">
+            <q-btn
+              flat
+              no-caps
+              padding="1"
+              icon="reply"
+              label="Reply"
+              :to="`/create-post/${message.payloadDigest}`"
+            />
+          </q-card-section>
+        </q-card-section>
+
+        <a-message-replies
+          :messages="message.replies"
+          v-if="showReplies"
+        />
+        <q-separator v-if="showParent && parentDigest" />
+        <q-card-section
+          v-if="showParent && parentDigest"
+          class="q-pa-none"
+        >
+          <q-card-section class="q-pa-sm">
+            In reply to:
+          </q-card-section>
+          <agora-message
+            class="q-ma-none"
+            :message="parentMessage"
+            :show-replies="false"
+            :render-body="false"
+          />
+        </q-card-section>
       </q-card-section>
     </q-card-section>
   </q-card>
@@ -98,7 +147,9 @@ import DOMPurify from 'dompurify'
 
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
-import { mapGetters } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
+
+import AMessageReplies from './AgoraMessageReplies.vue'
 
 import { AgoraMessage } from '../../cashweb/types/agora'
 
@@ -107,14 +158,37 @@ export default defineComponent({
     message: {
       default: undefined,
       type: Object as PropType<AgoraMessage | undefined>
+    },
+    showParent: {
+      default: false,
+      type: Boolean
+    },
+    showReplies: {
+      default: true,
+      type: Boolean
+    },
+    renderBody: {
+      default: true,
+      type: Boolean
     }
   },
-  components: {},
+  components: {
+    AMessageReplies
+  },
+  mounted () {
+    if (!this.parentDigest) {
+      return
+    }
+    this.fetchMessage({ wallet: this.$wallet, payloadDigest: this.parentDigest })
+  },
   data () {
     return { }
   },
   emits: ['setTopic'],
   methods: {
+    ...mapActions({
+      fetchMessage: 'agora/fetchMessage'
+    }),
     formatSatoshis (value: number) {
       return (value / 1_000_000).toFixed(0)
     },
@@ -129,11 +203,18 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getMessages: 'agora/getMessages',
+      getMessage: 'agora/getMessage',
       topics: 'agora/getTopics',
       getContactProfile: 'contacts/getContactProfile',
       haveContact: 'contacts/haveContact',
       getSelectedTopic: 'agora/getSelectedTopic'
     }),
+    parentDigest () {
+      return this.message?.parentDigest
+    },
+    parentMessage () {
+      return this.getMessage(this.parentDigest)
+    },
     messages () {
       return this.getMessages.filter((message: AgoraMessage) =>
         message.entries.some((entry) => entry.kind === 'post')

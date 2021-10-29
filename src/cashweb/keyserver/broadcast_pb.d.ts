@@ -72,6 +72,11 @@ export class BroadcastMessage extends jspb.Message {
   setEntriesList(value: Array<BroadcastEntry>): void;
   addEntries(value?: BroadcastEntry, index?: number): BroadcastEntry;
 
+  getParentDigest(): Uint8Array | string;
+  getParentDigest_asU8(): Uint8Array;
+  getParentDigest_asB64(): string;
+  setParentDigest(value: Uint8Array | string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BroadcastMessage.AsObject;
   static toObject(includeInstance: boolean, msg: BroadcastMessage): BroadcastMessage.AsObject;
@@ -87,6 +92,7 @@ export namespace BroadcastMessage {
     topic: string,
     timestamp: number,
     entriesList: Array<BroadcastEntry.AsObject>,
+    parentDigest: Uint8Array | string,
   }
 }
 

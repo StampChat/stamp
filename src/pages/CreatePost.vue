@@ -8,6 +8,7 @@
       />
       <q-input
         label="Topic"
+        :disable="!!getMessage(parentDigest)"
         v-model="topic"
       />
       <q-input
@@ -39,26 +40,48 @@
       />
     </q-card-actions>
   </q-card>
+
+  <q-card class="q-ma-sm">
+    <q-card-section>
+      Replying to:
+    </q-card-section>
+    <a-message
+      :message="getMessage(parentDigest)"
+      v-if="getMessage(parentDigest)"
+      :show-replies="false"
+    />
+  </q-card>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 
+import AMessage from '../components/agora/AgoraMessage.vue'
+
 export default defineComponent({
+  components: {
+    AMessage
+  },
   props: {},
   data () {
+    const parentDigest = this.$route.params.parentDigest as string
     return {
       offering: 1,
-      topic: '',
+      topic: (this.$store.state.agora.index)[parentDigest]?.topic ?? '',
       title: '',
       url: null,
-      message: ''
+      message: '',
+      parentDigest
     }
+  },
+  beforeRouteUpdate (to, from, next) {
+    this.parentDigest = to.params.parentDigest as string
+    next()
   },
   computed: {
     ...mapGetters({
-      selectedTopic: 'agora/getSelectedTopic'
+      getMessage: 'agora/getMessage'
     })
   },
   methods: {
@@ -73,7 +96,7 @@ export default defineComponent({
         message: this.message
       }
       console.log('posting message', entry)
-      await this.postMessage({ wallet: this.$wallet, entry, satoshis: this.offering * 1_000_000, topic: this.topic })
+      await this.postMessage({ wallet: this.$wallet, entry, satoshis: this.offering * 1_000_000, topic: this.topic, parentDigest: this.parentDigest })
       this.back()
     },
     back () {
