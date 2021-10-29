@@ -37,7 +37,7 @@ const module: Module<State, unknown> = {
     setEntries (state, messages: AgoraMessage[]) {
       messages.sort((a, b) => b.satoshis - a.satoshis)
       state.messages = messages
-      state.index = indexBy(message => message.payloadHash, messages)
+      state.index = indexBy(message => message.payloadDigest, messages)
       state.topics = uniq(messages.map(message => message.topic))
     },
     setSelectedTopic (state, topic: string) {

@@ -14,5 +14,5 @@ export type AgoraMessage = {
   topic: string;
   satoshis: number;
   entries: AgoraMessageEntry[];
-  payloadHash: string;
+  payloadDigest: string;
 }

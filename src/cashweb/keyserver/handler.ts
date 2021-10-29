@@ -287,13 +287,13 @@ export class KeyserverHandler {
       const parsedEntries: AgoraMessageEntry[] = []
       const satoshisBurned = calculateBurnAmount(wrapper.getTransactionsList())
       assert(satoshisBurned === wrapper.getBurnAmount())
-      const payloadHash = crypto.Hash.sha256(Buffer.from(payload)).toString('hex')
+      const payloadDigest = crypto.Hash.sha256(Buffer.from(payload)).toString('hex')
       const parsedMessage: AgoraMessage = {
         poster: address,
         satoshis: satoshisBurned,
         topic: message.getTopic(),
         entries: parsedEntries,
-        payloadHash
+        payloadDigest
       }
       for (const entry of entries) {
         const kind = entry.getKind()
