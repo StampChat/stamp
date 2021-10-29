@@ -9,11 +9,27 @@
       horizontal
     >
       <q-card-section
-        class="col-shrink"
+        class="col-shrink q-pa-none"
       >
-        <div>
+        <q-card-section class="q-pa-none text-center">
+          <q-btn
+            flat
+            icon="thumb_up"
+            padding="0"
+            disable
+          />
+        </q-card-section>
+        <q-card-section class="q-pa-none text-center">
           {{ formatSatoshis(message.satoshis) }}
-        </div>
+        </q-card-section>
+        <q-card-section class="q-pa-none text-center">
+          <q-btn
+            flat
+            icon="thumb_down"
+            padding="0"
+            disable
+          />
+        </q-card-section>
       </q-card-section>
       <q-separator vertical />
       <q-card-section
@@ -100,7 +116,7 @@ export default defineComponent({
   emits: ['setTopic'],
   methods: {
     formatSatoshis (value: number) {
-      return (value / 1_000_000).toFixed(2)
+      return (value / 1_000_000).toFixed(0)
     },
     markedMessage (text: string) {
       const html = DOMPurify.sanitize(marked(text))
