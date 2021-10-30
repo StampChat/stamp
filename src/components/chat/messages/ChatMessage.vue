@@ -96,7 +96,7 @@ import ChatMessageReply from './ChatMessageReply.vue'
 import ChatMessageText from './ChatMessageText.vue'
 import ChatMessageImage from './ChatMessageImage.vue'
 import ChatMessageStealth from './ChatMessageStealth.vue'
-import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog'
+import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog.vue'
 import TransactionDialog from '../../dialogs/TransactionDialog.vue'
 import { stampPrice } from '../../../cashweb/wallet/helpers'
 
