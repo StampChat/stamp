@@ -253,6 +253,44 @@ export class KeyserverHandler {
     await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
   }
 
+  async addOfferings (payloadDigest: string, vote: number) {
+    // Topic should not be required, but it is a sanity check on the backend to
+    // make sure the vote and the post have the same information.
+    assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
+
+    const payloadDigestBinary = Buffer.from(payloadDigest, 'hex')
+    const { transaction: burnTransaction, usedUtxos } = this.constructBurnTransaction(this.wallet, payloadDigestBinary, vote)
+
+    const burnOutput = new BurnOutputs()
+    burnOutput.setTx(burnTransaction.toBuffer())
+    burnOutput.setIndex(0)
+
+    const idPrivKey = this.wallet?.identityPrivKey
+    assert(idPrivKey, 'Missing private key in createBroadcast')
+    const idPubKey = idPrivKey.toPublicKey().toBuffer()
+
+    const signature = crypto.ECDSA.sign(payloadDigestBinary, idPrivKey)
+    const sig = signature.toCompact(1, true).slice(1)
+
+    const authWrapper = new AuthWrapper()
+    authWrapper.setPublicKey(idPubKey)
+    authWrapper.setSignature(sig)
+
+    authWrapper.setPublicKey(idPubKey)
+    authWrapper.setPayloadDigest(payloadDigestBinary)
+    authWrapper.setBurnAmount(vote)
+    authWrapper.setScheme(AuthWrapper.SignatureScheme.ECDSA)
+    authWrapper.setTransactionsList([burnOutput])
+    const server = this.chooseServer()
+    const url = `${server}/messages`
+    await axios({
+      method: 'put',
+      url: url,
+      data: authWrapper.serializeBinary()
+    })
+    await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
+  }
+
   parseWrapper (wrapper: AuthWrapper) {
     const payload = wrapper.getPayload()
     assert(typeof payload !== 'string', 'payload type should not be a string')

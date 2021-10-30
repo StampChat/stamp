@@ -109,6 +109,12 @@ const module: Module<State, unknown> = {
       commit('setMessage', message)
       // Need to refetch so we get the right proxy object
       return getters.getMessage(payloadDigest)
+    },
+    async addOffering ({ dispatch, getters }, { wallet, payloadDigest, satoshis }: { wallet: Wallet, payloadDigest: string, satoshis: number }) {
+      const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
+      console.log('voting towards message', payloadDigest, satoshis)
+      await keyserver.addOfferings(payloadDigest, satoshis)
+      await dispatch('refreshMessages', { wallet, topic: getters.getSelectedTopic })
     }
   }
 }

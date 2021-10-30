@@ -16,7 +16,7 @@
             flat
             icon="thumb_up"
             padding="0"
-            disable
+            @click="addVotes(10)"
           />
         </q-card-section>
         <q-card-section class="q-pa-none text-center">
@@ -27,7 +27,7 @@
             flat
             icon="thumb_down"
             padding="0"
-            disable
+            @click="addVotes(-10)"
           />
         </q-card-section>
         <q-separator />
@@ -148,7 +148,6 @@ import DOMPurify from 'dompurify'
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
-
 import AMessageReplies from './AgoraMessageReplies.vue'
 
 import { AgoraMessage } from '../../cashweb/types/agora'
@@ -182,12 +181,16 @@ export default defineComponent({
     this.fetchMessage({ wallet: this.$wallet, payloadDigest: this.parentDigest })
   },
   data () {
-    return { }
+    return {
+      timeoutId: undefined as (ReturnType<typeof setTimeout> | undefined),
+      voteAmount: 0
+    }
   },
   emits: ['setTopic'],
   methods: {
     ...mapActions({
-      fetchMessage: 'agora/fetchMessage'
+      fetchMessage: 'agora/fetchMessage',
+      addOffering: 'agora/addOffering'
     }),
     formatSatoshis (value: number) {
       return (value / 1_000_000).toFixed(0)
@@ -198,6 +201,20 @@ export default defineComponent({
     },
     formatAddress (address:string) {
       return address.substring(6, 12) + '...' + address.substring(address.length - 6, address.length)
+    },
+    addVotes (xpi: number) {
+      this.voteAmount += xpi * 1_000_000
+      if (this.timeoutId) {
+        clearTimeout(this.timeoutId)
+      }
+      this.timeoutId = setTimeout(() => {
+        if (this.voteAmount === 0) {
+          return
+        }
+        console.log('Adding votes', { payloadDigest: this.message?.payloadDigest, satoshis: this.voteAmount })
+        this.addOffering({ wallet: this.$wallet, payloadDigest: this.message?.payloadDigest, satoshis: this.voteAmount })
+        this.voteAmount = 0
+      }, 1_000)
     }
   },
   computed: {
