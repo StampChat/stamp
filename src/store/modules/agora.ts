@@ -7,9 +7,11 @@ import { displayNetwork, keyservers } from '../../utils/constants'
 
 import { AgoraMessage, AgoraMessageEntry } from 'src/cashweb/types/agora'
 
+type MessageWithReplies = AgoraMessage & { replies: MessageWithReplies[] }
+
 export type State = {
-  messages: AgoraMessage[];
-  index: Record<string, AgoraMessage | undefined>
+  messages: MessageWithReplies[];
+  index: Record<string, MessageWithReplies | undefined>
   topics: string[]
   selectedTopic: string,
 };
@@ -31,14 +33,49 @@ const module: Module<State, unknown> = {
     },
     getSelectedTopic (state) {
       return state.selectedTopic
+    },
+    getMessage (state) {
+      return (messageDigest?: string) => {
+        console.log('messageDigest', messageDigest)
+        if (!messageDigest) {
+          return null
+        }
+        return state.index[messageDigest]
+      }
     }
   },
   mutations: {
     setEntries (state, messages: AgoraMessage[]) {
-      messages.sort((a, b) => b.satoshis - a.satoshis)
-      state.messages = messages
-      state.index = indexBy(message => message.payloadDigest, messages)
+      state.messages = messages.sort((a, b) => b.satoshis - a.satoshis).map(m => ({ ...m, replies: [] }))
+      state.index = indexBy(message => message.payloadDigest, state.messages)
       state.topics = uniq(messages.map(message => message.topic))
+      for (const message of state.messages) {
+        console.log('message', message)
+        if (!message.parentDigest) {
+          continue
+        }
+        if (!(message.parentDigest in state.index)) {
+          continue
+        }
+        state.index[message.parentDigest]?.replies.push(message)
+      }
+    },
+    setMessage (state, message: AgoraMessage) {
+      console.log('Saving specific message', message)
+      state.messages.push({ ...message, replies: [] })
+      state.messages = state.messages.sort((a, b) => b.satoshis - a.satoshis)
+      state.index = indexBy(message => message.payloadDigest, state.messages)
+      state.topics = uniq(state.messages.map(message => message.topic))
+      for (const message of state.messages) {
+        console.log('message', message)
+        if (!message.parentDigest) {
+          continue
+        }
+        if (!(message.parentDigest in state.index)) {
+          continue
+        }
+        state.index[message.parentDigest]?.replies.push(message)
+      }
     },
     setSelectedTopic (state, topic: string) {
       state.selectedTopic = topic
@@ -55,11 +92,23 @@ const module: Module<State, unknown> = {
       console.log('saving messages', entries)
       commit('setEntries', entries)
     },
-    async putMessage ({ dispatch, getters }, { wallet, entry, satoshis, topic }: { wallet: Wallet, entry: AgoraMessageEntry, satoshis: number, topic: string }) {
+    async putMessage ({ dispatch, getters }, { wallet, entry, satoshis, topic, parentDigest }: { wallet: Wallet, entry: AgoraMessageEntry, satoshis: number, topic: string, parentDigest?: string }) {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
       console.log('fetching messages')
-      await keyserver.createBroadcast(topic, [entry], satoshis)
+      await keyserver.createBroadcast(topic, [entry], satoshis, parentDigest)
       await dispatch('refreshMessages', { wallet, topic: getters.getSelectedTopic })
+    },
+    async fetchMessage ({ commit, getters }, { wallet, payloadDigest }: { wallet: Wallet, payloadDigest: string }) {
+      const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
+      const haveMessage = getters.getMessage(payloadDigest)
+      if (haveMessage) {
+        return haveMessage
+      }
+      console.log('fetching message', payloadDigest)
+      const message = await keyserver.getBroadcastMessage(payloadDigest)
+      commit('setMessage', message)
+      // Need to refetch so we get the right proxy object
+      return getters.getMessage(payloadDigest)
     }
   }
 }

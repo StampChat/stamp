@@ -192,12 +192,13 @@ export class KeyserverHandler {
     return wallet.constructTransaction({ outputs: [output] })
   }
 
-  async createBroadcast (topic: string, entries: AgoraMessageEntry[], vote: number) {
+  async createBroadcast (topic: string, entries: AgoraMessageEntry[], vote: number, parentDigest?: string) {
     assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
 
     const broadcastMessage = new BroadcastMessage()
     broadcastMessage.setTopic(topic)
     broadcastMessage.setTimestamp(Date.now())
+    parentDigest && broadcastMessage.setParentDigest(Buffer.from(parentDigest, 'hex'))
 
     // Construct payload
     const protoEntries: BroadcastEntry[] = []
@@ -209,7 +210,6 @@ export class KeyserverHandler {
         payload.setTitle(entry.title)
         entry.url && payload.setUrl(entry.url)
         entry.message && payload.setMessage(entry.message)
-
         textEntry.setPayload(payload.serializeBinary())
         protoEntries.push(textEntry)
         continue
@@ -264,12 +264,15 @@ export class KeyserverHandler {
     const satoshisBurned = calculateBurnAmount(wrapper.getTransactionsList())
     assert(satoshisBurned === wrapper.getBurnAmount())
     const payloadDigest = crypto.Hash.sha256(Buffer.from(payload)).toString('hex')
+    const parentDigestBinary = message.getParentDigest()
+    assert(typeof parentDigestBinary !== 'string' || parentDigestBinary.length === 0, 'post.getParentDigest() returned a string incorrectly')
     const parsedMessage: AgoraMessage = {
       poster: address,
       satoshis: satoshisBurned,
       topic: message.getTopic(),
       entries: parsedEntries,
-      payloadDigest
+      payloadDigest,
+      parentDigest: Buffer.from(parentDigestBinary).toString('hex')
     }
     for (const entry of entries) {
       const kind = entry.getKind()
@@ -278,7 +281,6 @@ export class KeyserverHandler {
 
       if (kind === 'post') {
         const post = AgoraPost.deserializeBinary(payload)
-
         parsedEntries.push({
           kind: 'post',
           title: post.getTitle(),
