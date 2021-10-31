@@ -315,7 +315,10 @@ export class KeyserverHandler {
     for (const entry of entries) {
       const kind = entry.getKind()
       const payload = entry.getPayload()
-      assert(typeof payload !== 'string', `invalid payload type returned from protobufs ${payload}`)
+      if (typeof payload === 'string') {
+        console.error('invalid payload type returned from protobufs')
+        continue
+      }
 
       if (kind === 'post') {
         const post = AgoraPost.deserializeBinary(payload)
