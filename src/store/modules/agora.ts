@@ -61,21 +61,22 @@ const module: Module<State, unknown> = {
       }
     },
     setMessage (state, message: AgoraMessage) {
-      console.log('Saving specific message', message)
-      state.messages.push({ ...message, replies: [] })
-      state.messages = state.messages.sort((a, b) => b.satoshis - a.satoshis)
-      state.index = indexBy(message => message.payloadDigest, state.messages)
-      state.topics = uniq(state.messages.map(message => message.topic))
-      for (const message of state.messages) {
-        console.log('message', message)
-        if (!message.parentDigest) {
-          continue
-        }
-        if (!(message.parentDigest in state.index)) {
-          continue
-        }
-        state.index[message.parentDigest]?.replies.push(message)
+      if (message.payloadDigest in state.index) {
+        return
       }
+      console.log('Saving specific message', message)
+      const mesageWithReplies = { ...message, replies: [] }
+      state.messages.push(mesageWithReplies)
+      state.messages = state.messages.sort((a, b) => b.satoshis - a.satoshis)
+      state.index[mesageWithReplies.payloadDigest] = mesageWithReplies
+      state.topics = uniq(state.messages.map(message => message.topic))
+      if (!mesageWithReplies.parentDigest) {
+        return
+      }
+      if (!(mesageWithReplies.parentDigest in state.index)) {
+        return
+      }
+      state.index[mesageWithReplies.parentDigest]?.replies.push(mesageWithReplies)
     },
     setSelectedTopic (state, topic: string) {
       state.selectedTopic = topic
