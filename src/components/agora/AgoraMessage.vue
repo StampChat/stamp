@@ -121,9 +121,9 @@
           :messages="message.replies"
           v-if="showReplies"
         />
-        <q-separator v-if="showParent && parentDigest" />
+        <q-separator v-if="showParent && parentDigest && parentMessage" />
         <q-card-section
-          v-if="showParent && parentDigest"
+          v-if="showParent && parentDigest && parentMessage"
           class="q-pa-none"
         >
           <q-card-section class="q-pa-sm">
@@ -155,8 +155,8 @@ import { AgoraMessage } from '../../cashweb/types/agora'
 export default defineComponent({
   props: {
     message: {
-      default: undefined,
-      type: Object as PropType<AgoraMessage | undefined>
+      default: () => ({ poster: undefined, satoshis: 0, replies: [], entries: [], payloadDigest: undefined, topic: '' }),
+      type: Object as PropType<AgoraMessage>
     },
     showParent: {
       default: false,
