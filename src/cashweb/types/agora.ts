@@ -16,4 +16,8 @@ export type AgoraMessage = {
   entries: AgoraMessageEntry[];
   payloadDigest: string;
   parentDigest?: string;
+  timestamp: Date;
+
+  /// Filled in based on local processing
+  replies?: AgoraMessage[]
 }

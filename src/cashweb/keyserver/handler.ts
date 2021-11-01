@@ -304,13 +304,15 @@ export class KeyserverHandler {
     const payloadDigest = crypto.Hash.sha256(Buffer.from(payload)).toString('hex')
     const parentDigestBinary = message.getParentDigest()
     assert(typeof parentDigestBinary !== 'string' || parentDigestBinary.length === 0, 'post.getParentDigest() returned a string incorrectly')
+    const timestamp = message.getTimestamp()
     const parsedMessage: AgoraMessage = {
       poster: address,
       satoshis: satoshisBurned,
       topic: message.getTopic(),
       entries: parsedEntries,
       payloadDigest,
-      parentDigest: Buffer.from(parentDigestBinary).toString('hex')
+      parentDigest: Buffer.from(parentDigestBinary).toString('hex'),
+      timestamp: new Date(timestamp)
     }
     for (const entry of entries) {
       const kind = entry.getKind()
