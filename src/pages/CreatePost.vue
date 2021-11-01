@@ -41,13 +41,15 @@
     </q-card-actions>
   </q-card>
 
-  <q-card class="q-ma-sm">
+  <q-card
+    class="q-ma-sm"
+    v-if="getMessage(parentDigest)"
+  >
     <q-card-section>
       Replying to:
     </q-card-section>
     <a-message
       :message="getMessage(parentDigest)"
-      v-if="getMessage(parentDigest)"
       :show-replies="false"
     />
   </q-card>
