@@ -58,6 +58,9 @@
             </div>
           </q-btn>
           <q-space />
+          <div class="text-bold text-center q-ma-sm">
+            {{ timestamp }}
+          </div>
           <q-btn
             no-caps
             flat
@@ -144,6 +147,7 @@
 <script lang="ts">
 import marked from 'marked'
 import DOMPurify from 'dompurify'
+import moment from 'moment'
 
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
@@ -226,6 +230,9 @@ export default defineComponent({
       haveContact: 'contacts/haveContact',
       getSelectedTopic: 'agora/getSelectedTopic'
     }),
+    timestamp () {
+      return this.message ? moment(this.message?.timestamp).format('YY-MM-DD HH:mm:ss') : ''
+    },
     parentDigest () {
       return this.message?.parentDigest
     },
