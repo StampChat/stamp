@@ -342,7 +342,7 @@ export class KeyserverHandler {
         method: 'get',
         url: url,
         params: {
-          from: from ?? Date.now() - 1000 * 60 * 60 * 24,
+          from: from ?? Date.now() - 1000 * 60 * 60 * 24 * 7,
           to: to ?? Date.now(),
           topic
         },
