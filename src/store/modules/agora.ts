@@ -42,11 +42,16 @@ const module: Module<State, unknown> = {
         }
         return state.index[messageDigest]
       }
+    },
+    lastMessageTime (state) {
+      return state.messages.reduce((maxDate, message) => (!maxDate || maxDate < message.timestamp) ? message.timestamp : maxDate, undefined as Date | undefined)
     }
   },
   mutations: {
     setEntries (state, messages: AgoraMessage[]) {
-      state.messages = messages.sort((a, b) => b.satoshis - a.satoshis).map(m => ({ ...m, replies: [] }))
+      const newMessages = messages.filter((m) => !(m.payloadDigest in state.index)).map(m => ({ ...m, replies: [] }))
+      state.messages.push(...newMessages)
+      state.messages.sort((a, b) => b.satoshis - a.satoshis).map(m => ({ ...m }))
       state.index = indexBy(message => message.payloadDigest, state.messages)
       state.topics = uniq(messages.map(message => message.topic))
       for (const message of state.messages) {
@@ -83,10 +88,12 @@ const module: Module<State, unknown> = {
     }
   },
   actions: {
-    async refreshMessages ({ commit }, { topic, wallet }: { topic: string, wallet: Wallet }) {
+    async refreshMessages ({ commit, getters }, { topic, wallet }: { topic: string, wallet: Wallet }) {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
       console.log('fetching messages')
-      const entries = await keyserver.getBroadcastMessages(topic)
+      const from = (getters.lastMessageTime as (undefined | Date))?.valueOf()
+      console.log('from', from)
+      const entries = await keyserver.getBroadcastMessages(topic, from)
       if (!entries) {
         return
       }
