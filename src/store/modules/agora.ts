@@ -50,7 +50,6 @@ const module: Module<State, unknown> = {
       state.index = indexBy(message => message.payloadDigest, state.messages)
       state.topics = uniq(messages.map(message => message.topic))
       for (const message of state.messages) {
-        console.log('message', message)
         if (!message.parentDigest) {
           continue
         }
@@ -90,7 +89,6 @@ const module: Module<State, unknown> = {
       if (!entries) {
         return
       }
-      console.log('saving messages', entries)
       commit('setEntries', entries)
     },
     async putMessage ({ dispatch, getters }, { wallet, entry, satoshis, topic, parentDigest }: { wallet: Wallet, entry: AgoraMessageEntry, satoshis: number, topic: string, parentDigest?: string }) {
