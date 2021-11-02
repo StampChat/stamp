@@ -13,12 +13,9 @@
 </template>
 
 <script lang="ts">
-import marked from 'marked'
-import DOMPurify from 'dompurify'
-
 import { AgoraMessage } from '../cashweb/types/agora'
 import { defineComponent } from 'vue'
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
 import AMessage from '../components/agora/AgoraMessage.vue'
 
 export default defineComponent({
@@ -29,28 +26,7 @@ export default defineComponent({
   data () {
     return { }
   },
-  emits: ['toggleMyDrawerOpen'],
-  methods: {
-    ...mapActions({
-      refreshMessages: 'agora/refreshMessages'
-    }),
-    toggleSettingsDrawerOpen () {
-      this.$emit('toggleMyDrawerOpen')
-    },
-    formatSatoshis (value: number) {
-      return (value / 1_000_000).toFixed(2)
-    },
-    markedMessage (text: string) {
-      const html = DOMPurify.sanitize(marked(text))
-      return html
-    },
-    formatAddress (address:string) {
-      return address.substring(6, 12) + '...' + address.substring(address.length - 6, address.length)
-    },
-    replyToMessage (payloadDigest: string) {
-      console.log(payloadDigest)
-    }
-  },
+  emits: [],
   computed: {
     ...mapGetters({
       getMessages: 'agora/getMessages',
