@@ -115,7 +115,7 @@
               padding="1"
               icon="reply"
               label="Reply"
-              :to="`/create-post/${message.payloadDigest}`"
+              :to="`/new-post/${message.payloadDigest}`"
             />
           </q-card-section>
         </q-card-section>

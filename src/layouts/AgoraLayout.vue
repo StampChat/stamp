@@ -35,7 +35,7 @@
           flat
           class="q-mx-sm q-pa-sm"
           label="Create Post"
-          to="/create-post"
+          to="/new-post"
         />
       </q-toolbar>
     </q-header>

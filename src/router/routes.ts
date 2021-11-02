@@ -12,11 +12,11 @@ export function createRoutes (): RouteRecordRaw[] {
           component: () => import('layouts/AgoraLayout.vue'),
           children: [
             { path: '', component: () => import('pages/Agora.vue') },
-            { path: ':payloadDigest', component: () => import('pages/AgoraPost.vue') }
+            { path: ':payloadDigest', component: () => import('pages/AgoraPost.vue') },
+            { path: '/new-post', component: () => import('pages/CreatePost.vue') },
+            { path: '/new-post/:parentDigest', component: () => import('pages/CreatePost.vue') }
           ]
         },
-        { path: 'create-post', component: () => import('pages/CreatePost.vue') },
-        { path: 'create-post/:parentDigest', component: () => import('pages/CreatePost.vue') },
         { path: 'changelog', component: () => import('pages/Changelog.vue') },
         { path: 'chat/:address', component: () => import('pages/Chat.vue') },
         { path: 'settings', component: () => import('pages/Settings.vue') },
