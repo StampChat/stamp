@@ -87,22 +87,22 @@ const module: Module<State, unknown> = {
     }
   },
   actions: {
-    async refreshMessages ({ commit, getters }, { topic, wallet }: { topic: string, wallet: Wallet }) {
+    async refreshMessages ({ commit, getters }, { wallet }: { topic: string, wallet: Wallet }) {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
       console.log('fetching messages')
       const from = (getters.lastMessageTime as (undefined | Date))?.valueOf()
       console.log('from', from)
-      const entries = await keyserver.getBroadcastMessages(topic, from)
+      const entries = await keyserver.getBroadcastMessages('', from)
       if (!entries) {
         return
       }
       commit('setEntries', entries)
     },
-    async putMessage ({ dispatch, getters }, { wallet, entry, satoshis, topic, parentDigest }: { wallet: Wallet, entry: AgoraMessageEntry, satoshis: number, topic: string, parentDigest?: string }) {
+    async putMessage ({ dispatch }, { wallet, entry, satoshis, topic, parentDigest }: { wallet: Wallet, entry: AgoraMessageEntry, satoshis: number, topic: string, parentDigest?: string }) {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
       console.log('fetching messages')
       await keyserver.createBroadcast(topic, [entry], satoshis, parentDigest)
-      await dispatch('refreshMessages', { wallet, topic: getters.getSelectedTopic })
+      await dispatch('refreshMessages', { wallet })
     },
     async fetchMessage ({ commit, getters }, { wallet, payloadDigest }: { wallet: Wallet, payloadDigest: string }) {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
@@ -116,11 +116,11 @@ const module: Module<State, unknown> = {
       // Need to refetch so we get the right proxy object
       return getters.getMessage(payloadDigest)
     },
-    async addOffering ({ dispatch, getters }, { wallet, payloadDigest, satoshis }: { wallet: Wallet, payloadDigest: string, satoshis: number }) {
+    async addOffering ({ dispatch }, { wallet, payloadDigest, satoshis }: { wallet: Wallet, payloadDigest: string, satoshis: number }) {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
       console.log('voting towards message', payloadDigest, satoshis)
       await keyserver.addOfferings(payloadDigest, satoshis)
-      await dispatch('refreshMessages', { wallet, topic: getters.getSelectedTopic })
+      await dispatch('refreshMessages', { wallet })
     }
   }
 }
