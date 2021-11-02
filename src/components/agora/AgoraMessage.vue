@@ -260,6 +260,11 @@ export default defineComponent({
   }
   :deep() .mdstyle p {
     max-width: 100%;
-    word-break: break-all;
+    word-break: break-word;
+  }
+  :deep() .mdstyle h1, h2, h3, h4 {
+    font-size: 120%;
+    font-weight: bold;
+    line-height: inherit;
   }
 </style>
