@@ -29,7 +29,7 @@
           label="URL"
           v-model="url"
           :rules="[
-            val => (val.length >= 0 && validateUrl(val)) || 'Invalid URL'
+            val => !val || validateUrl(val) || 'Invalid URL'
           ]"
           lazy-rules
         />
