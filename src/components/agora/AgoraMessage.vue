@@ -133,6 +133,7 @@
             In reply to:
           </q-card-section>
           <agora-message
+            v-bind="$attrs"
             class="q-ma-none"
             :message="parentMessage"
             :show-replies="false"

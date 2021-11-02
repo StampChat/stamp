@@ -4,11 +4,17 @@ export function createRoutes (): RouteRecordRaw[] {
   const routes: RouteRecordRaw[] = [
     {
       path: '/',
+      redirect: '/agora',
       component: () => import('layouts/MainLayout.vue'),
       children: [
-        { path: '', component: () => import('pages/Agora.vue') },
-        { path: 'agora', component: () => import('pages/Agora.vue') },
-        { path: 'agora/:payloadDigest', component: () => import('pages/AgoraPost.vue') },
+        {
+          path: 'agora',
+          component: () => import('layouts/AgoraLayout.vue'),
+          children: [
+            { path: '', component: () => import('pages/Agora.vue') },
+            { path: ':payloadDigest', component: () => import('pages/AgoraPost.vue') }
+          ]
+        },
         { path: 'create-post', component: () => import('pages/CreatePost.vue') },
         { path: 'create-post/:parentDigest', component: () => import('pages/CreatePost.vue') },
         { path: 'changelog', component: () => import('pages/Changelog.vue') },

@@ -3,7 +3,10 @@
     v-for="(message) in messages"
     :key="message.payloadDigest"
   >
-    <a-message :message="message" />
+    <a-message
+      v-bind="$attrs"
+      :message="message"
+    />
   </template>
 </template>
 
