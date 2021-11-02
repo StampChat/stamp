@@ -4,6 +4,7 @@
     :key="message.payloadDigest"
   >
     <a-message
+      v-show="showMessage(message.topic)"
       v-bind="$attrs"
       :message="message"
       :show-parent="true"
@@ -27,10 +28,16 @@ export default defineComponent({
     return { }
   },
   emits: [],
+  methods: {
+    showMessage (topic: string) {
+      return topic.startsWith(this.selectedTopic)
+    }
+  },
   computed: {
     ...mapGetters({
       getMessages: 'agora/getMessages',
-      topics: 'agora/getTopics'
+      topics: 'agora/getTopics',
+      selectedTopic: 'agora/getSelectedTopic'
     }),
     messages () {
       return this.getMessages.filter((message: AgoraMessage) =>
