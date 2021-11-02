@@ -54,7 +54,7 @@ const module: Module<State, unknown> = {
       state.messages.sort((a, b) => b.satoshis - a.satoshis).map(m => ({ ...m }))
       state.index = indexBy(message => message.payloadDigest, state.messages)
       state.topics = uniq(messages.map(message => message.topic))
-      for (const message of state.messages) {
+      for (const message of newMessages) {
         if (!message.parentDigest) {
           continue
         }
