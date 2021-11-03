@@ -16,6 +16,11 @@ export type State = {
   selectedTopic: string,
 };
 
+const halfLife = (satoshis: number, timestamp: Date, now: Date) => {
+  const halvedAmount = satoshis * Math.pow(0.5, (now.valueOf() - timestamp.valueOf()) / (60 * 60 * 24 * 1000))
+  return halvedAmount
+}
+
 const module: Module<State, unknown> = {
   namespaced: true,
   state: {
@@ -53,7 +58,9 @@ const module: Module<State, unknown> = {
       const allMessages = state.messages.slice()
       const index = indexBy(message => message.payloadDigest, allMessages)
       allMessages.push(...newMessages.filter(m => !(m.payloadDigest in index)))
-      allMessages.sort((a, b) => b.satoshis - a.satoshis)
+
+      const now = new Date()
+      allMessages.sort((a, b) => halfLife(b.satoshis, b.timestamp, now) - halfLife(a.satoshis, a.timestamp, now))
       state.index = indexBy(message => message.payloadDigest, state.messages)
       state.topics = uniq(messages.map(message => message.topic))
       for (const message of newMessages) {
@@ -71,11 +78,12 @@ const module: Module<State, unknown> = {
       if (message.payloadDigest in state.index) {
         return
       }
+      const now = new Date()
       console.log('Saving specific message', message)
       const allMessages = state.messages.slice()
       const mesageWithReplies = { ...message, replies: [] }
       allMessages.push(mesageWithReplies)
-      allMessages.sort((a, b) => b.satoshis - a.satoshis)
+      state.messages.sort((a, b) => halfLife(b.satoshis, b.timestamp, now) - halfLife(a.satoshis, a.timestamp, now))
       state.index = indexBy(message => message.payloadDigest, state.messages)
       state.topics = uniq(allMessages.map(message => message.topic))
       if (!mesageWithReplies.parentDigest) {
