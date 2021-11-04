@@ -13,8 +13,9 @@
           @click="toggleSettingsDrawerOpen"
           icon="menu"
         />
+        <q-avatar icon="forum" />
         <q-toolbar-title class="h6">
-          Agora
+          Forum
         </q-toolbar-title>
         <q-space />
         <q-btn
@@ -67,10 +68,10 @@ export default defineComponent({
   },
   methods: {
     ...mapActions({
-      refreshMessages: 'agora/refreshMessages'
+      refreshMessages: 'forum/refreshMessages'
     }),
     ...mapMutations({
-      setSelectedTopic: 'agora/setSelectedTopic'
+      setSelectedTopic: 'forum/setSelectedTopic'
     }),
     toggleSettingsDrawerOpen () {
       this.$emit('toggleMyDrawerOpen')
@@ -85,8 +86,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      topics: 'agora/getTopics',
-      getSelectedTopic: 'agora/getSelectedTopic'
+      topics: 'forum/getTopics',
+      getSelectedTopic: 'forum/getSelectedTopic'
     }),
     selectedTopic: {
       set (newVal?: string) {

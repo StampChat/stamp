@@ -169,7 +169,7 @@ const storePlugin = (store: Store<RootState>) => {
       contacts: rehydrateContacts(newState.contacts),
       chats: await rehydateChat(newState.chats),
       wallet: await rehydrateWallet(newState.wallet),
-      agora: store.state.agora
+      forum: store.state.forum
     }
     console.log('Restoring state')
     store.replaceState(replaceableState)

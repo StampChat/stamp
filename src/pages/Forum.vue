@@ -14,10 +14,10 @@
 </template>
 
 <script lang="ts">
-import { AgoraMessage } from '../cashweb/types/agora'
+import { ForumMessage } from '../cashweb/types/forum'
 import { defineComponent } from 'vue'
 import { mapGetters } from 'vuex'
-import AMessage from '../components/agora/AgoraMessage.vue'
+import AMessage from '../components/forum/ForumMessage.vue'
 
 export default defineComponent({
   props: {},
@@ -35,12 +35,12 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      getMessages: 'agora/getMessages',
-      topics: 'agora/getTopics',
-      selectedTopic: 'agora/getSelectedTopic'
+      getMessages: 'forum/getMessages',
+      topics: 'forum/getTopics',
+      selectedTopic: 'forum/getSelectedTopic'
     }),
     messages () {
-      return this.getMessages.filter((message: AgoraMessage) =>
+      return this.getMessages.filter((message: ForumMessage) =>
         message.entries.some((entry) => entry.kind === 'post')
       )
     }

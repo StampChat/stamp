@@ -6,18 +6,18 @@ export type TextPost = {
   message?: string;
 }
 
-export type AgoraMessageEntry = TextPost;
+export type ForumMessageEntry = TextPost;
 
-export type AgoraMessage = {
+export type ForumMessage = {
   /// Lotus address of poster
   poster: string;
   topic: string;
   satoshis: number;
-  entries: AgoraMessageEntry[];
+  entries: ForumMessageEntry[];
   payloadDigest: string;
   parentDigest?: string;
   timestamp: Date;
 
   /// Filled in based on local processing
-  replies?: AgoraMessage[]
+  replies?: ForumMessage[]
 }

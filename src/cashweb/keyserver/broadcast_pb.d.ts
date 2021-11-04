@@ -3,7 +3,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class AgoraPost extends jspb.Message {
+export class ForumPost extends jspb.Message {
   getTitle(): string;
   setTitle(value: string): void;
 
@@ -14,16 +14,16 @@ export class AgoraPost extends jspb.Message {
   setMessage(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): AgoraPost.AsObject;
-  static toObject(includeInstance: boolean, msg: AgoraPost): AgoraPost.AsObject;
+  toObject(includeInstance?: boolean): ForumPost.AsObject;
+  static toObject(includeInstance: boolean, msg: ForumPost): ForumPost.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: AgoraPost, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): AgoraPost;
-  static deserializeBinaryFromReader(message: AgoraPost, reader: jspb.BinaryReader): AgoraPost;
+  static serializeBinaryToWriter(message: ForumPost, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ForumPost;
+  static deserializeBinaryFromReader(message: ForumPost, reader: jspb.BinaryReader): ForumPost;
 }
 
-export namespace AgoraPost {
+export namespace ForumPost {
   export type AsObject = {
     title: string,
     url: string,

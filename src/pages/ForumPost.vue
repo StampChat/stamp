@@ -10,11 +10,11 @@
 </template>
 
 <script lang="ts">
-import { AgoraMessage } from 'src/cashweb/types/agora'
+import { ForumMessage } from 'src/cashweb/types/forum'
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 
-import AMessage from '../components/agora/AgoraMessage.vue'
+import AMessage from '../components/forum/ForumMessage.vue'
 
 export default defineComponent({
   components: {
@@ -25,27 +25,27 @@ export default defineComponent({
     const payloadDigest = this.$route.params.payloadDigest as string
     return {
       payloadDigest,
-      message: {} as Partial<AgoraMessage>
+      message: {} as Partial<ForumMessage>
     }
   },
   async mounted () {
     this.payloadDigest = this.$route.params.payloadDigest as string
-    this.message = await this.$store.dispatch('agora/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as AgoraMessage
+    this.message = await this.$store.dispatch('forum/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as ForumMessage
   },
   async beforeRouteUpdate (to, from, next) {
     this.payloadDigest = to.params.payloadDigest as string
-    this.message = await this.$store.dispatch('agora/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as AgoraMessage
+    this.message = await this.$store.dispatch('forum/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as ForumMessage
     console.log('returned msg', this.message)
     next()
   },
   computed: {
     ...mapGetters({
-      getMessage: 'agora/getMessage'
+      getMessage: 'forum/getMessage'
     })
   },
   methods: {
     ...mapActions({
-      fetchMessage: 'agora/fetchMessage'
+      fetchMessage: 'forum/fetchMessage'
     })
   }
 })

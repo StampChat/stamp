@@ -8,15 +8,16 @@ export function createRoutes (): RouteRecordRaw[] {
       component: () => import('layouts/MainLayout.vue'),
       children: [
         {
-          path: 'agora',
-          component: () => import('layouts/AgoraLayout.vue'),
+          path: 'forum',
+          component: () => import('layouts/ForumLayout.vue'),
           children: [
-            { path: '', component: () => import('pages/Agora.vue') },
-            { path: ':payloadDigest', component: () => import('pages/AgoraPost.vue') },
+            { path: '', component: () => import('pages/Forum.vue') },
+            { path: ':payloadDigest', component: () => import('pages/ForumPost.vue') },
             { path: '/new-post', component: () => import('pages/CreatePost.vue') },
             { path: '/new-post/:parentDigest', component: () => import('pages/CreatePost.vue') }
           ]
         },
+        { path: 'agora', redirect: '/forum' },
         { path: 'changelog', component: () => import('pages/Changelog.vue') },
         { path: 'chat/:address', component: () => import('pages/Chat.vue') },
         { path: 'settings', component: () => import('pages/Settings.vue') },

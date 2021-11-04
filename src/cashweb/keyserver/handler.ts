@@ -9,8 +9,8 @@ import { Wallet } from '../wallet'
 import { Outpoint } from '../types/outpoint'
 import { calcId } from '../wallet/helpers'
 import { Opcode } from 'app/local_modules/bitcore-lib-xpi'
-import { BroadcastEntry, BroadcastMessage, AgoraPost } from './broadcast_pb'
-import { AgoraMessage, AgoraMessageEntry } from '../types/agora'
+import { BroadcastEntry, BroadcastMessage, ForumPost } from './broadcast_pb'
+import { ForumMessage, ForumMessageEntry } from '../types/forum'
 
 function calculateBurnAmount (burnOutputs: BurnOutputs[]) {
   return burnOutputs.reduce((total, burn) => {
@@ -192,7 +192,7 @@ export class KeyserverHandler {
     return wallet.constructTransaction({ outputs: [output] })
   }
 
-  async createBroadcast (topic: string, entries: AgoraMessageEntry[], vote: number, parentDigest?: string) {
+  async createBroadcast (topic: string, entries: ForumMessageEntry[], vote: number, parentDigest?: string) {
     assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
 
     const broadcastMessage = new BroadcastMessage()
@@ -206,7 +206,7 @@ export class KeyserverHandler {
       const textEntry = new BroadcastEntry()
       textEntry.setKind(entry.kind)
       if (entry.kind === 'post') {
-        const payload = new AgoraPost()
+        const payload = new ForumPost()
         payload.setTitle(entry.title)
         entry.url && payload.setUrl(entry.url)
         entry.message && payload.setMessage(entry.message)
@@ -298,14 +298,14 @@ export class KeyserverHandler {
     const pubKey = Buffer.from(wrapper.getPublicKey())
     const address = PublicKey.fromBuffer(pubKey).toAddress(this.networkName).toXAddress()
     const entries = message.getEntriesList()
-    const parsedEntries: AgoraMessageEntry[] = []
+    const parsedEntries: ForumMessageEntry[] = []
     const satoshisBurned = calculateBurnAmount(wrapper.getTransactionsList())
     assert(satoshisBurned === wrapper.getBurnAmount())
     const payloadDigest = crypto.Hash.sha256(Buffer.from(payload)).toString('hex')
     const parentDigestBinary = message.getParentDigest()
     assert(typeof parentDigestBinary !== 'string' || parentDigestBinary.length === 0, 'post.getParentDigest() returned a string incorrectly')
     const timestamp = message.getTimestamp()
-    const parsedMessage: AgoraMessage = {
+    const parsedMessage: ForumMessage = {
       poster: address,
       satoshis: satoshisBurned,
       topic: message.getTopic(),
@@ -323,7 +323,7 @@ export class KeyserverHandler {
       }
 
       if (kind === 'post') {
-        const post = AgoraPost.deserializeBinary(payload)
+        const post = ForumPost.deserializeBinary(payload)
         parsedEntries.push({
           kind: 'post',
           title: post.getTitle(),
@@ -359,7 +359,7 @@ export class KeyserverHandler {
     }
     const authwrapperSet = AuthWrapperSet.deserializeBinary(response.data)
     const wrappers = authwrapperSet.getItemsList()
-    const messages: AgoraMessage[] = []
+    const messages: ForumMessage[] = []
     for (const wrapper of wrappers) {
       const message = this.parseWrapper(wrapper)
       messages.push(message)

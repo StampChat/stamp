@@ -4,7 +4,7 @@ import contacts, { State as ContactsState } from './contacts'
 import myProfile, { State as MyProfileState } from './my_profile'
 import relayClient, { State as RelayState } from './relay_client'
 import wallet, { State as WalletState } from './wallet'
-import agora, { State as AgoraState } from './agora'
+import forum, { State as ForumState } from './forum'
 
 const modules = {
   appearance,
@@ -13,7 +13,7 @@ const modules = {
   myProfile,
   relayClient,
   wallet,
-  agora
+  forum
 }
 
 export type RootState = {
@@ -28,7 +28,7 @@ export type RootState = {
   myProfile: MyProfileState
   relayClient: RelayState
   wallet: WalletState,
-  agora: AgoraState
+  forum: ForumState
 }
 
 export default modules
