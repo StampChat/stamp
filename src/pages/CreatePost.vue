@@ -74,7 +74,7 @@
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 
-import AMessage from '../components/agora/AgoraMessage.vue'
+import AMessage from '../components/soapbox/SoapboxMessage.vue'
 
 export default defineComponent({
   components: {
@@ -85,7 +85,7 @@ export default defineComponent({
     const parentDigest = this.$route.params.parentDigest as string
     return {
       offering: 10,
-      topic: (this.$store.state.agora.index)[parentDigest]?.topic ?? '',
+      topic: (this.$store.state.soapbox.index)[parentDigest]?.topic ?? '',
       title: '',
       url: null,
       message: '',
@@ -98,12 +98,12 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      getMessage: 'agora/getMessage'
+      getMessage: 'soapbox/getMessage'
     })
   },
   methods: {
     ...mapActions({
-      postMessage: 'agora/putMessage'
+      postMessage: 'soapbox/putMessage'
     }),
     async post () {
       const entry = {

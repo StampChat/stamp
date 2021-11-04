@@ -4,9 +4,9 @@
       <q-list>
         <q-separator />
         <chat-list-link
-          title="The Agora"
-          route="/agora"
-          icon="foundation"
+          title="Soapbox"
+          route="/soapbox"
+          icon="campaign"
         />
         <chat-list-link
           title="Login/Sign Up"

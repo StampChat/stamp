@@ -13,8 +13,9 @@
           @click="toggleSettingsDrawerOpen"
           icon="menu"
         />
+        <q-avatar icon="campaign" />
         <q-toolbar-title class="h6">
-          Agora
+          Soapbox
         </q-toolbar-title>
         <q-space />
         <q-btn
@@ -67,10 +68,10 @@ export default defineComponent({
   },
   methods: {
     ...mapActions({
-      refreshMessages: 'agora/refreshMessages'
+      refreshMessages: 'soapbox/refreshMessages'
     }),
     ...mapMutations({
-      setSelectedTopic: 'agora/setSelectedTopic'
+      setSelectedTopic: 'soapbox/setSelectedTopic'
     }),
     toggleSettingsDrawerOpen () {
       this.$emit('toggleMyDrawerOpen')
@@ -85,8 +86,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      topics: 'agora/getTopics',
-      getSelectedTopic: 'agora/getSelectedTopic'
+      topics: 'soapbox/getTopics',
+      getSelectedTopic: 'soapbox/getSelectedTopic'
     }),
     selectedTopic: {
       set (newVal?: string) {

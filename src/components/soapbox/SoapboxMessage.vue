@@ -105,7 +105,7 @@
               icon="forum"
               padding="1"
               :label="`${message.replies.length} replies`"
-              :to="`/agora/${message.payloadDigest}`"
+              :to="`/soapbox/${message.payloadDigest}`"
             />
           </q-card-section>
           <q-card-section class="q-pa-none text-center">
@@ -132,7 +132,7 @@
           <q-card-section class="q-pa-sm">
             In reply to:
           </q-card-section>
-          <agora-message
+          <soapbox-message
             v-bind="$attrs"
             class="q-ma-none"
             :message="parentMessage"
@@ -153,15 +153,15 @@ import moment from 'moment'
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
-import AMessageReplies from './AgoraMessageReplies.vue'
+import AMessageReplies from './SoapboxMessageReplies.vue'
 
-import { AgoraMessage } from '../../cashweb/types/agora'
+import { SoapboxMessage } from '../../cashweb/types/soapbox'
 
 export default defineComponent({
   props: {
     message: {
       default: () => ({ poster: undefined, satoshis: 0, replies: [], entries: [], payloadDigest: undefined, topic: '' }),
-      type: Object as PropType<AgoraMessage>
+      type: Object as PropType<SoapboxMessage>
     },
     showParent: {
       default: false,
@@ -194,8 +194,8 @@ export default defineComponent({
   emits: ['setTopic'],
   methods: {
     ...mapActions({
-      fetchMessage: 'agora/fetchMessage',
-      addOffering: 'agora/addOffering'
+      fetchMessage: 'soapbox/fetchMessage',
+      addOffering: 'soapbox/addOffering'
     }),
     formatSatoshis (value: number) {
       return (value / 1_000_000).toFixed(0)
@@ -224,12 +224,12 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      getMessages: 'agora/getMessages',
-      getMessage: 'agora/getMessage',
-      topics: 'agora/getTopics',
+      getMessages: 'soapbox/getMessages',
+      getMessage: 'soapbox/getMessage',
+      topics: 'soapbox/getTopics',
       getContactProfile: 'contacts/getContactProfile',
       haveContact: 'contacts/haveContact',
-      getSelectedTopic: 'agora/getSelectedTopic'
+      getSelectedTopic: 'soapbox/getSelectedTopic'
     }),
     timestamp () {
       return this.message ? moment(this.message?.timestamp).format('YY-MM-DD HH:mm:ss') : ''
@@ -241,7 +241,7 @@ export default defineComponent({
       return this.getMessage(this.parentDigest)
     },
     messages () {
-      return this.getMessages.filter((message: AgoraMessage) =>
+      return this.getMessages.filter((message: SoapboxMessage) =>
         message.entries.some((entry) => entry.kind === 'post')
       )
     }

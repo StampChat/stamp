@@ -10,11 +10,11 @@
 </template>
 
 <script lang="ts">
-import { AgoraMessage } from 'src/cashweb/types/agora'
+import { SoapboxMessage } from 'src/cashweb/types/soapbox'
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 
-import AMessage from '../components/agora/AgoraMessage.vue'
+import AMessage from '../components/soapbox/SoapboxMessage.vue'
 
 export default defineComponent({
   components: {
@@ -25,27 +25,27 @@ export default defineComponent({
     const payloadDigest = this.$route.params.payloadDigest as string
     return {
       payloadDigest,
-      message: {} as Partial<AgoraMessage>
+      message: {} as Partial<SoapboxMessage>
     }
   },
   async mounted () {
     this.payloadDigest = this.$route.params.payloadDigest as string
-    this.message = await this.$store.dispatch('agora/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as AgoraMessage
+    this.message = await this.$store.dispatch('soapbox/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as SoapboxMessage
   },
   async beforeRouteUpdate (to, from, next) {
     this.payloadDigest = to.params.payloadDigest as string
-    this.message = await this.$store.dispatch('agora/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as AgoraMessage
+    this.message = await this.$store.dispatch('soapbox/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as SoapboxMessage
     console.log('returned msg', this.message)
     next()
   },
   computed: {
     ...mapGetters({
-      getMessage: 'agora/getMessage'
+      getMessage: 'soapbox/getMessage'
     })
   },
   methods: {
     ...mapActions({
-      fetchMessage: 'agora/fetchMessage'
+      fetchMessage: 'soapbox/fetchMessage'
     })
   }
 })

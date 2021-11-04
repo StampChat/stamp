@@ -3,7 +3,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class AgoraPost extends jspb.Message {
+export class SoapboxPost extends jspb.Message {
   getTitle(): string;
   setTitle(value: string): void;
 
@@ -14,16 +14,16 @@ export class AgoraPost extends jspb.Message {
   setMessage(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): AgoraPost.AsObject;
-  static toObject(includeInstance: boolean, msg: AgoraPost): AgoraPost.AsObject;
+  toObject(includeInstance?: boolean): SoapboxPost.AsObject;
+  static toObject(includeInstance: boolean, msg: SoapboxPost): SoapboxPost.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: AgoraPost, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): AgoraPost;
-  static deserializeBinaryFromReader(message: AgoraPost, reader: jspb.BinaryReader): AgoraPost;
+  static serializeBinaryToWriter(message: SoapboxPost, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SoapboxPost;
+  static deserializeBinaryFromReader(message: SoapboxPost, reader: jspb.BinaryReader): SoapboxPost;
 }
 
-export namespace AgoraPost {
+export namespace SoapboxPost {
   export type AsObject = {
     title: string,
     url: string,

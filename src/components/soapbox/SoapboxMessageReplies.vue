@@ -22,7 +22,7 @@ export default defineComponent({
   },
   components: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    AMessage: defineAsyncComponent(async () => import('./AgoraMessage.vue') as any)
+    AMessage: defineAsyncComponent(async () => import('./SoapboxMessage.vue') as any)
   }
 })
 </script>
