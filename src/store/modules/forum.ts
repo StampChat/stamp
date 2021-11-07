@@ -50,8 +50,10 @@ const module: Module<State, unknown> = {
   mutations: {
     setEntries (state, messages: ForumMessage[]) {
       const newMessages = messages.filter((m) => !(m.payloadDigest in state.index)).map(m => ({ ...m, replies: [] }))
-      state.messages.push(...newMessages)
-      state.messages.sort((a, b) => b.satoshis - a.satoshis).map(m => ({ ...m }))
+      const allMessages = state.messages.slice()
+      const index = indexBy(message => message.payloadDigest, allMessages)
+      allMessages.push(...newMessages.filter(m => !(m.payloadDigest in index)))
+      allMessages.sort((a, b) => b.satoshis - a.satoshis)
       state.index = indexBy(message => message.payloadDigest, state.messages)
       state.topics = uniq(messages.map(message => message.topic))
       for (const message of newMessages) {
@@ -63,17 +65,19 @@ const module: Module<State, unknown> = {
         }
         state.index[message.parentDigest]?.replies.push(message)
       }
+      state.messages = allMessages
     },
     setMessage (state, message: ForumMessage) {
       if (message.payloadDigest in state.index) {
         return
       }
       console.log('Saving specific message', message)
+      const allMessages = state.messages.slice()
       const mesageWithReplies = { ...message, replies: [] }
-      state.messages.push(mesageWithReplies)
-      state.messages = state.messages.sort((a, b) => b.satoshis - a.satoshis)
-      state.index[mesageWithReplies.payloadDigest] = mesageWithReplies
-      state.topics = uniq(state.messages.map(message => message.topic))
+      allMessages.push(mesageWithReplies)
+      allMessages.sort((a, b) => b.satoshis - a.satoshis)
+      state.index = indexBy(message => message.payloadDigest, state.messages)
+      state.topics = uniq(allMessages.map(message => message.topic))
       if (!mesageWithReplies.parentDigest) {
         return
       }
@@ -81,6 +85,7 @@ const module: Module<State, unknown> = {
         return
       }
       state.index[mesageWithReplies.parentDigest]?.replies.push(mesageWithReplies)
+      state.messages = allMessages
     },
     setSelectedTopic (state, topic: string) {
       state.selectedTopic = topic
