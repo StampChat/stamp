@@ -62,7 +62,7 @@ const module: Module<State, unknown> = {
 
       const now = new Date()
       allMessages.sort((a, b) => halfLife(b.satoshis, b.timestamp, now) - halfLife(a.satoshis, a.timestamp, now))
-      state.index = indexBy(message => message.payloadDigest, state.messages)
+      state.index = indexBy(message => message.payloadDigest, allMessages)
       state.topics = uniq(messages.map(message => message.topic))
       for (const message of newMessages) {
         if (!message.parentDigest) {
@@ -87,8 +87,8 @@ const module: Module<State, unknown> = {
       const allMessages = state.messages.slice()
       const mesageWithReplies = { ...message, replies: [] }
       allMessages.push(mesageWithReplies)
-      state.messages.sort((a, b) => halfLife(b.satoshis, b.timestamp, now) - halfLife(a.satoshis, a.timestamp, now))
-      state.index = indexBy(message => message.payloadDigest, state.messages)
+      allMessages.sort((a, b) => halfLife(b.satoshis, b.timestamp, now) - halfLife(a.satoshis, a.timestamp, now))
+      state.index = indexBy(message => message.payloadDigest, allMessages)
       state.topics = uniq(allMessages.map(message => message.topic))
       if (!mesageWithReplies.parentDigest) {
         return
