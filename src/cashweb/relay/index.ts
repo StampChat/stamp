@@ -487,7 +487,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err)
-      const payloadDigestHex = err.payloadDigest.toString('hex')
+      const payloadDigestHex = err.payloadDigest?.toString('hex')
       this.events.emit('messageSendError', { address, senderAddress, index: payloadDigestHex, items, outpoints, transactions })
     }
   }
