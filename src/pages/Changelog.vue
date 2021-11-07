@@ -27,6 +27,17 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
+            v0.0.21 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Add a Forum feature so people can post, reply, and vote on topics</li>
+              <li>Fix P2PKH sends to non-Stamp wallets.</li>
+              <li>Fix the ability to delete single messages.</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.20 Changelog
           </div>
           <div class="text-body1">
