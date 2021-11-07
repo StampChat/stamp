@@ -342,8 +342,12 @@ const module: Module<State, unknown> = {
         return
       }
 
+      // Chat may be null if it is a self send
       const chat = state.chats[apiAddress]
-      assert(chat, 'Missing chat bug received message')
+      if (!chat) {
+        // This was a self send, we don't want to update any particular chats.
+        return
+      }
 
       if (previousHash in state.messages) {
         // we have the message already, just need to update some fields and return
