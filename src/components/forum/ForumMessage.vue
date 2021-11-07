@@ -179,12 +179,6 @@ export default defineComponent({
   components: {
     AMessageReplies
   },
-  mounted () {
-    if (!this.parentDigest) {
-      return
-    }
-    this.fetchMessage({ wallet: this.$wallet, payloadDigest: this.parentDigest })
-  },
   data () {
     return {
       timeoutId: undefined as (ReturnType<typeof setTimeout> | undefined),
@@ -194,7 +188,6 @@ export default defineComponent({
   emits: ['setTopic'],
   methods: {
     ...mapActions({
-      fetchMessage: 'forum/fetchMessage',
       addOffering: 'forum/addOffering'
     }),
     formatSatoshis (value: number) {
