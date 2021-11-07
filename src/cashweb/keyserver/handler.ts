@@ -251,6 +251,7 @@ export class KeyserverHandler {
       data: authWrapper.serializeBinary()
     })
     await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
+    return payloadDigest.toString('hex')
   }
 
   async addOfferings (payloadDigest: string, vote: number) {

@@ -1,3 +1,4 @@
+import assert from 'assert'
 import type { Module } from 'vuex'
 import { indexBy, uniq } from 'ramda'
 
@@ -76,6 +77,9 @@ const module: Module<State, unknown> = {
     },
     setMessage (state, message: ForumMessage) {
       if (message.payloadDigest in state.index) {
+        const oldMessage = state.index[message.payloadDigest]
+        assert(oldMessage, 'Not possible, typescript hole')
+        oldMessage.satoshis = message.satoshis
         return
       }
       const now = new Date()
@@ -114,15 +118,11 @@ const module: Module<State, unknown> = {
     async putMessage ({ dispatch }, { wallet, entry, satoshis, topic, parentDigest }: { wallet: Wallet, entry: ForumMessageEntry, satoshis: number, topic: string, parentDigest?: string }) {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
       console.log('fetching messages')
-      await keyserver.createBroadcast(topic, [entry], satoshis, parentDigest)
-      await dispatch('refreshMessages', { wallet })
+      const payloadDigest = await keyserver.createBroadcast(topic, [entry], satoshis, parentDigest)
+      await dispatch('fetchMessage', { payloadDigest, wallet })
     },
     async fetchMessage ({ commit, getters }, { wallet, payloadDigest }: { wallet: Wallet, payloadDigest: string }) {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
-      const haveMessage = getters.getMessage(payloadDigest)
-      if (haveMessage) {
-        return haveMessage
-      }
       console.log('fetching message', payloadDigest)
       const message = await keyserver.getBroadcastMessage(payloadDigest)
       commit('setMessage', message)
@@ -133,7 +133,7 @@ const module: Module<State, unknown> = {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
       console.log('voting towards message', payloadDigest, satoshis)
       await keyserver.addOfferings(payloadDigest, satoshis)
-      await dispatch('refreshMessages', { wallet })
+      await dispatch('fetchMessage', { payloadDigest, wallet })
     }
   }
 }
