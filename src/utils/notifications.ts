@@ -11,7 +11,7 @@ function negativeNotify (text: string) {
   })
 }
 
-export function errorNotify (err: { response?: any; message: string }) {
+export function errorNotify (err: { response?: unknown; message: string }) {
   console.error(err)
   if (err.response) {
     console.error(err.response)
