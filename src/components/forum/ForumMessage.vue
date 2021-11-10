@@ -58,9 +58,6 @@
             </div>
           </q-btn>
           <q-space />
-          <div class="text-bold text-center q-ma-sm">
-            {{ timestamp }}
-          </div>
           <q-btn
             no-caps
             flat
@@ -69,6 +66,12 @@
             @click.prevent="this.$emit('setTopic', message.topic)"
             :label="message.topic"
           />
+          <div class="text-bold text-center q-ma-sm">
+            {{ timestamp }}
+            <q-tooltip>
+              {{ fullTimestamp }}
+            </q-tooltip>
+          </div>
         </q-card-section>
 
         <q-separator horizontal />
@@ -225,7 +228,21 @@ export default defineComponent({
       getSelectedTopic: 'forum/getSelectedTopic'
     }),
     timestamp () {
-      return this.message ? moment(this.message?.timestamp).format('YY-MM-DD HH:mm:ss') : ''
+      if (!this.message) {
+        return ''
+      }
+      const howLongAgo = moment(this.message?.timestamp)
+      return howLongAgo.calendar(null, {
+        sameDay: 'HH:mm:ss',
+        nextDay: '[Tomorrow] HH:mm:ss',
+        nextWeek: 'dddd',
+        lastDay: 'HH:mm:ss',
+        lastWeek: '[Last] dddd',
+        sameElse: 'DD/MM/YYYY'
+      })
+    },
+    fullTimestamp () {
+      return this.message ? moment(this.message?.timestamp).format('YYYY-MM-DD HH:mm:ss') : ''
     },
     parentDigest () {
       return this.message?.parentDigest
