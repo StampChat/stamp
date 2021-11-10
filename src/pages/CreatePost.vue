@@ -11,16 +11,28 @@
           ]"
           lazy-rules
         />
-        <q-input
+        <q-select
           label="Topic"
           :disable="!!getMessage(parentDigest)"
           v-model="topic"
+          :options="topics"
           :rules="[
             val => val && val.length >0 && (/^[a-z0-9.-]+$/).test(val) || 'Only numbers, lowercase, periods and dashes allowed',
             val => !val.split('.').some(val => val.length === 0) || 'Topic segments not allowed to be empty'
           ]"
+          @filter="filterTopics"
           lazy-rules
-        />
+          use-input
+          input-debounce="0"
+        >
+          <template #no-option>
+            <q-item>
+              <q-item-section class="text-grey">
+                No results
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-select>
         <q-input
           label="Post Title"
           v-model="title"
@@ -60,9 +72,7 @@
     class="q-ma-sm"
     v-if="getMessage(parentDigest)"
   >
-    <q-card-section>
-      Replying to:
-    </q-card-section>
+    <q-card-section>Replying to:</q-card-section>
     <a-message
       :message="getMessage(parentDigest)"
       :show-replies="false"
@@ -85,10 +95,11 @@ export default defineComponent({
     const parentDigest = this.$route.params.parentDigest as string
     return {
       offering: 10,
-      topic: (this.$store.state.forum.index)[parentDigest]?.topic ?? '',
+      topic: this.$store.state.forum.index[parentDigest]?.topic ?? '',
       title: '',
       url: null,
       message: '',
+      topics: [] as string[],
       parentDigest
     }
   },
@@ -98,13 +109,19 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      getMessage: 'forum/getMessage'
+      getMessage: 'forum/getMessage',
+      availableTopics: 'forum/getTopics'
     })
   },
   methods: {
     ...mapActions({
       postMessage: 'forum/putMessage'
     }),
+    filterTopics (inputTopic: string, update: (arg: ()=>void) => void) {
+      update(() => {
+        this.topics = [inputTopic, ...this.availableTopics.filter((topic: string) => topic.indexOf(inputTopic) > -1)]
+      })
+    },
     async post () {
       const entry = {
         kind: 'post',
@@ -113,7 +130,13 @@ export default defineComponent({
         message: this.message
       }
       console.log('posting message', entry)
-      await this.postMessage({ wallet: this.$wallet, entry, satoshis: this.offering * 1_000_000, topic: this.topic, parentDigest: this.parentDigest })
+      await this.postMessage({
+        wallet: this.$wallet,
+        entry,
+        satoshis: this.offering * 1_000_000,
+        topic: this.topic,
+        parentDigest: this.parentDigest
+      })
       this.back()
     },
     back () {
