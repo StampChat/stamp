@@ -27,7 +27,7 @@ export default defineComponent({
   data () {
     return { }
   },
-  emits: [],
+  emits: ['setTopic'],
   methods: {
     showMessage (topic: string) {
       return topic.startsWith(this.selectedTopic)
