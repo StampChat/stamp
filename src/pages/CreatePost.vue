@@ -80,6 +80,7 @@ export default defineComponent({
   components: {
     AMessage
   },
+  emits: ['setTopic'],
   props: {},
   data () {
     const parentDigest = this.$route.params.parentDigest as string
