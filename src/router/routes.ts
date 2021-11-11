@@ -19,7 +19,13 @@ export function createRoutes (): RouteRecordRaw[] {
         },
         { path: 'agora', redirect: '/forum' },
         { path: 'changelog', component: () => import('pages/Changelog.vue') },
-        { path: 'chat/:address', component: () => import('pages/Chat.vue') },
+        {
+          path: 'chat',
+          component: () => import('layouts/ChatLayout.vue'),
+          children: [
+            { path: ':address', component: () => import('pages/Chat.vue') }
+          ]
+        },
         { path: 'settings', component: () => import('pages/Settings.vue') },
         { path: 'profile', component: () => import('pages/Profile.vue') },
         { path: 'receive', component: () => import('pages/Receive.vue') },

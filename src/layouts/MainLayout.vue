@@ -8,18 +8,6 @@
     >
       <left-drawer />
     </q-drawer>
-    <q-drawer
-      v-model="contactDrawerOpen"
-      side="right"
-      :width="splitterRatio"
-      :breakpoint="800"
-    >
-      <right-drawer
-        v-if="activeChatAddr"
-        :address="activeChatAddr"
-        :contact="getContact(activeChatAddr)"
-      />
-    </q-drawer>
     <q-dialog v-model="contactBookOpen">
       <contact-book-dialog :contact-click="contactClicked" />
     </q-dialog>
@@ -37,7 +25,6 @@
 
 <script>
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
-import RightDrawer from '../components/panels/RightDrawer.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { mapActions, mapGetters, mapState } from 'vuex'
 import { debounce } from 'quasar'
@@ -51,7 +38,6 @@ const compactMidpoint = (compactCutoff + compactWidth) / 2
 
 export default {
   components: {
-    RightDrawer,
     LeftDrawer,
     ContactBookDialog
   },
@@ -59,7 +45,6 @@ export default {
     return {
       trueSplitterRatio: compactCutoff,
       myDrawerOpen: !!this.activeChatAddr,
-      contactDrawerOpen: false,
       contactBookOpen: false,
       compact: false,
       compactWidth
@@ -185,7 +170,6 @@ export default {
   computed: {
     ...mapState('chats', ['chats', 'activeChatAddr']),
     ...mapGetters({
-      getContact: 'contacts/getContact',
       lastReceived: 'chats/getLastReceived',
       totalUnread: 'chats/totalUnread',
       getRelayData: 'myProfile/getRelayData'
