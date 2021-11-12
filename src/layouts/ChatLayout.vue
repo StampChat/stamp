@@ -59,7 +59,8 @@
     <q-page-container>
       <q-page>
         <router-view
-          @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
+          @sendFileClicked="sendFileOpen = true"
+          @giveLotusClicked="sendMoneyOpen = true"
         />
       </q-page>
     </q-page-container>
