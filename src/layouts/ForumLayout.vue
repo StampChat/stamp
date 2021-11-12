@@ -29,11 +29,19 @@
         <q-btn
           icon="refresh"
           flat
+          class="q-mx-none q-pa-sm"
           @click="refreshContent"
+        />
+        <q-btn
+          flat
+          icon="post_add"
+          class="q-mx-none q-pa-sm"
+          to="/new-post"
         />
         <q-btn
           icon="settings"
           flat
+          class="q-mx-none q-pa-sm"
           @click="showForumDrawer = !showForumDrawer"
         />
       </q-toolbar>
