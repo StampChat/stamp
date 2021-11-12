@@ -33,11 +33,36 @@
           ]"
           lazy-rules
         />
-        <q-input
-          label="Message"
-          v-model="message"
-          type="textarea"
-        />
+        <q-card-section
+          class="row q-pa-none"
+        >
+          <q-card-section
+            class="col-xs-12 col-md q-pa-none q-pr-xs"
+          >
+            <q-input
+              label="Message"
+              v-model="message"
+              type="textarea"
+            />
+          </q-card-section>
+
+          <q-card-section
+            class="col-xs-12 col-md-6 q-pa-none q-pt-md"
+            v-show="this.message"
+          >
+            <div class="text-weight-bold text-caption">
+              Message Preview
+            </div>
+            <q-card-section
+              class="q-pa-none q-pt-xs"
+            >
+              <span
+                class="mdstyle"
+                v-html="markedMessage"
+              />
+            </q-card-section>
+          </q-card-section>
+        </q-card-section>
       </q-card-section>
       <q-card-actions align="right">
         <q-btn
@@ -73,6 +98,8 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
+import marked from 'marked'
+import DOMPurify from 'dompurify'
 
 import AMessage from '../components/forum/ForumMessage.vue'
 
@@ -100,7 +127,12 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getMessage: 'forum/getMessage'
-    })
+    }),
+    markedMessage () {
+      const text: string = this.message
+      const html = DOMPurify.sanitize(marked(text))
+      return html
+    }
   },
   methods: {
     ...mapActions({
@@ -132,3 +164,44 @@ export default defineComponent({
   }
 })
 </script>
+
+<style scoped>
+:deep() .mdstyle img {
+  max-width: 100%;
+  max-height: 448px;
+}
+:deep() .mdstyle pre code {
+  /*overflow-wrap: break-word;*/
+  max-width: 100%;
+  white-space: pre-wrap;
+}
+:deep() .mdstyle table {
+  /*overflow-wrap: break-word;*/
+  max-width: 100%;
+  white-space: pre-wrap;
+}
+:deep() .mdstyle p {
+  max-width: 100%;
+  word-break: break-word;
+}
+:deep() .mdstyle h1 {
+  font-size: 120%;
+  font-weight: bold;
+  line-height: inherit;
+}
+:deep() .mdstyle h2 {
+  font-size: 120%;
+  font-weight: bold;
+  line-height: inherit;
+}
+:deep() .mdstyle h3 {
+  font-size: 120%;
+  font-weight: bold;
+  line-height: inherit;
+}
+:deep() .mdstyle h4 {
+  font-size: 120%;
+  font-weight: bold;
+  line-height: inherit;
+}
+</style>
