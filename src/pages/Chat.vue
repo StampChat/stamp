@@ -14,6 +14,7 @@
         :contact="getContact(chunk[0].outbound)"
         :name-color="chunk[0].outbound ? '': `color: ${nameColor};`"
         v-bind="$attrs"
+        @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
       />
     </template>
   </q-scroll-area>
@@ -71,12 +72,12 @@
 
     <!-- Message box -->
     <chat-input
+      @sendFileClicked="$emit('sendFileClicked')"
+      @giveLotusClicked="$emit('giveLotusClicked')"
       ref="chatInput"
       v-model:message="message"
       v-model:stamp-amount="stampAmount"
       @sendMessage="sendMessage"
-      @sendFileClicked="sendFileOpen = true"
-      @giveLotusClicked="sendMoneyOpen = true"
     />
   </q-footer>
 </template>
@@ -117,7 +118,7 @@ export default {
       message: ''
     }
   },
-  emits: ['replyClicked'],
+  emits: ['giveLotusClicked', 'sendFileClicked'],
   mounted () {
     this.scrollBottom()
   },
@@ -189,13 +190,15 @@ export default {
       }
     },
     setReply (payloadDigest) {
+      console.log('setting reply')
       this.replyDigest = payloadDigest
     }
   },
   computed: {
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
-      getProfile: 'myProfile/getProfile'
+      getProfile: 'myProfile/getProfile',
+      getMessageByPayload: 'chats/getMessageByPayload'
     }),
     ...mapState('chats', ['chats']),
     messages () {
