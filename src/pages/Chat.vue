@@ -144,13 +144,13 @@ export default {
     scrollBottom () {
       const scrollArea = this.$refs.chatScroll
       if (!scrollArea) {
-        console.log('not mounted?')
         // Not mounted yet
         return
       }
       const scrollTarget = scrollArea.getScrollTarget()
-      if (this.bottom || scrollTarget.scrollTop <= 10) {
-        console.log('not mounted?', scrollTarget.scrollTop)
+      // If we're not at the bottom, and we're not at the top, leave the scroll
+      // alone.
+      if (!this.bottom && scrollTarget.scrollTop >= 10) {
         return
       }
       this.$nextTick(() => {
