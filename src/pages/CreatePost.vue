@@ -68,11 +68,30 @@
       :show-replies="false"
     />
   </q-card>
+
+  <q-card
+    class="q-ma-sm"
+    v-show="this.message"
+  >
+    <q-card-section>
+      <div class="text-h6">
+        Preview
+      </div>
+    </q-card-section>
+    <q-separator horizontal />
+    <q-card-section>
+      <span
+        class="mdstyle"
+        v-html="markedMessage"
+      />
+    </q-card-section>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
+import marked from 'marked'
+import DOMPurify from 'dompurify'
 
 import AMessage from '../components/forum/ForumMessage.vue'
 
@@ -100,7 +119,12 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       getMessage: 'forum/getMessage'
-    })
+    }),
+    markedMessage () {
+      const text: string = this.message
+      const html = DOMPurify.sanitize(marked(text))
+      return html
+    }
   },
   methods: {
     ...mapActions({
@@ -132,3 +156,45 @@ export default defineComponent({
   }
 })
 </script>
+
+<style scoped>
+:deep() .mdstyle img {
+  max-width: 100%;
+  max-height: 448px;
+}
+:deep() .mdstyle pre code {
+  /*overflow-wrap: break-word;*/
+  max-width: 100%;
+  white-space: pre-wrap;
+}
+:deep() .mdstyle table {
+  /*overflow-wrap: break-word;*/
+  max-width: 100%;
+  white-space: pre-wrap;
+}
+:deep() .mdstyle p {
+  max-width: 100%;
+  word-break: break-word;
+}
+:deep() .mdstyle h1 {
+  font-size: 120%;
+  font-weight: bold;
+  line-height: inherit;
+}
+:deep() .mdstyle h2 {
+  font-size: 120%;
+  font-weight: bold;
+  line-height: inherit;
+}
+:deep() .mdstyle h3 {
+  font-size: 120%;
+  font-weight: bold;
+  line-height: inherit;
+}
+:deep() .mdstyle h4 {
+  font-size: 120%;
+  font-weight: bold;
+  line-height: inherit;
+}
+</style>
+
