@@ -43,8 +43,7 @@ export default {
   newContactDialog: {
     newContact: 'New Contact',
     enterBitcoinCashAddress: 'Enter Lotus address...',
-    notFound: 'Not Found',
-    minimumStamp: 'Minimum Stamp'
+    notFound: 'Not Found'
   },
   SettingPanel: {
     newContact: 'New Contact',
@@ -98,9 +97,6 @@ export default {
     pleaseType: 'Please be more creative',
     bio: 'Bio',
     bioHint: 'Short biolography displayed to others',
-    minimumStamp: 'Minimum Stamp *',
-    minimumStampHint: 'The minimum fee required for strangers to message you',
-    minimumStampRule: 'Please input an inbox fee',
     uploadAvatar: 'Upload Avatar'
   },
   clearHistoryDialog: {
