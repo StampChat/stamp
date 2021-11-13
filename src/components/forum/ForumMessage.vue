@@ -63,7 +63,7 @@
             flat
             stretch
             padding="1px"
-            @click.prevent="this.$emit('setTopic', message.topic)"
+            @click.prevent="$emit('set-topic', message.topic)"
             :label="message.topic"
           />
           <div class="text-bold text-center q-ma-sm">
@@ -188,7 +188,7 @@ export default defineComponent({
       voteAmount: 0
     }
   },
-  emits: ['setTopic'],
+  emits: ['set-topic'],
   methods: {
     ...mapActions({
       addOffering: 'forum/addOffering'

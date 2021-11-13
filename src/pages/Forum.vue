@@ -5,7 +5,7 @@
   >
     <a-message
       v-show="showMessage(message.topic)"
-      v-bind="$attrs"
+      @set-topic="(...args) => $emit('set-topic', ...args)"
       :message="message"
       :show-parent="true"
       :show-replies="false"
@@ -27,7 +27,7 @@ export default defineComponent({
   data () {
     return { }
   },
-  emits: ['setTopic'],
+  emits: ['set-topic'],
   methods: {
     showMessage (topic: string) {
       return topic.startsWith(this.selectedTopic)
