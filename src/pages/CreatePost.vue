@@ -101,7 +101,7 @@ import { mapActions, mapGetters } from 'vuex'
 import { toMarkdown } from '../utils/markdown'
 
 import AMessage from '../components/forum/ForumMessage.vue'
-import { infoNotify } from 'src/utils/notifications'
+import { errorNotify, infoNotify } from 'src/utils/notifications'
 
 export default defineComponent({
   components: {
@@ -145,9 +145,17 @@ export default defineComponent({
         message: this.message
       }
       console.log('posting message', entry)
-      await this.postMessage({ wallet: this.$wallet, entry, satoshis: this.offering * 1_000_000, topic: this.topic, parentDigest: this.parentDigest })
+
+      try {
+        await this.postMessage({ wallet: this.$wallet, entry, satoshis: this.offering * 1_000_000, topic: this.topic, parentDigest: this.parentDigest })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        errorNotify(err)
+        return
+      } finally {
+        this.back()
+      }
       infoNotify('Post created!')
-      this.back()
     },
     back () {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
