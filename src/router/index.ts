@@ -10,6 +10,7 @@ import { createRoutes } from './routes'
 import { RootState } from 'src/store/modules'
 
 const unprotectedRoutes = ['/', '/setup', '/forum', '/changelog']
+const protectedRoutes = ['/forum/new-post']
 
 async function addContactFromNavigation<S> (store: Store<S>, address: string) {
   try {
@@ -39,7 +40,7 @@ export default ({ store }: { store: Store<RootState> }) => {
       addContactFromNavigation(store, to.params.address as string)
     }
     console.log('Navigating to', to.fullPath, to.params.address, profile.name)
-    if (profile.name || unprotectedRoutes.some(path => to.fullPath.startsWith(path))) {
+    if (profile.name || (unprotectedRoutes.some(path => to.fullPath.startsWith(path)) && !protectedRoutes.some(path => to.fullPath.startsWith(path)))) {
       next()
     } else {
       console.log('nav to setup!')
