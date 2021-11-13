@@ -244,13 +244,18 @@ export class KeyserverHandler {
     authWrapper.setTransactionsList([burnOutput])
     const server = this.chooseServer()
 
-    const url = `${server}/messages`
-    await axios({
-      method: 'put',
-      url: url,
-      data: authWrapper.serializeBinary()
-    })
-    await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
+    try {
+      const url = `${server}/messages`
+      await axios({
+        method: 'put',
+        url: url,
+        data: authWrapper.serializeBinary()
+      })
+      await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
+    } catch (err) {
+      await Promise.all(usedUtxos.map(utxo => this.wallet?.fixOutpoint(utxo)))
+      throw err
+    }
     return payloadDigest.toString('hex')
   }
 
