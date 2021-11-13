@@ -21,7 +21,6 @@
           @click="toggleSettingsDrawerOpen"
           icon="menu"
         />
-        <q-avatar icon="forum" />
         <q-toolbar-title class="h6">
           Forum
         </q-toolbar-title>
