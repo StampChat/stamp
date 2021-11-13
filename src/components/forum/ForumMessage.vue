@@ -83,6 +83,7 @@
           <q-card-section class="q-ma-none q-pa-sm col-grow text-bold">
             <a
               :href="entry.url"
+              target="_blank"
               v-if="entry.url"
             >{{ entry.title }}</a>
             <span v-if="!entry.url">{{ entry.title }}</span>
@@ -149,8 +150,7 @@
 </template>
 
 <script lang="ts">
-import { marked, renderer } from '../../utils/markdown'
-import DOMPurify from 'dompurify'
+import { toMarkdown } from '../../utils/markdown'
 import moment from 'moment'
 
 import { defineComponent } from 'vue'
@@ -197,8 +197,7 @@ export default defineComponent({
       return (value / 1_000_000).toFixed(0)
     },
     markedMessage (text: string) {
-      const html = DOMPurify.sanitize(marked(text, { renderer: renderer }), { ADD_ATTR: ['target'] })
-      return html
+      return toMarkdown(text)
     },
     formatAddress (address:string) {
       return address.substring(6, 12) + '...' + address.substring(address.length - 6, address.length)
