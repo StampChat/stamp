@@ -12,23 +12,6 @@
             <img :src="avatar">
           </q-avatar>
         </q-item-section>
-        <q-item-section>
-          <q-item-label
-            style="text-align: right;"
-            class="text-weight-bold text-white"
-            lines="1"
-          >
-            Minimum Stamp
-          </q-item-label>
-          <q-item-label
-            style="text-align: right;"
-            class="text-white"
-            caption
-            lines="1"
-          >
-            {{ acceptancePrice }}
-          </q-item-label>
-        </q-item-section>
       </q-item>
 
       <q-item>

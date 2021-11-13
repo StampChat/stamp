@@ -68,9 +68,6 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ contact.profile.name }}</q-item-label>
-            <q-item-label caption>
-              {{ $t('newContactDialog.minimumStamp') }}: {{ contact.inbox.acceptancePrice }}
-            </q-item-label>
           </q-item-section>
         </q-item>
       </q-card-section>

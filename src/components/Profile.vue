@@ -16,11 +16,6 @@
             icon="person"
             label="Profile"
           />
-          <q-tab
-            name="inbox"
-            icon="mail"
-            label="Inbox"
-          />
         </q-tabs>
       </template>
       <template #after>
@@ -95,23 +90,6 @@
                       @click="cycleAvatarRight"
                     />
                   </div>
-                </div>
-              </div>
-            </div>
-          </q-tab-panel>
-          <q-tab-panel name="inbox">
-            <div class="row">
-              <div class="col">
-                <div class="row q-pa-md">
-                  <q-input
-                    outlined
-                    v-model="internalAceptancePrice"
-                    :label="$t('profile.minimumStamp')"
-                    :hint="$t('profile.minimumStampHint')"
-                    style="width:100%"
-                    type="number"
-                    :rules="[ val => val && val.length > 0 || $t('profile.minimumStampRule')]"
-                  />
                 </div>
               </div>
             </div>
