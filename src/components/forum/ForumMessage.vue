@@ -93,6 +93,7 @@
           >
             <span
               class="mdstyle"
+              ref="mdrendered"
               v-html="markedMessage(entry.message)"
             />
           </q-card-section>
@@ -149,7 +150,7 @@
 </template>
 
 <script lang="ts">
-import marked from 'marked'
+import { marked, renderer } from '../../utils/markdown'
 import DOMPurify from 'dompurify'
 import moment from 'moment'
 
@@ -197,7 +198,7 @@ export default defineComponent({
       return (value / 1_000_000).toFixed(0)
     },
     markedMessage (text: string) {
-      const html = DOMPurify.sanitize(marked(text))
+      const html = DOMPurify.sanitize(marked(text, { renderer: renderer }), { ADD_ATTR: ['target'] })
       return html
     },
     formatAddress (address:string) {

@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import marked from 'marked'
+import { marked, renderer } from '../../../utils/markdown'
 import DOMPurify from 'dompurify'
 
 export default {
@@ -16,7 +16,7 @@ export default {
   },
   methods: {
     markedMessage (text) {
-      const html = DOMPurify.sanitize(marked(text))
+      const html = DOMPurify.sanitize(marked(text, { renderer: renderer }), { ADD_ATTR: ['target'] })
       return html
     }
   },
