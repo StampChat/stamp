@@ -56,9 +56,12 @@ const module: Module<State, unknown> = {
   mutations: {
     setEntries (state, messages: ForumMessage[]) {
       const newMessages = messages.filter((m) => !(m.payloadDigest in state.index)).map(m => ({ ...m, replies: [] }))
-      const allMessages = state.messages.slice()
+      const allMessages = Object.values(state.index) as Exclude<MessageWithReplies, undefined>[]
       const index = indexBy(message => message.payloadDigest, allMessages)
       allMessages.push(...newMessages.filter(m => !(m.payloadDigest in index)))
+      allMessages.filter((message: ForumMessage) =>
+        message.entries.some((entry) => entry.kind === 'post')
+      )
 
       const now = new Date()
       allMessages.sort((a, b) => halfLife(b.satoshis, b.timestamp, now) - halfLife(a.satoshis, a.timestamp, now))
@@ -73,6 +76,7 @@ const module: Module<State, unknown> = {
         }
         state.index[message.parentDigest]?.replies.push(message)
       }
+
       state.messages = allMessages
     },
     setMessage (state, message: ForumMessage) {
@@ -82,6 +86,11 @@ const module: Module<State, unknown> = {
         oldMessage.satoshis = message.satoshis
         return
       }
+      const containsPost = message.entries.some((entry) => entry.kind === 'post')
+      if (!containsPost) {
+        return
+      }
+
       const now = new Date()
       console.log('Saving specific message', message)
       const allMessages = state.messages.slice()
