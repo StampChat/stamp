@@ -23,6 +23,8 @@
           @filter="filterTopics"
           lazy-rules
           use-input
+          @new-value="createValue"
+          new-value-mode="add-unique"
           input-debounce="0"
         >
           <template #no-option>
@@ -82,7 +84,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapGetters, mapMutations } from 'vuex'
 
 import AMessage from '../components/forum/ForumMessage.vue'
 
@@ -114,6 +116,7 @@ export default defineComponent({
     })
   },
   methods: {
+    ...mapMutations({ pushNewTopic: 'forum/pushNewTopic' }),
     ...mapActions({
       postMessage: 'forum/putMessage'
     }),
@@ -121,6 +124,19 @@ export default defineComponent({
       update(() => {
         this.topics = [inputTopic, ...this.availableTopics.filter((topic: string) => topic.indexOf(inputTopic) > -1)]
       })
+    },
+    createValue (val: string, done: (val: string, newValueMode: string) => void) {
+      // Calling done(var) when newValueMode is "add-unique", or done(var, "add-unique")
+      // adds "var" content to the model only if is not already set
+      // and it resets the input textbox to empty string
+      // https://quasar.dev/vue-components/select#example--filtering-and-adding-to-menu
+
+      if (val.length > 0) {
+        if (!this.availableTopics.includes(val)) {
+          this.pushNewTopic(val)
+        }
+        done(val, 'add-unique')
+      }
     },
     async post () {
       const entry = {
