@@ -93,7 +93,6 @@
           >
             <span
               class="mdstyle"
-              ref="mdrendered"
               v-html="markedMessage(entry.message)"
             />
           </q-card-section>
