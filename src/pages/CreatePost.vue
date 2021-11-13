@@ -98,8 +98,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters } from 'vuex'
-import marked from 'marked'
-import DOMPurify from 'dompurify'
+import { toMarkdown } from '../utils/markdown'
 
 import AMessage from '../components/forum/ForumMessage.vue'
 
@@ -130,8 +129,7 @@ export default defineComponent({
     }),
     markedMessage () {
       const text: string = this.message
-      const html = DOMPurify.sanitize(marked(text))
-      return html
+      return toMarkdown(text)
     }
   },
   methods: {
