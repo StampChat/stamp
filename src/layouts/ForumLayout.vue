@@ -4,6 +4,14 @@
     container
     class="hide-scrollbar absolute full-width"
   >
+    <q-drawer
+      v-model="showForumDrawer"
+      side="right"
+      :breakpoint="800"
+    >
+      <forum-drawer />
+    </q-drawer>
+
     <q-header>
       <q-toolbar class="q-pl-sm">
         <q-btn
@@ -21,22 +29,20 @@
         <q-btn
           icon="refresh"
           flat
+          class="q-mx-none q-pa-sm"
           @click="refreshContent"
-        />
-        <q-input
-          filled
-          class="q-mx-sm q-pa-none"
-          v-model="selectedTopic"
-          label="Topic"
-          style="width: 250px"
-          @keyup.enter.prevent="refreshContent"
-          clearable
         />
         <q-btn
           flat
-          class="q-mx-sm q-pa-sm"
-          label="Create Post"
+          icon="post_add"
+          class="q-mx-none q-pa-sm"
           to="/new-post"
+        />
+        <q-btn
+          icon="settings"
+          flat
+          class="q-mx-none q-pa-sm"
+          @click="showForumDrawer = !showForumDrawer"
         />
       </q-toolbar>
     </q-header>
@@ -58,10 +64,15 @@
 import { defineComponent } from 'vue'
 import { mapGetters, mapActions, mapMutations } from 'vuex'
 
+import ForumDrawer from '../components/panels/ForumDrawer.vue'
+
 export default defineComponent({
   data () {
-    return { }
+    return {
+      showForumDrawer: false
+    }
   },
+  components: { ForumDrawer },
   emits: ['toggleMyDrawerOpen'],
   mounted () {
     this.refreshContent()

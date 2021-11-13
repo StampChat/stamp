@@ -3,8 +3,7 @@
 </template>
 
 <script>
-import marked from 'marked'
-import DOMPurify from 'dompurify'
+import { toMarkdown } from '../../../utils/markdown'
 
 export default {
   name: 'ChatMessageSection',
@@ -16,12 +15,8 @@ export default {
   },
   methods: {
     markedMessage (text) {
-      const html = DOMPurify.sanitize(marked(text))
-      return html
+      return toMarkdown(text)
     }
-  },
-  filters: {
-    marked: marked
   }
 }
 </script>
