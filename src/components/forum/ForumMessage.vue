@@ -1,6 +1,6 @@
 <template>
   <q-card
-    class="q-ma-sm q-pa-none"
+    class="q-ma-sm q-pa-none max-w-720"
     flat
     bordered
   >
@@ -9,43 +9,78 @@
       horizontal
     >
       <q-card-section
-        class="col-shrink q-pa-none"
+        class="col-shrink q-pa-sm bg-on-secondary"
       >
         <q-card-section class="q-pa-none text-center">
           <q-btn
             flat
-            icon="thumb_up"
+            icon="arrow_drop_up"
             padding="0"
             @click="addVotes(10)"
           />
         </q-card-section>
-        <q-card-section class="q-pa-none text-center">
+        <q-card-section class="q-pa-none q-mt-xs text-center">
           {{ formatSatoshis(message.satoshis) }}
         </q-card-section>
-        <q-card-section class="q-pa-none text-center">
+        <q-card-section class="q-pa-none q-mt-xs text-center">
           <q-btn
             flat
-            icon="thumb_down"
+            icon="arrow_drop_down"
             padding="0"
             @click="addVotes(-10)"
           />
         </q-card-section>
-        <q-separator />
       </q-card-section>
-      <q-separator vertical />
       <q-card-section
         class="q-ma-none q-pa-none col"
         vertical
       >
-        <q-card-section
-          class="q-ma-none q-pa-sm col-grow"
-          horizontal
+        <template
+          v-for="(entry, index) in message.entries.filter(entry=> entry.kind === 'post')"
+          :key="index"
         >
+          <q-card-section
+            horizontal
+            class="q-ma-none q-pa-sm col-grow text-bold"
+          >
+            <a
+              :href="entry.url"
+              target="_blank"
+              v-if="entry.url"
+              class="text-h6 text-bold q-mr-md post-title"
+            >{{ entry.title || 'Untitled' }}</a>
+            <span
+              v-if="!entry.url"
+              class="text-h6 text-bold q-mr-md"
+            >{{ entry.title || 'Untitled' }}</span>
+            <div class="q-mt-xs">
+              <q-btn
+                rounded
+                no-caps
+                unelevated
+                color="primary"
+                size="sm"
+                @click.prevent="$emit('set-topic', message.topic)"
+                :label="message.topic"
+              />
+            </div>
+          </q-card-section>
+          <q-card-section
+            class="q-ma-none q-px-sm q-pt-none q-pb-sm col-grow"
+            v-if="renderBody"
+          >
+            <span
+              class="mdstyle"
+              v-html="markedMessage(entry.message)"
+            />
+          </q-card-section>
+        </template>
+        <q-card-actions class="q-ma-none q-pa-none">
           <q-btn
             no-caps
             flat
             stretch
-            padding="1px"
+            dense
             :to="`/chat/${message.poster}`"
           >
             <div
@@ -57,73 +92,29 @@
               {{ formatAddress(message.poster) }}
             </div>
           </q-btn>
-          <q-space />
-          <q-btn
-            no-caps
-            flat
-            stretch
-            padding="1px"
-            @click.prevent="$emit('set-topic', message.topic)"
-            :label="message.topic"
-          />
-          <div class="text-bold text-center q-ma-sm">
+          <div class="text-bold q-ml-sm text-caption">
             {{ timestamp }}
             <q-tooltip>
               {{ fullTimestamp }}
             </q-tooltip>
           </div>
-        </q-card-section>
-
-        <q-separator horizontal />
-
-        <template
-          v-for="(entry, index) in message.entries.filter(entry=> entry.kind === 'post')"
-          :key="index"
-        >
-          <q-card-section class="q-ma-none q-pa-sm col-grow text-bold">
-            <a
-              :href="entry.url"
-              target="_blank"
-              v-if="entry.url"
-            >{{ entry.title }}</a>
-            <span v-if="!entry.url">{{ entry.title }}</span>
-          </q-card-section>
-          <q-card-section
-            class="q-ma-none q-pa-sm col-grow"
-            v-if="renderBody"
-          >
-            <span
-              class="mdstyle"
-              v-html="markedMessage(entry.message)"
-            />
-          </q-card-section>
-        </template>
-        <q-separator />
-        <q-card-section
-          horizontal
-        >
-          <q-card-section class="q-pa-none text-center">
-            <q-btn
-              flat
-              no-caps
-              icon="forum"
-              padding="1"
-              :label="`${message.replies.length} replies`"
-              :to="`/forum/${message.payloadDigest}`"
-            />
-          </q-card-section>
-          <q-card-section class="q-pa-none text-center">
-            <q-btn
-              flat
-              no-caps
-              padding="1"
-              icon="reply"
-              label="Reply"
-              :to="`/new-post/${message.payloadDigest}`"
-            />
-          </q-card-section>
-        </q-card-section>
-
+          <q-btn
+            flat
+            no-caps
+            icon="forum"
+            class="q-ml-md"
+            :label="`${message.replies.length} replies`"
+            :to="`/forum/${message.payloadDigest}`"
+          />
+          <q-btn
+            flat
+            no-caps
+            icon="reply"
+            label="Reply"
+            class="q-ml-sm"
+            :to="`/new-post/${message.payloadDigest}`"
+          />
+        </q-card-actions>
         <a-message-replies
           :messages="message.replies"
           v-if="showReplies"
@@ -276,5 +267,18 @@ export default defineComponent({
     font-size: 120%;
     font-weight: bold;
     line-height: inherit;
+  }
+
+  .max-w-720 {
+    max-width: 720px;
+  }
+
+  .post-title {
+    color: var(--q-color-text);
+    text-decoration: none;
+  }
+
+  .post-title:hover {
+    text-decoration: underline;
   }
 </style>
