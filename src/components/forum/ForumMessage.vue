@@ -39,22 +39,6 @@
           class="q-ma-none q-pa-sm col-grow"
           horizontal
         >
-          <q-btn
-            no-caps
-            flat
-            stretch
-            padding="1px"
-            :to="`/chat/${message.poster}`"
-          >
-            <div
-              v-if="haveContact(message.poster)"
-            >
-              {{ getContactProfile(message.poster).name }}
-            </div>
-            <div v-else>
-              {{ formatAddress(message.poster) }}
-            </div>
-          </q-btn>
           <q-space />
           <q-btn
             no-caps
@@ -94,6 +78,28 @@
             />
           </q-card-section>
         </template>
+        <q-card-section
+          horizontal
+          class="q-ma-none q-pa-sm items-center"
+        >
+          <span class="q-mr-xs">by</span>
+          <q-btn
+            no-caps
+            flat
+            stretch
+            padding="1px"
+            :to="`/chat/${message.poster}`"
+          >
+            <div
+              v-if="haveContact(message.poster)"
+            >
+              {{ getContactProfile(message.poster).name }}
+            </div>
+            <div v-else>
+              {{ formatAddress(message.poster) }}
+            </div>
+          </q-btn>
+        </q-card-section>
         <q-card-section
           horizontal
         >
