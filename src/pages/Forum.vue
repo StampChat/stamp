@@ -43,7 +43,7 @@ export default defineComponent({
       voteThreshold: 'forum/getVoteThreshold'
     }),
     sortedPosts () {
-      return sortPostsByMode(this.messages, this.sortMode).filter(msg => msg.satoshis * 1_000_000 >= this.voteThreshold)
+      return sortPostsByMode(this.messages, this.sortMode).filter(msg => msg.satoshis >= this.voteThreshold * 1_000_000)
     }
   }
 })
