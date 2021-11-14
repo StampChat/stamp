@@ -1,11 +1,13 @@
 // app global css in Sass form
+:root {
+  --q-on-primary-color-text: white;
+}
 
 .q-header {
-    color             : var(--q-color-text);
+  color: var(--q-on-primary-color-text);
 }
 
 .q-footer {
-    color             : var(--q-color-text);
-    background        : var(--q-color-background);
+  color: var(--q-color-text);
+  background: var(--q-color-background);
 }
-
