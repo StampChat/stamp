@@ -2,8 +2,12 @@
 @use "light-mode.scss";
 @use "dark-mode.scss";
 
+:root {
+  --q-on-primary-color-text: white;
+}
+
 .q-header {
-  color: var(--q-color-text);
+  color: var(--q-on-primary-color-text);
 }
 
 .q-footer {
