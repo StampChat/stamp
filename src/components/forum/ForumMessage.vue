@@ -9,28 +9,27 @@
       horizontal
     >
       <q-card-section
-        class="col-shrink q-pa-none"
+        class="col-shrink q-pa-sm"
       >
         <q-card-section class="q-pa-none text-center">
           <q-btn
             flat
-            icon="thumb_up"
+            icon="arrow_drop_up"
             padding="0"
             @click="addVotes(10)"
           />
         </q-card-section>
-        <q-card-section class="q-pa-none text-center">
+        <q-card-section class="q-pa-none q-mt-xs text-center">
           {{ formatSatoshis(message.satoshis) }}
         </q-card-section>
-        <q-card-section class="q-pa-none text-center">
+        <q-card-section class="q-pa-none q-mt-xs text-center">
           <q-btn
             flat
-            icon="thumb_down"
+            icon="arrow_drop_down"
             padding="0"
             @click="addVotes(-10)"
           />
         </q-card-section>
-        <q-separator />
       </q-card-section>
       <q-separator vertical />
       <q-card-section
