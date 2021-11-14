@@ -1,11 +1,16 @@
 // app global css in Sass form
+@use "light-mode.scss";
+@use "dark-mode.scss";
 
 .q-header {
-    color             : var(--q-color-text);
+  color: var(--q-color-text);
 }
 
 .q-footer {
-    color             : var(--q-color-text);
-    background        : var(--q-color-background);
+  color: var(--q-color-text);
+  background: var(--q-color-background);
 }
 
+.bg-on-secondary {
+  background: var(--q-color-background);
+}

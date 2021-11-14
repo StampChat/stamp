@@ -9,7 +9,7 @@
       horizontal
     >
       <q-card-section
-        class="col-shrink q-pa-sm"
+        class="col-shrink q-pa-sm bg-on-secondary"
       >
         <q-card-section class="q-pa-none text-center">
           <q-btn
@@ -31,7 +31,6 @@
           />
         </q-card-section>
       </q-card-section>
-      <q-separator vertical />
       <q-card-section
         class="q-ma-none q-pa-none col"
         vertical
@@ -73,8 +72,6 @@
           </div>
         </q-card-section>
 
-        <q-separator horizontal />
-
         <template
           v-for="(entry, index) in message.entries.filter(entry=> entry.kind === 'post')"
           :key="index"
@@ -97,7 +94,6 @@
             />
           </q-card-section>
         </template>
-        <q-separator />
         <q-card-section
           horizontal
         >
