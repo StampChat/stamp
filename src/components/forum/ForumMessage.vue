@@ -1,6 +1,6 @@
 <template>
   <q-card
-    class="q-ma-sm q-pa-none"
+    class="q-ma-sm q-pa-none max-w-720"
     flat
     bordered
   >
@@ -35,41 +35,38 @@
         class="q-ma-none q-pa-none col"
         vertical
       >
-        <q-card-section
-          class="q-ma-none q-pa-sm col-grow"
-          horizontal
-        >
-          <q-space />
-          <q-btn
-            no-caps
-            flat
-            stretch
-            padding="1px"
-            @click.prevent="$emit('set-topic', message.topic)"
-            :label="message.topic"
-          />
-          <div class="text-bold text-center q-ma-sm">
-            {{ timestamp }}
-            <q-tooltip>
-              {{ fullTimestamp }}
-            </q-tooltip>
-          </div>
-        </q-card-section>
-
         <template
           v-for="(entry, index) in message.entries.filter(entry=> entry.kind === 'post')"
           :key="index"
         >
-          <q-card-section class="q-ma-none q-pa-sm col-grow text-bold">
+          <q-card-section
+            horizontal
+            class="q-ma-none q-pa-sm col-grow text-bold"
+          >
             <a
               :href="entry.url"
               target="_blank"
               v-if="entry.url"
-            >{{ entry.title }}</a>
-            <span v-if="!entry.url">{{ entry.title }}</span>
+              class="text-h6 text-bold q-mr-md post-title"
+            >{{ entry.title || 'Untitled' }}</a>
+            <span
+              v-if="!entry.url"
+              class="text-h6 text-bold q-mr-md"
+            >{{ entry.title || 'Untitled' }}</span>
+            <div class="q-mt-xs">
+              <q-btn
+                rounded
+                no-caps
+                unelevated
+                color="primary"
+                size="sm"
+                @click.prevent="$emit('set-topic', message.topic)"
+                :label="message.topic"
+              />
+            </div>
           </q-card-section>
           <q-card-section
-            class="q-ma-none q-pa-sm col-grow"
+            class="q-ma-none q-px-sm q-pt-none q-pb-sm col-grow"
             v-if="renderBody"
           >
             <span
@@ -78,16 +75,12 @@
             />
           </q-card-section>
         </template>
-        <q-card-section
-          horizontal
-          class="q-ma-none q-pa-sm items-center"
-        >
-          <span class="q-mr-xs">by</span>
+        <q-card-actions class="q-ma-none q-pa-none">
           <q-btn
             no-caps
             flat
             stretch
-            padding="1px"
+            dense
             :to="`/chat/${message.poster}`"
           >
             <div
@@ -99,32 +92,29 @@
               {{ formatAddress(message.poster) }}
             </div>
           </q-btn>
-        </q-card-section>
-        <q-card-section
-          horizontal
-        >
-          <q-card-section class="q-pa-none text-center">
-            <q-btn
-              flat
-              no-caps
-              icon="forum"
-              padding="1"
-              :label="`${message.replies.length} replies`"
-              :to="`/forum/${message.payloadDigest}`"
-            />
-          </q-card-section>
-          <q-card-section class="q-pa-none text-center">
-            <q-btn
-              flat
-              no-caps
-              padding="1"
-              icon="reply"
-              label="Reply"
-              :to="`/new-post/${message.payloadDigest}`"
-            />
-          </q-card-section>
-        </q-card-section>
-
+          <div class="text-bold q-ml-sm text-caption">
+            {{ timestamp }}
+            <q-tooltip>
+              {{ fullTimestamp }}
+            </q-tooltip>
+          </div>
+          <q-btn
+            flat
+            no-caps
+            icon="forum"
+            class="q-ml-md"
+            :label="`${message.replies.length} replies`"
+            :to="`/forum/${message.payloadDigest}`"
+          />
+          <q-btn
+            flat
+            no-caps
+            icon="reply"
+            label="Reply"
+            class="q-ml-sm"
+            :to="`/new-post/${message.payloadDigest}`"
+          />
+        </q-card-actions>
         <a-message-replies
           :messages="message.replies"
           v-if="showReplies"
@@ -277,5 +267,18 @@ export default defineComponent({
     font-size: 120%;
     font-weight: bold;
     line-height: inherit;
+  }
+
+  .max-w-720 {
+    max-width: 720px;
+  }
+
+  .post-title {
+    color: var(--q-color-text);
+    text-decoration: none;
+  }
+
+  .post-title:hover {
+    text-decoration: underline;
   }
 </style>
