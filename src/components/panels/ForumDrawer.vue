@@ -133,7 +133,9 @@ export default defineComponent({
     },
     threshold: {
       set (newVal?: string) {
-        this.setVoteThreshold(newVal ?? '')
+        const threshold = Number.parseFloat(newVal ?? '0')
+        const newThreshold = Number.isNaN(threshold) ? 0 : threshold
+        this.setVoteThreshold(newThreshold)
       },
       get (): string {
         return this.getVoteThreshold
