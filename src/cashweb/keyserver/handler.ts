@@ -350,7 +350,8 @@ export class KeyserverHandler {
         method: 'get',
         url: url,
         params: {
-          from: from ?? Date.now() - 1000 * 60 * 60 * 24 * 7,
+          // Defaults to 1 day
+          from: from ?? Date.now() - 1000 * 60 * 60 * 24,
           to: to ?? Date.now(),
           topic
         },

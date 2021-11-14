@@ -7,6 +7,7 @@ import { Wallet } from 'src/cashweb/wallet'
 import { displayNetwork, keyservers } from '../../utils/constants'
 
 import { ForumMessage, ForumMessageEntry } from 'src/cashweb/types/forum'
+import { SortMode } from 'src/utils/sorting'
 
 type MessageWithReplies = ForumMessage & { replies: MessageWithReplies[] }
 
@@ -15,12 +16,10 @@ export type State = {
   index: Record<string, MessageWithReplies | undefined>
   topics: string[]
   selectedTopic: string,
+  sortMode: SortMode,
+  duration: number,
+  voteThreshold: number,
 };
-
-const halfLife = (satoshis: number, timestamp: Date, now: Date) => {
-  const halvedAmount = satoshis * Math.pow(0.5, (now.valueOf() - timestamp.valueOf()) / (60 * 60 * 24 * 1000))
-  return halvedAmount
-}
 
 const module: Module<State, unknown> = {
   namespaced: true,
@@ -28,7 +27,11 @@ const module: Module<State, unknown> = {
     messages: [],
     index: {},
     topics: [],
-    selectedTopic: ''
+    selectedTopic: '',
+    sortMode: 'hot',
+    // 1 week
+    duration: 1000 * 60 * 60 * 24 * 7,
+    voteThreshold: 0
   },
   getters: {
     getMessages (state) {
@@ -51,21 +54,31 @@ const module: Module<State, unknown> = {
     },
     lastMessageTime (state) {
       return state.messages.reduce((maxDate, message) => (!maxDate || maxDate < message.timestamp) ? message.timestamp : maxDate, undefined as Date | undefined)
+    },
+    getSortMode (state) {
+      return state.sortMode
+    },
+    getDuration (state) {
+      return state.duration
+    },
+    getVoteThreshold (state) {
+      return state.voteThreshold
     }
   },
   mutations: {
+    setSortMode (state, sortMode) {
+      state.sortMode = sortMode
+    },
+    setDuration (state, duration: number) {
+      state.duration = duration
+    },
+    setVoteThreshold (state, voteThreshold: number) {
+      state.voteThreshold = voteThreshold
+    },
     setEntries (state, messages: ForumMessage[]) {
       const newMessages = messages.filter((m) => !(m.payloadDigest in state.index)).map(m => ({ ...m, replies: [] }))
-      const allMessages = Object.values(state.index) as Exclude<MessageWithReplies, undefined>[]
-      const index = indexBy(message => message.payloadDigest, allMessages)
-      allMessages.push(...newMessages.filter(m => !(m.payloadDigest in index)))
-      allMessages.filter((message: ForumMessage) =>
-        message.entries.some((entry) => entry.kind === 'post')
-      )
-
-      const now = new Date()
-      allMessages.sort((a, b) => halfLife(b.satoshis, b.timestamp, now) - halfLife(a.satoshis, a.timestamp, now))
-      state.index = indexBy(message => message.payloadDigest, allMessages)
+      state.messages.push(...newMessages.filter(m => !(m.payloadDigest in state.index)))
+      state.index = indexBy(message => message.payloadDigest, state.messages)
       state.topics = uniq(messages.map(message => message.topic))
       for (const message of newMessages) {
         if (!message.parentDigest) {
@@ -74,10 +87,13 @@ const module: Module<State, unknown> = {
         if (!(message.parentDigest in state.index)) {
           continue
         }
+        const replies = state.index[message.parentDigest]?.replies
+        const found = replies?.some((reply) => reply.payloadDigest === message.payloadDigest)
+        if (found) {
+          return
+        }
         state.index[message.parentDigest]?.replies.push(message)
       }
-
-      state.messages = allMessages
     },
     setMessage (state, message: ForumMessage) {
       if (message.payloadDigest in state.index) {
@@ -91,22 +107,23 @@ const module: Module<State, unknown> = {
         return
       }
 
-      const now = new Date()
       console.log('Saving specific message', message)
-      const allMessages = state.messages.slice()
       const mesageWithReplies = { ...message, replies: [] }
-      allMessages.push(mesageWithReplies)
-      allMessages.sort((a, b) => halfLife(b.satoshis, b.timestamp, now) - halfLife(a.satoshis, a.timestamp, now))
-      state.index = indexBy(message => message.payloadDigest, allMessages)
-      state.topics = uniq(allMessages.map(message => message.topic))
+      state.messages.push(mesageWithReplies)
+      state.index = indexBy(message => message.payloadDigest, state.messages)
+      state.topics = uniq(state.messages.map(message => message.topic))
       if (!mesageWithReplies.parentDigest) {
         return
       }
       if (!(mesageWithReplies.parentDigest in state.index)) {
         return
       }
+      const replies = state.index[mesageWithReplies.parentDigest]?.replies
+      const found = replies?.some((reply) => reply.payloadDigest === mesageWithReplies.payloadDigest)
+      if (found) {
+        return
+      }
       state.index[mesageWithReplies.parentDigest]?.replies.push(mesageWithReplies)
-      state.messages = allMessages
     },
     setSelectedTopic (state, topic: string) {
       state.selectedTopic = topic
@@ -116,8 +133,8 @@ const module: Module<State, unknown> = {
     async refreshMessages ({ commit, getters }, { wallet }: { topic: string, wallet: Wallet }) {
       const keyserver = new KeyserverHandler({ wallet, networkName: displayNetwork, keyservers })
       console.log('fetching messages')
-      const from = (getters.lastMessageTime as (undefined | Date))?.valueOf()
-      console.log('from', from)
+      const from = Date.now() - getters.getDuration
+      console.log(from)
       const entries = await keyserver.getBroadcastMessages('', from)
       if (!entries) {
         return
