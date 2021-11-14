@@ -1,6 +1,6 @@
 <template>
   <template
-    v-for="(message) in messages"
+    v-for="(message) in sortedPosts"
     :key="message.payloadDigest"
   >
     <a-message
@@ -17,6 +17,8 @@
 import { defineComponent } from 'vue'
 import { mapGetters } from 'vuex'
 import AMessage from '../components/forum/ForumMessage.vue'
+
+import { sortPostsByMode } from '../utils/sorting'
 
 export default defineComponent({
   props: {},
@@ -35,9 +37,14 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       messages: 'forum/getMessages',
+      sortMode: 'forum/getSortMode',
       topics: 'forum/getTopics',
-      selectedTopic: 'forum/getSelectedTopic'
-    })
+      selectedTopic: 'forum/getSelectedTopic',
+      voteThreshold: 'forum/getVoteThreshold'
+    }),
+    sortedPosts () {
+      return sortPostsByMode(this.messages, this.sortMode).filter(msg => msg.satoshis * 1_000_000 >= this.voteThreshold)
+    }
   }
 })
 </script>

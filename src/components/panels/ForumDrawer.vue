@@ -17,8 +17,40 @@
         </q-item>
 
         <q-item>
+          <q-select
+            class="q-mx-sm q-pa-none"
+            v-model="sortMode"
+            :options="sortModes"
+            label="Sort"
+            style="width: 250px"
+            use-input
+          />
+        </q-item>
+
+        <q-item>
+          <q-select
+            class="q-mx-sm q-pa-none"
+            v-model="duration"
+            :options="durations"
+            label="Duration"
+            style="width: 250px"
+            use-input
+          />
+        </q-item>
+
+        <q-item>
+          <q-input
+            class="q-mx-sm q-pa-none"
+            v-model="threshold"
+            label="Vote Threshold"
+            style="width: 250px"
+            use-input
+          />
+        </q-item>
+
+        <q-item>
           <q-btn
-            flat
+            color="primary"
             class="q-mx-sm q-pa-sm"
             label="Create Post"
             to="/new-post"
@@ -33,12 +65,18 @@
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
 
+import { sortModes } from '../../utils/sorting'
+
+const DURATIONS = [{ label: '1 Day', value: 1000 * 60 * 60 * 24 * 1 }, { label: '1 Week', value: 1000 * 60 * 60 * 24 * 7 }]
+
 export default defineComponent({
   components: {
   },
   data () {
     return {
-      contactBookOpen: false
+      contactBookOpen: false,
+      sortModes: sortModes,
+      durations: DURATIONS
     }
   },
   methods: {
@@ -46,7 +84,10 @@ export default defineComponent({
       refreshMessages: 'forum/refreshMessages'
     }),
     ...mapMutations({
-      setSelectedTopic: 'forum/setSelectedTopic'
+      setSelectedTopic: 'forum/setSelectedTopic',
+      setSortMode: 'forum/setSortMode',
+      setDuration: 'forum/setDuration',
+      setVoteThreshold: 'forum/setVoteThreshold'
     }),
     refreshContent () {
       this.refreshMessages({ wallet: this.$wallet, topic: this.selectedTopic })
@@ -59,18 +100,43 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       topics: 'forum/getTopics',
-      getSelectedTopic: 'forum/getSelectedTopic'
+      getSelectedTopic: 'forum/getSelectedTopic',
+      getSortMode: 'forum/getSortMode',
+      getDuration: 'forum/getDuration',
+      getVoteThreshold: 'forum/getVoteThreshold'
     }),
+    sortMode: {
+      set (newVal?: string) {
+        this.setSortMode(newVal ?? 'hot')
+      },
+      get (): string {
+        return this.getSortMode
+      }
+    },
     selectedTopic: {
       set (newVal?: string) {
         this.setSelectedTopic(newVal ?? '')
-        // If the contents were cleared then we should refresh.
-        if (!newVal) {
-          this.refreshContent()
-        }
       },
       get (): string {
         return this.getSelectedTopic
+      }
+    },
+    duration: {
+      set (newVal?: {label: string, value: number}) {
+        console.log(newVal)
+        this.setDuration(newVal?.value ?? '')
+        this.refreshContent()
+      },
+      get (): {label: string, value: number} | undefined {
+        return DURATIONS.find((duration) => duration.value === this.getDuration)
+      }
+    },
+    threshold: {
+      set (newVal?: string) {
+        this.setVoteThreshold(newVal ?? '')
+      },
+      get (): string {
+        return this.getVoteThreshold
       }
     }
   }
