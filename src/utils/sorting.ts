@@ -1,6 +1,6 @@
 import { ForumMessage } from 'src/cashweb/types/forum'
 
-export const sortModes = <const>['hot', 'new']
+export const sortModes = <const>['hot', 'top', 'new']
 export type SortMode = typeof sortModes[number];
 
 export function halfLife (satoshis: number, timestamp: Date, now: Date) {
@@ -17,10 +17,16 @@ export function timeSort (posts: ForumMessage[]) {
   return posts.slice().sort((a, b) => b.timestamp.valueOf() - a.timestamp.valueOf())
 }
 
+export function voteSort (posts: ForumMessage[]) {
+  return posts.slice().sort((a, b) => b.satoshis - a.satoshis)
+}
+
 export function sortPostsByMode (posts: ForumMessage[], sortMode: SortMode) {
   switch (sortMode) {
     case 'hot':
       return halfLifeSort(posts)
+    case 'top':
+      return voteSort(posts)
     case 'new':
       return timeSort(posts)
     default:
