@@ -1,12 +1,10 @@
 <template>
-  <q-card class="q-ma-sm">
-    <a-message
-      v-bind="$attrs"
-      :message="message"
-      v-if="message && message.payloadDigest"
-      :show-replies="true"
-    />
-  </q-card>
+  <a-message
+    v-bind="$attrs"
+    :message="message"
+    v-if="message && message.payloadDigest"
+    :show-replies="true"
+  />
 </template>
 
 <script lang="ts">

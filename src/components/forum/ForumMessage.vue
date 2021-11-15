@@ -1,6 +1,7 @@
 <template>
   <q-card
-    class="q-ma-sm q-pa-none max-w-720"
+    class="q-pa-none max-w-720"
+    :class="{ 'q-ma-sm': !compact }"
     flat
     bordered
   >
@@ -167,6 +168,10 @@ export default defineComponent({
     },
     renderBody: {
       default: true,
+      type: Boolean
+    },
+    compact: {
+      default: false,
       type: Boolean
     }
   },
