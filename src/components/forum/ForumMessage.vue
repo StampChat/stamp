@@ -32,7 +32,7 @@
         </q-card-section>
       </q-card-section>
       <q-card-section
-        class="q-ma-none q-pa-none col"
+        class="q-ma-none q-pa-none"
         vertical
       >
         <template
@@ -270,7 +270,7 @@ export default defineComponent({
   }
 
   .max-w-720 {
-    max-width: 720px;
+    width: min(100vw - 32px, 720px);
   }
 
   .post-title {
