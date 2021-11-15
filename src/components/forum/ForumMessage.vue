@@ -47,7 +47,7 @@
             <q-icon
               name="link"
               v-if="entry.url"
-              size="24px"
+              size="18px"
               class="q-pa-xs"
             />
             <a
@@ -55,9 +55,7 @@
               target="_blank"
               v-if="entry.url"
               class="text-h6 text-bold q-mr-md post-title"
-            >
-              {{ entry.title || 'Untitled' }}
-            </a>
+            >{{ entry.title || 'Untitled' }}</a>
             <span
               v-if="!entry.url"
               class="text-h6 text-bold q-mr-md"
