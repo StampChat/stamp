@@ -19,6 +19,7 @@ export type State = {
   sortMode: SortMode,
   duration: number,
   voteThreshold: number,
+  compactView: boolean,
 };
 
 const module: Module<State, unknown> = {
@@ -31,7 +32,8 @@ const module: Module<State, unknown> = {
     sortMode: 'hot',
     // 1 week
     duration: 1000 * 60 * 60 * 24 * 7,
-    voteThreshold: 0
+    voteThreshold: 0,
+    compactView: false
   },
   getters: {
     getMessages (state) {
@@ -63,6 +65,9 @@ const module: Module<State, unknown> = {
     },
     getVoteThreshold (state) {
       return state.voteThreshold
+    },
+    getCompactView (state) {
+      return state.compactView
     }
   },
   mutations: {
@@ -74,6 +79,9 @@ const module: Module<State, unknown> = {
     },
     setVoteThreshold (state, voteThreshold: number) {
       state.voteThreshold = voteThreshold
+    },
+    setCompactView (state, compactView: boolean) {
+      state.compactView = compactView
     },
     setEntries (state, messages: ForumMessage[]) {
       const newMessages = messages.filter((m) => !(m.payloadDigest in state.index)).map(m => ({ ...m, replies: [] }))
