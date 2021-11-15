@@ -47,8 +47,7 @@
             <q-icon
               name="link"
               v-if="entry.url"
-              size="18px"
-              class="q-pa-xs"
+              class="text-h6 q-pa-xs"
             />
             <a
               :href="entry.url"
