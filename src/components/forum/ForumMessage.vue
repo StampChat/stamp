@@ -32,7 +32,7 @@
         </q-card-section>
       </q-card-section>
       <q-card-section
-        class="q-ma-none q-pa-none"
+        class="q-ma-none q-pa-none col"
         vertical
       >
         <template
