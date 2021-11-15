@@ -36,6 +36,7 @@ function getIconPNGPath () {
 }
 
 let mainWindow
+let externalUrlWindow
 let tray
 let windowsBadgeUpdater
 const nativeIconSmall = nativeImage.createFromPath(getIconPNGPath()).resize({ width: 16, height: 16 })
@@ -104,11 +105,22 @@ function createWindow () {
     mainWindow = null
   })
 
-  mainWindow.webContents.on('will-navigate', (e, url) => {
-    if (url !== e.sender.getURL()) {
-      e.preventDefault()
-      shell.openExternal(url)
-    }
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    externalUrlWindow = new BrowserWindow({
+      width: 1000,
+      height: 600,
+      icon: nativeIcon,
+      frame: true,
+      useContentSize: true,
+      webPreferences: {
+        preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
+        contextIsolation: true,
+        nodeIntegration: true,
+        enableRemoteModule: true,
+      }
+    })
+    externalUrlWindow.loadURL(url)
+    return { action: 'deny' }
   })
 }
 

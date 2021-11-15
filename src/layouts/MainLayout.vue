@@ -3,7 +3,7 @@
     <q-header class="electron-only">
       <q-bar
         style="height: 23px"
-        class="q-electron-drag"
+        class="q-electron-drag q-pr-xs"
       >
         <q-space />
         <q-btn
