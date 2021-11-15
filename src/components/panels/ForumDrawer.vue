@@ -56,6 +56,13 @@
             to="/new-post"
           />
         </q-item>
+        <q-item>
+          <q-checkbox
+            v-model="compactView"
+            class="q-mx-sm q-pa-sm"
+            label="Compact View"
+          />
+        </q-item>
       </q-list>
     </q-scroll-area>
   </div>
@@ -87,7 +94,8 @@ export default defineComponent({
       setSelectedTopic: 'forum/setSelectedTopic',
       setSortMode: 'forum/setSortMode',
       setDuration: 'forum/setDuration',
-      setVoteThreshold: 'forum/setVoteThreshold'
+      setVoteThreshold: 'forum/setVoteThreshold',
+      setCompactView: 'forum/setCompactView'
     }),
     refreshContent () {
       this.refreshMessages({ wallet: this.$wallet, topic: this.selectedTopic })
@@ -103,7 +111,9 @@ export default defineComponent({
       getSelectedTopic: 'forum/getSelectedTopic',
       getSortMode: 'forum/getSortMode',
       getDuration: 'forum/getDuration',
-      getVoteThreshold: 'forum/getVoteThreshold'
+      getVoteThreshold: 'forum/getVoteThreshold',
+      getCompactView: 'forum/getCompactView'
+
     }),
     sortMode: {
       set (newVal?: string) {
@@ -129,6 +139,14 @@ export default defineComponent({
       },
       get (): {label: string, value: number} | undefined {
         return DURATIONS.find((duration) => duration.value === this.getDuration)
+      }
+    },
+    compactView: {
+      set (newVal?: boolean) {
+        this.setCompactView(newVal)
+      },
+      get (): boolean {
+        return this.getCompactView
       }
     },
     threshold: {

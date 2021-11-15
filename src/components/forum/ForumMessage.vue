@@ -68,7 +68,7 @@
           </q-card-section>
           <q-card-section
             class="q-ma-none q-px-sm q-pt-none q-pb-sm col-grow"
-            v-if="renderBody"
+            v-if="renderBody && !compactView"
           >
             <span
               class="mdstyle"
@@ -171,6 +171,10 @@ export default defineComponent({
       type: Boolean
     },
     compact: {
+      default: false,
+      type: Boolean
+    },
+    compactView: {
       default: false,
       type: Boolean
     }

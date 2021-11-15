@@ -9,6 +9,7 @@
       :message="message"
       :show-parent="true"
       :show-replies="false"
+      :compact-view="compactView"
     />
   </template>
 </template>
@@ -40,7 +41,8 @@ export default defineComponent({
       sortMode: 'forum/getSortMode',
       topics: 'forum/getTopics',
       selectedTopic: 'forum/getSelectedTopic',
-      voteThreshold: 'forum/getVoteThreshold'
+      voteThreshold: 'forum/getVoteThreshold',
+      compactView: 'forum/getCompactView'
     }),
     sortedPosts () {
       return sortPostsByMode(this.messages, this.sortMode).filter(msg => msg.satoshis >= this.voteThreshold * 1_000_000)
