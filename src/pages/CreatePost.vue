@@ -91,6 +91,7 @@
     <a-message
       :message="getMessage(parentDigest)"
       :show-replies="false"
+      :compact="true"
     />
   </q-card>
 </template>
