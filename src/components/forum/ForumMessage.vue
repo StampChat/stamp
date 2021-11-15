@@ -44,12 +44,20 @@
             horizontal
             class="q-ma-none q-pa-sm col-grow text-bold"
           >
+            <q-icon
+              name="link"
+              v-if="entry.url"
+              size="24px"
+              class="q-pa-xs"
+            />
             <a
               :href="entry.url"
               target="_blank"
               v-if="entry.url"
               class="text-h6 text-bold q-mr-md post-title"
-            >{{ entry.title || 'Untitled' }}</a>
+            >
+              {{ entry.title || 'Untitled' }}
+            </a>
             <span
               v-if="!entry.url"
               class="text-h6 text-bold q-mr-md"
