@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@capacitor/core": "2.5.0",
+    "@electron/remote": "^2.0.1",
     "@quasar/extras": "^1.11.5",
     "@vue/compiler-sfc": "^3.2.4",
     "atob": "^2.1.2",

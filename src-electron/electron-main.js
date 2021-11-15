@@ -4,6 +4,10 @@ import { app, BrowserWindow, nativeTheme, Tray, Menu, shell, nativeImage } from 
 import path from 'path'
 import fs from 'fs'
 import Badge from 'electron-windows-badge'
+import { initialize, enable } from '@electron/remote/main'
+
+// required for custom qbar
+initialize()
 
 // Enable single instance lock
 const isSingleInstance = app.requestSingleInstanceLock()
@@ -61,6 +65,7 @@ function createWindow () {
     width: 1000,
     height: 600,
     icon: nativeIcon,
+    frame: false,
     useContentSize: true,
     webPreferences: {
       preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
@@ -70,9 +75,13 @@ function createWindow () {
     }
   })
 
+  // custom qbar enabler
+  enable(mainWindow.webContents)
+
   windowsBadgeUpdater = new Badge(mainWindow, {})
 
   mainWindow.loadURL(process.env.APP_URL)
+  mainWindow.setMenuBarVisibility(false)
 
   let forceQuit = false
   if (process.platform === 'darwin') {
