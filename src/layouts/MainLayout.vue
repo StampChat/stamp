@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHr LpR lff">
-    <q-header>
+    <q-header class="electron-only">
       <q-bar
         style="height: 23px"
         class="q-electron-drag"
