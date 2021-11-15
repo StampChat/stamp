@@ -1,5 +1,35 @@
 <template>
   <q-layout view="hHr LpR lff">
+    <q-header>
+      <q-bar
+        style="height: 23px"
+        class="q-electron-drag"
+      >
+        <q-space />
+        <q-btn
+          dense
+          size="xs"
+          flat
+          icon="minimize"
+          @click="minimize"
+        />
+        <q-btn
+          dense
+          size="xs"
+          flat
+          icon="crop_square"
+          @click="toggleMaximize"
+        />
+        <q-btn
+          dense
+          size="xs"
+          flat
+          icon="close"
+          @click="closeApp"
+        />
+      </q-bar>
+    </q-header>
+
     <q-drawer
       v-model="myDrawerOpen"
       :width="splitterRatio"
@@ -61,6 +91,21 @@ export default {
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getDarkMode: 'appearance/getDarkMode'
     }),
+    minimize () {
+      if (process.env.MODE === 'electron') {
+        window.myWindowAPI.minimize()
+      }
+    },
+    toggleMaximize () {
+      if (process.env.MODE === 'electron') {
+        window.myWindowAPI.toggleMaximize()
+      }
+    },
+    closeApp () {
+      if (process.env.MODE === 'electron') {
+        window.myWindowAPI.close()
+      }
+    },
     tweak (offset, viewportHeight) {
       const height = viewportHeight - offset + 'px'
       return { height, minHeight: height }
