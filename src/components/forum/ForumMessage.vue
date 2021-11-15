@@ -275,7 +275,7 @@ export default defineComponent({
   }
 
   .max-w-720 {
-    width: min(100vw - 32px, 720px);
+    width: min(100% - 32px, 720px);
   }
 
   .post-title {
