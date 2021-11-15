@@ -127,6 +127,9 @@ const module: Module<State, unknown> = {
     },
     setSelectedTopic (state, topic: string) {
       state.selectedTopic = topic
+    },
+    pushNewTopic (state, topic: string) {
+      state.topics.push(topic)
     }
   },
   actions: {

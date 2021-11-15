@@ -11,16 +11,30 @@
           ]"
           lazy-rules
         />
-        <q-input
+        <q-select
           label="Topic"
           :disable="!!getMessage(parentDigest)"
           v-model="topic"
+          :options="topics"
+          @filter="filterTopics"
+          use-input
+          @new-value="createValue"
+          new-value-mode="add-unique"
+          input-debounce="0"
           :rules="[
             val => val && val.length >0 && (/^[a-z0-9.-]+$/).test(val) || 'Only numbers, lowercase, periods and dashes allowed',
             val => !val.split('.').some(val => val.length === 0) || 'Topic segments not allowed to be empty'
           ]"
           lazy-rules
-        />
+        >
+          <template #no-option>
+            <q-item>
+              <q-item-section class="text-grey">
+                No results
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-select>
         <q-input
           label="Post Title"
           v-model="title"
@@ -98,7 +112,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapGetters, mapMutations } from 'vuex'
 import { toMarkdown } from '../utils/markdown'
 
 import AMessage from '../components/forum/ForumMessage.vue'
@@ -114,7 +128,8 @@ export default defineComponent({
     const parentDigest = this.$route.params.parentDigest as string
     return {
       offering: 10,
-      topic: (this.$store.state.forum.index)[parentDigest]?.topic ?? '',
+      topic: this.$store.state.forum.index[parentDigest]?.topic ?? '',
+      topics: [] as string[],
       title: '',
       url: null,
       message: '',
@@ -127,7 +142,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      getMessage: 'forum/getMessage'
+      getMessage: 'forum/getMessage',
+      availableTopics: 'forum/getTopics'
     }),
     markedMessage () {
       const text: string = this.message
@@ -135,9 +151,27 @@ export default defineComponent({
     }
   },
   methods: {
+    ...mapMutations({ pushNewTopic: 'forum/pushNewTopic' }),
     ...mapActions({
       postMessage: 'forum/putMessage'
     }),
+    filterTopics (inputTopic: string, update: (arg: ()=>void) => void) {
+      update(() => {
+        this.topics = [inputTopic, ...this.availableTopics.filter((topic: string) => topic.indexOf(inputTopic) > -1)]
+      })
+    },
+    createValue (val: string, done: (val: string, newValueMode: string) => void) {
+      // Calling done(var) when newValueMode is "add-unique", or done(var, "add-unique")
+      // adds "var" content to the model only if is not already set
+      // and it resets the input textbox to empty string
+      // https://quasar.dev/vue-components/select#example--filtering-and-adding-to-menu
+      if (val.length > 0) {
+        if (!this.availableTopics.includes(val)) {
+          this.pushNewTopic(val)
+        }
+        done(val, 'add-unique')
+      }
+    },
     async post () {
       const entry = {
         kind: 'post',
