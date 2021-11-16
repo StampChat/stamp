@@ -106,20 +106,12 @@ function createWindow () {
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    externalUrlWindow = new BrowserWindow({
-      width: 1000,
-      height: 600,
-      icon: nativeIcon,
-      frame: true,
-      useContentSize: true,
-      webPreferences: {
-        preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
-        contextIsolation: true,
-        nodeIntegration: true,
-        enableRemoteModule: true,
-      }
-    })
+    externalUrlWindow = new BrowserWindow()
     externalUrlWindow.loadURL(url)
+
+    // we pass 'deny' to disallow the creation of new window
+    // with mainWindow and instead manually use externalUrlWindow.
+    // Passing 'allow' will open link in two windows.
     return { action: 'deny' }
   })
 }
