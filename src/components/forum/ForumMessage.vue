@@ -44,6 +44,11 @@
             horizontal
             class="q-ma-none q-pa-sm col-grow text-bold"
           >
+            <q-icon
+              name="link"
+              v-if="entry.url"
+              class="text-h6 q-pa-xs"
+            />
             <a
               :href="entry.url"
               target="_blank"
