@@ -27,6 +27,46 @@
           class="q-px-sm absolute full-width full-height"
         >
           <div class="text-h6">
+            v0.0.22 Changelog
+          </div>
+          <div class="text-body1">
+            <ul>
+              <li>Add spinner at forum page before posts are loaded (#499)</li>
+              <li>Custom window bar for electron build. (#496)</li>
+              <li>Forum: add link icon to post titles containing URL (#498)</li>
+              <li>Give topic hints to user when posting (#497)</li>
+              <li>Enable configuration for a "compact mode" (#495)</li>
+              <li>Use percent instead of vw for post size (#494)</li>
+              <li>Fix width on small devices (#493)</li>
+              <li>Fix margin in reply view (#492)</li>
+              <li>Add `top` sort to Forum (#491)</li>
+              <li>Fix Threshold filtering on Forum (#490)</li>
+              <li>Add some configurability to the Forum feed (#489)</li>
+              <li>(sorts) Update POST UX (#487)</li>
+              <li>Change header color to white (#488)</li>
+              <li>Remove mentions of minimum acceptance price (#486)</li>
+              <li>Add error notification to Create Post screen (#485)</li>
+              <li>Remove forum icon from title bar in Forum screen (#484)</li>
+              <li>Add toast on post, and ensure it loads (#483)</li>
+              <li>Fix topic filtering button on Forum (#482)</li>
+              <li>Protect `/forum/new-post` route for non-signed up users (#481)</li>
+              <li>Open links in new browser tab (#480)</li>
+              <li>Add message markdown preview (#479)</li>
+              <li>Fix Reply, Send File, and Give Lotus Actions (#477)</li>
+              <li>Fix scrolling behavior in chat on new messages (#476)</li>
+              <li>Update butons on Forum title bar (#475)</li>
+              <li>Remove CircleCI builds (#474)</li>
+              <li>Move header buttons to side panel of Forum (#473)</li>
+              <li>Invert ChatLayout to be above the actual Chat page (#472)</li>
+              <li>Change formatting of timestamps in forum (#467)</li>
+              <li>Update Android manifests for Google Play (#468)</li>
+              <li>Fix type warning on `errorNotify`</li>
+              <li>Upgrade quasar and capacitor to latest version within channel</li>
+              <li>Fix reply attachment to parent messages (#466)</li>
+            </ul>
+          </div>
+
+          <div class="text-h6">
             v0.0.21 Changelog
           </div>
           <div class="text-body1">

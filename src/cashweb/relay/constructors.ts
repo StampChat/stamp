@@ -178,7 +178,6 @@ export class MessageConstructor {
     const arr = image.split(',')
     assert(arr.length > 0, 'image string is invalid.')
     const matches = arr[0].match(/:(.*?);/)
-    console.log(matches)
     assert(matches && matches.length > 1, 'matches is the wrong length')
     const avatarType = matches[1]
     const bstr = atob(arr[1])
@@ -246,7 +245,6 @@ export class MessageConstructor {
     const arr = profileObj.avatar.split(',')
     assert(arr.length > 0, 'image string is invalid.')
     const matches = arr[0].match(/:(.*?);/)
-    console.log(matches)
     assert(matches && matches.length > 1, 'matches is the wrong length')
     const avatarType = matches[1]
     const bstr = atob(arr[1])
