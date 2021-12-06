@@ -1,4 +1,4 @@
-import marked from 'marked'
+import * as marked from 'marked'
 const renderer = new marked.Renderer()
 renderer.link = (href, title, text) => {
   return '<a target="_blank" href="' + href + '">' + text + '</a>'
@@ -6,7 +6,7 @@ renderer.link = (href, title, text) => {
 import DOMPurify from 'dompurify'
 
 export function toMarkdown(input: string) {
-  return DOMPurify.sanitize(marked(input, { renderer: renderer }), {
+  return DOMPurify.sanitize(marked.marked(input, { renderer: renderer }), {
     ADD_ATTR: ['target'],
   })
 }

@@ -2,6 +2,7 @@
 /local_modules
 /node_modules
 /src/assets/
+/src-capacitor
 
 # ignore yaml
 *.yml
