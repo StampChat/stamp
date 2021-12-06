@@ -3,11 +3,7 @@
     <q-scroll-area class="q-px-none col">
       <q-list>
         <q-separator />
-        <chat-list-link
-          title="Forum"
-          route="/forum"
-          icon="forum"
-        />
+        <chat-list-link title="Forum" route="/forum" icon="forum" />
         <chat-list-link
           title="Login/Sign Up"
           route="/setup"
@@ -17,7 +13,7 @@
         <q-separator />
         <template v-if="$status.setup">
           <chat-list-item
-            v-for="(contact) in getSortedChatOrder"
+            v-for="contact in getSortedChatOrder"
             :key="contact.address"
             :chat-address="contact.address"
             :value-unread="formatBalance(contact.totalUnreadValue)"
@@ -45,35 +41,34 @@ export default {
   props: {
     compact: {
       type: Boolean,
-      required: true
-    }
+      required: true,
+    },
   },
   emits: ['toggleMyDrawerOpen'],
   components: {
     ChatListItem,
-    ChatListLink
+    ChatListLink,
   },
-  data () {
-    return {
-    }
+  data() {
+    return {}
   },
   methods: {
-    toggleMyDrawerOpen () {
+    toggleMyDrawerOpen() {
       this.$emit('toggleMyDrawerOpen')
     },
-    formatBalance (balance) {
+    formatBalance(balance) {
       if (!balance) {
         return
       }
       return formatBalance(balance)
-    }
+    },
   },
   computed: {
     ...mapGetters({
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getNumUnread: 'chats/getNumUnread',
-      balance: 'wallet/balance'
-    })
-  }
+      balance: 'wallet/balance',
+    }),
+  },
 }
 </script>

@@ -4,12 +4,7 @@
       <image-dialog :image="image" />
     </q-dialog>
 
-    <q-img
-      :src="image"
-      contain
-      style="width: 10vw;"
-      @click="showImageDialog"
-    />
+    <q-img :src="image" contain style="width: 10vw" @click="showImageDialog" />
   </div>
 </template>
 
@@ -20,22 +15,21 @@ export default {
   props: {
     image: {
       type: String,
-      default: () => ''
-    }
+      default: () => '',
+    },
   },
   components: {
-    ImageDialog
+    ImageDialog,
   },
-  data () {
+  data() {
     return {
-      imageDialog: false
-
+      imageDialog: false,
     }
   },
   methods: {
-    showImageDialog () {
+    showImageDialog() {
       this.imageDialog = true
-    }
-  }
+    },
+  },
 }
 </script>

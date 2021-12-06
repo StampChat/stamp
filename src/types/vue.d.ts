@@ -10,11 +10,11 @@ declare module '@vue/runtime-core' {
     // Stamp properties
     $electrum: {
       connected: boolean
-    };
-    $electrumClientPromise: Promise<ElectrumClient>;
+    }
+    $electrumClientPromise: Promise<ElectrumClient>
 
-    $wallet: Wallet,
-    $relayClient: RelayClient,
+    $wallet: Wallet
+    $relayClient: RelayClient
     $store: Store<RootState>
   }
 }

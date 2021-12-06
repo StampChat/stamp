@@ -1,16 +1,8 @@
 <template>
   <div>
-    <q-splitter
-      :value="110"
-      unit="px"
-      disable
-    >
+    <q-splitter :value="110" unit="px" disable>
       <template #before>
-        <q-tabs
-          v-model="tab"
-          vertical
-          class="text-primary"
-        >
+        <q-tabs v-model="tab" vertical class="text-primary">
           <q-tab
             name="networking"
             icon="cloud"
@@ -40,17 +32,14 @@
                 :label="$t('settings.contactRefreshInterval')"
                 type="number"
                 :hint="$t('settings.contactRefreshIntervalHint')"
-                style="width:100%"
+                style="width: 100%"
                 ref="contactRefreshInterval"
               />
             </div>
           </q-tab-panel>
           <q-tab-panel name="appearance">
             <div class="row">
-              <q-toggle
-                :label="$t('settings.darkMode')"
-                v-model="darkMode"
-              />
+              <q-toggle :label="$t('settings.darkMode')" v-model="darkMode" />
             </div>
           </q-tab-panel>
         </q-tab-panels>
@@ -64,39 +53,39 @@ export default {
   props: {
     modelValue: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
   emits: ['update:modelValue'],
-  data () {
+  data() {
     return {
       tab: 'networking',
       darkMode: this.value.appearance.darkMode,
-      updateInterval: this.value.networking.updateInterval
+      updateInterval: this.value.networking.updateInterval,
     }
   },
   computed: {
-    constructSettings () {
+    constructSettings() {
       return {
         networking: {
-          updateInterval: this.updateInterval
+          updateInterval: this.updateInterval,
         },
         appearance: {
-          darkMode: this.darkMode
-        }
+          darkMode: this.darkMode,
+        },
       }
-    }
+    },
   },
   watch: {
-    updateInterval () {
+    updateInterval() {
       this.$emit('update:modelValue', this.constructSettings)
     },
-    darkMode () {
+    darkMode() {
       this.$emit('update:modelValue', this.constructSettings)
-    }
+    },
   },
-  mounted () {
+  mounted() {
     this.$refs.contactRefreshInterval.$el.focus()
-  }
+  },
 }
 </script>

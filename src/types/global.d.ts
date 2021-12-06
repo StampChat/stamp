@@ -1,5 +1,4 @@
-
-export { }
+export {}
 
 export interface Badge {
   updateBadge: (increment: number) => void
@@ -12,7 +11,7 @@ export interface External {
 
 declare global {
   interface Window {
-    badge: Badge;
-    url: External;
+    badge: Badge
+    url: External
   }
 }

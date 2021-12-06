@@ -1,21 +1,14 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section class="row items-center">
-      <q-avatar
-        icon="signal_wifi_off"
-        color="red"
-        text-color="white"
-      />
-      <span class="q-ml-sm">Lost connection to relay server. Would you like to reconnect?</span>
+      <q-avatar icon="signal_wifi_off" color="red" text-color="white" />
+      <span class="q-ml-sm"
+        >Lost connection to relay server. Would you like to reconnect?</span
+      >
     </q-card-section>
 
     <q-card-actions align="right">
-      <q-btn
-        flat
-        label="Close"
-        color="primary"
-        v-close-popup
-      />
+      <q-btn flat label="Close" color="primary" v-close-popup />
       <q-btn
         flat
         label="Retry"
@@ -30,9 +23,9 @@
 <script>
 export default {
   methods: {
-    connect () {
+    connect() {
       this.$relayClient.setUpWebsocket(this.$wallet.myAddress)
-    }
-  }
+    },
+  },
 }
 </script>

@@ -10,7 +10,7 @@
         round
         icon="add"
         color="primary"
-        @click="newContactOpen=true"
+        @click="newContactOpen = true"
       />
     </q-card-section>
 
@@ -49,14 +49,14 @@ export default {
   props: {
     contactClick: {
       type: Function,
-      required: true
-    }
+      required: true,
+    },
   },
   components: {
-    ContactList
+    ContactList,
   },
   methods: {
-    searchContacts (searchPrefix) {
+    searchContacts(searchPrefix) {
       const sortedContacts = Object.entries(this.contacts).sort((e1, e2) => {
         return e1[0] < e2[0]
       })
@@ -64,27 +64,30 @@ export default {
       const result = {}
       for (const [address, contact] of sortedContacts) {
         const lowerSearch = searchPrefix.toLowerCase()
-        if (contact.profile.name.toLowerCase().includes(lowerSearch) || address.toLowerCase().includes(lowerSearch)) {
+        if (
+          contact.profile.name.toLowerCase().includes(lowerSearch) ||
+          address.toLowerCase().includes(lowerSearch)
+        ) {
           result[address] = contact
         }
       }
 
       return result
-    }
+    },
   },
   computed: {
     ...mapGetters({
-      contacts: 'contacts/getContacts'
-    })
+      contacts: 'contacts/getContacts',
+    }),
   },
-  data () {
+  data() {
     return {
       search: '',
-      newContactOpen: false
+      newContactOpen: false,
     }
   },
-  mounted () {
+  mounted() {
     this.$refs.contactSearch.$el.focus()
-  }
+  },
 }
 </script>

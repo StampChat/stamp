@@ -1,12 +1,10 @@
 <template>
   <q-card>
     <q-card-section class="row items-center">
-      <q-avatar
-        icon="delete"
-        color="red"
-        text-color="white"
-      />
-      <span class="q-ml-sm">{{ $t('deleteChatDialog.message') }} {{ name }}?</span>
+      <q-avatar icon="delete" color="red" text-color="white" />
+      <span class="q-ml-sm"
+        >{{ $t('deleteChatDialog.message') }} {{ name }}?</span
+      >
     </q-card-section>
 
     <q-card-actions align="right">
@@ -34,17 +32,17 @@ export default {
   props: {
     address: {
       type: String,
-      default: () => ''
+      default: () => '',
     },
     name: {
       type: String,
-      default: () => ''
-    }
+      default: () => '',
+    },
   },
   methods: {
     ...mapMutations({
-      deleteChat: 'chats/deleteChat'
-    })
-  }
+      deleteChat: 'chats/deleteChat',
+    }),
+  },
 }
 </script>

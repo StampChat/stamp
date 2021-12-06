@@ -19,15 +19,11 @@
     <q-slide-transition>
       <q-card-section
         class="q-py-none"
-        v-if="(contact === null) && address !== ''"
+        v-if="contact === null && address !== ''"
       >
         <q-item>
           <q-item-section avatar>
-            <q-icon
-              color="negative"
-              name="error"
-              size="xl"
-            />
+            <q-icon color="negative" name="error" size="xl" />
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ $t('newContactDialog.notFound') }}</q-item-label>
@@ -35,10 +31,7 @@
           </q-item-section>
         </q-item>
       </q-card-section>
-      <q-card-section
-        class="q-py-none"
-        v-else-if="contact === 'loading'"
-      >
+      <q-card-section class="q-py-none" v-else-if="contact === 'loading'">
         <q-item>
           <q-item-section avatar>
             <q-skeleton type="QAvatar" />
@@ -53,17 +46,11 @@
           </q-item-section>
         </q-item>
       </q-card-section>
-      <q-card-section
-        v-else-if="contact"
-        class="q-py-none"
-      >
+      <q-card-section v-else-if="contact" class="q-py-none">
         <q-item>
           <q-item-section avatar>
             <q-avatar rounded>
-              <img
-                :src="contact.profile.avatar"
-                size="xl"
-              >
+              <img :src="contact.profile.avatar" size="xl" />
             </q-avatar>
           </q-item-section>
           <q-item-section>
@@ -73,11 +60,7 @@
       </q-card-section>
     </q-slide-transition>
     <q-card-actions align="right">
-      <q-btn
-        label="Cancel"
-        color="negative"
-        @click="cancel"
-      />
+      <q-btn label="Cancel" color="negative" @click="cancel" />
       <q-btn
         :disable="contact === null"
         label="Add"
@@ -95,10 +78,10 @@ import { toAPIAddress } from '../utils/address'
 import { keyservers, networkName } from '../utils/constants'
 
 export default {
-  data () {
+  data() {
     return {
       address: '',
-      contact: null
+      contact: null,
     }
   },
   watch: {
@@ -122,23 +105,23 @@ export default {
       } catch {
         this.contact = null
       }
-    }
+    },
   },
   methods: {
     ...mapActions({
-      addContactVuex: 'contacts/addContact'
+      addContactVuex: 'contacts/addContact',
     }),
-    addContact () {
+    addContact() {
       const cashAddress = toAPIAddress(this.address) // TODO: Make generic
       this.addContactVuex({ address: cashAddress, contact: this.contact })
       this.$router.replace(`/chat/${cashAddress}`)
     },
-    cancel () {
+    cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
-    }
+    },
   },
-  mounted () {
+  mounted() {
     this.$refs.address.$el.focus()
-  }
+  },
 }
 </script>

@@ -1,9 +1,7 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section class="row items-center q-pb-none">
-      <div class="text-h6">
-        Send File
-      </div>
+      <div class="text-h6">Send File</div>
       <q-space />
       <q-btn
         flat
@@ -18,13 +16,9 @@
         ref="filePicker"
         v-model="filePath"
         filled=""
-        style="display:none"
+        style="display: none"
       />
-      <q-img
-        v-if="image"
-        :src="image"
-        spinner-color="white"
-      />
+      <q-img v-if="image" :src="image" spinner-color="white" />
     </q-card-section>
     <q-card-section>
       <q-input
@@ -37,18 +31,13 @@
       />
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn
-        flat
-        label="Cancel"
-        color="primary"
-        v-close-popup
-      />
+      <q-btn flat label="Cancel" color="primary" v-close-popup />
       <q-btn
         flat
         label="Send"
         color="primary"
         v-close-popup
-        :disable="filePath===null"
+        :disable="filePath === null"
         @click="sendImage"
       />
     </q-card-actions>
@@ -62,37 +51,42 @@ export default {
   props: {
     address: {
       type: String,
-      default: () => ''
-    }
+      default: () => '',
+    },
   },
-  data () {
+  data() {
     return {
       caption: '',
       filePath: null,
-      image: null
+      image: null,
     }
   },
   methods: {
     ...mapGetters({
-      getStampAmount: 'chats/getStampAmount'
+      getStampAmount: 'chats/getStampAmount',
     }),
-    async sendImage () {
+    async sendImage() {
       const stampAmount = this.getStampAmount()(this.address)
-      await this.$relayClient.sendImage({ address: this.address, image: this.image, caption: this.caption, stampAmount })
-    }
+      await this.$relayClient.sendImage({
+        address: this.address,
+        image: this.image,
+        caption: this.caption,
+        stampAmount,
+      })
+    },
   },
   watch: {
-    filePath (val) {
+    filePath(val) {
       // TODO: Check it's an image
       if (val == null) {
         return
       }
       const reader = new FileReader()
       reader.readAsDataURL(val)
-      reader.onload = (evt) => {
+      reader.onload = evt => {
         this.image = evt.target.result
       }
-    }
-  }
+    },
+  },
 }
 </script>

@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import Vue from 'vue'
 
 export default Vue.extend({
   // <= MUST extend Vue instance
@@ -8,12 +8,12 @@ export default Vue.extend({
     return {
       counter: 0,
       input: 'rocket muffin',
-    };
+    }
   },
   methods: {
     increment(): void {
       // <= methods return type MUST be annotated too
-      this.counter++;
+      this.counter++
     },
   },
-});
+})

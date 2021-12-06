@@ -6,9 +6,7 @@
           label="Offering"
           v-model="offering"
           suffix="XPI"
-          :rules="[
-            val => Number.parseFloat(val) || 'Invalid number'
-          ]"
+          :rules="[val => Number.parseFloat(val) || 'Invalid number']"
           lazy-rules
         />
         <q-select
@@ -22,86 +20,53 @@
           new-value-mode="add-unique"
           input-debounce="0"
           :rules="[
-            val => val && val.length >0 && (/^[a-z0-9.-]+$/).test(val) || 'Only numbers, lowercase, periods and dashes allowed',
-            val => !val.split('.').some(val => val.length === 0) || 'Topic segments not allowed to be empty'
+            val =>
+              (val && val.length > 0 && /^[a-z0-9.-]+$/.test(val)) ||
+              'Only numbers, lowercase, periods and dashes allowed',
+            val =>
+              !val.split('.').some(val => val.length === 0) ||
+              'Topic segments not allowed to be empty',
           ]"
           lazy-rules
         >
           <template #no-option>
             <q-item>
-              <q-item-section class="text-grey">
-                No results
-              </q-item-section>
+              <q-item-section class="text-grey"> No results </q-item-section>
             </q-item>
           </template>
         </q-select>
-        <q-input
-          label="Post Title"
-          v-model="title"
-        />
+        <q-input label="Post Title" v-model="title" />
         <q-input
           label="URL"
           v-model="url"
-          :rules="[
-            val => !val || validateUrl(val) || 'Invalid URL'
-          ]"
+          :rules="[val => !val || validateUrl(val) || 'Invalid URL']"
           lazy-rules
         />
-        <q-card-section
-          class="row q-pa-none"
-        >
-          <q-card-section
-            class="col-xs-12 col-md q-pa-none q-pr-xs"
-          >
-            <q-input
-              label="Message"
-              v-model="message"
-              type="textarea"
-            />
+        <q-card-section class="row q-pa-none">
+          <q-card-section class="col-xs-12 col-md q-pa-none q-pr-xs">
+            <q-input label="Message" v-model="message" type="textarea" />
           </q-card-section>
 
           <q-card-section
             class="col-xs-12 col-md-6 q-pa-none q-pt-md"
             v-show="this.message"
           >
-            <div class="text-weight-bold text-caption">
-              Message Preview
-            </div>
-            <q-card-section
-              class="q-pa-none q-pt-xs"
-            >
-              <span
-                class="mdstyle"
-                v-html="markedMessage"
-              />
+            <div class="text-weight-bold text-caption">Message Preview</div>
+            <q-card-section class="q-pa-none q-pt-xs">
+              <span class="mdstyle" v-html="markedMessage" />
             </q-card-section>
           </q-card-section>
         </q-card-section>
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn
-          @click="back"
-          label="back"
-          color="negative"
-          class="q-ma-sm"
-        />
-        <q-btn
-          type="submit"
-          label="Post"
-          color="primary"
-          class="q-ma-sm"
-        />
+        <q-btn @click="back" label="back" color="negative" class="q-ma-sm" />
+        <q-btn type="submit" label="Post" color="primary" class="q-ma-sm" />
       </q-card-actions>
     </q-form>
   </q-card>
 
-  <q-card
-    class="q-ma-sm"
-    v-if="getMessage(parentDigest)"
-  >
-    <q-card-section>
-      Replying to:
-    </q-card-section>
+  <q-card class="q-ma-sm" v-if="getMessage(parentDigest)">
+    <q-card-section> Replying to: </q-card-section>
     <a-message
       :message="getMessage(parentDigest)"
       :show-replies="false"
@@ -120,11 +85,11 @@ import { errorNotify, infoNotify } from 'src/utils/notifications'
 
 export default defineComponent({
   components: {
-    AMessage
+    AMessage,
   },
   emits: ['setTopic'],
   props: {},
-  data () {
+  data() {
     const parentDigest = this.$route.params.parentDigest as string
     return {
       offering: 10,
@@ -133,34 +98,42 @@ export default defineComponent({
       title: '',
       url: null,
       message: '',
-      parentDigest
+      parentDigest,
     }
   },
-  beforeRouteUpdate (to, from, next) {
+  beforeRouteUpdate(to, from, next) {
     this.parentDigest = to.params.parentDigest as string
     next()
   },
   computed: {
     ...mapGetters({
       getMessage: 'forum/getMessage',
-      availableTopics: 'forum/getTopics'
+      availableTopics: 'forum/getTopics',
     }),
-    markedMessage () {
+    markedMessage() {
       const text: string = this.message
       return toMarkdown(text)
-    }
+    },
   },
   methods: {
     ...mapMutations({ pushNewTopic: 'forum/pushNewTopic' }),
     ...mapActions({
-      postMessage: 'forum/putMessage'
+      postMessage: 'forum/putMessage',
     }),
-    filterTopics (inputTopic: string, update: (arg: ()=>void) => void) {
+    filterTopics(inputTopic: string, update: (arg: () => void) => void) {
       update(() => {
-        this.topics = [inputTopic, ...this.availableTopics.filter((topic: string) => topic.indexOf(inputTopic) > -1)]
+        this.topics = [
+          inputTopic,
+          ...this.availableTopics.filter(
+            (topic: string) => topic.indexOf(inputTopic) > -1,
+          ),
+        ]
       })
     },
-    createValue (val: string, done: (val: string, newValueMode: string) => void) {
+    createValue(
+      val: string,
+      done: (val: string, newValueMode: string) => void,
+    ) {
       // Calling done(var) when newValueMode is "add-unique", or done(var, "add-unique")
       // adds "var" content to the model only if is not already set
       // and it resets the input textbox to empty string
@@ -172,18 +145,24 @@ export default defineComponent({
         done(val, 'add-unique')
       }
     },
-    async post () {
+    async post() {
       const entry = {
         kind: 'post',
         title: this.title,
         url: this.url ? this.url : null,
-        message: this.message
+        message: this.message,
       }
       console.log('posting message', entry)
 
       try {
-        await this.postMessage({ wallet: this.$wallet, entry, satoshis: this.offering * 1_000_000, topic: this.topic, parentDigest: this.parentDigest })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await this.postMessage({
+          wallet: this.$wallet,
+          entry,
+          satoshis: this.offering * 1_000_000,
+          topic: this.topic,
+          parentDigest: this.parentDigest,
+        })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         errorNotify(err)
         return
@@ -192,10 +171,10 @@ export default defineComponent({
       }
       infoNotify('Post created!')
     },
-    back () {
+    back() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     },
-    validateUrl (val: string) {
+    validateUrl(val: string) {
       try {
         const url = new URL(val)
         return !!url
@@ -203,8 +182,8 @@ export default defineComponent({
         console.log(err)
         return false
       }
-    }
-  }
+    },
+  },
 })
 </script>
 

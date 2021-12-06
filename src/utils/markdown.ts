@@ -5,6 +5,8 @@ renderer.link = (href, title, text) => {
 }
 import DOMPurify from 'dompurify'
 
-export function toMarkdown (input: string) {
-  return DOMPurify.sanitize(marked(input, { renderer: renderer }), { ADD_ATTR: ['target'] })
+export function toMarkdown(input: string) {
+  return DOMPurify.sanitize(marked(input, { renderer: renderer }), {
+    ADD_ATTR: ['target'],
+  })
 }

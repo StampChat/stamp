@@ -13,11 +13,11 @@ import StatusFooter from '../components/StatusFooter.vue'
 
 export default {
   components: { StatusFooter },
-  data () {
+  data() {
     return {
       leftDrawer: true,
-      isBasic: true
+      isBasic: true,
     }
-  }
+  },
 }
 </script>

@@ -1,18 +1,9 @@
 <template>
   <q-layout view="hHr LpR lff">
     <q-header class="electron-only">
-      <q-bar
-        style="height: 23px"
-        class="q-electron-drag q-pr-xs"
-      >
+      <q-bar style="height: 23px" class="q-electron-drag q-pr-xs">
         <q-space />
-        <q-btn
-          dense
-          size="xs"
-          flat
-          icon="minimize"
-          @click="minimize"
-        />
+        <q-btn dense size="xs" flat icon="minimize" @click="minimize" />
         <q-btn
           dense
           size="xs"
@@ -20,13 +11,7 @@
           icon="crop_square"
           @click="toggleMaximize"
         />
-        <q-btn
-          dense
-          size="xs"
-          flat
-          icon="close"
-          @click="closeApp"
-        />
+        <q-btn dense size="xs" flat icon="close" @click="closeApp" />
       </q-bar>
     </q-header>
 
@@ -69,74 +54,74 @@ const compactMidpoint = (compactCutoff + compactWidth) / 2
 export default {
   components: {
     LeftDrawer,
-    ContactBookDialog
+    ContactBookDialog,
   },
-  data () {
+  data() {
     return {
       trueSplitterRatio: compactCutoff,
       myDrawerOpen: !!this.activeChatAddr,
       contactBookOpen: false,
       compact: false,
-      compactWidth
+      compactWidth,
     }
   },
   methods: {
     ...mapActions({
       vuexSetActiveChat: 'chats/setActiveChat',
       addDefaultContact: 'contacts/addDefaultContact',
-      refreshContacts: 'contacts/refreshContacts'
+      refreshContacts: 'contacts/refreshContacts',
     }),
     ...mapGetters({
       getRelayToken: 'relayClient/getToken',
       getSortedChatOrder: 'chats/getSortedChatOrder',
-      getDarkMode: 'appearance/getDarkMode'
+      getDarkMode: 'appearance/getDarkMode',
     }),
-    minimize () {
+    minimize() {
       if (process.env.MODE === 'electron') {
         window.myWindowAPI.minimize()
       }
     },
-    toggleMaximize () {
+    toggleMaximize() {
       if (process.env.MODE === 'electron') {
         window.myWindowAPI.toggleMaximize()
       }
     },
-    closeApp () {
+    closeApp() {
       if (process.env.MODE === 'electron') {
         window.myWindowAPI.close()
       }
     },
-    tweak (offset, viewportHeight) {
+    tweak(offset, viewportHeight) {
       const height = viewportHeight - offset + 'px'
       return { height, minHeight: height }
     },
-    toggleContactDrawerOpen () {
+    toggleContactDrawerOpen() {
       console.log('toggleContactDrawerOpen')
       this.contactDrawerOpen = !this.contactDrawerOpen
     },
-    toggleContactBookOpen () {
+    toggleContactBookOpen() {
       console.log('toggleContactBookOpen')
       this.contactBookOpen = !this.contactBookOpen
     },
-    toggleMyDrawerOpen () {
+    toggleMyDrawerOpen() {
       if (this.compact) {
         this.compact = false
         this.trueSplitterRatio = compactCutoff
       }
       this.myDrawerOpen = !this.myDrawerOpen
     },
-    shortcutKeyListener (e) {
+    shortcutKeyListener(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         this.toggleContactBookOpen()
       }
     },
-    contactClicked (newAddress) {
+    contactClicked(newAddress) {
       this.vuexSetActiveChat(newAddress)
       this.$router.push(`/chat/${newAddress}`).catch(() => {
         // Don't care. Probably duplicate route
       })
     },
-    setupConnections () {
+    setupConnections() {
       // Not currently setup. User needs to go through setup flow first
       if (!this.getRelayToken()) {
         return
@@ -172,19 +157,23 @@ export default {
             console.log(`Loading messages took ${t1 - t0}ms`)
             this.$status.loaded = true
           })
-          .catch((err) => {
+          .catch(err => {
             console.error(err)
             setTimeout(refreshMessages, 100)
           })
       }
       refreshMessages()
 
-      const handler = new KeyserverHandler({ wallet: this.$wallet, keyservers: keyservers, networkName })
+      const handler = new KeyserverHandler({
+        wallet: this.$wallet,
+        keyservers: keyservers,
+        networkName,
+      })
       // Update keyserver data if it doesn't exist.
       handler.getRelayUrl(this.$wallet.myAddress.toXAddress()).catch(() => {
         handler.updateKeyMetadata(
           this.$relayClient.url,
-          this.$wallet.identityPrivKey
+          this.$wallet.identityPrivKey,
         )
       })
 
@@ -195,9 +184,9 @@ export default {
           .updateProfile(
             this.$wallet.identityPrivKey,
             relayData.profile,
-            relayData.inbox.acceptancePrice
+            relayData.inbox.acceptancePrice,
           )
-          .catch((err) => {
+          .catch(err => {
             console.error(err)
             // TODO: Move specialization down error displayer
             if (err.response.status === 413) {
@@ -210,14 +199,14 @@ export default {
           })
       })
       this.$q.loading.hide()
-    }
+    },
   },
   computed: {
     ...mapState('chats', ['chats', 'activeChatAddr']),
     ...mapGetters({
       lastReceived: 'chats/getLastReceived',
       totalUnread: 'chats/totalUnread',
-      getRelayData: 'myProfile/getRelayData'
+      getRelayData: 'myProfile/getRelayData',
     }),
     splitterRatio: {
       get: function () {
@@ -239,23 +228,23 @@ export default {
             this.compact = false
           }
         })
-      }, 100)
-    }
+      }, 100),
+    },
   },
-  created () {
+  created() {
     this.$q.dark.set(this.getDarkMode())
     this.setupConnections()
   },
-  mounted () {
+  mounted() {
     document.addEventListener('keydown', this.shortcutKeyListener)
   },
-  beforeUnmount () {
+  beforeUnmount() {
     document.removeEventListener('keydown', this.shortcutKeyListener)
   },
   watch: {
     totalUnread: function (unread) {
       this.updateBadge(unread)
-    }
-  }
+    },
+  },
 }
 </script>

@@ -24,7 +24,7 @@
 
 ### Requirements
 
-* [Quasar](https://quasar.dev/start/pick-quasar-flavour)
+- [Quasar](https://quasar.dev/start/pick-quasar-flavour)
 
 ### Cloning the Source
 
@@ -54,12 +54,11 @@ Your binary will be located in `/dist/electron/Packaged/` folder.
 
 You may cross-platform compile to the following targets:
 
-* `darwin`
-* `mac`
-* `win32`
-* `win`
-* `linux`
-
+- `darwin`
+- `mac`
+- `win32`
+- `win`
+- `linux`
 
 ```bash
 yarn install
@@ -85,15 +84,16 @@ quasar build -m capacitor -T android
 ```bash
 quasar build -m capacitor -T ios
 ```
+
 In order to remote debugging on real ios device, the devtools option in quasar.conf.js should not be 'source-map'. Instead try 'eval-source-map'
 The root cause is that the Safari web inspector disconnects/crashes when the size of any files are too large.
 
 ### Updating the generated protobuf files:
 
-If the protobuf files need to change due to the addition of a new entry type, or some addition, the following commands will allow for the regeneration of these files. 
+If the protobuf files need to change due to the addition of a new entry type, or some addition, the following commands will allow for the regeneration of these files.
 Please check them into the repo after they have been generated.
 
-* [Protobuf compiler](https://github.com/protocolbuffers/protobuf)
+- [Protobuf compiler](https://github.com/protocolbuffers/protobuf)
 
 ```bash
 git submodule update --init --recursive

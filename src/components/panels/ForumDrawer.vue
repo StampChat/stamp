@@ -1,8 +1,6 @@
 <template>
   <div class="column full-height">
-    <q-scroll-area
-      class="col"
-    >
+    <q-scroll-area class="col">
       <q-list>
         <q-item>
           <q-input
@@ -74,36 +72,38 @@ import { mapActions, mapGetters, mapMutations } from 'vuex'
 
 import { sortModes } from '../../utils/sorting'
 
-const DURATIONS = [{ label: '1 Day', value: 1000 * 60 * 60 * 24 * 1 }, { label: '1 Week', value: 1000 * 60 * 60 * 24 * 7 }]
+const DURATIONS = [
+  { label: '1 Day', value: 1000 * 60 * 60 * 24 * 1 },
+  { label: '1 Week', value: 1000 * 60 * 60 * 24 * 7 },
+]
 
 export default defineComponent({
-  components: {
-  },
-  data () {
+  components: {},
+  data() {
     return {
       contactBookOpen: false,
       sortModes: sortModes,
-      durations: DURATIONS
+      durations: DURATIONS,
     }
   },
   methods: {
     ...mapActions({
-      refreshMessages: 'forum/refreshMessages'
+      refreshMessages: 'forum/refreshMessages',
     }),
     ...mapMutations({
       setSelectedTopic: 'forum/setSelectedTopic',
       setSortMode: 'forum/setSortMode',
       setDuration: 'forum/setDuration',
       setVoteThreshold: 'forum/setVoteThreshold',
-      setCompactView: 'forum/setCompactView'
+      setCompactView: 'forum/setCompactView',
     }),
-    refreshContent () {
+    refreshContent() {
       this.refreshMessages({ wallet: this.$wallet, topic: this.selectedTopic })
     },
-    setTopic (text: string) {
+    setTopic(text: string) {
       this.selectedTopic = text
       this.refreshContent()
-    }
+    },
   },
   computed: {
     ...mapGetters({
@@ -112,53 +112,52 @@ export default defineComponent({
       getSortMode: 'forum/getSortMode',
       getDuration: 'forum/getDuration',
       getVoteThreshold: 'forum/getVoteThreshold',
-      getCompactView: 'forum/getCompactView'
-
+      getCompactView: 'forum/getCompactView',
     }),
     sortMode: {
-      set (newVal?: string) {
+      set(newVal?: string) {
         this.setSortMode(newVal ?? 'hot')
       },
-      get (): string {
+      get(): string {
         return this.getSortMode
-      }
+      },
     },
     selectedTopic: {
-      set (newVal?: string) {
+      set(newVal?: string) {
         this.setSelectedTopic(newVal ?? '')
       },
-      get (): string {
+      get(): string {
         return this.getSelectedTopic
-      }
+      },
     },
     duration: {
-      set (newVal?: {label: string, value: number}) {
+      set(newVal?: { label: string; value: number }) {
         console.log(newVal)
         this.setDuration(newVal?.value ?? '')
         this.refreshContent()
       },
-      get (): {label: string, value: number} | undefined {
-        return DURATIONS.find((duration) => duration.value === this.getDuration)
-      }
+      get(): { label: string; value: number } | undefined {
+        return DURATIONS.find(duration => duration.value === this.getDuration)
+      },
     },
     compactView: {
-      set (newVal?: boolean) {
+      set(newVal?: boolean) {
         this.setCompactView(newVal)
       },
-      get (): boolean {
+      get(): boolean {
         return this.getCompactView
-      }
+      },
     },
     threshold: {
-      set (newVal?: string) {
+      set(newVal?: string) {
         const threshold = Number.parseFloat(newVal ?? '0')
         const newThreshold = Number.isNaN(threshold) ? 0 : threshold
         this.setVoteThreshold(newThreshold)
       },
-      get (): string {
+      get(): string {
         return this.getVoteThreshold
-      }
-    }
-  }
+      },
+    },
+  },
 })
 </script>

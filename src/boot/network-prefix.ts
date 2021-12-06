@@ -6,7 +6,7 @@ export default boot(() => {
   const dnsSeeds = [
     'seed.bitcoinabc.org',
     'seeder.jasonbcox.com',
-    'seed.deadalnix.me'
+    'seed.deadalnix.me',
   ]
 
   const liveNetwork = {
@@ -20,7 +20,7 @@ export default boot(() => {
     xprivkey: 0x0488ade4,
     networkMagic: 0xe3e1f3e8,
     port: 8333,
-    dnsSeeds: dnsSeeds
+    dnsSeeds: dnsSeeds,
   }
 
   // TODO: we need to clean this up.
@@ -35,7 +35,7 @@ export default boot(() => {
     xprivkey: 0x04358394,
     networkMagic: 0xf4e5f3f4,
     port: 18333,
-    dnsSeeds: dnsSeeds
+    dnsSeeds: dnsSeeds,
   }
 
   Networks.add(testNetwork)

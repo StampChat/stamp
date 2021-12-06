@@ -8,14 +8,8 @@
   >
     <q-item-section avatar>
       <q-avatar rounded>
-        <img
-          src="~assets/stamp-icon.png"
-          v-if="!icon"
-        >
-        <q-icon
-          :name="icon"
-          v-if="icon"
-        />
+        <img src="~assets/stamp-icon.png" v-if="!icon" />
+        <q-icon :name="icon" v-if="icon" />
       </q-avatar>
     </q-item-section>
     <q-item-section>
@@ -25,35 +19,34 @@
 </template>
 
 <script>
-
 export default {
   methods: {
-    setRoute () {
+    setRoute() {
       this.$router.push(this.route).catch(() => {
         // Don't care. Probably duplicate route
       })
-    }
+    },
   },
   computed: {
-    isActive () {
+    isActive() {
       return this.$route.path === this.route
-    }
+    },
   },
   props: {
     title: {
       type: String,
-      required: true
+      required: true,
     },
     route: {
       type: String,
-      required: true
+      required: true,
     },
     icon: {
       type: String,
       required: false,
-      default: () => null
-    }
-  }
+      default: () => null,
+    },
+  },
 }
 </script>
 <style lang="scss" scoped>

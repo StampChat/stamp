@@ -5,31 +5,14 @@
       <relay-connect-dialog />
     </q-dialog>
 
-    <q-tabs
-      v-model="tab"
-      v-if="$status.setup"
-    >
-      <q-tab
-        v-if="$status.setup"
-        name="settings"
-        icon="settings"
-      />
-      <q-tab
-        name="contacts"
-        icon="contacts"
-      />
+    <q-tabs v-model="tab" v-if="$status.setup">
+      <q-tab v-if="$status.setup" name="settings" icon="settings" />
+      <q-tab name="contacts" icon="contacts" />
     </q-tabs>
 
-    <settings-panel
-      v-if="$status.setup"
-      v-show="tab=='settings'"
-    />
+    <settings-panel v-if="$status.setup" v-show="tab == 'settings'" />
 
-    <chat-list
-      v-show="tab=='contacts'"
-      v-bind="$attrs"
-      :compact="false"
-    />
+    <chat-list v-show="tab == 'contacts'" v-bind="$attrs" :compact="false" />
 
     <q-list v-if="$status.setup">
       <q-separator />
@@ -40,29 +23,16 @@
             {{ formattedBalance }}
           </q-item-label>
         </q-item-section>
-        <q-item-section
-          v-if="!walletConnected"
-          side
-        >
-          <q-btn
-            icon="account_balance_wallet"
-            flat
-            round
-            color="red"
-          />
+        <q-item-section v-if="!walletConnected" side>
+          <q-btn icon="account_balance_wallet" flat round color="red" />
         </q-item-section>
         <q-item-section
           v-if="!relayConnected"
           side
           clickable
-          @click="relayConnectOpen=true"
+          @click="relayConnectOpen = true"
         >
-          <q-btn
-            icon="email"
-            flat
-            round
-            color="red"
-          />
+          <q-btn icon="email" flat round color="red" />
         </q-item-section>
       </q-item>
     </q-list>
@@ -84,9 +54,9 @@ export default {
   components: {
     ChatList,
     SettingsPanel,
-    RelayConnectDialog
+    RelayConnectDialog,
   },
-  data () {
+  data() {
     return {
       tab: 'contacts',
       // My Drawer
@@ -94,44 +64,44 @@ export default {
       relayConnectOpen: false,
       newContactOpen: false,
       //
-      trueSplitterRatio: compactCutoff
+      trueSplitterRatio: compactCutoff,
     }
   },
   methods: {
     ...mapActions({
       setActiveChat: 'chats/setActiveChat',
-      addDefaultContact: 'contacts/addDefaultContact'
+      addDefaultContact: 'contacts/addDefaultContact',
     }),
     ...mapGetters({
-      getDarkMode: 'appearance/getDarkMode'
+      getDarkMode: 'appearance/getDarkMode',
     }),
-    tweak (offset, viewportHeight) {
+    tweak(offset, viewportHeight) {
       const height = viewportHeight - offset + 'px'
       return { height, minHeight: height }
     },
-    toggleContactBookOpen () {
+    toggleContactBookOpen() {
       this.contactBookOpen = !this.contactBookOpen
     },
-    toggleMyDrawerOpen () {
+    toggleMyDrawerOpen() {
       if (this.compact) {
         this.compact = false
         this.trueSplitterRatio = compactCutoff
       }
       this.myDrawerOpen = !this.myDrawerOpen
     },
-    shortcutKeyListener (e) {
+    shortcutKeyListener(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         this.toggleContactBookOpen()
       }
     },
-    contactClicked (address) {
+    contactClicked(address) {
       this.contactBookOpen = false
 
       return this.setActiveChat(address)
     },
-    receiveECash () {
+    receiveECash() {
       openPage(this.$router, this.$route.path, '/receive')
-    }
+    },
   },
   computed: {
     ...mapState('chats', ['chats', 'activeChatAddr']),
@@ -142,20 +112,20 @@ export default {
       getRelayData: 'myProfile/getRelayData',
       getSortedChatOrder: 'chats/getSortedChatOrder',
       getNumUnread: 'chats/getNumUnread',
-      balance: 'wallet/balance'
+      balance: 'wallet/balance',
     }),
-    relayConnected () {
+    relayConnected() {
       return this.$relay.connected
     },
-    walletConnected () {
+    walletConnected() {
       return this.$electrum.connected
     },
-    formattedBalance () {
+    formattedBalance() {
       if (!this.balance) {
         return
       }
       return formatBalance(this.balance)
-    }
-  }
+    },
+  },
 }
 </script>

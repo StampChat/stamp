@@ -48,16 +48,15 @@ import { sentTransactionNotify, errorNotify } from '../utils/notifications'
 import { displayNetwork, networkName } from '../utils/constants'
 
 export default {
-  components: {
-  },
-  data () {
+  components: {},
+  data() {
     return {
       address: '',
-      amount: null
+      amount: null,
     }
   },
   computed: {
-    isValid () {
+    isValid() {
       if (!this.amount) {
         return false
       }
@@ -70,13 +69,16 @@ export default {
         }
       }
       return false
-    }
+    },
   },
   methods: {
-    async send () {
+    async send() {
       try {
         const satoshiAmount = Number(this.amount * 1000000)
-        await this.$relayClient.sendToPubKeyHash({ address: this.address, amount: satoshiAmount })
+        await this.$relayClient.sendToPubKeyHash({
+          address: this.address,
+          amount: satoshiAmount,
+        })
         sentTransactionNotify()
       } catch (err) {
         console.error(err)
@@ -86,12 +88,12 @@ export default {
         window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
       }
     },
-    cancel () {
+    cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
-    }
+    },
   },
-  mounted () {
+  mounted() {
     this.$refs.address.$el.focus()
-  }
+  },
 }
 </script>

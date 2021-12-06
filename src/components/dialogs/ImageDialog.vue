@@ -5,10 +5,7 @@
     @mouseenter="showBtn = true"
     @mouseleave="showBtn = false"
   >
-    <div
-      v-if="showBtn"
-      class="absolute-bottom all-pointer-events"
-    >
+    <div v-if="showBtn" class="absolute-bottom all-pointer-events">
       <q-btn
         size="md"
         class="float-right"
@@ -25,13 +22,13 @@ export default {
   props: {
     image: {
       type: String,
-      default: () => ''
+      default: () => '',
+    },
+  },
+  data() {
+    return {
+      showBtn: false,
     }
   },
-  data () {
-    return {
-      showBtn: false
-    }
-  }
 }
 </script>

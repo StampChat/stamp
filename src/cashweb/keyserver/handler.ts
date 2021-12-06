@@ -2,9 +2,21 @@ import axios from 'axios'
 import assert from 'assert'
 
 import { Entry, AddressMetadata } from './keyserver_pb'
-import { AuthWrapper, AuthWrapperSet, BurnOutputs } from '../auth_wrapper/wrapper_pb'
+import {
+  AuthWrapper,
+  AuthWrapperSet,
+  BurnOutputs,
+} from '../auth_wrapper/wrapper_pb'
 import pop from '../pop'
-import { crypto, Address, Networks, PrivateKey, Transaction, Script, PublicKey } from 'bitcore-lib-xpi'
+import {
+  crypto,
+  Address,
+  Networks,
+  PrivateKey,
+  Transaction,
+  Script,
+  PublicKey,
+} from 'bitcore-lib-xpi'
 import { Wallet } from '../wallet'
 import { Outpoint } from '../types/outpoint'
 import { calcId } from '../wallet/helpers'
@@ -12,17 +24,25 @@ import { Opcode } from 'app/local_modules/bitcore-lib-xpi'
 import { BroadcastEntry, BroadcastMessage, ForumPost } from './broadcast_pb'
 import { ForumMessage, ForumMessageEntry } from '../types/forum'
 
-function calculateBurnAmount (burnOutputs: BurnOutputs[]) {
+function calculateBurnAmount(burnOutputs: BurnOutputs[]) {
   return burnOutputs.reduce((total, burn) => {
     // TODO: Validate format
     const index = burn.getIndex()
     const tx = burn.getTx()
-    assert(typeof tx !== 'string', 'Tx returned as string from protobuf library')
+    assert(
+      typeof tx !== 'string',
+      'Tx returned as string from protobuf library',
+    )
     const parsedTx = new Transaction(Buffer.from(tx))
     const output = parsedTx.outputs[index]
     const script = new Uint8Array(output.script.toBuffer())
     const isDownVote = script[6] === Opcode.map.OP_0
-    return total + (isDownVote ? -parsedTx.outputs[index].satoshis : parsedTx.outputs[index].satoshis)
+    return (
+      total +
+      (isDownVote
+        ? -parsedTx.outputs[index].satoshis
+        : parsedTx.outputs[index].satoshis)
+    )
   }, 0)
 }
 
@@ -32,8 +52,21 @@ export class KeyserverHandler {
   defaultSampleSize: number
   wallet?: Wallet
 
-  constructor ({ wallet, defaultSampleSize = 3, keyservers, networkName }: { wallet?: Wallet, defaultSampleSize?: number, keyservers: string[], networkName: string }) {
-    assert(networkName, 'Missing networkName while initializing KeyserverHandler')
+  constructor({
+    wallet,
+    defaultSampleSize = 3,
+    keyservers,
+    networkName,
+  }: {
+    wallet?: Wallet
+    defaultSampleSize?: number
+    keyservers: string[]
+    networkName: string
+  }) {
+    assert(
+      networkName,
+      'Missing networkName while initializing KeyserverHandler',
+    )
     assert(keyservers, 'Missing keyservers while initializing KeyserverHandler')
     this.keyservers = keyservers
     this.networkName = networkName
@@ -41,11 +74,14 @@ export class KeyserverHandler {
     this.wallet = wallet
   }
 
-  toAPIAddressString (address: string) {
-    return new Address(new Address(address).hashBuffer, Networks.get(this.networkName, undefined)).toCashAddress()
+  toAPIAddressString(address: string) {
+    return new Address(
+      new Address(address).hashBuffer,
+      Networks.get(this.networkName, undefined),
+    ).toCashAddress()
   }
 
-  constructRelayUrlMetadata (relayUrl: string, privKey: PrivateKey) {
+  constructRelayUrlMetadata(relayUrl: string, privKey: PrivateKey) {
     const relayUrlEntry = new Entry()
     relayUrlEntry.setKind('relay-server')
     const rawRelayUrl = new TextEncoder().encode(relayUrl)
@@ -71,52 +107,57 @@ export class KeyserverHandler {
     return authWrapper
   }
 
-  async fetchMetadata (keyserver: string, address: string) {
+  async fetchMetadata(keyserver: string, address: string) {
     const legacyAddress = this.toAPIAddressString(address)
     const url = `${keyserver}/keys/${legacyAddress}`
-    const response = await axios(
-      {
-        method: 'get',
-        url: url,
-        responseType: 'arraybuffer'
-      }
-    )
+    const response = await axios({
+      method: 'get',
+      url: url,
+      responseType: 'arraybuffer',
+    })
     if (response.status === 200) {
       const metadata = AuthWrapper.deserializeBinary(response.data)
       return metadata
     }
   }
 
-  chooseServer () {
+  chooseServer() {
     // TODO: Sample correctly
     return this.keyservers[0]
   }
 
-  async paymentRequest (serverUrl: string, address: string, truncatedAuthWrapper: AuthWrapper) {
+  async paymentRequest(
+    serverUrl: string,
+    address: string,
+    truncatedAuthWrapper: AuthWrapper,
+  ) {
     const legacyAddress = this.toAPIAddressString(address)
     const rawAuthWrapper = truncatedAuthWrapper.serializeBinary()
     const url = `${serverUrl}/keys/${legacyAddress}`
     return pop.getPaymentRequest(url, 'put', rawAuthWrapper)
   }
 
-  async _uniformSample (address: string) {
+  async _uniformSample(address: string) {
     // TODO: Sample correctly
     const server = this.chooseServer()
     return this.fetchMetadata(server, address)
   }
 
-  async getRelayUrl (address: string) {
+  async getRelayUrl(address: string) {
     const legacyAddress = this.toAPIAddressString(address)
 
     // Get metadata
     const metadata = await this._uniformSample(legacyAddress)
     assert(metadata, 'Missing metadata from keyserver')
     const rawAddressMetadata = metadata.getPayload()
-    assert(typeof rawAddressMetadata !== 'string', 'rawAddressMetadata is a string?')
+    assert(
+      typeof rawAddressMetadata !== 'string',
+      'rawAddressMetadata is a string?',
+    )
     const payload = AddressMetadata.deserializeBinary(rawAddressMetadata)
 
     // Find vCard
-    function isRelay (entry: Entry) {
+    function isRelay(entry: Entry) {
       return entry.getKind() === 'relay-server'
     }
     const entryList = payload.getEntriesList()
@@ -130,20 +171,25 @@ export class KeyserverHandler {
     return relayUrl
   }
 
-  async putMetadata (address: string, server: string, metadata: AuthWrapper, token: string) {
+  async putMetadata(
+    address: string,
+    server: string,
+    metadata: AuthWrapper,
+    token: string,
+  ) {
     const rawMetadata = metadata.serializeBinary()
     const url = `${server}/keys/${address}`
     await axios({
       method: 'put',
       url: url,
       headers: {
-        Authorization: token
+        Authorization: token,
       },
-      data: rawMetadata
+      data: rawMetadata,
     })
   }
 
-  async updateKeyMetadata (relayUrl: string, idPrivKey: PrivateKey) {
+  async updateKeyMetadata(relayUrl: string, idPrivKey: PrivateKey) {
     assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
     const idAddress = idPrivKey.toAddress(this.networkName).toCashAddress()
     // Construct metadata
@@ -162,19 +208,28 @@ export class KeyserverHandler {
     const payloadBuf = payloadDigest.buffer
     truncatedAuthWrapper.setPayloadDigest(new Uint8Array(payloadBuf))
 
-    const { paymentDetails } = await this.paymentRequest(serverUrl, idAddress, truncatedAuthWrapper) ?? { paymentDetails: undefined }
+    const { paymentDetails } = (await this.paymentRequest(
+      serverUrl,
+      idAddress,
+      truncatedAuthWrapper,
+    )) ?? { paymentDetails: undefined }
     assert(paymentDetails, 'Missing payment details')
     // Construct payment
-    const { paymentUrl, payment, usedUtxos } = await pop.constructPaymentTransaction(this.wallet, paymentDetails)
+    const { paymentUrl, payment, usedUtxos } =
+      await pop.constructPaymentTransaction(this.wallet, paymentDetails)
 
     const paymentUrlFull = new URL(paymentUrl, serverUrl)
     const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
-    await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
+    await Promise.all(
+      usedUtxos.map((id: Outpoint) =>
+        this.wallet?.storage.deleteOutpoint(calcId(id)),
+      ),
+    )
 
     await this.putMetadata(idAddress, serverUrl, authWrapper, token)
   }
 
-  private constructBurnTransaction (wallet: Wallet, hash: Buffer, vote: number) {
+  private constructBurnTransaction(wallet: Wallet, hash: Buffer, vote: number) {
     const upvote = vote > 0
     const satoshis = vote < 0 ? -vote : vote
 
@@ -187,18 +242,24 @@ export class KeyserverHandler {
 
     const output = new Transaction.Output({
       script,
-      satoshis
+      satoshis,
     })
     return wallet.constructTransaction({ outputs: [output] })
   }
 
-  async createBroadcast (topic: string, entries: ForumMessageEntry[], vote: number, parentDigest?: string) {
+  async createBroadcast(
+    topic: string,
+    entries: ForumMessageEntry[],
+    vote: number,
+    parentDigest?: string,
+  ) {
     assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
 
     const broadcastMessage = new BroadcastMessage()
     broadcastMessage.setTopic(topic)
     broadcastMessage.setTimestamp(Date.now())
-    parentDigest && broadcastMessage.setParentDigest(Buffer.from(parentDigest, 'hex'))
+    parentDigest &&
+      broadcastMessage.setParentDigest(Buffer.from(parentDigest, 'hex'))
 
     // Construct payload
     const protoEntries: BroadcastEntry[] = []
@@ -220,7 +281,8 @@ export class KeyserverHandler {
 
     const serializedMessage = broadcastMessage.serializeBinary()
     const payloadDigest = crypto.Hash.sha256(Buffer.from(serializedMessage))
-    const { transaction: burnTransaction, usedUtxos } = this.constructBurnTransaction(this.wallet, payloadDigest, vote)
+    const { transaction: burnTransaction, usedUtxos } =
+      this.constructBurnTransaction(this.wallet, payloadDigest, vote)
 
     const burnOutput = new BurnOutputs()
     burnOutput.setTx(burnTransaction.toBuffer())
@@ -249,9 +311,13 @@ export class KeyserverHandler {
       await axios({
         method: 'put',
         url: url,
-        data: authWrapper.serializeBinary()
+        data: authWrapper.serializeBinary(),
       })
-      await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
+      await Promise.all(
+        usedUtxos.map((id: Outpoint) =>
+          this.wallet?.storage.deleteOutpoint(calcId(id)),
+        ),
+      )
     } catch (err) {
       await Promise.all(usedUtxos.map(utxo => this.wallet?.fixOutpoint(utxo)))
       throw err
@@ -259,13 +325,14 @@ export class KeyserverHandler {
     return payloadDigest.toString('hex')
   }
 
-  async addOfferings (payloadDigest: string, vote: number) {
+  async addOfferings(payloadDigest: string, vote: number) {
     // Topic should not be required, but it is a sanity check on the backend to
     // make sure the vote and the post have the same information.
     assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
 
     const payloadDigestBinary = Buffer.from(payloadDigest, 'hex')
-    const { transaction: burnTransaction, usedUtxos } = this.constructBurnTransaction(this.wallet, payloadDigestBinary, vote)
+    const { transaction: burnTransaction, usedUtxos } =
+      this.constructBurnTransaction(this.wallet, payloadDigestBinary, vote)
 
     const burnOutput = new BurnOutputs()
     burnOutput.setTx(burnTransaction.toBuffer())
@@ -292,24 +359,35 @@ export class KeyserverHandler {
     await axios({
       method: 'put',
       url: url,
-      data: authWrapper.serializeBinary()
+      data: authWrapper.serializeBinary(),
     })
-    await Promise.all(usedUtxos.map((id: Outpoint) => this.wallet?.storage.deleteOutpoint(calcId(id))))
+    await Promise.all(
+      usedUtxos.map((id: Outpoint) =>
+        this.wallet?.storage.deleteOutpoint(calcId(id)),
+      ),
+    )
   }
 
-  parseWrapper (wrapper: AuthWrapper) {
+  parseWrapper(wrapper: AuthWrapper) {
     const payload = wrapper.getPayload()
     assert(typeof payload !== 'string', 'payload type should not be a string')
     const message = BroadcastMessage.deserializeBinary(payload)
     const pubKey = Buffer.from(wrapper.getPublicKey())
-    const address = PublicKey.fromBuffer(pubKey).toAddress(this.networkName).toXAddress()
+    const address = PublicKey.fromBuffer(pubKey)
+      .toAddress(this.networkName)
+      .toXAddress()
     const entries = message.getEntriesList()
     const parsedEntries: ForumMessageEntry[] = []
     const satoshisBurned = calculateBurnAmount(wrapper.getTransactionsList())
     assert(satoshisBurned === wrapper.getBurnAmount())
-    const payloadDigest = crypto.Hash.sha256(Buffer.from(payload)).toString('hex')
+    const payloadDigest = crypto.Hash.sha256(Buffer.from(payload)).toString(
+      'hex',
+    )
     const parentDigestBinary = message.getParentDigest()
-    assert(typeof parentDigestBinary !== 'string' || parentDigestBinary.length === 0, 'post.getParentDigest() returned a string incorrectly')
+    assert(
+      typeof parentDigestBinary !== 'string' || parentDigestBinary.length === 0,
+      'post.getParentDigest() returned a string incorrectly',
+    )
     const timestamp = message.getTimestamp()
     const parsedMessage: ForumMessage = {
       poster: address,
@@ -318,7 +396,7 @@ export class KeyserverHandler {
       entries: parsedEntries,
       payloadDigest,
       parentDigest: Buffer.from(parentDigestBinary).toString('hex'),
-      timestamp: new Date(timestamp)
+      timestamp: new Date(timestamp),
     }
     for (const entry of entries) {
       const kind = entry.getKind()
@@ -334,7 +412,7 @@ export class KeyserverHandler {
           kind: 'post',
           title: post.getTitle(),
           url: post.getUrl(),
-          message: post.getMessage()
+          message: post.getMessage(),
         })
         continue
       }
@@ -342,22 +420,20 @@ export class KeyserverHandler {
     return parsedMessage
   }
 
-  async getBroadcastMessages (topic: string, from?: number, to?: number) {
+  async getBroadcastMessages(topic: string, from?: number, to?: number) {
     const server = this.chooseServer()
     const url = `${server}/messages`
-    const response = await axios(
-      {
-        method: 'get',
-        url: url,
-        params: {
-          // Defaults to 1 day
-          from: from ?? Date.now() - 1000 * 60 * 60 * 24,
-          to: to ?? Date.now(),
-          topic
-        },
-        responseType: 'arraybuffer'
-      }
-    )
+    const response = await axios({
+      method: 'get',
+      url: url,
+      params: {
+        // Defaults to 1 day
+        from: from ?? Date.now() - 1000 * 60 * 60 * 24,
+        to: to ?? Date.now(),
+        topic,
+      },
+      responseType: 'arraybuffer',
+    })
     if (response.status !== 200) {
       return
     }
@@ -374,16 +450,14 @@ export class KeyserverHandler {
     return messages
   }
 
-  async getBroadcastMessage (payloadDigest: string) {
+  async getBroadcastMessage(payloadDigest: string) {
     const server = this.chooseServer()
     const url = `${server}/messages/${payloadDigest}`
-    const response = await axios(
-      {
-        method: 'get',
-        url: url,
-        responseType: 'arraybuffer'
-      }
-    )
+    const response = await axios({
+      method: 'get',
+      url: url,
+      responseType: 'arraybuffer',
+    })
     if (response.status !== 200) {
       return
     }

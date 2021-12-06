@@ -11,7 +11,11 @@
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
       <contact-book-dialog
-        :contact-click="function (address, contact) { return setActiveChat(address) }"
+        :contact-click="
+          function (address, contact) {
+            return setActiveChat(address)
+          }
+        "
         @close-contact-search-dialog="closeContactSearchDialog"
       />
     </q-dialog>
@@ -20,22 +24,14 @@
     <!-- Drawer -->
     <q-scroll-area class="col">
       <q-list>
-        <q-item
-          clickable
-          v-ripple
-          @click="newContact"
-        >
+        <q-item clickable v-ripple @click="newContact">
           <q-item-section avatar>
             <q-icon name="add_comment" />
           </q-item-section>
 
           <q-item-section>{{ $t('SettingPanel.newContact') }}</q-item-section>
         </q-item>
-        <q-item
-          clickable
-          v-ripple
-          @click="contactBookOpen = true"
-        >
+        <q-item clickable v-ripple @click="contactBookOpen = true">
           <q-item-section avatar>
             <q-icon name="contacts" />
           </q-item-section>
@@ -45,37 +41,29 @@
 
         <q-separator />
 
-        <q-item
-          clickable
-          v-ripple
-          @click="sendECash"
-        >
+        <q-item clickable v-ripple @click="sendECash">
           <q-item-section avatar>
             <q-icon name="send" />
           </q-item-section>
 
-          <q-item-section>{{ $t('SettingPanel.sendBitcoinCash') }}</q-item-section>
+          <q-item-section>{{
+            $t('SettingPanel.sendBitcoinCash')
+          }}</q-item-section>
         </q-item>
 
-        <q-item
-          clickable
-          v-ripple
-          @click="receiveECash"
-        >
+        <q-item clickable v-ripple @click="receiveECash">
           <q-item-section avatar>
             <q-icon name="account_balance_wallet" />
           </q-item-section>
 
-          <q-item-section>{{ $t('SettingPanel.recieveBitcoinCash') }}</q-item-section>
+          <q-item-section>{{
+            $t('SettingPanel.recieveBitcoinCash')
+          }}</q-item-section>
         </q-item>
 
         <q-separator />
 
-        <q-item
-          clickable
-          v-ripple
-          @click="openProfile"
-        >
+        <q-item clickable v-ripple @click="openProfile">
           <q-item-section avatar>
             <q-icon name="face" />
           </q-item-section>
@@ -83,11 +71,7 @@
           <q-item-section>{{ $t('SettingPanel.profile') }}</q-item-section>
         </q-item>
 
-        <q-item
-          clickable
-          v-ripple
-          @click="openSettings"
-        >
+        <q-item clickable v-ripple @click="openSettings">
           <q-item-section avatar>
             <q-icon name="tune" />
           </q-item-section>
@@ -96,11 +80,7 @@
         </q-item>
         <q-separator />
 
-        <q-item
-          clickable
-          v-ripple
-          @click="deleteForever"
-        >
+        <q-item clickable v-ripple @click="deleteForever">
           <q-item-section avatar>
             <q-icon name="delete_forever" />
           </q-item-section>
@@ -111,9 +91,11 @@
         <q-item
           clickable
           v-ripple
-          @click="$router.push('/changelog').catch(() => {
-            // Don't care. Probably duplicate route
-          })"
+          @click="
+            $router.push('/changelog').catch(() => {
+              // Don't care. Probably duplicate route
+            })
+          "
         >
           <q-item-section avatar>
             <q-icon name="change_history" />
@@ -135,72 +117,72 @@ import { openPage } from '../../utils/routes'
 export default {
   components: {
     ContactCard,
-    ContactBookDialog
+    ContactBookDialog,
   },
-  data () {
+  data() {
     return {
-      contactBookOpen: false
+      contactBookOpen: false,
     }
   },
   emits: ['update:drawerOpen'],
   props: {
     drawerOpen: {
       type: Boolean,
-      default: () => false
-    }
+      default: () => false,
+    },
   },
   model: {
     prop: 'drawerOpen',
-    event: 'update:drawerOpen'
+    event: 'update:drawerOpen',
   },
   methods: {
     ...mapMutations({
-      deleteMessage: 'chats/deleteMessage'
+      deleteMessage: 'chats/deleteMessage',
     }),
     ...mapActions({
-      setActiveChat: 'chats/setActiveChat'
+      setActiveChat: 'chats/setActiveChat',
     }),
-    getIdentityPrivKey () {
+    getIdentityPrivKey() {
       return this.$wallet.identityPrivKey
     },
-    closeContactSearchDialog () {
+    closeContactSearchDialog() {
       this.contactBookOpen = false
     },
-    openSettings () {
+    openSettings() {
       openPage(this.$router, this.$route.path, '/settings')
     },
-    openProfile () {
+    openProfile() {
       openPage(this.$router, this.$route.path, '/profile')
     },
-    receiveECash () {
+    receiveECash() {
       openPage(this.$router, this.$route.path, '/receive')
     },
-    sendECash () {
+    sendECash() {
       openPage(this.$router, this.$route.path, '/send')
     },
-    newContact () {
+    newContact() {
       openPage(this.$router, this.$route.path, '/add-contact')
     },
-    deleteForever () {
+    deleteForever() {
       openPage(this.$router, this.$route.path, '/wipe-wallet')
-    }
+    },
   },
   computed: {
     ...mapGetters({
       getProfile: 'myProfile/getProfile',
-      getInbox: 'myProfile/getInbox'
+      getInbox: 'myProfile/getInbox',
     }),
-    getMyAddressStr () {
+    getMyAddressStr() {
       return this.$wallet.myAddress.toXAddress()
     },
     drawerOpenModel: {
-      get () {
+      get() {
         return this.drawerOpen
       },
-      set (value) {
+      set(value) {
         this.$emit('update:drawerOpen', value)
-      }
-    }
-  }
+      },
+    },
+  },
 }
 </script>

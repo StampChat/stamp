@@ -2,10 +2,7 @@
   <div class="row">
     <div class="col">
       <div class="stack-header row">
-        <div
-          class="q-px-md col text-weight-bold"
-          :style="nameColor"
-        >
+        <div class="q-px-md col text-weight-bold" :style="nameColor">
           {{ contact.name }}
         </div>
         <div class="col-auto">
@@ -40,43 +37,43 @@ import { formatBalance } from '../../../utils/formatting'
 
 export default {
   components: {
-    ChatMessage
+    ChatMessage,
   },
   props: {
     contact: {
       type: Object,
-      required: true
+      required: true,
     },
     address: {
       type: String,
-      required: true
+      required: true,
     },
     messages: {
       type: Array,
-      required: true
+      required: true,
     },
     nameColor: {
       type: String,
-      required: true
+      required: true,
     },
     globalIndex: {
       type: Number,
-      required: true
-    }
+      required: true,
+    },
   },
   emits: ['replyClicked'],
   methods: {
-    replyClicked (args) {
+    replyClicked(args) {
       this.$emit('replyClicked', args)
-    }
+    },
   },
   computed: {
-    lastMessage () {
+    lastMessage() {
       const nMessages = this.messages.length
       const lastMessage = this.messages[nMessages - 1]
       return lastMessage
     },
-    shortTimestamp () {
+    shortTimestamp() {
       const nMessages = this.messages.length
       const lastMessage = this.messages[nMessages - 1]
       switch (lastMessage.status) {
@@ -89,7 +86,7 @@ export default {
             nextWeek: 'dddd',
             lastDay: 'HH:mm:ss',
             lastWeek: '[Last] dddd',
-            sameElse: 'DD/MM/YYYY'
+            sameElse: 'DD/MM/YYYY',
           })
         }
         case 'pending':
@@ -99,16 +96,20 @@ export default {
       }
       return 'unknown'
     },
-    timestampString () {
-      const timestamp = this.lastMessage.timestamp || this.lastMessage.serverTime
+    timestampString() {
+      const timestamp =
+        this.lastMessage.timestamp || this.lastMessage.serverTime
       return moment(timestamp)
     },
-    stampAmount () {
+    stampAmount() {
       // TODO: Don't sum again inside the chat message?
-      const amount = this.messages.reduce((total, msg) => total + stampPrice(msg.outpoints), 0)
+      const amount = this.messages.reduce(
+        (total, msg) => total + stampPrice(msg.outpoints),
+        0,
+      )
       return formatBalance(amount)
-    }
-  }
+    },
+  },
 }
 </script>
 

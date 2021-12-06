@@ -19,20 +19,14 @@
     <q-card-section>
       <div class="row">
         <qrcode-vue
-          style="margin-left: auto; margin-right: auto;"
+          style="margin-left: auto; margin-right: auto"
           :value="displayAddress"
           :size="300"
           level="H"
         />
       </div>
       <div class="row">
-        <q-input
-          class="fit"
-          filled
-          auto-grow
-          v-model="displayAddress"
-          readonly
-        >
+        <q-input class="fit" filled auto-grow v-model="displayAddress" readonly>
           <template #after>
             <q-btn
               dense
@@ -53,10 +47,7 @@
       </div>
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn
-        color="warning"
-        @click="seedPhraseOpen = true"
-      >
+      <q-btn color="warning" @click="seedPhraseOpen = true">
         {{ $t('receiveBitcoinDialog.showSeed') }}
       </q-btn>
       <q-btn
@@ -78,44 +69,49 @@ import { copyToClipboard } from 'quasar'
 export default {
   components: {
     SeedPhraseDialog,
-    QrcodeVue
+    QrcodeVue,
   },
-  data () {
+  data() {
     return {
       seedPhraseOpen: false,
-      legacy: false
+      legacy: false,
     }
   },
   computed: {
     ...mapGetters({
-      balance: 'wallet/balance'
+      balance: 'wallet/balance',
     }),
-    formattedBalance () {
+    formattedBalance() {
       return formatBalance(this.balance)
     },
-    displayAddress () {
-      return this.legacy ? this.$wallet.myAddress.toXAddress() : this.$wallet.displayAddress
-    }
+    displayAddress() {
+      return this.legacy
+        ? this.$wallet.myAddress.toXAddress()
+        : this.$wallet.displayAddress
+    },
   },
   methods: {
-    toggleLegacy () {
+    toggleLegacy() {
       this.legacy = !this.legacy
     },
-    copyAddress () {
-      copyToClipboard(this.displayAddress).then(() => {
-        this.$q.notify({
-          message: `<div class="text-center">${this.$t('receiveBitcoinDialog.addressCopied')}</div>`,
-          html: true,
-          color: 'purple'
+    copyAddress() {
+      copyToClipboard(this.displayAddress)
+        .then(() => {
+          this.$q.notify({
+            message: `<div class="text-center">${this.$t(
+              'receiveBitcoinDialog.addressCopied',
+            )}</div>`,
+            html: true,
+            color: 'purple',
+          })
         })
-      })
         .catch(() => {
           // fail
         })
     },
-    close () {
+    close() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
-    }
-  }
+    },
+  },
 }
 </script>

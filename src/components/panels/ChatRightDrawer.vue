@@ -2,10 +2,7 @@
   <div class="column full-height">
     <!-- Send Lotus dialog -->
     <q-dialog v-model="sendBitcoinOpen">
-      <send-lotus-dialog
-        :address="address"
-        :contact="contact.profile"
-      />
+      <send-lotus-dialog :address="address" :contact="contact.profile" />
     </q-dialog>
 
     <!-- TODO: Renable these features at a later data. They don't work correctly, but were only for demo purposes. -->
@@ -28,7 +25,13 @@
  -->
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
-      <contact-book-dialog :contact-click="function (shareAddr, contact) { return shareContact({ currentAddr: address, shareAddr }) }" />
+      <contact-book-dialog
+        :contact-click="
+          function (shareAddr, contact) {
+            return shareContact({ currentAddr: address, shareAddr })
+          }
+        "
+      />
     </q-dialog>
 
     <!-- Contact card -->
@@ -46,9 +49,7 @@
           <q-item-section avatar>
             <q-icon name="post_add" />
           </q-item-section>
-          <q-item-section>
-            Stamp Price
-          </q-item-section>
+          <q-item-section> Stamp Price </q-item-section>
           <q-item-section>
             <q-input
               dense
@@ -59,17 +60,11 @@
             />
           </q-item-section>
         </q-item>
-        <q-item
-          clickable
-          v-ripple
-          @click="sendBitcoinOpen = true"
-        >
+        <q-item clickable v-ripple @click="sendBitcoinOpen = true">
           <q-item-section avatar>
             <q-icon name="attach_money" />
           </q-item-section>
-          <q-item-section>
-            Send Lotus
-          </q-item-section>
+          <q-item-section> Send Lotus </q-item-section>
         </q-item>
 
         <q-separator />
@@ -77,14 +72,12 @@
         <q-item
           clickable
           v-ripple
-          @click="() => notifications = !notifications"
+          @click="() => (notifications = !notifications)"
         >
           <q-item-section avatar>
             <q-icon name="notifications_none" />
           </q-item-section>
-          <q-item-section>
-            Notifications
-          </q-item-section>
+          <q-item-section> Notifications </q-item-section>
           <q-item-section side>
             <q-toggle v-model="notifications" />
           </q-item-section>
@@ -156,62 +149,65 @@ export default {
     // ClearHistoryDialog,
     // DeleteChatDialog,
     ContactBookDialog,
-    SendLotusDialog
+    SendLotusDialog,
   },
   props: {
     address: {
       type: String,
-      default: () => ''
+      default: () => '',
     },
     contact: {
       type: Object,
       default: () => ({
-        profile: { name: 'Unknown', avatar: '' }
-      })
-    }
+        profile: { name: 'Unknown', avatar: '' },
+      }),
+    },
   },
   methods: {
     ...mapActions({
       shareContact: 'chats/shareContact',
-      setStampAmount: 'chats/setStampAmount'
+      setStampAmount: 'chats/setStampAmount',
     }),
     ...mapMutations({
-      setNotify: 'contacts/setNotify'
-    })
+      setNotify: 'contacts/setNotify',
+    }),
   },
   computed: {
     ...mapGetters({
       getNotify: 'contacts/getNotify',
-      getStampAmount: 'chats/getStampAmount'
+      getStampAmount: 'chats/getStampAmount',
     }),
     notifications: {
-      get () {
+      get() {
         return this.getNotify(this.address)
       },
-      set (value) {
+      set(value) {
         this.setNotify({ address: this.address, value })
-      }
+      },
     },
     stampAmount: {
-      get () {
+      get() {
         return Number(this.getStampAmount(this.address) / 1000000).toFixed(2)
       },
-      set (amount) {
+      set(amount) {
         const amountNumber = Number(amount)
         if (isNaN(amountNumber)) {
           return
         }
-        this.setStampAmount({ address: this.address, stampAmount: Number(amountNumber) * 1000000 })
-      }
-    }
+        this.setStampAmount({
+          address: this.address,
+          stampAmount: Number(amountNumber) * 1000000,
+        })
+      },
+    },
   },
   data: function () {
     return {
       confirmClearOpen: false,
       confirmDeleteOpen: false,
       contactBookOpen: false,
-      sendBitcoinOpen: false
+      sendBitcoinOpen: false,
     }
-  }
+  },
 }
 </script>

@@ -1,27 +1,37 @@
 import { ForumMessage } from 'src/cashweb/types/forum'
 
 export const sortModes = <const>['hot', 'top', 'new']
-export type SortMode = typeof sortModes[number];
+export type SortMode = typeof sortModes[number]
 
-export function halfLife (satoshis: number, timestamp: Date, now: Date) {
-  const halvedAmount = satoshis * Math.pow(0.5, (now.valueOf() - timestamp.valueOf()) / (60 * 60 * 24 * 1000))
+export function halfLife(satoshis: number, timestamp: Date, now: Date) {
+  const halvedAmount =
+    satoshis *
+    Math.pow(0.5, (now.valueOf() - timestamp.valueOf()) / (60 * 60 * 24 * 1000))
   return halvedAmount
 }
 
-export function halfLifeSort (posts: ForumMessage[]) {
+export function halfLifeSort(posts: ForumMessage[]) {
   const now = new Date()
-  return posts.slice().sort((a, b) => halfLife(b.satoshis, b.timestamp, now) - halfLife(a.satoshis, a.timestamp, now))
+  return posts
+    .slice()
+    .sort(
+      (a, b) =>
+        halfLife(b.satoshis, b.timestamp, now) -
+        halfLife(a.satoshis, a.timestamp, now),
+    )
 }
 
-export function timeSort (posts: ForumMessage[]) {
-  return posts.slice().sort((a, b) => b.timestamp.valueOf() - a.timestamp.valueOf())
+export function timeSort(posts: ForumMessage[]) {
+  return posts
+    .slice()
+    .sort((a, b) => b.timestamp.valueOf() - a.timestamp.valueOf())
 }
 
-export function voteSort (posts: ForumMessage[]) {
+export function voteSort(posts: ForumMessage[]) {
   return posts.slice().sort((a, b) => b.satoshis - a.satoshis)
 }
 
-export function sortPostsByMode (posts: ForumMessage[], sortMode: SortMode) {
+export function sortPostsByMode(posts: ForumMessage[], sortMode: SortMode) {
   switch (sortMode) {
     case 'hot':
       return halfLifeSort(posts)

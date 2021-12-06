@@ -1,12 +1,6 @@
 <template>
-  <template
-    v-for="(message) in messages"
-    :key="message.payloadDigest"
-  >
-    <a-message
-      v-bind="$attrs"
-      :message="message"
-    />
+  <template v-for="message in messages" :key="message.payloadDigest">
+    <a-message v-bind="$attrs" :message="message" />
   </template>
 </template>
 
@@ -17,12 +11,14 @@ export default defineComponent({
   props: {
     messages: {
       default: undefined,
-      type: Object
-    }
+      type: Object,
+    },
   },
   components: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    AMessage: defineAsyncComponent(async () => import('./ForumMessage.vue') as any)
-  }
+    AMessage: defineAsyncComponent(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      async () => import('./ForumMessage.vue') as any,
+    ),
+  },
 })
 </script>

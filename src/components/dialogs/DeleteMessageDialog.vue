@@ -1,11 +1,7 @@
 <template>
   <q-card>
     <q-card-section class="row items-center">
-      <q-avatar
-        icon="delete"
-        color="red"
-        text-color="white"
-      />
+      <q-avatar icon="delete" color="red" text-color="white" />
       <span class="q-ml-sm">{{ $t('deleteMessageDialog.message') }}</span>
     </q-card-section>
 
@@ -33,36 +29,40 @@ export default {
   props: {
     address: {
       type: String,
-      required: true
+      required: true,
     },
     payloadDigest: {
       type: String,
-      required: true
+      required: true,
     },
     index: {
       type: Number,
-      required: true
-    }
+      required: true,
+    },
   },
   methods: {
     ...mapMutations({
-      deleteMessage: 'chats/deleteMessage'
+      deleteMessage: 'chats/deleteMessage',
     }),
-    async deleteMessageBoth () {
+    async deleteMessageBoth() {
       // TODO: Move this into wallet API
       // TODO: More private
       // Delete message from relay server
       try {
         await this.$relayClient.deleteMessage(this.payloadDigest)
         // Delete message from relay server
-        this.deleteMessage({ address: this.address, payloadDigest: this.payloadDigest, index: this.index })
+        this.deleteMessage({
+          address: this.address,
+          payloadDigest: this.payloadDigest,
+          index: this.index,
+        })
       } catch (err) {
         console.error(err)
         if (err.response) {
           console.error(err.response)
         }
       }
-    }
-  }
+    },
+  },
 }
 </script>

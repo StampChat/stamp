@@ -6,8 +6,8 @@
   "author": "shammah@cryptonumismatics.org",
   "private": true,
   "scripts": {
-    "lint": "eslint 'src/**/*.{ts,js,vue}'",
-    "lint:fix": "npm run lint -- --fix",
+    "lint": "eslint 'src/**/*.{ts,js,vue}' && prettier --check .",
+    "lint:fix": "prettier --write . && eslint 'src/**/*.{ts,js,vue}' --fix",
     "dev": "quasar dev -m electron -- --no-sandbox --disable-setuid-sandbox",
     "build": "quasar build -m electron -b builder",
     "test": "echo \"See package.json => scripts for available tests.\" && exit 0",
@@ -26,7 +26,8 @@
     "test:unit:watch": "jest --watch",
     "test:unit:watchAll": "jest --watchAll",
     "serve:test:coverage": "quasar serve test/jest/coverage/lcov-report/ --port 8788",
-    "concurrently:dev:jest": "concurrently \"quasar dev\" \"jest --watch\""
+    "concurrently:dev:jest": "concurrently \"quasar dev\" \"jest --watch\"",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@capacitor/core": "2.5.0",
@@ -81,7 +82,6 @@
     "@types/vcf": "^2.0.3",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
-    "@vue/devtools": "^5.3.4",
     "babel-loader": "^8.2.2",
     "copy-webpack-plugin": "^9.0.1",
     "devtron": "^1.4.0",
@@ -90,7 +90,7 @@
     "electron-debug": "^3.2.0",
     "electron-devtools-installer": "^3.2.0",
     "eslint": "^7.14.0",
-    "eslint-config-standard": "^16.0.2",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.19.1",
     "eslint-plugin-jest": "^24.5.2",
     "eslint-plugin-node": "^11.0.0",
@@ -98,6 +98,7 @@
     "eslint-plugin-vue": "^7.0.0",
     "eslint-webpack-plugin": "^3.0.1",
     "node-polyfill-webpack-plugin": "^1.1.4",
+    "prettier": "^2.5.1",
     "protoc": "^1.0.4",
     "ts-protoc-gen": "^0.15.0"
   },

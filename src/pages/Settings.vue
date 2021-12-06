@@ -1,16 +1,8 @@
 <template>
   <q-card class="q-ma-sm">
-    <q-splitter
-      :value="110"
-      unit="px"
-      disable
-    >
+    <q-splitter :value="110" unit="px" disable>
       <template #before>
-        <q-tabs
-          v-model="tab"
-          vertical
-          class="text-primary"
-        >
+        <q-tabs v-model="tab" vertical class="text-primary">
           <q-tab
             name="networking"
             icon="cloud"
@@ -40,17 +32,14 @@
                 :label="$t('settings.contactRefreshInterval')"
                 type="number"
                 :hint="$t('settings.contactRefreshIntervalHint')"
-                style="width:100%"
+                style="width: 100%"
                 ref="contactRefreshInterval"
               />
             </div>
           </q-tab-panel>
           <q-tab-panel name="appearance">
             <div class="row">
-              <q-toggle
-                :label="$t('settings.darkMode')"
-                v-model="darkMode"
-              />
+              <q-toggle :label="$t('settings.darkMode')" v-model="darkMode" />
             </div>
           </q-tab-panel>
         </q-tab-panels>
@@ -80,36 +69,39 @@ export default {
   props: {
     value: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
-  data () {
+  data() {
     return {
       tab: 'networking',
       darkMode: this.getDarkMode(),
-      updateInterval: this.getUpdateInterval() / 60000
+      updateInterval: this.getUpdateInterval() / 60000,
     }
   },
   methods: {
-    ...mapGetters({ getUpdateInterval: 'contacts/getUpdateInterval', getDarkMode: 'appearance/getDarkMode' }),
+    ...mapGetters({
+      getUpdateInterval: 'contacts/getUpdateInterval',
+      getDarkMode: 'appearance/getDarkMode',
+    }),
     ...mapActions({
-      setDarkMode: 'appearance/setDarkMode'
+      setDarkMode: 'appearance/setDarkMode',
     }),
     ...mapMutations({
-      setUpdateInterval: 'contacts/setUpdateInterval'
+      setUpdateInterval: 'contacts/setUpdateInterval',
     }),
-    save () {
+    save() {
       this.setDarkMode(this.darkMode)
       this.$q.dark.set(this.darkMode)
       this.setUpdateInterval(this.updateInterval * 60000)
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     },
-    cancel () {
+    cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
-    }
+    },
   },
-  mounted () {
+  mounted() {
     this.$refs.contactRefreshInterval.$el.focus()
-  }
+  },
 }
 </script>

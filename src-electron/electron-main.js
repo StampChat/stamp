@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-unused-vars */
-import { app, BrowserWindow, nativeTheme, Tray, Menu, shell, nativeImage } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  nativeTheme,
+  Tray,
+  Menu,
+  shell,
+  nativeImage,
+} from 'electron'
 import path from 'path'
 import fs from 'fs'
 import Badge from 'electron-windows-badge'
@@ -16,11 +24,14 @@ if (!isSingleInstance) {
 }
 
 try {
-  if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
+  if (
+    process.platform === 'win32' &&
+    nativeTheme.shouldUseDarkColors === true
+  ) {
     fs.unlinkSync(path.join(app.getPath('userData'), 'DevTools Extensions'))
   }
   // eslint-disable-next-line no-empty
-} catch (_) { }
+} catch (_) {}
 
 /**
  * Set `__statics` path to static files in production;
@@ -30,7 +41,7 @@ if (process.env.PROD) {
   global.__statics = __dirname
 }
 
-function getIconPNGPath () {
+function getIconPNGPath() {
   // NOTE: This use to be platform specific, and may need to be again in the future.
   return path.join(__dirname, '../icons/linux-512x512.png')
 }
@@ -39,24 +50,26 @@ let mainWindow
 let externalUrlWindow
 let tray
 let windowsBadgeUpdater
-const nativeIconSmall = nativeImage.createFromPath(getIconPNGPath()).resize({ width: 16, height: 16 })
+const nativeIconSmall = nativeImage
+  .createFromPath(getIconPNGPath())
+  .resize({ width: 16, height: 16 })
 const nativeIcon = nativeImage.createFromPath(getIconPNGPath())
 
-function createWindow () {
+function createWindow() {
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Open Stamp',
       click: function () {
         mainWindow.show()
-      }
+      },
     },
     {
       label: 'Quit Stamp',
       click: function () {
         mainWindow.destroy()
         app.quit()
-      }
-    }
+      },
+    },
   ])
 
   tray = new Tray(nativeIconSmall)
@@ -73,7 +86,7 @@ function createWindow () {
       contextIsolation: true,
       nodeIntegration: true,
       enableRemoteModule: true,
-    }
+    },
   })
 
   // custom qbar enabler

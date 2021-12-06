@@ -1,7 +1,7 @@
 import { Address, crypto } from 'bitcore-lib-xpi'
 import { colorSalt } from './constants'
 
-export function formatBalance (balance: number) {
+export function formatBalance(balance: number) {
   const isNegative = balance < 0 ? '-' : ''
   const sats = Math.abs(balance)
   if (sats < 1_000) {
@@ -11,7 +11,7 @@ export function formatBalance (balance: number) {
   return isNegative + (sats / 1_000_000).toFixed(2) + ' Lotus'
 }
 
-export function addressColor (address: Address) {
+export function addressColor(address: Address) {
   const rawAddress = address.toBuffer()
 
   // Add salt
@@ -24,7 +24,7 @@ export function addressColor (address: Address) {
   return { hue, saturation }
 }
 
-export function addressColorFromStr (addrStr: string) {
+export function addressColorFromStr(addrStr: string) {
   const addrObj = new Address(addrStr)
   const { hue, saturation } = addressColor(addrObj)
   const color = `hsl(${hue}, ${saturation * 100}%, 60%)`

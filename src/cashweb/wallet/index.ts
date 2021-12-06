@@ -3,7 +3,15 @@ import assert from 'assert'
 
 import { calcId } from './helpers'
 
-import { Address, Script, Transaction, crypto, PrivateKey, HDPrivateKey, PublicKey } from 'bitcore-lib-xpi'
+import {
+  Address,
+  Script,
+  Transaction,
+  crypto,
+  PrivateKey,
+  HDPrivateKey,
+  PublicKey,
+} from 'bitcore-lib-xpi'
 import { OutpointStore } from './storage/storage'
 import type { ElectrumClient, RequestResponse } from 'electrum-cash'
 
@@ -19,7 +27,7 @@ const maxFeePerByte = 3
 const maximumTransactionSize = 100000
 
 // TODO: This function needs a test.
-function shuffleArray (arr: unknown[]) {
+function shuffleArray(arr: unknown[]) {
   const swaps = [...arr.keys()]
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * i)
@@ -33,7 +41,7 @@ function shuffleArray (arr: unknown[]) {
   return swaps
 }
 
-function toElectrumScriptHash (address: string | Address | PublicKey) {
+function toElectrumScriptHash(address: string | Address | PublicKey) {
   const scriptHash = Script.buildPublicKeyHashOut(address)
   const scriptHashRaw = scriptHash.toBuffer()
   const digest = crypto.Hash.sha256(scriptHashRaw)
@@ -42,13 +50,17 @@ function toElectrumScriptHash (address: string | Address | PublicKey) {
 }
 
 type PrivateKeyData = { privKey: PrivateKey }
-type AddressData = { address: string, change: boolean } & PrivateKeyData
-type ElectrumScriptHash = string;
+type AddressData = { address: string; change: boolean } & PrivateKeyData
+type ElectrumScriptHash = string
 type AddressGenerator = (txnNumber: number) => (output: number) => PublicKey
 // UnspendOutpout.fromObject can work with this
 type BuildableOutput = Outpoint & { script?: string }
 // eslint-disable-next-line camelcase, @typescript-eslint/naming-convention
-type ElectrumListUnspentOutput = { tx_hash: string, tx_pos: number, value: number }
+type ElectrumListUnspentOutput = {
+  tx_hash: string
+  tx_pos: number
+  value: number
+}
 
 export class Wallet {
   storage: OutpointStore
@@ -62,9 +74,16 @@ export class Wallet {
   changeAddresses: Record<string, PrivateKeyData | undefined> = {}
   electrumScriptHashes: Record<ElectrumScriptHash, AddressData> = {}
 
-  scriptHashSubscriber: (response: Error | RequestResponse) => void;
+  scriptHashSubscriber: (response: Error | RequestResponse) => void
 
-  constructor (storage: OutpointStore, { networkName = 'livenet', numAddresses = 20, numChangeAddresses = 20 } = {}) {
+  constructor(
+    storage: OutpointStore,
+    {
+      networkName = 'livenet',
+      numAddresses = 20,
+      numChangeAddresses = 20,
+    } = {},
+  ) {
     this.storage = storage
     this.networkName = networkName
     this.numAddresses = numAddresses
@@ -78,12 +97,12 @@ export class Wallet {
     this.scriptHashSubscriber = this.scriptHashUpdated.bind(this)
   }
 
-  setElectrumClient (electrumClientPromise: Promise<ElectrumClient>) {
+  setElectrumClient(electrumClientPromise: Promise<ElectrumClient>) {
     this.electrumClientPromise = electrumClientPromise
     this.init()
   }
 
-  setXPrivKey (xPrivKey: HDPrivateKey) {
+  setXPrivKey(xPrivKey: HDPrivateKey) {
     this._xPrivKey = xPrivKey
     // TODO: we're just using the first key in the HD addresses for now
     // so that it'll be compatible (mostly) with other HD wallets.
@@ -93,13 +112,12 @@ export class Wallet {
       .deriveChild(899, true)
       .deriveChild(0, true)
       .deriveChild(0)
-      .deriveChild(0)
-      .privateKey
+      .deriveChild(0).privateKey
 
     this.init()
   }
 
-  async init () {
+  async init() {
     console.log('initializing wallet')
     if (!this.xPrivKey) {
       return
@@ -116,15 +134,15 @@ export class Wallet {
     console.log(`startListenersTime UTXOs took ${startListenersTime - t0} ms`)
   }
 
-  get xPrivKey () {
+  get xPrivKey() {
     return this._xPrivKey
   }
 
-  get identityPrivKey () {
+  get identityPrivKey() {
     return this._identityPrivKey
   }
 
-  initAddresses () {
+  initAddresses() {
     const xPrivKey = this.xPrivKey
     assert(xPrivKey, 'xPrivKey undefined while calling wallet initialization')
 
@@ -132,26 +150,31 @@ export class Wallet {
     this.changeAddresses = {}
     this.electrumScriptHashes = {}
     for (let i = 0; i < this.numAddresses; i++) {
-      const privKey = xPrivKey.deriveChild(44, true)
+      const privKey = xPrivKey
+        .deriveChild(44, true)
         .deriveChild(899, true)
         .deriveChild(0, true)
         .deriveChild(0)
-        .deriveChild(i)
-        .privateKey
+        .deriveChild(i).privateKey
       const address = privKey.toAddress(this.networkName).toXAddress()
       this.setAddress({ address, privKey })
 
       // Index by script hash
       const scriptHash = toElectrumScriptHash(address)
-      this.addElectrumScriptHash({ scriptHash, address, change: false, privKey })
+      this.addElectrumScriptHash({
+        scriptHash,
+        address,
+        change: false,
+        privKey,
+      })
     }
     for (let j = 0; j < this.numChangeAddresses; j++) {
-      const privKey = xPrivKey.deriveChild(44, true)
+      const privKey = xPrivKey
+        .deriveChild(44, true)
         .deriveChild(899, true)
         .deriveChild(0, true)
         .deriveChild(1)
-        .deriveChild(j)
-        .privateKey
+        .deriveChild(j).privateKey
       const address = privKey.toAddress(this.networkName).toXAddress()
       this.setChangeAddress({ address, privKey })
 
@@ -161,20 +184,37 @@ export class Wallet {
     }
   }
 
-  addElectrumScriptHash ({ scriptHash, address, change, privKey }: { scriptHash: string } & AddressData) {
+  addElectrumScriptHash({
+    scriptHash,
+    address,
+    change,
+    privKey,
+  }: { scriptHash: string } & AddressData) {
     this.electrumScriptHashes[scriptHash] = { address, change, privKey }
   }
 
-  setAddress ({ address, privKey }: { address: string, privKey: PrivateKey }) {
+  setAddress({ address, privKey }: { address: string; privKey: PrivateKey }) {
     this.addresses[address] = { privKey }
   }
 
-  setChangeAddress ({ address, privKey }: { address: string, privKey: PrivateKey }) {
+  setChangeAddress({
+    address,
+    privKey,
+  }: {
+    address: string
+    privKey: PrivateKey
+  }) {
     this.changeAddresses[address] = { privKey }
   }
 
-  async refreshUTXOsByAddr ({ address, outputs }: { address: string, outputs: Outpoint[] }) {
-    const ids = outputs.map((output) => calcId(output))
+  async refreshUTXOsByAddr({
+    address,
+    outputs,
+  }: {
+    address: string
+    outputs: Outpoint[]
+  }) {
+    const ids = outputs.map(output => calcId(output))
     const foundIds = []
 
     // Remove missing utxos
@@ -202,72 +242,109 @@ export class Wallet {
     }
   }
 
-  async updateUTXOFromScriptHash (scriptHash: string) {
+  async updateUTXOFromScriptHash(scriptHash: string) {
     const client = await this.electrumClientPromise
     assert(client, 'missing client in updateUTXOFromScriptHash')
     try {
-      const elOutputs: Error | RequestResponse = await client.request('blockchain.scripthash.listunspent', scriptHash)
-      assert(elOutputs, `Null response from blockchain.scripthash.listunspent for ${scriptHash}`)
+      const elOutputs: Error | RequestResponse = await client.request(
+        'blockchain.scripthash.listunspent',
+        scriptHash,
+      )
+      assert(
+        elOutputs,
+        `Null response from blockchain.scripthash.listunspent for ${scriptHash}`,
+      )
       if (elOutputs instanceof Error) {
         throw elOutputs
       }
-      assert(elOutputs instanceof Array, 'output of blockchain.scripthash.listunspent was not an array!')
+      assert(
+        elOutputs instanceof Array,
+        'output of blockchain.scripthash.listunspent was not an array!',
+      )
       const unspentOutputs = elOutputs as ElectrumListUnspentOutput[]
       const addressMap = this.getAddressByElectrumScriptHash(scriptHash)
       const { address, privKey } = addressMap
-      const outputs = unspentOutputs.map((elOutput: ElectrumListUnspentOutput) => {
-        const output = {
-          txId: elOutput.tx_hash,
-          outputIndex: elOutput.tx_pos,
-          satoshis: elOutput.value,
-          type: 'p2pkh',
-          address,
-          privKey
-        }
-        return output
-      })
+      const outputs = unspentOutputs.map(
+        (elOutput: ElectrumListUnspentOutput) => {
+          const output = {
+            txId: elOutput.tx_hash,
+            outputIndex: elOutput.tx_pos,
+            satoshis: elOutput.value,
+            type: 'p2pkh',
+            address,
+            privKey,
+          }
+          return output
+        },
+      )
       await this.refreshUTXOsByAddr({ address, outputs })
     } catch (err) {
       console.error('error deserializing utxo address', err, scriptHash)
     }
   }
 
-  async updateHDUTXOs () {
+  async updateHDUTXOs() {
     // Check HD Wallet
     const scriptHashes = Object.keys(this.electrumScriptHashes)
-    await P.map(scriptHashes, scriptHash => this.updateUTXOFromScriptHash(scriptHash), { concurrency: 5 })
+    await P.map(
+      scriptHashes,
+      scriptHash => this.updateUTXOFromScriptHash(scriptHash),
+      { concurrency: 5 },
+    )
   }
 
-  async startListeners () {
+  async startListeners() {
     const client = await this.electrumClientPromise
     assert(client, 'missing client in startListeners')
     const scriptHashes = Object.keys(this.electrumScriptHashes)
 
-    await P.map(scriptHashes, scriptHash => client.subscribe(this.scriptHashSubscriber, 'blockchain.scripthash.subscribe', scriptHash), { concurrency: 5 })
+    await P.map(
+      scriptHashes,
+      scriptHash =>
+        client.subscribe(
+          this.scriptHashSubscriber,
+          'blockchain.scripthash.subscribe',
+          scriptHash,
+        ),
+      { concurrency: 5 },
+    )
   }
 
-  async updateAllOutpoints () {
+  async updateAllOutpoints() {
     // Check HD Wallet
     const utxos = [...this.storage.getOutpoints().values()]
     await P.map(utxos, utxo => this.fixOutpoint(utxo), { concurrency: 5 })
   }
 
-  async checkOutpoint (utxo: Outpoint) {
+  async checkOutpoint(utxo: Outpoint) {
     const utxoId = calcId(utxo)
     console.log(`Checking UTXO ${utxoId}`)
     const client = await this.electrumClientPromise
     assert(client, 'missing client in fixOutpointId')
     const scriptHash = toElectrumScriptHash(utxo.address)
-    const elOutputs = await client.request('blockchain.scripthash.listunspent', scriptHash)
-    assert(elOutputs, `Null response from blockchain.scripthash.listunspent for ${scriptHash}`)
+    const elOutputs = await client.request(
+      'blockchain.scripthash.listunspent',
+      scriptHash,
+    )
+    assert(
+      elOutputs,
+      `Null response from blockchain.scripthash.listunspent for ${scriptHash}`,
+    )
     if (elOutputs instanceof Error) {
       return false
     }
-    assert(elOutputs instanceof Array, 'output of blockchain.scripthash.listunspent was not an array!')
+    assert(
+      elOutputs instanceof Array,
+      'output of blockchain.scripthash.listunspent was not an array!',
+    )
     const unspentOutputs = elOutputs as ElectrumListUnspentOutput[]
-    if (!unspentOutputs.some(output => {
-      return (output.tx_hash === utxo.txId) && (output.tx_pos === utxo.outputIndex)
-    })) {
+    if (
+      !unspentOutputs.some(output => {
+        return (
+          output.tx_hash === utxo.txId && output.tx_pos === utxo.outputIndex
+        )
+      })
+    ) {
       console.log(`UTXO missing on-chain, deleting missing UTXO ${utxoId}`)
       this.storage.deleteOutpoint(utxoId)
       return false
@@ -276,7 +353,7 @@ export class Wallet {
     return true
   }
 
-  async fixOutpoint (utxo: Outpoint) {
+  async fixOutpoint(utxo: Outpoint) {
     const utxoId = calcId(utxo)
     // TODO: This needs some thought to ensure we do not delete outpoints that
     // are possibly just out of sync with the mempool.
@@ -288,7 +365,7 @@ export class Wallet {
         console.log(`Missing UTXO for ${utxoId}`)
         return
       }
-      if (!await this.checkOutpoint(utxo)) {
+      if (!(await this.checkOutpoint(utxo))) {
         return
       }
       await this.unfreezeOutpoint(utxoId)
@@ -298,7 +375,7 @@ export class Wallet {
     }
   }
 
-  async scriptHashUpdated (response: RequestResponse | Error) {
+  async scriptHashUpdated(response: RequestResponse | Error) {
     if (!(response instanceof Array)) {
       // Electrum-cash client is dumb and sends the initial subscription call response to our
       // callback handler. The data is not the same, and is actually a string with the
@@ -311,7 +388,13 @@ export class Wallet {
     await this.updateUTXOFromScriptHash(scriptHash)
   }
 
-  async forwardUTXOsToAddress ({ utxos, address }: { utxos: Outpoint[], address: string }) {
+  async forwardUTXOsToAddress({
+    utxos,
+    address,
+  }: {
+    utxos: Outpoint[]
+    address: string
+  }) {
     let transaction = new Transaction()
 
     const signingKeys = []
@@ -319,14 +402,18 @@ export class Wallet {
 
     const stagedUtxos = []
     for (const passedInUtxo of utxos) {
-      const outpoint: BuildableOutput | undefined = this.storage.getOutpoint(calcId(passedInUtxo))
+      const outpoint: BuildableOutput | undefined = this.storage.getOutpoint(
+        calcId(passedInUtxo),
+      )
       if (!outpoint) {
         continue
       }
       stagedUtxos.push(outpoint)
       outpoint.script = Script.buildPublicKeyHashOut(outpoint.address).toHex()
       signingKeys.push(outpoint.privKey)
-      transaction = transaction.from([Transaction.UnspentOutput.fromObject(outpoint)])
+      transaction = transaction.from([
+        Transaction.UnspentOutput.fromObject(outpoint),
+      ])
       satoshis += outpoint.satoshis
     }
 
@@ -364,13 +451,32 @@ export class Wallet {
   // Bitcore estimate size is horribly broken. This slightly overestimates the transaction size
   // based on the fact that there are varints in several places. This also ensure we don't underrun
   // fees.
-  _estimateSize (transaction: Transaction) {
+  _estimateSize(transaction: Transaction) {
     const transactionOverHead = 4 + 9 + 9 + 4
-    const maxScriptSize = 32 /* txid */ + 4 /* index */ + 1 /* length */ + 1 + /* push */ 73 /* signature */ + 33 /* pubkey */ + 4 /* sequence */
-    return transactionOverHead + transaction.outputs.length * 35 + transaction.inputs.length * maxScriptSize
+    const maxScriptSize =
+      32 /* txid */ +
+      4 /* index */ +
+      1 /* length */ +
+      1 +
+      /* push */ 73 /* signature */ +
+      33 /* pubkey */ +
+      4 /* sequence */
+    return (
+      transactionOverHead +
+      transaction.outputs.length * 35 +
+      transaction.inputs.length * maxScriptSize
+    )
   }
 
-  finalizeTransaction ({ transaction, signingKeys, shuffleChange = true }: { transaction: Transaction, signingKeys: PrivateKey[], shuffleChange?: boolean }) {
+  finalizeTransaction({
+    transaction,
+    signingKeys,
+    shuffleChange = true,
+  }: {
+    transaction: Transaction
+    signingKeys: PrivateKey[]
+    shuffleChange?: boolean
+  }) {
     // Add change outputs using our HD wallet.  We want multiple outputs following a
     // power distribution, so we don't have to combine lots of outputs at later times
     // in order to create specific amounts.
@@ -384,21 +490,32 @@ export class Wallet {
     let skipAmount = 0
     // Create change outputs randomly in decreasing orders of magnitude
     for (const changeAddress of changeAddresses) {
-      const estimatedFutureSize = this._estimateSize(transaction) + standardUtxoSize
-      const delta = transaction.inputAmount - transaction.outputAmount - skipAmount
+      const estimatedFutureSize =
+        this._estimateSize(transaction) + standardUtxoSize
+      const delta =
+        transaction.inputAmount - transaction.outputAmount - skipAmount
       console.log(`Available amount for change and fees = ${delta} `)
       if (delta < dustLimit + estimatedFutureSize * minFeePerByte) {
-        console.log(`Can't make another output given currently available funds ${delta} < ${dustLimit + estimatedFutureSize * minFeePerByte}`)
+        console.log(
+          `Can't make another output given currently available funds ${delta} < ${
+            dustLimit + estimatedFutureSize * minFeePerByte
+          }`,
+        )
         // We can't make more outputs without going over the fee.
         break
       }
 
       const upperBound = delta - estimatedFutureSize * minFeePerByte
       const randomSplit = Math.random() * 0.2 + 0.4
-      const changeOutputAmount = Math.ceil(randomSplit * (upperBound - skipAmount - dustLimit)) + skipAmount + dustLimit
+      const changeOutputAmount =
+        Math.ceil(randomSplit * (upperBound - skipAmount - dustLimit)) +
+        skipAmount +
+        dustLimit
       if (amountOOM === OOM(changeOutputAmount)) {
         skipAmount += changeOutputAmount
-        console.log('Skipping change output due to same OOM as recipient amount')
+        console.log(
+          'Skipping change output due to same OOM as recipient amount',
+        )
         continue
       }
       skipAmount = 0
@@ -410,7 +527,7 @@ export class Wallet {
       // Create the output
       const output = new Transaction.Output({
         script: Script.buildPublicKeyHashOut(changeAddress).toHex(),
-        satoshis: changeOutputAmount
+        satoshis: changeOutputAmount,
       })
       transaction = transaction.addOutput(output)
     }
@@ -427,10 +544,13 @@ export class Wallet {
       if (changeOutputAmount >= minimumNewInputAmount) {
         const output = new Transaction.Output({
           script: Script.buildPublicKeyHashOut(changeAddresses[0]).toHex(),
-          satoshis: changeOutputAmount
+          satoshis: changeOutputAmount,
         })
         transaction = transaction.addOutput(output)
-        console.log('Generating one-off change output due to random output logic skipping creating any output', output)
+        console.log(
+          'Generating one-off change output due to random output logic skipping creating any output',
+          output,
+        )
       }
     } else if (transaction.outputs.length > 1) {
       // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
@@ -441,28 +561,63 @@ export class Wallet {
       // If there's no change output, we'll have to just eat the loss
       // Randomly pick a change output.
       const delta = transaction.inputAmount - transaction.outputAmount
-      const outputIndex = Math.floor(Math.random() * (transaction.outputs.length - 1)) + 1
+      const outputIndex =
+        Math.floor(Math.random() * (transaction.outputs.length - 1)) + 1
       const finalSize = this._estimateSize(transaction)
       const properFee = Math.ceil(finalSize * minFeePerByte)
       const amountToAdd = delta - properFee
       // Add a small amount to the current output
       transaction.outputs[outputIndex].satoshis += amountToAdd
       transaction._outputAmount += amountToAdd
-      console.log('Shuffling excess change into existing output', delta, 'Fee required', properFee, 'Will add', amountToAdd, 'To output #', outputIndex)
+      console.log(
+        'Shuffling excess change into existing output',
+        delta,
+        'Fee required',
+        properFee,
+        'Will add',
+        amountToAdd,
+        'To output #',
+        outputIndex,
+      )
     }
-    const newIndex = shuffleChange ? shuffleArray(transaction.outputs).findIndex((v) => v === 0) : 0
+    const newIndex = shuffleChange
+      ? shuffleArray(transaction.outputs).findIndex(v => v === 0)
+      : 0
     // Sign transaction
     transaction = transaction.sign(signingKeys)
     const finalTxnSize = this._estimateSize(transaction)
     // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
-    console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / this._estimateSize(transaction))
+    console.log(
+      'size',
+      finalTxnSize,
+      'outputAmount',
+      transaction.outputAmount,
+      'inputAmount',
+      transaction.inputAmount,
+      'delta',
+      transaction.inputAmount - transaction.outputAmount,
+      'feePerByte',
+      (transaction.inputAmount - transaction.outputAmount) /
+        this._estimateSize(transaction),
+    )
     console.log(transaction)
     // Return output location
     return newIndex
   }
 
-  _buildTransactionSetForExplicitAmount ({ amount, desiredMinimumTransactions = 2, addressGenerator, utxos, transactionOffset = 0 }:
-    { amount: number, desiredMinimumTransactions?: number, addressGenerator: AddressGenerator, utxos: Outpoint[], transactionOffset?: number }) {
+  _buildTransactionSetForExplicitAmount({
+    amount,
+    desiredMinimumTransactions = 2,
+    addressGenerator,
+    utxos,
+    transactionOffset = 0,
+  }: {
+    amount: number
+    desiredMinimumTransactions?: number
+    addressGenerator: AddressGenerator
+    utxos: Outpoint[]
+    transactionOffset?: number
+  }) {
     let amountLeft = amount
     const transactionBundle = []
     let transactionNumber = transactionOffset
@@ -470,7 +625,10 @@ export class Wallet {
     // by desiredMinimumTransactions this will ensure that if transaction
     // building is working correctly, and we have the appropriate UTXOs we will
     // build more than 1 transaction.
-    const maximumUsableUtxoSize = Math.max(Math.ceil(amount / desiredMinimumTransactions), minimumNewInputAmount)
+    const maximumUsableUtxoSize = Math.max(
+      Math.ceil(amount / desiredMinimumTransactions),
+      minimumNewInputAmount,
+    )
 
     while (amountLeft > 0) {
       const signingKeys = []
@@ -487,33 +645,54 @@ export class Wallet {
       while (true) {
         // We would ideally like to find a UTXO that is larger than the amount left, minus the amounts of all the other UTXOs we have added thus far to this transaction
         // additinoally we need to include the size of the output and the fees.
-        const requisiteSize = (Math.min(amountLeft, maximumUsableUtxoSize) - satoshis) +
-          (this._estimateSize(transaction) + 1 * standardUtxoSize + standardInputSize) * maxFeePerByte
+        const requisiteSize =
+          Math.min(amountLeft, maximumUsableUtxoSize) -
+          satoshis +
+          (this._estimateSize(transaction) +
+            1 * standardUtxoSize +
+            standardInputSize) *
+            maxFeePerByte
         if (utxos.length === 0) {
-          throw new RangeError('out of utxos, unable to construct transaction set')
+          throw new RangeError(
+            'out of utxos, unable to construct transaction set',
+          )
         }
         console.log(`requisiteSize == ${requisiteSize}`)
-        const smallerUtxos = utxos.filter((a) => a.satoshis < requisiteSize)
+        const smallerUtxos = utxos.filter(a => a.satoshis < requisiteSize)
         // Use the biggest UTXO smaller than the amount we're trying to build,
         // or use the smallest UTXO if we don't have a "greatest lower bound" utxo
-        const utxoToUse: BuildableOutput = smallerUtxos.length !== 0 ? smallerUtxos[smallerUtxos.length - 1] : utxos[0]
+        const utxoToUse: BuildableOutput =
+          smallerUtxos.length !== 0
+            ? smallerUtxos[smallerUtxos.length - 1]
+            : utxos[0]
         const usedUtxoId = calcId(utxoToUse)
         // Remove UTXO from available set
-        utxos.splice(utxos.findIndex(utxo => calcId(utxo) === usedUtxoId), 1)
+        utxos.splice(
+          utxos.findIndex(utxo => calcId(utxo) === usedUtxoId),
+          1,
+        )
         stagedUtxos.push(utxoToUse)
-        utxoToUse.script = Script.buildPublicKeyHashOut(utxoToUse.address).toHex()
+        utxoToUse.script = Script.buildPublicKeyHashOut(
+          utxoToUse.address,
+        ).toHex()
         transaction.from([Transaction.UnspentOutput.fromObject(utxoToUse)])
         signingKeys.push(utxoToUse.privKey)
         const txnSize = this._estimateSize(transaction)
         satoshis += utxoToUse.satoshis
         // We can't generate a transaction at all yet
-        if (satoshis < dustLimit + (txnSize + standardUtxoSize) * minFeePerByte) {
+        if (
+          satoshis <
+          dustLimit + (txnSize + standardUtxoSize) * minFeePerByte
+        ) {
           console.log("We can't generate a transaction at all yet")
           continue
         }
 
-        console.log(`transaction._estimateSize() + standardUtxoSize : ${txnSize} + ${standardUtxoSize}`)
-        const availableAmount = satoshis - (txnSize + standardUtxoSize) * minFeePerByte
+        console.log(
+          `transaction._estimateSize() + standardUtxoSize : ${txnSize} + ${standardUtxoSize}`,
+        )
+        const availableAmount =
+          satoshis - (txnSize + standardUtxoSize) * minFeePerByte
         // If availableAmount is the minimum, there will be no change output
         // if amountLeft is the minimum, there will need to be change.  However, the delta may be less than the dust limit
         // in which case we may want to throw this iteration away.
@@ -521,13 +700,28 @@ export class Wallet {
         const availableForFeesAndChange = satoshis - amountToUse
         console.log(`availableForFeesAndChange ${availableForFeesAndChange}`)
         // We subtract out the fees require to generate both the recipients output, and the posibility of change
-        const availableForChange = availableForFeesAndChange - (txnSize + standardUtxoSize) * minFeePerByte
+        const availableForChange =
+          availableForFeesAndChange -
+          (txnSize + standardUtxoSize) * minFeePerByte
         console.log(`availableForChange ${availableForChange}`)
         // We have a fairly large overage (more than double fees), but we don't have enough excess to create the output
-        if (availableForChange > (txnSize + standardUtxoSize) * maxFeePerByte && availableForChange < dustLimit + standardUtxoSize * minFeePerByte) {
-          console.log("Too much overage to drop and can't generate a change output. Add another input")
-          console.log(`${availableForChange} > ${2 * minimumNewInputAmount} + ${standardUtxoSize} * ${maxFeePerByte}`)
-          console.log(`${availableForChange} < ${minimumNewInputAmount + standardUtxoSize * minFeePerByte}`)
+        if (
+          availableForChange > (txnSize + standardUtxoSize) * maxFeePerByte &&
+          availableForChange < dustLimit + standardUtxoSize * minFeePerByte
+        ) {
+          console.log(
+            "Too much overage to drop and can't generate a change output. Add another input",
+          )
+          console.log(
+            `${availableForChange} > ${
+              2 * minimumNewInputAmount
+            } + ${standardUtxoSize} * ${maxFeePerByte}`,
+          )
+          console.log(
+            `${availableForChange} < ${
+              minimumNewInputAmount + standardUtxoSize * minFeePerByte
+            }`,
+          )
           // Try adding another UTXO so we can generate change
           continue
         }
@@ -536,20 +730,30 @@ export class Wallet {
         // try adding another UTXO to the inputs of this one.
         const overage = amountLeft - amountToUse
         if (overage > 0 && overage < minimumNewInputAmount) {
-          console.log("If we made this transaction, we wouldn't be able to make another. Add another UTXO here")
-          console.log(`Amount left < minimumNewInputAmount: ${amountLeft - amountToUse} < ${minimumNewInputAmount}`)
+          console.log(
+            "If we made this transaction, we wouldn't be able to make another. Add another UTXO here",
+          )
+          console.log(
+            `Amount left < minimumNewInputAmount: ${
+              amountLeft - amountToUse
+            } < ${minimumNewInputAmount}`,
+          )
           continue
         }
 
         break
       }
-      const availableAmount = satoshis - (this._estimateSize(transaction) + standardUtxoSize) * minFeePerByte
+      const availableAmount =
+        satoshis -
+        (this._estimateSize(transaction) + standardUtxoSize) * minFeePerByte
       const address = addressGenerator(transactionNumber)(0)
       const amountToUse = Math.min(amountLeft, availableAmount)
-      transaction.addOutput(new Transaction.Output({
-        script: new Script(new Address(address)),
-        satoshis: amountToUse
-      }))
+      transaction.addOutput(
+        new Transaction.Output({
+          script: new Script(new Address(address)),
+          satoshis: amountToUse,
+        }),
+      )
 
       // Wait until succeeding to update the transactionNumber
       transactionNumber += 1
@@ -558,32 +762,55 @@ export class Wallet {
       const outputIndex = this.finalizeTransaction({ transaction, signingKeys })
       // We can't make this transaction any bigger
       if (this._estimateSize(transaction) > maximumTransactionSize) {
-        throw new RangeError('Unable to build transaction due to overflow on transaction size')
+        throw new RangeError(
+          'Unable to build transaction due to overflow on transaction size',
+        )
       }
       transactionBundle.push({
         transaction,
         vouts: [outputIndex],
-        usedUtxos: stagedUtxos
+        usedUtxos: stagedUtxos,
       })
     }
     return transactionBundle
   }
 
-  constructTransactionSet ({ addressGenerator, amount }: { addressGenerator: AddressGenerator, amount: number }) {
+  constructTransactionSet({
+    addressGenerator,
+    amount,
+  }: {
+    addressGenerator: AddressGenerator
+    amount: number
+  }) {
     // Don't use frozen utxos.
-    const utxos = [...this.storage.getOutpoints().values()].filter(utxo => !utxo.frozen)
+    const utxos = [...this.storage.getOutpoints().values()].filter(
+      utxo => !utxo.frozen,
+    )
     utxos.sort((a, b) => a.satoshis - b.satoshis)
     // Coin selection
     const transactionBundle = []
 
-    transactionBundle.push(...this._buildTransactionSetForExplicitAmount({ amount, addressGenerator, utxos, transactionOffset: transactionBundle.length }))
+    transactionBundle.push(
+      ...this._buildTransactionSetForExplicitAmount({
+        amount,
+        addressGenerator,
+        utxos,
+        transactionOffset: transactionBundle.length,
+      }),
+    )
     for (const transaction of transactionBundle) {
-      transaction.usedUtxos.forEach(utxoId => this.storage.freezeOutpoint(calcId(utxoId)))
+      transaction.usedUtxos.forEach(utxoId =>
+        this.storage.freezeOutpoint(calcId(utxoId)),
+      )
     }
     return transactionBundle
   }
 
-  constructTransaction ({ outputs }: { outputs: Outpoint[] | Transaction.Output[] }) {
+  constructTransaction({
+    outputs,
+  }: {
+    outputs: Outpoint[] | Transaction.Output[]
+  }) {
     let transaction = new Transaction()
 
     // Add outputs
@@ -596,12 +823,23 @@ export class Wallet {
     const signingKeys = []
 
     const amountRequired = transaction.outputAmount
-    const sortedUtxos: BuildableOutput[] = [...this.storage.getOutpoints().values()]
-      .sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis)
+    const sortedUtxos: BuildableOutput[] = [
+      ...this.storage.getOutpoints().values(),
+    ].sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis)
 
     const biggerUtxos = sortedUtxos.filter(
-      (a) => a.satoshis >= amountRequired + (this._estimateSize(transaction) + standardUtxoSize + standardInputSize) * minFeePerByte)
-    const utxoSetToUse = biggerUtxos.length !== 0 ? [biggerUtxos[biggerUtxos.length - 1]] : sortedUtxos
+      a =>
+        a.satoshis >=
+        amountRequired +
+          (this._estimateSize(transaction) +
+            standardUtxoSize +
+            standardInputSize) *
+            minFeePerByte,
+    )
+    const utxoSetToUse =
+      biggerUtxos.length !== 0
+        ? [biggerUtxos[biggerUtxos.length - 1]]
+        : sortedUtxos
 
     let satoshis = 0
     const usedUtxos = []
@@ -617,7 +855,9 @@ export class Wallet {
       utxo.script = Script.buildPublicKeyHashOut(address).toHex()
       // Grab private key
       signingKeys.push(utxo.privKey)
-      transaction = transaction.from([Transaction.UnspentOutput.fromObject(utxo)])
+      transaction = transaction.from([
+        Transaction.UnspentOutput.fromObject(utxo),
+      ])
       satoshis += utxo.satoshis
     }
 
@@ -625,9 +865,7 @@ export class Wallet {
       throw Error('insufficient funds')
     }
 
-    usedUtxos.map(
-      utxo => this.storage.freezeOutpoint(calcId(utxo))
-    )
+    usedUtxos.map(utxo => this.storage.freezeOutpoint(calcId(utxo)))
 
     // Add change outputs using our HD wallet.  We want multiple outputs following a
     // power distribution, so we don't have to combine lots of outputs at later times
@@ -638,41 +876,52 @@ export class Wallet {
     this.finalizeTransaction({ transaction, signingKeys, shuffleChange: false })
     const finalTxnSize = transaction._estimateSize()
     // Sweep change into a randomly provided output.  Helps provide noise and obsfuscation
-    console.log('size', finalTxnSize, 'outputAmount', transaction.outputAmount, 'inputAmount', transaction.inputAmount, 'delta', transaction.inputAmount - transaction.outputAmount, 'feePerByte', (transaction.inputAmount - transaction.outputAmount) / transaction._estimateSize())
+    console.log(
+      'size',
+      finalTxnSize,
+      'outputAmount',
+      transaction.outputAmount,
+      'inputAmount',
+      transaction.inputAmount,
+      'delta',
+      transaction.inputAmount - transaction.outputAmount,
+      'feePerByte',
+      (transaction.inputAmount - transaction.outputAmount) /
+        transaction._estimateSize(),
+    )
     console.log(transaction)
     return { transaction, usedUtxos }
   }
 
-  get feePerByte () {
+  get feePerByte() {
     return 2
   }
 
-  getAddressByElectrumScriptHash (scriptHash: string) {
+  getAddressByElectrumScriptHash(scriptHash: string) {
     return this.electrumScriptHashes[scriptHash]
   }
 
-  getPaymentAddress (seqNum: number) {
+  getPaymentAddress(seqNum: number) {
     return Object.keys(this.addresses)[seqNum]
   }
 
-  get myAddress () {
+  get myAddress() {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
     return this.identityPrivKey?.toAddress(this.networkName)
   }
 
-  get displayAddress () {
+  get displayAddress() {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
-    return this.identityPrivKey?.toAddress(this.networkName)
-      .toXAddress()
+    return this.identityPrivKey?.toAddress(this.networkName).toXAddress()
   }
 
-  get allAddresses () {
+  get allAddresses() {
     return { ...this.addresses, ...this.changeAddresses }
   }
 
-  get privKeys () {
+  get privKeys() {
     const privKeys = Object.values(this.addresses).map(address => {
       assert(address, 'address is unset in get privKeys')
       return Object.freeze(address.privKey)
@@ -680,7 +929,7 @@ export class Wallet {
     return Object.freeze(privKeys)
   }
 
-  unfreezeOutpoint (id: string) {
+  unfreezeOutpoint(id: string) {
     // TODO: Nobody should be calling this outside of the wallet
     try {
       return this.storage.unfreezeOutpoint(id)
@@ -690,7 +939,7 @@ export class Wallet {
     }
   }
 
-  putOutpoint (utxo: Outpoint) {
+  putOutpoint(utxo: Outpoint) {
     assert(utxo.type !== undefined, 'putOupoint utxo wrong format')
     assert(utxo.privKey !== undefined, 'putOupoint utxo wrong format')
     assert(utxo.address !== undefined, 'putOupoint utxo wrong format')
@@ -702,7 +951,7 @@ export class Wallet {
     return this.storage.putOutpoint(utxo)
   }
 
-  deleteOutpoint (id: string) {
+  deleteOutpoint(id: string) {
     console.log(`deleting outpoint ${id}`)
     if (!this.storage.getOutpoint(id)) {
       console.log(`id not found in UTXO storage ${id}`)
@@ -715,7 +964,7 @@ export class Wallet {
   // levelDB database has been cleared.
   // This needs to happen when the seed has potentially changed after
   // the UTXOs have been refreshed.
-  clearUtxos () {
+  clearUtxos() {
     const outpoints = this.storage.getOutpoints()
     for (const [outpointId] of outpoints) {
       this.deleteOutpoint(outpointId)

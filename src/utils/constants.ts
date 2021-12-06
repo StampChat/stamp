@@ -1,4 +1,3 @@
-
 import { ElectrumTransport } from 'electrum-cash'
 
 // Electrum constants
@@ -7,8 +6,8 @@ export const electrumServers = [
   {
     url: 'fulcrum.cashweb.io',
     port: 443,
-    scheme: ElectrumTransport.WSS.Scheme
-  }
+    scheme: ElectrumTransport.WSS.Scheme,
+  },
 ]
 
 // The separation here is due the fork. Not all backends support the new network prefixes yet
@@ -38,41 +37,47 @@ export const defaultRelayUrl = 'https://mainnet-relay.cashweb.io'
 export const relayUrlOptions = ['https://mainnet-relay.cashweb.io']
 export const defaultRelayData: {
   profile: {
-    name: string,
-    bio: string,
-    avatar: string,
-    pubKey?: Uint8Array,
-  },
+    name: string
+    bio: string
+    avatar: string
+    pubKey?: Uint8Array
+  }
   inbox: {
-    acceptancePrice?: number;
-  },
+    acceptancePrice?: number
+  }
   notify: boolean
 } = {
   profile: {
     name: '',
     bio: '',
-    avatar: ''
+    avatar: '',
   },
   inbox: {
-    acceptancePrice: defaultAcceptancePrice
+    acceptancePrice: defaultAcceptancePrice,
   },
-  notify: true
+  notify: true,
 }
 export const pendingRelayData = {
   profile: {
     name: 'Loading...',
     bio: '',
     avatar: null,
-    pubKey: null
+    pubKey: null,
   },
   inbox: {
-    acceptancePrice: NaN
+    acceptancePrice: NaN,
   },
-  notify: true
+  notify: true,
 }
 
 // Avatar constants
-export const defaultAvatars = ['bunny_cyborg.png', 'croc_music.png', 'kitty_standard.png', 'panda_ninja.png', 'dog_posh.png']
+export const defaultAvatars = [
+  'bunny_cyborg.png',
+  'croc_music.png',
+  'kitty_standard.png',
+  'panda_ninja.png',
+  'dog_posh.png',
+]
 
 // Chat constants
 export const defaultStampAmount = 500000
@@ -81,12 +86,12 @@ export const stampLowerLimit = 5000
 export const defaultContacts = [
   {
     name: 'Give Lotus Chat',
-    address: 'lotus_16PSJJK5XfnDCV3sdi3BsgDTa1dS4xezFuH6duwbo'
+    address: 'lotus_16PSJJK5XfnDCV3sdi3BsgDTa1dS4xezFuH6duwbo',
   },
   {
     name: 'Shammah',
-    address: 'lotus_16PSJPAVocAM5behRWxqwQnpEVRPJrV4XxbthBhJR'
-  }
+    address: 'lotus_16PSJPAVocAM5behRWxqwQnpEVRPJrV4XxbthBhJR',
+  },
 ]
 
 // Notification constants

@@ -6,44 +6,46 @@ import { join } from 'path'
 
 const metadataKeys = {
   schemaVersion: 'schemaVersion',
-  lastServerTime: 'lastServerTime'
+  lastServerTime: 'lastServerTime',
 }
 
 class MessageIterator implements AsyncIterableIterator<MessageWrapper> {
-  iterator: any;
-  db: LevelDB;
+  iterator: any
+  db: LevelDB
 
-  constructor (db: LevelDB) {
+  constructor(db: LevelDB) {
     this.db = db
   }
 
-  async next (): Promise<IteratorResult<MessageWrapper>> {
-    const value = await new Promise<void | MessageWrapper>((resolve, reject) => {
-      this.iterator.next((error: Error, key: string, value: string) => {
-        if (error) {
-          reject(error)
-        }
-        if (!key) {
-          this.iterator.end((error: Error) => {
-            if (error) {
-              reject(error)
-            }
+  async next(): Promise<IteratorResult<MessageWrapper>> {
+    const value = await new Promise<void | MessageWrapper>(
+      (resolve, reject) => {
+        this.iterator.next((error: Error, key: string, value: string) => {
+          if (error) {
+            reject(error)
+          }
+          if (!key) {
+            this.iterator.end((error: Error) => {
+              if (error) {
+                reject(error)
+              }
+              resolve()
+            })
             resolve()
-          })
-          resolve()
-          return
-        }
-        const parsedValue: MessageWrapper = JSON.parse(value)
-        resolve(parsedValue)
-      })
-    })
+            return
+          }
+          const parsedValue: MessageWrapper = JSON.parse(value)
+          resolve(parsedValue)
+        })
+      },
+    )
     if (!value) {
       return new MessageReturnResult()
     }
     return new MessageResult(value)
   }
 
-  async return (): Promise<IteratorResult<MessageWrapper>> {
+  async return(): Promise<IteratorResult<MessageWrapper>> {
     return new Promise((resolve, reject) => {
       this.iterator.end((error: Error) => {
         this.db.close()
@@ -55,7 +57,7 @@ class MessageIterator implements AsyncIterableIterator<MessageWrapper> {
     })
   }
 
-  [Symbol.asyncIterator] (): AsyncIterableIterator<MessageWrapper> {
+  [Symbol.asyncIterator](): AsyncIterableIterator<MessageWrapper> {
     this.iterator = this.db.iterator({})
     return this
   }
@@ -70,12 +72,12 @@ export class LevelMessageStore implements MessageStore {
   private openedDb?: LevelDB
   private openedMetadataDb?: LevelDB
 
-  constructor (location: string) {
+  constructor(location: string) {
     this.messageDbLocation = join(location, 'messages')
     this.metadataDbLocation = join(location, 'metadata')
   }
 
-  async Open () {
+  async Open() {
     this.openedDb = level(this.messageDbLocation)
     this.openedMetadataDb = level(this.metadataDbLocation)
 
@@ -89,29 +91,29 @@ export class LevelMessageStore implements MessageStore {
     }
   }
 
-  async Close () {
+  async Close() {
     this.db.close()
   }
 
-  get db () {
+  get db() {
     if (!this.openedDb) {
       throw new Error('No db opened')
     }
     return this.openedDb
   }
 
-  get metadataDb () {
+  get metadataDb() {
     if (!this.openedMetadataDb) {
       throw new Error('No db opened')
     }
     return this.openedMetadataDb
   }
 
-  private getMetadataDatabase () {
+  private getMetadataDatabase() {
     return level(this.messageDbLocation)
   }
 
-  async getMessage (payloadDigest: string): Promise<MessageWrapper | undefined> {
+  async getMessage(payloadDigest: string): Promise<MessageWrapper | undefined> {
     try {
       const value = await this.db.get(payloadDigest)
       return JSON.parse(value)
@@ -123,20 +125,22 @@ export class LevelMessageStore implements MessageStore {
     }
   }
 
-  async deleteMessage (payloadDigest: string): Promise<void> {
+  async deleteMessage(payloadDigest: string): Promise<void> {
     await this.db.del(payloadDigest)
   }
 
-  async saveMessage (messageWrapper: MessageWrapper): Promise<void> {
+  async saveMessage(messageWrapper: MessageWrapper): Promise<void> {
     const index = messageWrapper.index
     await this.mostRecentMessageTime(messageWrapper.message.serverTime)
     await this.db.put(index, JSON.stringify(messageWrapper))
   }
 
-  async mostRecentMessageTime (newLastServerTime?: number): Promise<number> {
+  async mostRecentMessageTime(newLastServerTime?: number): Promise<number> {
     const jsonNewLastServerTime = JSON.stringify(newLastServerTime || 0)
     try {
-      const lastServerTimeString: string = await this.db.get(metadataKeys.lastServerTime)
+      const lastServerTimeString: string = await this.db.get(
+        metadataKeys.lastServerTime,
+      )
       const lastServerTime = JSON.parse(lastServerTimeString)
       if (!lastServerTime) {
         await this.db.put(metadataKeys.lastServerTime, jsonNewLastServerTime)
@@ -160,13 +164,15 @@ export class LevelMessageStore implements MessageStore {
     }
   }
 
-  private async getSchemaVersion (): Promise<number> {
+  private async getSchemaVersion(): Promise<number> {
     if (this.schemaVersion) {
       return this.schemaVersion
     }
 
     try {
-      const value: string = await this.metadataDb.get(metadataKeys.schemaVersion)
+      const value: string = await this.metadataDb.get(
+        metadataKeys.schemaVersion,
+      )
       return JSON.parse(value)
     } catch (err: any) {
       if (err.type === 'NotFoundError') {
@@ -176,20 +182,23 @@ export class LevelMessageStore implements MessageStore {
     }
   }
 
-  private async setSchemaVersion (schemaVersion: number): Promise<void> {
-    await this.metadataDb.put(metadataKeys.schemaVersion, JSON.stringify(schemaVersion))
+  private async setSchemaVersion(schemaVersion: number): Promise<void> {
+    await this.metadataDb.put(
+      metadataKeys.schemaVersion,
+      JSON.stringify(schemaVersion),
+    )
     // Update cache
     this.schemaVersion = schemaVersion
   }
 
-  async getIterator (): Promise<AsyncIterableIterator<MessageWrapper>> {
+  async getIterator(): Promise<AsyncIterableIterator<MessageWrapper>> {
     return new MessageIterator(this.db)
   }
 
   /**
    * This will delete everything in the store! Don't call it by accident!
    */
-  async clear () {
+  async clear() {
     await this.db.clear()
     await this.metadataDb.clear()
   }

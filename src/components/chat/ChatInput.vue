@@ -1,43 +1,21 @@
 <template>
   <div class="row">
     <q-toolbar class="q-px-sm">
-      <q-btn
-        dense
-        flat
-        icon="unfold_more"
-      >
+      <q-btn dense flat icon="unfold_more">
         <q-menu>
           <q-list style="min-width: 100px">
-            <q-item
-              clickable
-              v-close-popup
-              @click="giveLotusClicked"
-            >
-              <q-item-section
-                avatar
-                side
-              >
+            <q-item clickable v-close-popup @click="giveLotusClicked">
+              <q-item-section avatar side>
                 <q-icon name="local_florist" />
               </q-item-section>
-              <q-item-section>
-                Give Lotus Secretly
-              </q-item-section>
+              <q-item-section> Give Lotus Secretly </q-item-section>
             </q-item>
 
-            <q-item
-              clickable
-              v-close-popup
-              @click="sendFileClicked"
-            >
-              <q-item-section
-                avatar
-                side
-              >
+            <q-item clickable v-close-popup @click="sendFileClicked">
+              <q-item-section avatar side>
                 <q-icon name="attach_file" />
               </q-item-section>
-              <q-item-section>
-                Attach Image
-              </q-item-section>
+              <q-item-section> Attach Image </q-item-section>
             </q-item>
 
             <!-- <q-item clickable>
@@ -90,12 +68,7 @@
         :placeholder="$t('chatInput.placeHolder')"
       />
       <q-space />
-      <q-btn
-        dense
-        flat
-        class="q-btn q-pa-sm"
-        @mousedown.prevent="sendMessage"
-      >
+      <q-btn dense flat class="q-btn q-pa-sm" @mousedown.prevent="sendMessage">
         <q-icon name="send" />
       </q-btn>
     </q-toolbar>
@@ -115,7 +88,7 @@ export default {
   components: {
     // Picker
   },
-  data () {
+  data() {
     return {
       // emojiIndex
     }
@@ -123,52 +96,58 @@ export default {
   props: {
     message: {
       type: String,
-      default: () => ''
+      default: () => '',
     },
     stampAmount: {
       type: Number,
-      default: () => defaultStampAmount
-    }
+      default: () => defaultStampAmount,
+    },
   },
-  emits: ['update:message', 'update:stampAmount', 'sendMessage', 'giveLotusClicked', 'sendFileClicked'],
+  emits: [
+    'update:message',
+    'update:stampAmount',
+    'sendMessage',
+    'giveLotusClicked',
+    'sendFileClicked',
+  ],
   methods: {
-    focus () {
+    focus() {
       this.$refs.inputBox.focus()
     },
-    sendMessage () {
+    sendMessage() {
       this.$emit('sendMessage', this.innerMessage)
     },
-    giveLotusClicked () {
+    giveLotusClicked() {
       this.$emit('giveLotusClicked')
     },
-    sendFileClicked () {
+    sendFileClicked() {
       this.$emit('sendFileClicked')
     },
-    addEmoji (value) {
+    addEmoji(value) {
       // TODO: This needs to be cursor position aware
       this.innerMessage += `:${value.id}:`
-    }
+    },
   },
   computed: {
     innerMessage: {
-      get () {
+      get() {
         return this.message
       },
-      set (val) {
-        const replacer = (match) => emoji.emojify(match)
+      set(val) {
+        const replacer = match => emoji.emojify(match)
         // TODO: Remove emojify
         const emojifiedValue = val.replace(/(:.*:)/g, replacer)
         this.$emit('update:message', emojifiedValue)
-      }
+      },
     },
     innerStampAmount: {
-      get () {
+      get() {
         return Number(this.stampAmount / 1000000).toFixed(2)
       },
-      set (val) {
+      set(val) {
         this.$emit('update:stampAmount', Number(val) * 1000000)
-      }
-    }
-  }
+      },
+    },
+  },
 }
 </script>

@@ -1,6 +1,6 @@
 // app global css in Sass form
-@use "light-mode.scss";
-@use "dark-mode.scss";
+@use 'light-mode.scss';
+@use 'dark-mode.scss';
 
 :root {
   --q-on-primary-color-text: white;

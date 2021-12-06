@@ -4,11 +4,7 @@
     container
     class="hide-scrollbar absolute full-width"
   >
-    <q-drawer
-      v-model="contactDrawerOpen"
-      side="right"
-      :breakpoint="800"
-    >
+    <q-drawer v-model="contactDrawerOpen" side="right" :breakpoint="800">
       <right-drawer
         v-if="address"
         :address="address"
@@ -24,10 +20,7 @@
 
     <!-- Send money dialog -->
     <q-dialog v-model="sendMoneyOpen">
-      <send-lotus-dialog
-        :address="address"
-        :contact="contactProfile"
-      />
+      <send-lotus-dialog :address="address" :contact="contactProfile" />
     </q-dialog>
 
     <q-header>
@@ -40,7 +33,7 @@
           icon="menu"
         />
         <q-avatar rounded>
-          <img :src="contactProfile.avatar">
+          <img :src="contactProfile.avatar" />
         </q-avatar>
         <q-toolbar-title class="h6">
           {{ contactProfile.name }}
@@ -75,38 +68,38 @@ import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import SendLotusDialog from '../components/dialogs/SendLotusDialog.vue'
 
 export default {
-  props: { },
+  props: {},
   emits: ['toggleMyDrawerOpen'],
   components: {
     RightDrawer,
     SendFileDialog,
-    SendLotusDialog
+    SendLotusDialog,
   },
-  data () {
+  data() {
     return {
       // TODO: Timer isn't used delete
       timer: null,
       sendFileOpen: false,
       sendMoneyOpen: false,
       address: this.$route.params.address,
-      contactDrawerOpen: false
+      contactDrawerOpen: false,
     }
   },
-  beforeRouteUpdate (to, from, next) {
+  beforeRouteUpdate(to, from, next) {
     this.address = to.params.address
     next()
   },
-  unmounted () {
+  unmounted() {
     clearTimeout(this.timer)
   },
   computed: {
     ...mapGetters({
-      getContact: 'contacts/getContact'
+      getContact: 'contacts/getContact',
     }),
-    contactProfile () {
+    contactProfile() {
       return this.getContact(this.address).profile
-    }
-  }
+    },
+  },
 }
 </script>
 

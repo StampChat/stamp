@@ -1,0 +1,11 @@
+/dist
+/local_modules
+/node_modules
+/src/assets/
+
+# ignore yaml
+*.yml
+
+# ignore protobuf files
+*_pb.js
+*_pb.d.ts

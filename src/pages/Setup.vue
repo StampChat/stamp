@@ -13,9 +13,7 @@
           @click="$emit('toggleMyDrawerOpen')"
           icon="menu"
         />
-        <q-toolbar-title class="h6">
-          Welcome
-        </q-toolbar-title>
+        <q-toolbar-title class="h6">Welcome</q-toolbar-title>
       </q-toolbar>
     </q-header>
 
@@ -68,12 +66,9 @@
                 class="q-ml-sm"
               />
             </q-stepper-navigation>
-            <q-banner
-              inline-actions
-              class="text-white bg-red"
-            >
-              {{ $t('setup.seedWarning') }}
-            </q-banner>
+            <q-banner inline-actions class="text-white bg-red">{{
+              $t('setup.seedWarning')
+            }}</q-banner>
           </template>
         </q-stepper>
       </q-page>
@@ -100,7 +95,7 @@ import {
   defaultAvatars,
   recomendedBalance,
   keyservers,
-  networkName
+  networkName,
 } from '../utils/constants'
 import { errorNotify } from '../utils/notifications'
 
@@ -108,7 +103,6 @@ import AccountStep from '../components/setup/AccountStep.vue'
 import DepositStep from '../components/setup/DepositStep.vue'
 import EulaStep from '../components/setup/EULAStep.vue'
 
-// eslint-disable-next-line import/no-webpack-loader-syntax
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate'
 import { calcId } from 'src/cashweb/wallet/helpers'
 
@@ -116,15 +110,15 @@ export default defineComponent({
   components: {
     AccountStep,
     DepositStep,
-    EulaStep
+    EulaStep,
   },
-  data () {
+  data() {
     return {
       step: 1,
       accountData: {
         name: '',
         valid: false,
-        seed: this.getSeedPhrase() || generateMnemonic()
+        seed: this.getSeedPhrase() || generateMnemonic(),
       },
       relayData: defaultRelayData,
       relayUrl: defaultRelayUrl,
@@ -132,12 +126,12 @@ export default defineComponent({
       seed: '',
       settings: {
         networking: {
-          updateInterval: this.getUpdateInterval() / 1_000
+          updateInterval: this.getUpdateInterval() / 1_000,
         },
         appearance: {
-          darkMode: this.getDarkMode()
-        }
-      }
+          darkMode: this.getDarkMode(),
+        },
+      },
     }
   },
   emits: ['setupCompleted', 'toggleMyDrawerOpen'],
@@ -145,21 +139,21 @@ export default defineComponent({
     ...mapActions({
       setRelayToken: 'relayClient/setToken',
       resetChats: 'chats/reset',
-      darkMode: 'appearance/setDarkMode'
+      darkMode: 'appearance/setDarkMode',
     }),
     ...mapGetters({
       getUpdateInterval: 'contacts/getUpdateInterval',
       getDarkMode: 'appearance/getDarkMode',
-      getSeedPhrase: 'wallet/getSeedPhrase'
+      getSeedPhrase: 'wallet/getSeedPhrase',
     }),
     ...mapMutations({
       setRelayData: 'myProfile/setRelayData',
       resetWallet: 'wallet/reset',
       setXPrivKey: 'wallet/setXPrivKey',
       setSeedPhrase: 'wallet/setSeedPhrase',
-      updateInterval: 'contacts/setUpdateInterval'
+      updateInterval: 'contacts/setUpdateInterval',
     }),
-    selectRandomAvatar () {
+    selectRandomAvatar() {
       const avatarName =
         defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)]
       const toDataURL = (callback: (dataURL: string) => void) => {
@@ -180,19 +174,19 @@ export default defineComponent({
         this.avatar = dataUrl
       })
     },
-    newWallet () {
+    newWallet() {
       this.resetWallet()
       this.$wallet.clearUtxos()
 
       this.$q.loading.show({
         delay: 100,
-        message: this.$t('setup.generatingWallet')
+        message: this.$t('setup.generatingWallet'),
       })
       return new Promise<void>((resolve, reject) => {
         // Setup worker
         // TODO: What was the point of doing this in a worker?
         const worker = new WalletGenWorker()
-        worker.onmessage = async (event) => {
+        worker.onmessage = async event => {
           try {
             // Prepare wallet
             const xPrivKeyObj = event.data
@@ -212,36 +206,34 @@ export default defineComponent({
         worker.postMessage(this.seed)
       })
     },
-    async setupRelayData () {
+    async setupRelayData() {
       // Set profile
       const ksHandler = new KeyserverHandler({
         wallet: this.$wallet,
         keyservers: keyservers,
-        networkName
+        networkName,
       })
       const idAddress = this.$wallet.myAddress?.toCashAddress() ?? ''
 
       // Check for existing metadata
       this.$q.loading.show({
         delay: 100,
-        message: this.$t('setup.searchingExistingMetaData')
+        message: this.$t('setup.searchingExistingMetaData'),
       })
 
       // Try find relay URL on keyserver
       try {
         const foundRelayUrl = await ksHandler.getRelayUrl(idAddress)
         this.relayUrl = foundRelayUrl ?? defaultRelayUrl
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         // No URL found
         if (err.response && err.response.status === 404) {
           this.relayUrl = defaultRelayUrl
-          const stepper = (this.$refs.stepper as QStepper)
+          const stepper = this.$refs.stepper as QStepper
           stepper.next()
         } else {
-          const keyserverErr = new Error(
-            this.$t('setup.errorContactKeyServer')
-          )
+          const keyserverErr = new Error(this.$t('setup.errorContactKeyServer'))
           errorNotify(keyserverErr)
         }
       } finally {
@@ -251,7 +243,7 @@ export default defineComponent({
       // Check for existing metadata
       this.$q.loading.show({
         delay: 100,
-        message: this.$t('setup.searchingRelay')
+        message: this.$t('setup.searchingRelay'),
       })
       // Get profile from relay server
       // We do this first to prevent uploading broken URL to keyserver
@@ -259,20 +251,20 @@ export default defineComponent({
         relayUrl: this.relayUrl,
         store: this.$store,
         wallet: this.$wallet,
-        electrumClient: this.$electrum
+        electrumClient: this.$electrum,
       })
       try {
         this.relayData = await relayClient.getRelayData(idAddress)
         return
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         this.relayData = {
           ...defaultRelayData,
           profile: {
             ...defaultRelayData.profile,
             name: this.accountData.name || 'Stamp User',
-            avatar: this.avatar
-          }
+            avatar: this.avatar,
+          },
         }
         if (!err.response) {
           this.$q.loading.hide()
@@ -284,18 +276,18 @@ export default defineComponent({
         this.$q.loading.hide()
       }
     },
-    async setUpKeyserver () {
+    async setUpKeyserver() {
       // Set profile
       const ksHandler = new KeyserverHandler({
         wallet: this.$wallet,
         networkName,
-        keyservers: keyservers
+        keyservers: keyservers,
       })
 
       try {
         this.$q.loading.show({
           delay: 100,
-          message: this.$t('setup.uploadingMetaData')
+          message: this.$t('setup.uploadingMetaData'),
         })
         const idPrivKey = this.$wallet.identityPrivKey
 
@@ -303,24 +295,24 @@ export default defineComponent({
 
         await ksHandler.updateKeyMetadata(this.relayUrl, idPrivKey)
         this.$q.loading.hide()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         errorNotify(err)
         throw err
       }
     },
-    async setupRelay () {
+    async setupRelay() {
       const { client: relayClient } = await getRelayClient({
         relayUrl: this.relayUrl,
         store: this.$store,
         electrumClient: this.$electrumClientPromise,
-        wallet: this.$wallet
+        wallet: this.$wallet,
       })
 
       // Set filter
       this.$q.loading.show({
         delay: 100,
-        message: this.$t('setup.requestingPayment')
+        message: this.$t('setup.requestingPayment'),
       })
 
       const idAddress = this.$wallet.myAddress
@@ -331,24 +323,24 @@ export default defineComponent({
       while (triesLeft > 0) {
         try {
           const relayPaymentRequest = await relayClient.profilePaymentRequest(
-            idAddress.toCashAddress().toString()
+            idAddress.toCashAddress().toString(),
           )
-          assert(relayPaymentRequest, 'relayPaymentRequest should be defined at this point')
+          assert(
+            relayPaymentRequest,
+            'relayPaymentRequest should be defined at this point',
+          )
           // Send payment
           this.$q.loading.show({
             delay: 100,
-            message: this.$t('setup.sendingPayment')
+            message: this.$t('setup.sendingPayment'),
           })
 
           // Get token from relay server
-          const {
-            paymentUrl,
-            payment,
-            usedUtxos
-          } = await pop.constructPaymentTransaction(
-            this.$wallet,
-            relayPaymentRequest.paymentDetails
-          )
+          const { paymentUrl, payment, usedUtxos } =
+            await pop.constructPaymentTransaction(
+              this.$wallet,
+              relayPaymentRequest.paymentDetails,
+            )
 
           const paymentUrlFull = new URL(paymentUrl, this.relayUrl)
           console.log('Sending payment to', paymentUrlFull.href)
@@ -358,17 +350,18 @@ export default defineComponent({
           this.$relayClient.setToken(token)
           await Promise.all(
             // TODO: This should not be touching wallet storage directly.
-            usedUtxos.map((output) =>
-              this.$wallet.storage.deleteOutpoint(calcId(output)))
+            usedUtxos.map(output =>
+              this.$wallet.storage.deleteOutpoint(calcId(output)),
+            ),
           )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           // TODO: errors should not be stringly typed. Fix this
           // later. Also retry here should be more explicit. This is
           // basically so that things work when the person only had one UTXO to begin with.
           if (err.message === 'insufficient funds') {
             triesLeft--
-            await new Promise<void>((resolve) => {
+            await new Promise<void>(resolve => {
               setTimeout(() => resolve(), 1000)
             })
             continue
@@ -390,16 +383,16 @@ export default defineComponent({
 
       this.$q.loading.show({
         delay: 100,
-        message: this.$t('setup.openingInbox')
+        message: this.$t('setup.openingInbox'),
       })
 
       try {
         await this.$relayClient.updateProfile(
           idPrivKey,
           this.relayData.profile,
-          acceptancePrice
+          acceptancePrice,
         )
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         console.error(err)
         this.$q.loading.hide()
@@ -418,18 +411,16 @@ export default defineComponent({
       this.setRelayData(this.relayData)
       this.setSeedPhrase(this.seed)
     },
-    async setupSettings () {
+    async setupSettings() {
       // Reset all messaging
       await this.resetChats()
       await this.setUpKeyserver()
       await this.setupRelay()
-      await this.updateInterval(
-        this.settings.networking.updateInterval * 1_000
-      )
+      await this.updateInterval(this.settings.networking.updateInterval * 1_000)
       await this.$emit('setupCompleted')
     },
-    next () {
-      const stepper = (this.$refs.stepper as QStepper)
+    next() {
+      const stepper = this.$refs.stepper as QStepper
 
       switch (this.step) {
         case 1:
@@ -440,23 +431,23 @@ export default defineComponent({
           this.newWallet()
             .then(() => this.setupRelayData())
             .then(() => stepper.next())
-            .catch((err) => errorNotify(err))
+            .catch(err => errorNotify(err))
           break
         case 3:
           this.setupSettings()
             .then(() => this.$router.push('/'))
-            .catch((err) => errorNotify(err))
+            .catch(err => errorNotify(err))
           break
       }
     },
-    previous () {
-      const stepper = (this.$refs.stepper as QStepper)
+    previous() {
+      const stepper = this.$refs.stepper as QStepper
       stepper.previous()
-    }
+    },
   },
   computed: {
     ...mapGetters({ balance: 'wallet/balance' }),
-    forwardEnabled () {
+    forwardEnabled() {
       if (!this.$electrum.connected) {
         return false
       }
@@ -473,10 +464,10 @@ export default defineComponent({
           return true
       }
     },
-    isWalletValid (): boolean {
+    isWalletValid(): boolean {
       return this.accountData.valid
     },
-    isRelayValid (): boolean {
+    isRelayValid(): boolean {
       console.log('name', this.relayData.profile.name)
       console.log('avatar', !!this.relayData.profile.avatar)
       console.log('price', this.relayData.inbox.acceptancePrice)
@@ -486,10 +477,10 @@ export default defineComponent({
         this.relayData.inbox.acceptancePrice
       )
     },
-    isWalletSufficient () {
+    isWalletSufficient() {
       return !!this.balance && this.balance >= recomendedBalance
     },
-    nextButtonLabel (): string {
+    nextButtonLabel(): string {
       switch (this.step) {
         case 1:
           return this.$t('agree')
@@ -500,7 +491,7 @@ export default defineComponent({
         default:
           return 'Unknown'
       }
-    }
-  }
+    },
+  },
 })
 </script>
