@@ -14,7 +14,7 @@
       <div class="row q-ma-xs q-ma-xs">
         <q-space />
         <q-btn
-          class="row q-ma-xs q-ma-xs "
+          class="row q-ma-xs q-ma-xs"
           color="primary"
           label="Import Character"
           @click="importCharacter"
@@ -30,8 +30,8 @@
         filled
         :label="$t('profile.name')"
         lazy-rules
-        style="width:100%"
-        :rules="[ val => !!val || val.length > 0 || $t('profile.pleaseType') ]"
+        style="width: 100%"
+        :rules="[val => !!val || val.length > 0 || $t('profile.pleaseType')]"
       />
       <q-input
         :readonly="action === 'new'"
@@ -42,7 +42,7 @@
         filled
         rows="2"
         lazy-rules
-        :rules=" [ val => isSeedValid || $t('profile.invalidSeed') ]"
+        :rules="[val => isSeedValid || $t('profile.invalidSeed')]"
         :placeholder="$t('profile.enterSeed')"
       />
       <q-btn
@@ -72,34 +72,36 @@ import { seedCopiedNotify } from '../../utils/notifications'
 
 export default {
   model: {
-    accountData: Object
+    accountData: Object,
   },
   props: {
     accountData: {
       type: Object,
-      required: true
-    }
+      required: true,
+    },
   },
   emits: ['update:account-data'],
-  data () {
+  data() {
     return {
       action: 'none',
       rawName: this.accountData.name,
-      rawSeed: this.accountData.seed
+      rawSeed: this.accountData.seed,
     }
   },
   methods: {
-    generateMnemonic () {
+    generateMnemonic() {
       this.rawSeed = generateMnemonic()
     },
-    copySeed () {
-      copyToClipboard(this.seed).then(() => {
-        seedCopiedNotify()
-      }).catch(() => {
-        // fail
-      })
+    copySeed() {
+      copyToClipboard(this.seed)
+        .then(() => {
+          seedCopiedNotify()
+        })
+        .catch(() => {
+          // fail
+        })
     },
-    pasteImported () {
+    pasteImported() {
       const el = document.createElement('textarea')
       document.body.appendChild(el)
       el.focus()
@@ -107,27 +109,31 @@ export default {
       document.body.removeChild(el)
       this.$nextTick(() => this.$refs.seedInput.select())
     },
-    newCharacter () {
+    newCharacter() {
       this.generateMnemonic()
       this.action = 'new'
       this.rawName = ''
     },
-    importCharacter () {
+    importCharacter() {
       this.action = 'import'
       this.rawSeed = ''
-    }
+    },
   },
   computed: {
     seed: {
-      get () {
+      get() {
         return this.rawSeed
       },
-      set (val) {
+      set(val) {
         this.rawSeed = val
-        this.$emit('update:account-data', { name: this.rawName, seed: this.rawSeed.toLowerCase().trim(), valid: this.isValid })
-      }
+        this.$emit('update:account-data', {
+          name: this.rawName,
+          seed: this.rawSeed.toLowerCase().trim(),
+          valid: this.isValid,
+        })
+      },
     },
-    isValid () {
+    isValid() {
       if (this.action === 'new') {
         return this.rawName.length > 0 && this.isSeedValid
       }
@@ -136,18 +142,22 @@ export default {
       }
       return false
     },
-    isSeedValid () {
+    isSeedValid() {
       return validateMnemonic(this.rawSeed.toLowerCase().trim())
     },
     name: {
-      get () {
+      get() {
         return this.rawName
       },
-      set (val) {
+      set(val) {
         this.rawName = val
-        this.$emit('update:account-data', { name: this.rawName, seed: this.rawSeed, valid: this.isValid })
-      }
-    }
-  }
+        this.$emit('update:account-data', {
+          name: this.rawName,
+          seed: this.rawSeed,
+          valid: this.isValid,
+        })
+      },
+    },
+  },
 }
 </script>

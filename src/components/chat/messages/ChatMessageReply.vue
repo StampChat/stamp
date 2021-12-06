@@ -1,9 +1,6 @@
 <template>
   <div class="reply">
-    <div
-      class="col text-weight-bold"
-      :style="`color: ${nameColor};`"
-    >
+    <div class="col text-weight-bold" :style="`color: ${nameColor};`">
       {{ name }}
     </div>
     <chat-message
@@ -23,37 +20,37 @@ import { addressColorFromStr } from '../../../utils/formatting'
 export default {
   name: 'ChatMessageReply',
   components: {
-    ChatMessage: defineAsyncComponent(() => import('./ChatMessage.vue'))
+    ChatMessage: defineAsyncComponent(() => import('./ChatMessage.vue')),
   },
   props: {
     address: {
       type: String,
-      required: true
+      required: true,
     },
     payloadDigest: {
       type: String,
-      required: true
+      required: true,
     },
     mouseover: {
       type: Boolean,
-      required: true
-    }
+      required: true,
+    },
   },
   methods: {
     ...mapGetters({
       getMessageByPayloadVuex: 'chats/getMessageByPayload',
-      getContact: 'contacts/getContact'
-    })
+      getContact: 'contacts/getContact',
+    }),
   },
   computed: {
     ...mapGetters({
-      getProfile: 'myProfile/getProfile'
+      getProfile: 'myProfile/getProfile',
     }),
-    message () {
+    message() {
       const message = this.getMessageByPayloadVuex()(this.payloadDigest)
       return message || { items: [], senderAddress: undefined }
     },
-    name () {
+    name() {
       if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
         return this.getProfile.name
       }
@@ -63,13 +60,13 @@ export default {
       }
       return contact.profile.name
     },
-    nameColor () {
+    nameColor() {
       if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
         return 'text-black'
       }
       return addressColorFromStr(this.address)
-    }
-  }
+    },
+  },
 }
 </script>
 

@@ -1,9 +1,9 @@
-const esModules = ['quasar/lang', 'lodash-es'].join('|');
+const esModules = ['quasar/lang', 'lodash-es'].join('|')
 
 /* eslint-env node */
 module.exports = {
   globals: {
-    __DEV__: true,
+    '__DEV__': true,
     // TODO: Remove if resolved natively https://github.com/vuejs/vue-jest/issues/175
     'vue-jest': {
       pug: { doctype: 'html' },
@@ -73,4 +73,4 @@ module.exports = {
   },
   transformIgnorePatterns: [`node_modules/(?!(${esModules}))`],
   snapshotSerializers: ['<rootDir>/node_modules/jest-serializer-vue'],
-};
+}

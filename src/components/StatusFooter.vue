@@ -4,8 +4,8 @@
       <q-space />
       <q-btn
         flat
-        :color="connected?'white':'negative'"
-        :icon="connected?'account_balance_wallet':'error'"
+        :color="connected ? 'white' : 'negative'"
+        :icon="connected ? 'account_balance_wallet' : 'error'"
         label="Wallet"
       />
       <q-space />
@@ -17,15 +17,15 @@
 export default {
   model: {
     prop: 'isBasic',
-    event: 'input'
+    event: 'input',
   },
   props: {
-    isBasic: Boolean
+    isBasic: Boolean,
   },
   computed: {
-    connected () {
+    connected() {
       return this.$electrum.connected
-    }
-  }
+    },
+  },
 }
 </script>

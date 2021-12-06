@@ -4,11 +4,7 @@
     container
     class="hide-scrollbar absolute full-width"
   >
-    <q-drawer
-      v-model="showForumDrawer"
-      side="right"
-      :breakpoint="800"
-    >
+    <q-drawer v-model="showForumDrawer" side="right" :breakpoint="800">
       <forum-drawer />
     </q-drawer>
 
@@ -21,9 +17,7 @@
           @click="toggleSettingsDrawerOpen"
           icon="menu"
         />
-        <q-toolbar-title class="h6">
-          Forum
-        </q-toolbar-title>
+        <q-toolbar-title class="h6"> Forum </q-toolbar-title>
         <q-space />
         <q-btn
           icon="refresh"
@@ -31,12 +25,7 @@
           class="q-mx-none q-pa-sm"
           @click="refreshContent"
         />
-        <q-btn
-          flat
-          icon="post_add"
-          class="q-mx-none q-pa-sm"
-          to="/new-post"
-        />
+        <q-btn flat icon="post_add" class="q-mx-none q-pa-sm" to="/new-post" />
         <q-btn
           icon="settings"
           flat
@@ -66,51 +55,51 @@ import { mapGetters, mapActions, mapMutations } from 'vuex'
 import ForumDrawer from '../components/panels/ForumDrawer.vue'
 
 export default defineComponent({
-  data () {
+  data() {
     return {
-      showForumDrawer: false
+      showForumDrawer: false,
     }
   },
   components: { ForumDrawer },
   emits: ['toggleMyDrawerOpen'],
-  mounted () {
+  mounted() {
     this.refreshContent()
   },
   methods: {
     ...mapActions({
-      refreshMessages: 'forum/refreshMessages'
+      refreshMessages: 'forum/refreshMessages',
     }),
     ...mapMutations({
-      setSelectedTopic: 'forum/setSelectedTopic'
+      setSelectedTopic: 'forum/setSelectedTopic',
     }),
-    toggleSettingsDrawerOpen () {
+    toggleSettingsDrawerOpen() {
       this.$emit('toggleMyDrawerOpen')
     },
-    refreshContent () {
+    refreshContent() {
       this.refreshMessages({ wallet: this.$wallet, topic: this.selectedTopic })
     },
-    setTopic (text: string) {
+    setTopic(text: string) {
       this.selectedTopic = text
       this.refreshContent()
-    }
+    },
   },
   computed: {
     ...mapGetters({
       topics: 'forum/getTopics',
-      getSelectedTopic: 'forum/getSelectedTopic'
+      getSelectedTopic: 'forum/getSelectedTopic',
     }),
     selectedTopic: {
-      set (newVal?: string) {
+      set(newVal?: string) {
         this.setSelectedTopic(newVal ?? '')
         // If the contents were cleared then we should refresh.
         if (!newVal) {
           this.refreshContent()
         }
       },
-      get (): string {
+      get(): string {
         return this.getSelectedTopic
-      }
-    }
-  }
+      },
+    },
+  },
 })
 </script>

@@ -5,13 +5,9 @@
     clickable
     @click="setActiveChat(chatAddress)"
   >
-    <q-item-section
-      avatar
-      v-if="$status.setup"
-      side
-    >
+    <q-item-section avatar v-if="$status.setup" side>
       <q-avatar rounded>
-        <img :src="contact.avatar">
+        <img :src="contact.avatar" />
         <q-badge
           v-show="compact"
           v-if="!!numUnread"
@@ -24,19 +20,13 @@
     </q-item-section>
     <q-item-section v-show="!compact">
       <q-item-label>{{ contact.name }}</q-item-label>
-      <q-item-label
-        caption
-        lines="2"
-      >
+      <q-item-label caption lines="2">
         {{ latestMessageBody }}
       </q-item-label>
     </q-item-section>
-    <q-item-section
-      v-show="!compact"
-      side
-    >
+    <q-item-section v-show="!compact" side>
       <q-badge
-        v-if="!!valueUnread "
+        v-if="!!valueUnread"
         color="primary"
         :label="valueUnread"
         class="q-my-xs"
@@ -57,59 +47,62 @@ import { mapGetters, mapActions } from 'vuex'
 export default {
   methods: {
     ...mapActions({ vuexSetActiveChat: 'chats/setActiveChat' }),
-    setActiveChat (newAddress) {
+    setActiveChat(newAddress) {
       this.vuexSetActiveChat(newAddress)
       this.$router.push(`/chat/${newAddress}`).catch(() => {
         // Don't care. Probably duplicate route
       })
-    }
+    },
   },
   computed: {
     ...mapGetters({
       getContactProfile: 'contacts/getContactProfile',
-      getLatestMessage: 'chats/getLatestMessage'
+      getLatestMessage: 'chats/getLatestMessage',
     }),
-    latestMessageBody () {
+    latestMessageBody() {
       const info = this.getLatestMessage(this.chatAddress)
       if (info === null) {
         return ''
       }
-      const slicedText = info.text.split(' ').map(word => word.slice(0, 15)).join(' ')
+      const slicedText = info.text
+        .split(' ')
+        .map(word => word.slice(0, 15))
+        .join(' ')
       if (info.outbound) {
         return 'You: ' + slicedText
       } else {
         return 'Them:' + slicedText
       }
     },
-    contact () {
+    contact() {
       return this.getContactProfile(this.chatAddress)
     },
-    isActive () {
+    isActive() {
       return this.$route.params.address === this.chatAddress
-    }
+    },
   },
   props: {
     chatAddress: {
       type: String,
-      required: true
+      required: true,
     },
     numUnread: {
       type: Number,
       // Not passed when all read
       required: false,
-      default: () => 0
+      default: () => 0,
     },
     valueUnread: {
       type: String,
       // Not passed when all read
       required: false,
-      default: () => ''
+      default: () => '',
     },
     compact: {
       type: Boolean,
-      required: true
-    }
-  }
+      required: true,
+    },
+  },
 }
 </script>
 <style lang="scss" scoped>

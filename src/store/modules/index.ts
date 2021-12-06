@@ -13,21 +13,21 @@ const modules = {
   myProfile,
   relayClient,
   wallet,
-  forum
+  forum,
 }
 
 export type RootState = {
-  restored: Promise<boolean>;
+  restored: Promise<boolean>
   storeMetadata?: {
-    networkName?: string,
-    version?: number,
+    networkName?: string
+    version?: number
   }
-  appearance: AppearanceState;
+  appearance: AppearanceState
   chats: ChatsState
   contacts: ContactsState
   myProfile: MyProfileState
   relayClient: RelayState
-  wallet: WalletState,
+  wallet: WalletState
   forum: ForumState
 }
 

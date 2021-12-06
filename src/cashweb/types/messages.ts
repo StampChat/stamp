@@ -25,25 +25,30 @@ export interface StealthItem {
 
 export interface ImageItem {
   type: 'image'
-  image: string,
+  image: string
 }
 
-export type MessageItem = StealthItem | P2PKHSendItem | TextItem | ReplyItem | ImageItem
+export type MessageItem =
+  | StealthItem
+  | P2PKHSendItem
+  | TextItem
+  | ReplyItem
+  | ImageItem
 
 export interface Message {
-  outbound: boolean;
-  status: string;
-  receivedTime: number;
-  serverTime: number;
-  items: Array<MessageItem>;
-  outpoints: Array<Outpoint>;
-  senderAddress: string;
+  outbound: boolean
+  status: string
+  receivedTime: number
+  serverTime: number
+  items: Array<MessageItem>
+  outpoints: Array<Outpoint>
+  senderAddress: string
 }
 
 export interface MessageWrapper {
-  message: Message;
-  index: string;
-  outbound: boolean;
-  senderAddress: string;
-  copartyAddress: string;
+  message: Message
+  index: string
+  outbound: boolean
+  senderAddress: string
+  copartyAddress: string
 }

@@ -1,4 +1,7 @@
-export async function pAll<T, FuncType extends () => Promise<T>> (queue: (FuncType)[], concurrency = 5) {
+export async function pAll<T, FuncType extends () => Promise<T>>(
+  queue: FuncType[],
+  concurrency = 5,
+) {
   let index = 0
   const results: T[] = []
 

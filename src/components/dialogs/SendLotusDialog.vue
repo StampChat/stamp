@@ -1,9 +1,7 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
-      <div class="text-h6">
-        Send Lotus to {{ contact.name }}
-      </div>
+      <div class="text-h6">Send Lotus to {{ contact.name }}</div>
     </q-card-section>
     <q-card-section>
       <q-input
@@ -28,15 +26,10 @@
       />
     </q-card-section>
     <q-card-actions align="right">
+      <q-btn flat label="Cancel" color="primary" v-close-popup />
       <q-btn
         flat
-        label="Cancel"
-        color="primary"
-        v-close-popup
-      />
-      <q-btn
-        flat
-        :disable="amount==''"
+        :disable="amount == ''"
         label="Send"
         color="primary"
         v-close-popup
@@ -50,34 +43,39 @@
 import { mapGetters } from 'vuex'
 
 export default {
-  data () {
+  data() {
     return {
       amount: 0,
-      memo: ''
+      memo: '',
     }
   },
   props: {
     address: {
       type: String,
-      default: () => ''
+      default: () => '',
     },
     contact: {
       type: Object,
-      default: () => ({ name: 'Unknown' })
-    }
+      default: () => ({ name: 'Unknown' }),
+    },
   },
   methods: {
     ...mapGetters({
-      getStampAmount: 'chats/getStampAmount'
+      getStampAmount: 'chats/getStampAmount',
     }),
-    async sendStealthPayment () {
+    async sendStealthPayment() {
       const stampAmount = this.getStampAmount()(this.address)
       const amount = Number(this.amount * 1000000)
-      await this.$relayClient.sendStealthPayment({ address: this.address, amount, memo: this.memo, stampAmount })
-    }
+      await this.$relayClient.sendStealthPayment({
+        address: this.address,
+        amount,
+        memo: this.memo,
+        stampAmount,
+      })
+    },
   },
-  mounted () {
+  mounted() {
     this.$refs.amount.$el.focus()
-  }
+  },
 }
 </script>

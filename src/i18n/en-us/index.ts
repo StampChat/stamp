@@ -4,15 +4,16 @@
 export default {
   agree: 'Agree',
   chat: {
-    donationMessage: 'Thank you for participating in our vision of the future of online communications. Please consider donating to our efforts by sending real BCH to bitcoincash:qq7vt04md0pt6fk5szhcx4cgsfuzmppy5u4hxshr4a'
+    donationMessage:
+      'Thank you for participating in our vision of the future of online communications. Please consider donating to our efforts by sending real BCH to bitcoincash:qq7vt04md0pt6fk5szhcx4cgsfuzmppy5u4hxshr4a',
   },
   chatInput: {
     placeHolder: 'Write a message...',
-    emojiPickerTitle: 'Select an emoji'
+    emojiPickerTitle: 'Select an emoji',
   },
   chatList: {
     noContactMessage: 'Add contacts from the drawer above...',
-    balance: 'Balance'
+    balance: 'Balance',
   },
   setup: {
     welcome: 'Welcome',
@@ -21,7 +22,8 @@ export default {
     deposit: 'Deposit Lotus',
     settings: 'Settings',
     back: 'Back',
-    seedWarning: 'Do not forget your character\'s secret name, you will never be able to remember them again.',
+    seedWarning:
+      "Do not forget your character's secret name, you will never be able to remember them again.",
     searchingRelay: 'Searching for existing relay data...',
     networkErrorRelayDied: 'Network Error: Relay server connection died. ',
     networkErrorRelayUnexpected: 'Network error: Relay errored unexpectedly.',
@@ -29,7 +31,8 @@ export default {
     sendingPayment: 'Sending Payment...',
     uploadingMetaData: 'Uploading Metadata...',
     openingInbox: 'Opening Inbox...',
-    profileImageLargeError: 'Profile image is too large, select a smaller image.',
+    profileImageLargeError:
+      'Profile image is too large, select a smaller image.',
     continue: 'Continue',
     finish: 'Finish',
     generatingWallet: 'Generating wallet...',
@@ -38,12 +41,12 @@ export default {
     searchingExistingMetaData: 'Searching for existing keyserver metadata...',
     errorContactKeyServer: 'Unable to contact keyserver',
     accountSetupNext: 'Proceed',
-    depositStepNext: 'Enter the Masquerade'
+    depositStepNext: 'Enter the Masquerade',
   },
   newContactDialog: {
     newContact: 'New Contact',
     enterBitcoinCashAddress: 'Enter Lotus address...',
-    notFound: 'Not Found'
+    notFound: 'Not Found',
   },
   SettingPanel: {
     newContact: 'New Contact',
@@ -53,30 +56,30 @@ export default {
     profile: 'Profile',
     settings: 'Settings',
     wipeAndSave: 'Remote Wipe Wallet',
-    changeLog: 'Changelog'
+    changeLog: 'Changelog',
   },
   receiveBitcoinDialog: {
     walletStatus: 'Wallet Status',
     showSeed: 'ShowSeed',
     close: 'Close',
-    addressCopied: 'Address copied to clipboard'
+    addressCopied: 'Address copied to clipboard',
   },
   sendAddressDialog: {
     sendToAddress: 'Send to Address',
     enterBitcoinCashAddress: 'Enter Lotus address...',
     enterAmount: 'Enter Amount (Lotus)',
     cancel: 'Cancel',
-    send: 'Send'
+    send: 'Send',
   },
   contactBookDialog: {
     contacts: 'Contacts',
     search: 'Search...',
-    close: 'Close'
+    close: 'Close',
   },
   contactItem: {
     address: 'Address',
     inboxPrice: 'Inbox Price',
-    notFound: 'Not Found'
+    notFound: 'Not Found',
   },
   settings: {
     appearance: 'Appearance',
@@ -85,52 +88,52 @@ export default {
     contactRefreshIntervalHint: 'Interval between contact updates',
     darkMode: 'Dark Mode',
     saveSettings: 'Save',
-    cancelSettings: 'Cancel'
+    cancelSettings: 'Cancel',
   },
   profile: {
-    name: 'Character\'s Public Name',
-    seedEntry: 'Character\'s Secret Name',
+    name: "Character's Public Name",
+    seedEntry: "Character's Secret Name",
     importSeed: 'Recover past memories',
     invalidSeed: 'Unknown secret name...',
     nameHint: 'Name displayed to others',
-    enterSeed: 'Enter your character\'s secret name...',
+    enterSeed: "Enter your character's secret name...",
     pleaseType: 'Please be more creative',
     bio: 'Bio',
     bioHint: 'Short biolography displayed to others',
-    uploadAvatar: 'Upload Avatar'
+    uploadAvatar: 'Upload Avatar',
   },
   clearHistoryDialog: {
     cancel: 'Cancel',
     clear: 'Clear',
-    message: 'Are you sure you want to clear all chat history with'
+    message: 'Are you sure you want to clear all chat history with',
   },
   deleteChatDialog: {
     cancel: 'Cancel',
     delete: 'Delete',
-    message: 'Are you sure you want to delete all chat history with'
+    message: 'Are you sure you want to delete all chat history with',
   },
   deleteMessageDialog: {
     cancel: 'Cancel',
     delete: 'Delete',
-    message: 'Are you sure you want to delete this message?'
+    message: 'Are you sure you want to delete this message?',
   },
   imageDialog: {
-    close: 'Close'
+    close: 'Close',
   },
   profileDialog: {
     cancel: 'Cancel',
     update: 'Update',
     avatarTooLarge: 'Profile avatar is too large, select a smaller image.',
     unableContactRelay: 'Unable to contact relay server.',
-    pushingProfile: 'Pushing new Profile...'
+    pushingProfile: 'Pushing new Profile...',
   },
   wipeWallet: {
     cancel: 'Cancel',
     wipe: 'Wipe All Remote Content',
-    spinnerText: 'Deleting All Messages'
+    spinnerText: 'Deleting All Messages',
   },
   seedPhraseDialog: {
     seedPhrase: 'Seed Phrase',
-    close: 'Close'
-  }
+    close: 'Close',
+  },
 }

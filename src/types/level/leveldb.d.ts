@@ -4,12 +4,12 @@ export class LevelDBIterator {
 }
 
 export class LevelDB {
-  put(key: string, value: string): Promise<void>;
-  get(key: string): Promise<string>;
-  del(key: string): Promise<void>;
+  put(key: string, value: string): Promise<void>
+  get(key: string): Promise<string>
+  del(key: string): Promise<void>
 
-  close(): Promise<void>;
+  close(): Promise<void>
   iterator(options: Record<string, unknown>): Promise<LevelDBIterator>
 }
 
-export function level(localtion: string): LevelDB;
+export function level(localtion: string): LevelDB

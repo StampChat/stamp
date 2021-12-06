@@ -16,35 +16,41 @@ import AMessage from '../components/forum/ForumMessage.vue'
 
 export default defineComponent({
   components: {
-    AMessage
+    AMessage,
   },
   props: {},
-  data () {
+  data() {
     const payloadDigest = this.$route.params.payloadDigest as string
     return {
       payloadDigest,
-      message: {} as Partial<ForumMessage>
+      message: {} as Partial<ForumMessage>,
     }
   },
-  async mounted () {
+  async mounted() {
     this.payloadDigest = this.$route.params.payloadDigest as string
-    this.message = await this.$store.dispatch('forum/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as ForumMessage
+    this.message = (await this.$store.dispatch('forum/fetchMessage', {
+      wallet: this.$wallet,
+      payloadDigest: this.payloadDigest,
+    })) as ForumMessage
   },
-  async beforeRouteUpdate (to, from, next) {
+  async beforeRouteUpdate(to, from, next) {
     this.payloadDigest = to.params.payloadDigest as string
-    this.message = await this.$store.dispatch('forum/fetchMessage', { wallet: this.$wallet, payloadDigest: this.payloadDigest }) as ForumMessage
+    this.message = (await this.$store.dispatch('forum/fetchMessage', {
+      wallet: this.$wallet,
+      payloadDigest: this.payloadDigest,
+    })) as ForumMessage
     console.log('returned msg', this.message)
     next()
   },
   computed: {
     ...mapGetters({
-      getMessage: 'forum/getMessage'
-    })
+      getMessage: 'forum/getMessage',
+    }),
   },
   methods: {
     ...mapActions({
-      fetchMessage: 'forum/fetchMessage'
-    })
-  }
+      fetchMessage: 'forum/fetchMessage',
+    }),
+  },
 })
 </script>

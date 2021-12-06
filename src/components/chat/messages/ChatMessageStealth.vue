@@ -1,14 +1,7 @@
 <template>
-  <q-banner
-    rounded
-    class="bg-grey-3"
-  >
+  <q-banner rounded class="bg-grey-3">
     You received
-    <q-icon
-      name="local_florist"
-      size="sm"
-      dense
-    />
+    <q-icon name="local_florist" size="sm" dense />
     {{ formatSats(amount) }}
   </q-banner>
 </template>
@@ -20,19 +13,19 @@ export default {
   props: {
     amount: {
       type: Number,
-      required: true
-    }
+      required: true,
+    },
   },
-  data () {
+  data() {
     return {
       imageDialog: false,
-      image: null
+      image: null,
     }
   },
   methods: {
-    formatSats (value) {
+    formatSats(value) {
       return formatBalance(value)
-    }
-  }
+    },
+  },
 }
 </script>

@@ -1,12 +1,12 @@
 body.body--dark {
-    --q-color-background: #303030;
-    --q-color-text: white;
-    // TODO: Figure out how to use global quasar scss variables
-    --q-color-bg-active: #424242;
+  --q-color-background: #303030;
+  --q-color-text: white;
+  // TODO: Figure out how to use global quasar scss variables
+  --q-color-bg-active: #424242;
 
-    background: var(--q-color-background);
-    color: var(--q-color-text);
-    .active {
-      background-color: var(--q-color-bg-active);
-    }
+  background: var(--q-color-background);
+  color: var(--q-color-text);
+  .active {
+    background-color: var(--q-color-bg-active);
+  }
 }

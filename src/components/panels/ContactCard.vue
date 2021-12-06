@@ -9,24 +9,17 @@
       <q-item>
         <q-item-section>
           <q-avatar rounded>
-            <img :src="avatar">
+            <img :src="avatar" />
           </q-avatar>
         </q-item-section>
       </q-item>
 
       <q-item>
         <q-item-section>
-          <q-item-label
-            class="text-weight-bold text-white"
-            lines="1"
-          >
+          <q-item-label class="text-weight-bold text-white" lines="1">
             {{ name }}
           </q-item-label>
-          <q-item-label
-            class="text-white"
-            caption
-            lines="1"
-          >
+          <q-item-label class="text-white" caption lines="1">
             {{ displayAddress }}
           </q-item-label>
         </q-item-section>
@@ -55,27 +48,27 @@ export default {
   props: {
     name: {
       type: String,
-      default: () => ''
+      default: () => '',
     },
     address: {
       type: String,
-      default: () => ''
+      default: () => '',
     },
     bio: {
       type: String,
-      default: () => ''
+      default: () => '',
     },
     acceptancePrice: {
       type: Number,
-      default: () => 5000
+      default: () => 5000,
     },
     avatar: {
       type: String,
-      default: () => ''
-    }
+      default: () => '',
+    },
   },
   methods: {
-    copyAddress () {
+    copyAddress() {
       copyToClipboard(this.displayAddress)
         .then(() => {
           addressCopiedNotify()
@@ -83,14 +76,17 @@ export default {
         .catch(() => {
           // fail
         })
-    }
+    },
   },
   computed: {
-    displayAddress () {
+    displayAddress() {
       const address = Address(this.address)
-      const displayAddress = Address(address.hashBuffer, Networks.get(displayNetwork)).toXAddress()
+      const displayAddress = Address(
+        address.hashBuffer,
+        Networks.get(displayNetwork),
+      ).toXAddress()
       return displayAddress
-    }
-  }
+    },
+  },
 }
 </script>

@@ -1,9 +1,7 @@
 <template>
   <q-card class="q-ma-sm">
     <q-card-section>
-      <div class="text-h6">
-        Profile
-      </div>
+      <div class="text-h6">Profile</div>
     </q-card-section>
     <profile
       v-model:name="name"
@@ -33,22 +31,22 @@ import Profile from '../components/Profile'
 import { errorNotify } from '../utils/notifications'
 
 export default {
-  data () {
+  data() {
     const relayData = this.getRelayData()
     return {
       name: relayData.profile.name,
       bio: relayData.profile.bio,
       avatar: relayData.profile.avatar,
-      acceptancePrice: relayData.inbox.acceptancePrice
+      acceptancePrice: relayData.inbox.acceptancePrice,
     }
   },
   components: {
-    Profile
+    Profile,
   },
   methods: {
     ...mapMutations({ setRelayData: 'myProfile/setRelayData' }),
     ...mapGetters('myProfile', ['getRelayData']),
-    async updateRelayData () {
+    async updateRelayData() {
       // Set profile
       const client = this.$relayClient
 
@@ -58,11 +56,15 @@ export default {
 
       this.$q.loading.show({
         delay: 100,
-        message: this.$t('profileDialog.pushingProfile')
+        message: this.$t('profileDialog.pushingProfile'),
       })
 
       try {
-        await client.updateProfile(idPrivKey, this.relayData.profile, acceptancePrice)
+        await client.updateProfile(
+          idPrivKey,
+          this.relayData.profile,
+          acceptancePrice,
+        )
         this.setRelayData(this.relayData)
       } catch (err) {
         console.error(err)
@@ -79,31 +81,35 @@ export default {
       }
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     },
-    cancel () {
+    cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
-    }
+    },
   },
   computed: {
-    profile () {
+    profile() {
       return {
         name: this.name,
         bio: this.bio,
-        avatar: this.avatar
+        avatar: this.avatar,
       }
     },
-    relayData () {
+    relayData() {
       return {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         profile: this.profile,
         inbox: {
-          acceptancePrice: this.acceptancePrice
-        }
+          acceptancePrice: this.acceptancePrice,
+        },
       }
     },
-    identical () {
+    identical() {
       const currentProfile = this.getRelayData().profile
-      return currentProfile.name === this.name && currentProfile.bio === this.bio && currentProfile.avatar === this.avatar
-    }
-  }
+      return (
+        currentProfile.name === this.name &&
+        currentProfile.bio === this.bio &&
+        currentProfile.avatar === this.avatar
+      )
+    },
+  },
 }
 </script>

@@ -1,9 +1,6 @@
 <template>
   <template v-if="messages.length > 0">
-    <template
-      v-for="(message) in sortedPosts"
-      :key="message.payloadDigest"
-    >
+    <template v-for="message in sortedPosts" :key="message.payloadDigest">
       <a-message
         v-show="showMessage(message.topic)"
         @set-topic="(...args) => $emit('set-topic', ...args)"
@@ -16,11 +13,7 @@
   </template>
   <template v-else>
     <div>
-      <q-spinner-puff
-        class="absolute-center"
-        color="purple"
-        size="20rem"
-      />
+      <q-spinner-puff class="absolute-center" color="purple" size="20rem" />
     </div>
   </template>
 </template>
@@ -35,16 +28,16 @@ import { sortPostsByMode } from '../utils/sorting'
 export default defineComponent({
   props: {},
   components: {
-    AMessage
+    AMessage,
   },
-  data () {
-    return { }
+  data() {
+    return {}
   },
   emits: ['set-topic'],
   methods: {
-    showMessage (topic: string) {
+    showMessage(topic: string) {
       return topic.startsWith(this.selectedTopic)
-    }
+    },
   },
   computed: {
     ...mapGetters({
@@ -53,11 +46,13 @@ export default defineComponent({
       topics: 'forum/getTopics',
       selectedTopic: 'forum/getSelectedTopic',
       voteThreshold: 'forum/getVoteThreshold',
-      compactView: 'forum/getCompactView'
+      compactView: 'forum/getCompactView',
     }),
-    sortedPosts () {
-      return sortPostsByMode(this.messages, this.sortMode).filter(msg => msg.satoshis >= this.voteThreshold * 1_000_000)
-    }
-  }
+    sortedPosts() {
+      return sortPostsByMode(this.messages, this.sortMode).filter(
+        msg => msg.satoshis >= this.voteThreshold * 1_000_000,
+      )
+    },
+  },
 })
 </script>

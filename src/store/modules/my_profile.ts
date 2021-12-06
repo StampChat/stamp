@@ -1,14 +1,13 @@
-
 import type { Module } from 'vuex'
 
 export type State = {
   profile: {
-    name?: string,
-    bio?: string,
-    avatar?: string,
-  },
+    name?: string
+    bio?: string
+    avatar?: string
+  }
   inbox: {
-    acceptancePrice?: number;
+    acceptancePrice?: number
   }
 }
 
@@ -16,22 +15,22 @@ const module: Module<State, unknown> = {
   namespaced: true,
   state: { profile: {}, inbox: {} },
   getters: {
-    getRelayData (state) {
+    getRelayData(state) {
       return state
     },
-    getProfile (state) {
+    getProfile(state) {
       return state.profile
     },
-    getInbox (state) {
+    getInbox(state) {
       return state.inbox
-    }
+    },
   },
   mutations: {
-    setRelayData (state, relayData) {
+    setRelayData(state, relayData) {
       state.profile = relayData.profile
       state.inbox = relayData.inbox
-    }
-  }
+    },
+  },
 }
 
 export default module

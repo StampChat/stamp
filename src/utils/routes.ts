@@ -5,10 +5,10 @@ export const settingsRoutes = [
   '/profile',
   '/receive',
   '/send',
-  '/add-contact'
+  '/add-contact',
 ]
 
-export function openPage (router: Router, currentRoute: string, route: string) {
+export function openPage(router: Router, currentRoute: string, route: string) {
   for (const settingsRoute of settingsRoutes) {
     if (currentRoute.startsWith(settingsRoute)) {
       return router.replace(route)

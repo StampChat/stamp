@@ -1,12 +1,6 @@
 <template>
-  <q-menu
-    touch-position
-    context-menu
-  >
-    <q-list
-      dense
-      style="min-width: 100px"
-    >
+  <q-menu touch-position context-menu>
+    <q-list dense style="min-width: 100px">
       <q-item
         v-if="message.outpoints != null"
         clickable
@@ -15,11 +9,7 @@
       >
         <q-item-section> Reply </q-item-section>
       </q-item>
-      <q-item
-        v-if="message.outpoints != null"
-        clickable
-        v-close-popup
-      >
+      <q-item v-if="message.outpoints != null" clickable v-close-popup>
         <q-item-section> Forward </q-item-section>
       </q-item>
       <q-separator />
@@ -40,18 +30,10 @@
         <q-item-section> Resend </q-item-section>
       </q-item>
       <q-separator />
-      <q-item
-        clickable
-        v-close-popup
-        @click="copyMessage"
-      >
+      <q-item clickable v-close-popup @click="copyMessage">
         <q-item-section> Copy </q-item-section>
       </q-item>
-      <q-item
-        clickable
-        v-close-popup
-        @click="$emit('deleteClick')"
-      >
+      <q-item clickable v-close-popup @click="$emit('deleteClick')">
         <q-item-section>Delete</q-item-section>
       </q-item>
     </q-list>
@@ -65,57 +47,67 @@ export default {
   props: {
     address: {
       type: String,
-      required: true
+      required: true,
     },
     message: {
       type: Object,
-      required: true
+      required: true,
     },
     payloadDigest: {
       type: String,
-      required: true
+      required: true,
     },
     index: {
       type: Number,
       required: false,
-      default: () => 0
-    }
+      default: () => 0,
+    },
   },
   emits: ['deleteClick', 'replyClick', 'txClick'],
   methods: {
     ...mapMutations({
-      deleteMessage: 'chats/deleteMessage'
+      deleteMessage: 'chats/deleteMessage',
     }),
     ...mapGetters({
-      getStampAmount: 'chats/getStampAmount'
+      getStampAmount: 'chats/getStampAmount',
     }),
-    sendMessage (...args) {
+    sendMessage(...args) {
       return this.$relayClient.sendMessage(args)
     },
-    sendStealthPayment (...args) {
+    sendStealthPayment(...args) {
       return this.$relayClient.sendStealthPayment(args)
     },
-    sendImage (...args) {
+    sendImage(...args) {
       return this.$relayClient.sendImage(args)
     },
-    resend () {
-      this.deleteMessage({ address: this.address, payloadDigest: this.payloadDigest, index: this.index })
-      const stampAmount = this.getStampAmount()(this.address)
-      return this.$relayClient.sendMessageImpl({ address: this.address, items: this.message.items, stampAmount })
-    },
-    copyMessage () {
-      const text = this.message.items.find(el => el.type === 'text').text
-      copyToClipboard(text).then(() => {
-        this.$q.notify({
-          message: '<div class="text-center"> Message copied to clipboard </div>',
-          html: true,
-          color: 'purple'
-        })
+    resend() {
+      this.deleteMessage({
+        address: this.address,
+        payloadDigest: this.payloadDigest,
+        index: this.index,
       })
+      const stampAmount = this.getStampAmount()(this.address)
+      return this.$relayClient.sendMessageImpl({
+        address: this.address,
+        items: this.message.items,
+        stampAmount,
+      })
+    },
+    copyMessage() {
+      const text = this.message.items.find(el => el.type === 'text').text
+      copyToClipboard(text)
+        .then(() => {
+          this.$q.notify({
+            message:
+              '<div class="text-center"> Message copied to clipboard </div>',
+            html: true,
+            color: 'purple',
+          })
+        })
         .catch(() => {
           // fail
         })
-    }
-  }
+    },
+  },
 }
 </script>

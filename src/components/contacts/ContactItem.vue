@@ -1,12 +1,8 @@
 <template>
   <div :mouseover="$emit('mouseover-contact', address)">
-    <q-item v-if="(contact === null)">
+    <q-item v-if="contact === null">
       <q-item-section avatar>
-        <q-icon
-          color="negative"
-          name="error"
-          size="xl"
-        />
+        <q-icon color="negative" name="error" size="xl" />
       </q-item-section>
       <q-item-section>
         <q-item-label>{{ $t('contactItem.notFound') }}</q-item-label>
@@ -26,44 +22,29 @@
         </q-item-label>
       </q-item-section>
     </q-item>
-    <q-item
-      v-ripple
-      v-else-if="contact"
-      v-close-popup
-    >
-      <q-item-section
-        avatar
-        @click="contactClick(address, contact)"
-      >
-        <q-avatar
-          rounded
-          size="55px"
-        >
-          <img :src="contact.profile.avatar">
+    <q-item v-ripple v-else-if="contact" v-close-popup>
+      <q-item-section avatar @click="contactClick(address, contact)">
+        <q-avatar rounded size="55px">
+          <img :src="contact.profile.avatar" />
         </q-avatar>
       </q-item-section>
       <q-item-section @click="contactClick(address, contact)">
         <q-item-label> {{ contact.profile.name }} </q-item-label>
-        <q-item-label
-          lines="1"
-          caption
-        >
-          <span class="text-weight-bold">{{ $t('contactItem.address') }}: </span> {{ address }}
+        <q-item-label lines="1" caption>
+          <span class="text-weight-bold"
+            >{{ $t('contactItem.address') }}:
+          </span>
+          {{ address }}
         </q-item-label>
         <q-item-label caption>
-          <span class="text-weight-bold">{{ $t('contactItem.inboxPrice') }}: </span> {{ contact.inbox.acceptancePrice }}
+          <span class="text-weight-bold"
+            >{{ $t('contactItem.inboxPrice') }}:
+          </span>
+          {{ contact.inbox.acceptancePrice }}
         </q-item-label>
       </q-item-section>
-      <q-item-section
-        side
-        @click="deleteContact(address)"
-      >
-        <q-btn
-          flat
-          round
-          icon="delete"
-          color="red"
-        />
+      <q-item-section side @click="deleteContact(address)">
+        <q-btn flat round icon="delete" color="red" />
       </q-item-section>
     </q-item>
   </div>
@@ -76,22 +57,22 @@ export default {
   props: {
     address: {
       type: String,
-      default: () => ''
+      default: () => '',
     },
     contact: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
     },
     contactClick: {
       type: Function,
-      default: () => ''
-    }
+      default: () => '',
+    },
   },
   emits: ['mouseover-contact'],
   methods: {
     ...mapActions({
-      deleteContact: 'contacts/deleteContact'
-    })
-  }
+      deleteContact: 'contacts/deleteContact',
+    }),
+  },
 }
 </script>

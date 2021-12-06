@@ -1,21 +1,9 @@
 <template>
   <div>
-    <q-splitter
-      v-model="splitterSize"
-      unit="px"
-      disable
-    >
+    <q-splitter v-model="splitterSize" unit="px" disable>
       <template #before>
-        <q-tabs
-          v-model="tab"
-          vertical
-          class="text-primary"
-        >
-          <q-tab
-            name="profile"
-            icon="person"
-            label="Profile"
-          />
+        <q-tabs v-model="tab" vertical class="text-primary">
+          <q-tab name="profile" icon="person" label="Profile" />
         </q-tabs>
       </template>
       <template #after>
@@ -35,8 +23,11 @@
                     :label="$t('profile.name')"
                     :hint="$t('profile.nameHint')"
                     lazy-rules
-                    style="width:100%"
-                    :rules="[ val => val && val.length > 0 || $t('profile.pleaseType')]"
+                    style="width: 100%"
+                    :rules="[
+                      val =>
+                        (val && val.length > 0) || $t('profile.pleaseType'),
+                    ]"
                   />
                 </div>
                 <div class="row q-pa-md">
@@ -45,7 +36,7 @@
                     :label="$t('profile.bio')"
                     :hint="$t('profile.bioHint')"
                     outlined
-                    style="width:100%"
+                    style="width: 100%"
                     autogrow
                   />
                 </div>
@@ -55,12 +46,14 @@
                   class="bg-primary text-white shadow-2"
                   style="border-radius: 10px 10px 0px 0px"
                 >
-                  <q-toolbar-title>{{ $t('profile.uploadAvatar') }}</q-toolbar-title>
+                  <q-toolbar-title>{{
+                    $t('profile.uploadAvatar')
+                  }}</q-toolbar-title>
                   <q-file
                     ref="filePicker"
                     v-model="avatarPath"
                     filled=""
-                    style="display:none"
+                    style="display: none"
                   />
                   <q-btn
                     type="file"
@@ -72,10 +65,7 @@
                   />
                 </q-toolbar>
                 <div>
-                  <q-img
-                    :src="internalAvatar"
-                    spinner-color="white"
-                  />
+                  <q-img :src="internalAvatar" spinner-color="white" />
                   <div class="text-center">
                     <q-btn
                       flat
@@ -107,23 +97,28 @@ export default {
   props: {
     name: {
       type: String,
-      default: () => ('')
+      default: () => '',
     },
     bio: {
       type: String,
-      default: () => ('')
+      default: () => '',
     },
     avatar: {
       type: String,
-      default: () => ('')
+      default: () => '',
     },
     acceptancePrice: {
       type: Number,
-      default: () => 0
-    }
+      default: () => 0,
+    },
   },
-  emits: ['update:name', 'update:bio', 'update:avatar', 'update:acceptancePrice'],
-  data () {
+  emits: [
+    'update:name',
+    'update:bio',
+    'update:avatar',
+    'update:acceptancePrice',
+  ],
+  data() {
     return {
       splitterSize: 110,
       internalAvatar: this.avatar,
@@ -132,12 +127,12 @@ export default {
       internalAcceptancePrice: this.acceptancePrice,
       avatarPath: null,
       tab: 'profile',
-      defaultAvatarIndex: Math.floor(Math.random() * defaultAvatars.length)
+      defaultAvatarIndex: Math.floor(Math.random() * defaultAvatars.length),
     }
   },
   methods: {
-    selectLocalAvatar (name) {
-      const toDataURL = (callback) => {
+    selectLocalAvatar(name) {
+      const toDataURL = callback => {
         const img = new Image()
         img.crossOrigin = 'Anonymous'
         img.onload = function () {
@@ -151,47 +146,50 @@ export default {
         }
         img.src = require(`../assets/avatars/${name}`)
       }
-      toDataURL((dataUrl) => {
+      toDataURL(dataUrl => {
         this.internalAvatar = dataUrl
       })
     },
-    cycleAvatarLeft () {
-      this.defaultAvatarIndex = ((this.defaultAvatarIndex - 1) + defaultAvatars.length) % defaultAvatars.length
+    cycleAvatarLeft() {
+      this.defaultAvatarIndex =
+        (this.defaultAvatarIndex - 1 + defaultAvatars.length) %
+        defaultAvatars.length
       this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
     },
-    cycleAvatarRight () {
-      this.defaultAvatarIndex = (this.defaultAvatarIndex + 1) % defaultAvatars.length
+    cycleAvatarRight() {
+      this.defaultAvatarIndex =
+        (this.defaultAvatarIndex + 1) % defaultAvatars.length
       this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
-    }
+    },
   },
   watch: {
-    internalName (value) {
+    internalName(value) {
       this.$emit('update:name', value)
     },
-    internalBio (value) {
+    internalBio(value) {
       this.$emit('update:bio', value)
     },
-    internalAvatar (value) {
+    internalAvatar(value) {
       this.$emit('update:avatar', value)
     },
-    internalAcceptancePrice (value) {
+    internalAcceptancePrice(value) {
       this.$emit('update:acceptancePrice', value)
     },
-    avatarPath (val) {
+    avatarPath(val) {
       if (val == null) {
         return
       }
       const reader = new FileReader()
       reader.readAsDataURL(val)
-      reader.onload = (evt) => {
+      reader.onload = evt => {
         this.internalAvatar = evt.target.result
       }
-    }
+    },
   },
-  created () {
+  created() {
     if (!this.avatar) {
       this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
     }
-  }
+  },
 }
 </script>

@@ -34,17 +34,17 @@ export default {
   props: {
     address: {
       type: String,
-      default: () => ''
+      default: () => '',
     },
     name: {
       type: String,
-      default: () => ''
-    }
+      default: () => '',
+    },
   },
   computed: {
     ...mapGetters({
-      getSeedPhrase: 'wallet/getSeedPhrase'
-    })
-  }
+      getSeedPhrase: 'wallet/getSeedPhrase',
+    }),
+  },
 }
 </script>

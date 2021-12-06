@@ -1,13 +1,13 @@
 body.body--light {
-    --q-color-background: #fafafa;
-    --q-color-text: black;
-    // TODO: Figure out how to use global quasar scss variables
-    --q-color-bg-active: #e0e0e0;
-    --q-color-active: rgb(221,221,221);
+  --q-color-background: #fafafa;
+  --q-color-text: black;
+  // TODO: Figure out how to use global quasar scss variables
+  --q-color-bg-active: #e0e0e0;
+  --q-color-active: rgb(221, 221, 221);
 
-    background: var(--q-color-background);
-    color: var(--q-color-text);
-    .active {
-      background-color: var(--q-color-active);
-    }
+  background: var(--q-color-background);
+  color: var(--q-color-text);
+  .active {
+    background-color: var(--q-color-active);
+  }
 }

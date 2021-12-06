@@ -3,15 +3,15 @@ import { notificationTimeout } from './constants'
 
 // Error notifications
 
-function negativeNotify (text: string) {
+function negativeNotify(text: string) {
   Notify.create({
     message: '<div class="text-center"> ' + text + ' </div>',
     html: true,
-    color: 'negative'
+    color: 'negative',
   })
 }
 
-export function errorNotify (err: { response?: unknown; message: string }) {
+export function errorNotify(err: { response?: unknown; message: string }) {
   console.error(err)
   if (err.response) {
     console.error(err.response)
@@ -21,27 +21,27 @@ export function errorNotify (err: { response?: unknown; message: string }) {
 
 // Info notifications
 
-export function infoNotify (text: string) {
+export function infoNotify(text: string) {
   Notify.create({
     message: '<div class="text-center"> ' + text + ' </div>',
     html: true,
-    color: 'accent'
+    color: 'accent',
   })
 }
 
-export function addressCopiedNotify () {
+export function addressCopiedNotify() {
   infoNotify('Address copied to clipboard.')
 }
 
-export function insufficientStampNotify () {
+export function insufficientStampNotify() {
   infoNotify('Stamp is too small, receiver will not be notified.')
 }
 
-export function seedCopiedNotify () {
+export function seedCopiedNotify() {
   infoNotify('Your secret name has been saved to your clipboard.')
 }
 
-export function sentTransactionNotify () {
+export function sentTransactionNotify() {
   Notify.create({
     message: '<div class="text-center"> Sent transaction </div>',
     html: true,
@@ -52,20 +52,20 @@ export function sentTransactionNotify () {
         color: 'secondary',
         handler: () => {
           /* ... */
-        }
-      }
-    ]
+        },
+      },
+    ],
   })
 }
-export function desktopNotify (
+export function desktopNotify(
   title: string,
   body: string,
   icon: string,
-  callback: () => void
+  callback: () => void,
 ) {
   const notify = new window.Notification(title, {
     body,
-    icon
+    icon,
   })
   notify.onclick = () => {
     callback()

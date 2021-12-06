@@ -19,23 +19,21 @@
 import { contextBridge, ipcRenderer, shell } from 'electron'
 import { BrowserWindow } from '@electron/remote'
 
-contextBridge.exposeInMainWorld('badge',
-  {
-    updateBadge: (unread) => {
-      ipcRenderer.sendSync('update-badge', 1)
-    },
-    setBadgeCount (count) {
-      // remote.app.setBadgeCount(unread)
-    }
-  }
-)
+contextBridge.exposeInMainWorld('badge', {
+  updateBadge: unread => {
+    ipcRenderer.sendSync('update-badge', 1)
+  },
+  setBadgeCount(count) {
+    // remote.app.setBadgeCount(unread)
+  },
+})
 
 contextBridge.exposeInMainWorld('myWindowAPI', {
-  minimize () {
+  minimize() {
     BrowserWindow.getFocusedWindow().minimize()
   },
 
-  toggleMaximize () {
+  toggleMaximize() {
     const win = BrowserWindow.getFocusedWindow()
 
     if (win.isMaximized()) {
@@ -45,15 +43,13 @@ contextBridge.exposeInMainWorld('myWindowAPI', {
     }
   },
 
-  close () {
+  close() {
     BrowserWindow.getFocusedWindow().close()
-  }
+  },
 })
 
-contextBridge.exposeInMainWorld('url',
-  {
-    open: (url) => {
-      shell.openExternal(url);
-    },
-  }
-)
+contextBridge.exposeInMainWorld('url', {
+  open: url => {
+    shell.openExternal(url)
+  },
+})

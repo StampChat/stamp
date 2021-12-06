@@ -12,17 +12,13 @@
         :messages="chunk"
         :global-index="globalIndex"
         :contact="getContact(chunk[0].outbound)"
-        :name-color="chunk[0].outbound ? '': `color: ${nameColor};`"
+        :name-color="chunk[0].outbound ? '' : `color: ${nameColor};`"
         v-bind="$attrs"
         @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
       />
     </template>
   </q-scroll-area>
-  <q-page-sticky
-    position="bottom-right"
-    :offset="[18, 18]"
-    v-show="!bottom"
-  >
+  <q-page-sticky position="bottom-right" :offset="[18, 18]" v-show="!bottom">
     <q-btn
       round
       flat
@@ -34,11 +30,7 @@
   </q-page-sticky>
 
   <q-footer bordered>
-    <div
-      v-if="!!replyDigest"
-      class="reply col q-px-md q-pt-sm"
-      ref="replyBox"
-    >
+    <div v-if="!!replyDigest" class="reply col q-px-md q-pt-sm" ref="replyBox">
       <!-- Reply box -->
       <div class="row">
         <div class="col text-weight-bold">
@@ -56,15 +48,15 @@
       </div>
       <div class="row q-px-sm q-pt-sm">
         <chat-message-text
-          v-if="replyItem.type=='text'"
+          v-if="replyItem.type == 'text'"
           :text="replyItem.text"
         />
         <chat-message-image
-          v-else-if="replyItem.type=='image'"
+          v-else-if="replyItem.type == 'image'"
           :image="replyItem.image"
         />
         <chat-message-stealth
-          v-else-if="replyItem.type=='stealth'"
+          v-else-if="replyItem.type == 'stealth'"
           :amount="replyItem.amount"
         />
       </div>
@@ -102,35 +94,35 @@ export default {
     ChatMessageText,
     ChatMessageImage,
     ChatMessageStealth,
-    ChatInput
+    ChatInput,
   },
-  beforeRouteUpdate (to, from, next) {
+  beforeRouteUpdate(to, from, next) {
     this.address = to.params.address
     next()
   },
-  data () {
+  data() {
     console.log(this.$route.params.address)
     return {
       address: this.$route.params.address,
       bottom: true,
       messagesToShow: 30,
       replyDigest: null,
-      message: ''
+      message: '',
     }
   },
   emits: ['giveLotusClicked', 'sendFileClicked'],
-  mounted () {
+  mounted() {
     this.scrollBottom()
   },
   methods: {
     ...mapGetters({
       getAcceptancePrice: 'contacts/getAcceptancePrice',
-      getStampAmount: 'chats/getStampAmount'
+      getStampAmount: 'chats/getStampAmount',
     }),
     ...mapActions({
-      setStampAmount: 'chats/setStampAmount'
+      setStampAmount: 'chats/setStampAmount',
     }),
-    scrollHandler (details) {
+    scrollHandler(details) {
       if (
         // Ten pixels from top
         details.verticalPosition <= 10
@@ -140,9 +132,13 @@ export default {
       }
       // Set this afterwards, incase we were at the bottom already.
       // We want to ensure that we scroll!
-      this.bottom = details.verticalSize - details.verticalPosition - details.verticalContainerSize <= 10
+      this.bottom =
+        details.verticalSize -
+          details.verticalPosition -
+          details.verticalContainerSize <=
+        10
     },
-    scrollBottom () {
+    scrollBottom() {
       const scrollArea = this.$refs.chatScroll
       if (!scrollArea) {
         // Not mounted yet
@@ -158,14 +154,14 @@ export default {
         scrollArea.setScrollPosition(
           'vertical',
           scrollTarget.scrollHeight,
-          scrollDuration
+          scrollDuration,
         )
       })
     },
-    nameColor () {
+    nameColor() {
       return addressColorFromStr(this.address)
     },
-    sendMessage (message) {
+    sendMessage(message) {
       const stampAmount = this.getStampAmount()(this.address)
       const acceptancePrice = this.getAcceptancePrice()(this.address)
       if (stampAmount < acceptancePrice) {
@@ -176,36 +172,36 @@ export default {
           address: this.address,
           text: message,
           replyDigest: this.replyDigest,
-          stampAmount
+          stampAmount,
         })
         this.message = ''
         this.replyDigest = null
       }
     },
-    getContact (outbound) {
+    getContact(outbound) {
       if (outbound) {
         return this.getProfile
       } else {
         return this.getContactVuex(this.address).profile
       }
     },
-    setReply (payloadDigest) {
+    setReply(payloadDigest) {
       console.log('setting reply')
       this.replyDigest = payloadDigest
-    }
+    },
   },
   computed: {
     ...mapGetters({
       getContactVuex: 'contacts/getContact',
       getProfile: 'myProfile/getProfile',
-      getMessageByPayload: 'chats/getMessageByPayload'
+      getMessageByPayload: 'chats/getMessageByPayload',
     }),
     ...mapState('chats', ['chats']),
-    messages () {
+    messages() {
       const activeChat = this.chats[this.address]
       return activeChat ? activeChat.messages : []
     },
-    chunkedMessages () {
+    chunkedMessages() {
       // TODO: Improve stacking logic e.g. long durations between messages prevent stacking
       // TODO: Optimize this by progressively constructing it
       if (!this.messages) {
@@ -216,20 +212,33 @@ export default {
       const start = this.messages.length - length
       const end = this.messages.length
 
-      const { chunks, currentChunk, globalIndex } = this.messages.slice(start + 1, end).reduce(({ chunks, currentChunk, globalIndex }, message) => {
-        if (currentChunk[0].senderAddress === message.senderAddress) {
-          currentChunk.push(message)
-          return { chunks, currentChunk, globalIndex: globalIndex }
-        } else {
-          chunks.push({ chunk: currentChunk, globalIndex: globalIndex })
-          return { chunks, currentChunk: [message], globalIndex: globalIndex + currentChunk.length }
-        }
-      }, { chunks: [], currentChunk: [this.messages[start]], globalIndex: start })
+      const { chunks, currentChunk, globalIndex } = this.messages
+        .slice(start + 1, end)
+        .reduce(
+          ({ chunks, currentChunk, globalIndex }, message) => {
+            if (currentChunk[0].senderAddress === message.senderAddress) {
+              currentChunk.push(message)
+              return { chunks, currentChunk, globalIndex: globalIndex }
+            } else {
+              chunks.push({ chunk: currentChunk, globalIndex: globalIndex })
+              return {
+                chunks,
+                currentChunk: [message],
+                globalIndex: globalIndex + currentChunk.length,
+              }
+            }
+          },
+          {
+            chunks: [],
+            currentChunk: [this.messages[start]],
+            globalIndex: start,
+          },
+        )
 
       chunks.push({ chunk: currentChunk, globalIndex: globalIndex })
       return chunks
     },
-    replyItem () {
+    replyItem() {
       if (!this.replyDigest) {
         return null
       }
@@ -245,16 +254,20 @@ export default {
 
       return firstNonReply
     },
-    replyName () {
-      const replyAddress = this.getMessageByPayload(this.replyDigest).senderAddress
+    replyName() {
+      const replyAddress = this.getMessageByPayload(
+        this.replyDigest,
+      ).senderAddress
       if (replyAddress === this.$wallet.myAddress.toXAddress()) {
         return this.getProfile.name
       }
       const contact = this.getContactVuex(replyAddress)
       return contact.profile.name
     },
-    replyColor () {
-      const replyAddress = this.getMessageByPayload(this.replyDigest).senderAddress
+    replyColor() {
+      const replyAddress = this.getMessageByPayload(
+        this.replyDigest,
+      ).senderAddress
       if (replyAddress === this.$wallet.myAddress.toXAddress()) {
         return 'black'
       }
@@ -262,21 +275,24 @@ export default {
       return this.addressColorFromStr(this.address)
     },
     stampAmount: {
-      set (stampAmount) {
+      set(stampAmount) {
         const stampAmountNumber = Math.max(stampLowerLimit, Number(stampAmount))
-        this.setStampAmount({ address: this.address, stampAmount: stampAmountNumber })
+        this.setStampAmount({
+          address: this.address,
+          stampAmount: stampAmountNumber,
+        })
       },
-      get () {
+      get() {
         return Number(this.getStampAmount()(this.address))
-      }
-    }
+      },
+    },
   },
   watch: {
-    'messages.length' () {
+    'messages.length'() {
       // Scroll to bottom if user was already there.
       this.scrollBottom()
     },
-    active (newActive) {
+    'active'(newActive) {
       if (!newActive) {
         return
       }
@@ -286,7 +302,7 @@ export default {
       // Scroll to bottom only if the view was effectively in it's initial state.
       this.scrollBottom()
       // TODO: Scroll to last unread
-    }
-  }
+    },
+  },
 }
 </script>

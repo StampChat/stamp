@@ -31,42 +31,31 @@
       :index="index"
       @txClick="transactionDialog = true"
       @deleteClick="deleteDialog = true"
-      @replyClick="replyClicked({ address, payloadDigest: message.payloadDigest })"
+      @replyClick="
+        replyClicked({ address, payloadDigest: message.payloadDigest })
+      "
     />
 
-    <div
-      class="col"
-      v-if="message.payloadDigest"
-    >
-      <div
-        class="q-px-lg"
-        v-for="(item, key) in message.items"
-        :key="key"
-      >
+    <div class="col" v-if="message.payloadDigest">
+      <div class="q-px-lg" v-for="(item, key) in message.items" :key="key">
         <chat-message-reply
-          v-if="item.type=='reply'"
+          v-if="item.type == 'reply'"
           :payload-digest="item.payloadDigest"
           :address="address"
           :mouseover="mouseover"
         />
-        <chat-message-text
-          v-else-if="item.type=='text'"
-          :text="item.text"
-        />
+        <chat-message-text v-else-if="item.type == 'text'" :text="item.text" />
         <chat-message-image
-          v-else-if="item.type=='image'"
+          v-else-if="item.type == 'image'"
           :image="item.image"
         />
         <chat-message-stealth
-          v-else-if="item.type=='stealth'"
+          v-else-if="item.type == 'stealth'"
           :amount="item.amount"
         />
       </div>
     </div>
-    <div
-      class="col"
-      v-else-if="!message.payloadDigest"
-    >
+    <div class="col" v-else-if="!message.payloadDigest">
       Unable to find message payload
     </div>
 
@@ -77,14 +66,8 @@
       {{ shortTime }}
     </div>
 
-    <div
-      v-if="message.status==='error'"
-      class="col-auto"
-    >
-      <q-icon
-        name="error"
-        color="red"
-      />
+    <div v-if="message.status === 'error'" class="col-auto">
+      <q-icon name="error" color="red" />
     </div>
   </q-item>
 </template>
@@ -109,48 +92,48 @@ export default {
     ChatMessageImage,
     ChatMessageStealth,
     TransactionDialog,
-    DeleteMessageDialog
+    DeleteMessageDialog,
   },
   emits: ['replyClicked'],
-  data () {
+  data() {
     return {
       transactionDialog: false,
       deleteDialog: false,
-      mouseover: false
+      mouseover: false,
     }
   },
   props: {
     address: {
       type: String,
-      required: true
+      required: true,
     },
     message: {
       type: Object,
-      required: true
+      required: true,
     },
     nameColor: {
       type: String,
-      required: true
+      required: true,
     },
     // Payload digest and index are not passed when nested in a reply
     payloadDigest: {
       type: String,
       required: false,
-      default: () => ''
+      default: () => '',
     },
     index: {
       type: Number,
       required: false,
-      default: () => 0
-    }
+      default: () => 0,
+    },
   },
   methods: {
-    replyClicked (args) {
+    replyClicked(args) {
       this.$emit('replyClicked', args)
-    }
+    },
   },
   computed: {
-    shortTimestamp () {
+    shortTimestamp() {
       switch (this.message.status) {
         case 'confirmed': {
           const timestamp = this.message.timestamp || this.message.serverTime
@@ -161,7 +144,7 @@ export default {
             nextWeek: 'dddd',
             lastDay: 'HH:mm:ss',
             lastWeek: '[Last] dddd',
-            sameElse: 'DD/MM/YYYY'
+            sameElse: 'DD/MM/YYYY',
           })
         }
         case 'pending':
@@ -171,7 +154,7 @@ export default {
       }
       return 'N/A'
     },
-    shortTime () {
+    shortTime() {
       switch (this.message.status) {
         case 'confirmed': {
           const timestamp = this.message.timestamp || this.message.serverTime
@@ -185,17 +168,17 @@ export default {
       }
       return 'N/A'
     },
-    timestampString () {
+    timestampString() {
       const timestamp = this.message.timestamp || this.message.serverTime
       return moment(timestamp)
     },
-    stampAmount () {
+    stampAmount() {
       if (!this.message || !this.message.outpoints) {
         return '0 Lotus'
       }
       const amount = stampPrice(this.message.outpoints)
       return Number(amount / 1000000).toFixed(2) + ' Lotus'
-    }
-  }
+    },
+  },
 }
 </script>

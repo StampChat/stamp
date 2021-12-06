@@ -9,18 +9,8 @@
         :size="150"
       />
     </div>
-    <q-btn
-      class="center"
-      label="Get Free Lotus"
-      @click="openFaucet"
-    />
-    <q-input
-      class="fit"
-      filled
-      auto-grow
-      v-model="displayAddress"
-      readonly
-    >
+    <q-btn class="center" label="Get Free Lotus" @click="openFaucet" />
+    <q-input class="fit" filled auto-grow v-model="displayAddress" readonly>
       <template #after>
         <q-btn
           dense
@@ -48,7 +38,9 @@
       color="warning"
       class="q-mt-sm"
     />
-    <span class="row q-mx-sm q-px-none">Current: {{ formatBalance }}, Need: {{ formatRecommended }}</span>
+    <span class="row q-mx-sm q-px-none"
+      >Current: {{ formatBalance }}, Need: {{ formatRecommended }}</span
+    >
   </div>
 </template>
 
@@ -63,21 +55,21 @@ import { toAPIAddress, toDisplayAddress } from '../../utils/address'
 
 export default {
   components: {
-    QrcodeVue
+    QrcodeVue,
   },
-  data () {
+  data() {
     return {
       paymentAddrCounter: 0,
       recomendedBalance,
       qrSize: 300,
-      legacy: false
+      legacy: false,
     }
   },
   methods: {
-    toggleLegacy () {
+    toggleLegacy() {
       this.legacy = !this.legacy
     },
-    copyAddress () {
+    copyAddress() {
       copyToClipboard(this.displayAddress)
         .then(() => {
           addressCopiedNotify()
@@ -86,28 +78,34 @@ export default {
           // fail
         })
     },
-    setQRSize (size) {
+    setQRSize(size) {
       this.qrSize = size.height
     },
-    openFaucet () {
-      this.openURL(`https://faucet.lotuslounge.org/?address=${toDisplayAddress(this.$wallet.myAddress)}`)
-    }
+    openFaucet() {
+      this.openURL(
+        `https://faucet.lotuslounge.org/?address=${toDisplayAddress(
+          this.$wallet.myAddress,
+        )}`,
+      )
+    },
   },
   computed: {
     ...mapGetters({ balance: 'wallet/balance' }),
-    displayAddress () {
-      return (this.legacy ? toAPIAddress(this.$wallet.myAddress) : toDisplayAddress(this.$wallet.myAddress))
+    displayAddress() {
+      return this.legacy
+        ? toAPIAddress(this.$wallet.myAddress)
+        : toDisplayAddress(this.$wallet.myAddress)
     },
-    percentageBalance () {
+    percentageBalance() {
       const percentage = this.balance / this.recomendedBalance
       return percentage
     },
-    formatRecommended () {
+    formatRecommended() {
       return formatBalance(this.recomendedBalance)
     },
-    formatBalance () {
+    formatBalance() {
       return formatBalance(this.balance)
-    }
-  }
+    },
+  },
 }
 </script>

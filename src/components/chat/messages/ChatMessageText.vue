@@ -10,13 +10,13 @@ export default {
   props: {
     text: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   methods: {
-    markedMessage (text) {
+    markedMessage(text) {
       return toMarkdown(text)
-    }
-  }
+    },
+  },
 }
 </script>

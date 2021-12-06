@@ -1,7 +1,7 @@
 # CashWeb Libraries
 
 This folder contains libraries relevant to interacting with cashweb backend
-services. 
+services.
 
 # License
 
