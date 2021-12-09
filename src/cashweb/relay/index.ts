@@ -311,9 +311,11 @@ export class RelayClient extends ReadOnlyRelayClient {
     await axios({
       method: 'delete',
       url,
-      headers: {
-        Authorization: this.token,
-      },
+      headers: this.token
+        ? {
+            Authorization: this.token,
+          }
+        : undefined,
       params: {
         digest,
       },
@@ -329,9 +331,11 @@ export class RelayClient extends ReadOnlyRelayClient {
     await axios({
       method: 'put',
       url: url,
-      headers: {
-        Authorization: this.token,
-      },
+      headers: this.token
+        ? {
+            Authorization: this.token,
+          }
+        : undefined,
       data: rawProfile,
     })
   }
@@ -349,9 +353,11 @@ export class RelayClient extends ReadOnlyRelayClient {
       const response = await axios({
         method: 'get',
         url: url,
-        headers: {
-          Authorization: this.token,
-        },
+        headers: this.token
+          ? {
+              Authorization: this.token,
+            }
+          : undefined,
         params: {
           start_time: startTime,
           end_time: endTime,

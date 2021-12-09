@@ -79,6 +79,9 @@ module.exports = {
     'one-var': 'off',
     'no-constant-condition': ['error', { checkLoops: false }],
 
+    'vue/multi-word-component-names': 'off',
+    'vue/v-on-event-hyphenation': 'off',
+
     // TypeScript
     'quotes': ['warn', 'single', { avoidEscape: true }],
     '@typescript-eslint/explicit-function-return-type': 'off',
