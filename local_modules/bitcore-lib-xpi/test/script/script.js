@@ -762,6 +762,14 @@ describe('Script', function() {
       should.exist(s._network);
       s._network.should.equal(pubkey.network);
     });
+    it('should create P2PKH script from buffer', function() {
+      const hash = Buffer.from('0123456789012345678901234567890123456789', 'hex');
+      var s = Script.buildPublicKeyHashOut(hash);
+      should.exist(s);
+      s.toString().should.equal('OP_DUP OP_HASH160 20 0x0123456789012345678901234567890123456789 OP_EQUALVERIFY OP_CHECKSIG');
+      s.isPublicKeyHashOut().should.equal(true);
+      s.toAddress().toString().should.equal('lotus_16PSJH9V9yzfUx9Kq9XrUYqB6S9o94vt861cVakbb');
+    });
   });
   describe('#buildPublicKeyOut', function() {
     it('should create script from public key', function() {

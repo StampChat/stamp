@@ -244,7 +244,7 @@ declare module 'bitcore-lib-xpi' {
       opts: unknown,
     ): Script
     function buildPublicKeyHashOut(
-      address: Address | PublicKey | string,
+      address: Address | PublicKey | Buffer | string,
     ): Script
     function buildPublicKeyOut(pubkey: PublicKey): Script
     function buildDataOut(data: string | Buffer, encoding?: string): Script

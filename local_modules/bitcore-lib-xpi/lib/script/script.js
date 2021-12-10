@@ -864,20 +864,20 @@ Script.buildP2SHMultisigIn = function(pubkeys, threshold, signatures, opts) {
 /**
  * @returns {Script} a new pay to public key hash output for the given
  * address or public key
- * @param {(Address|PublicKey)} to - destination address or public key
+ * @param {(Address|PublicKey|Buffer=)} to - destination address, public key or public key hash
  */
 Script.buildPublicKeyHashOut = function(to) {
   $.checkArgument(!_.isUndefined(to));
-  $.checkArgument(to instanceof PublicKey || to instanceof Address || _.isString(to));
-  if (to instanceof PublicKey) {
-    to = to.toAddress();
-  } else if (_.isString(to)) {
-    to = new Address(to);
-  }
+  $.checkArgument(to instanceof PublicKey || to instanceof Address || to instanceof Buffer || _.isString(to));
+  var buffer =
+    to instanceof Buffer ? to :
+    to instanceof Address ? to.hashBuffer :
+    to instanceof PublicKey ? to.toAddress().hashBuffer :
+    _.isString(to) ? new Address(to).hashBuffer : undefined;
   var s = new Script();
   s.add(Opcode.OP_DUP)
     .add(Opcode.OP_HASH160)
-    .add(to.hashBuffer)
+    .add(buffer)
     .add(Opcode.OP_EQUALVERIFY)
     .add(Opcode.OP_CHECKSIG);
   s._network = to.network;
