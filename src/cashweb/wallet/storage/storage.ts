@@ -1,37 +1,37 @@
-import { Outpoint, OutpointId } from '../../types/outpoint'
+import { Utxo, UtxoId } from '../../types/utxo'
 
-export class OutpointResult implements IteratorYieldResult<Outpoint> {
+export class UtxoResult implements IteratorYieldResult<Utxo> {
   done: false
-  value: Outpoint
+  value: Utxo
 
-  constructor(value: Outpoint) {
+  constructor(value: Utxo) {
     this.done = false
     this.value = value
   }
 }
 
-export class OutpointReturnResult
-  implements IteratorReturnResult<Outpoint | undefined>
+export class UtxoReturnResult
+  implements IteratorReturnResult<Utxo | undefined>
 {
   done: true
-  value: Outpoint | undefined
+  value: Utxo | undefined
 
-  constructor(value: Outpoint | undefined = undefined) {
+  constructor(value: Utxo | undefined = undefined) {
     this.done = true
     this.value = value
   }
 }
 
-export interface OutpointStore {
-  getOutpoint(id: OutpointId): Outpoint | undefined
-  deleteOutpoint(id: OutpointId): void
-  putOutpoint(outpoint: Outpoint): void
-  freezeOutpoint(outpointId: OutpointId): void
-  unfreezeOutpoint(outpointId: OutpointId): void
+export interface UtxoStore {
+  getById(id: UtxoId): Utxo | undefined
+  deleteById(id: UtxoId): void
+  put(outpoint: Utxo): void
+  freezeById(outpointId: UtxoId): void
+  unfreezeById(outpointId: UtxoId): void
 
-  getOutpoints(): Map<string, Outpoint>
+  getUtxoMap(): Map<string, Utxo>
 
-  getOutpointIterator(): Promise<AsyncIterableIterator<Outpoint>>
-  getFrozenOutpointIterator(): Promise<AsyncIterableIterator<Outpoint>>
+  utxosIter(): Promise<AsyncIterableIterator<Utxo>>
+  frozenUtxosIter(): Promise<AsyncIterableIterator<Utxo>>
   clear(): Promise<void>
 }

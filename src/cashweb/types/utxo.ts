@@ -1,6 +1,6 @@
 import { PrivateKey } from 'bitcore-lib-xpi'
 
-export interface Outpoint {
+export interface Utxo {
   address: string
   privKey: PrivateKey // This is okay, we don't add it to the wallet.
   satoshis: number
@@ -10,4 +10,4 @@ export interface Outpoint {
   frozen?: boolean
 }
 
-export type OutpointId = string
+export type UtxoId = string

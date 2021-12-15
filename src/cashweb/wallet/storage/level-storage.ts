@@ -2,16 +2,16 @@
 import level, { LevelDB } from 'level'
 import { join } from 'path'
 
-import { OutpointStore, OutpointResult, OutpointReturnResult } from './storage'
-import { calcId } from '../helpers'
-import { Outpoint, OutpointId } from 'src/cashweb/types/outpoint'
+import { UtxoStore, UtxoResult, UtxoReturnResult } from './storage'
+import { calcUtxoId } from '../helpers'
+import { Utxo, UtxoId } from 'src/cashweb/types/utxo'
 
 const metadataKeys = {
   schemaVersion: 'schemaVersion',
   lastServerTime: 'lastServerTime',
 }
 
-class OutpointIterator implements AsyncIterableIterator<Outpoint> {
+class OutpointIterator implements AsyncIterableIterator<Utxo> {
   iterator: any
   db: LevelDB
   onlyFrozen: boolean
@@ -21,8 +21,8 @@ class OutpointIterator implements AsyncIterableIterator<Outpoint> {
     this.onlyFrozen = onlyFrozen
   }
 
-  async next(): Promise<IteratorResult<Outpoint>> {
-    const value = await new Promise<void | Outpoint>((resolve, reject) => {
+  async next(): Promise<IteratorResult<Utxo>> {
+    const value = await new Promise<void | Utxo>((resolve, reject) => {
       this.iterator.next((error: Error, key: string, value: string) => {
         if (error) {
           reject(error)
@@ -37,12 +37,12 @@ class OutpointIterator implements AsyncIterableIterator<Outpoint> {
           resolve()
           return
         }
-        const parsedOutpoint: Outpoint = JSON.parse(value)
+        const parsedOutpoint: Utxo = JSON.parse(value)
         resolve(parsedOutpoint)
       })
     })
     if (!value) {
-      return new OutpointReturnResult()
+      return new UtxoReturnResult()
     }
     if (!this.onlyFrozen && value.frozen) {
       return this.next()
@@ -51,10 +51,10 @@ class OutpointIterator implements AsyncIterableIterator<Outpoint> {
       return this.next()
     }
 
-    return new OutpointResult(value)
+    return new UtxoResult(value)
   }
 
-  async return(): Promise<IteratorResult<Outpoint>> {
+  async return(): Promise<IteratorResult<Utxo>> {
     return new Promise((resolve, reject) => {
       this.iterator.end((error: Error) => {
         this.db.close()
@@ -66,7 +66,7 @@ class OutpointIterator implements AsyncIterableIterator<Outpoint> {
     })
   }
 
-  [Symbol.asyncIterator](): AsyncIterableIterator<Outpoint> {
+  [Symbol.asyncIterator](): AsyncIterableIterator<Utxo> {
     this.iterator = this.db.iterator({})
     return this
   }
@@ -74,19 +74,19 @@ class OutpointIterator implements AsyncIterableIterator<Outpoint> {
 
 const currentSchemaVersion = 1
 
-export class LevelOutpointStore implements OutpointStore {
-  private outpointDbLocation: string
+export class LevelUtxoStore implements UtxoStore {
+  private utxoDbLocation: string
   private metadataDbLocation: string
   private schemaVersion?: number
   private openedDb?: LevelDB
-  private cache: Map<OutpointId, Outpoint>
-  private deletedOutpoints: Set<OutpointId>
+  private cache: Map<UtxoId, Utxo>
+  private deletedUtxos: Set<UtxoId>
 
   constructor(location: string) {
-    this.outpointDbLocation = join(location, 'outpoints')
+    this.utxoDbLocation = join(location, 'outpoints')
     this.metadataDbLocation = join(location, 'metadata')
-    this.cache = new Map<OutpointId, Outpoint>()
-    this.deletedOutpoints = new Set<OutpointId>()
+    this.cache = new Map<UtxoId, Utxo>()
+    this.deletedUtxos = new Set<UtxoId>()
   }
 
   get db() {
@@ -97,7 +97,7 @@ export class LevelOutpointStore implements OutpointStore {
   }
 
   async Open() {
-    this.openedDb = level(this.outpointDbLocation)
+    this.openedDb = level(this.utxoDbLocation)
     const dbSchemaVersion = await this.getSchemaVersion()
     if (!dbSchemaVersion) {
       await this.setSchemaVersion(currentSchemaVersion)
@@ -116,47 +116,47 @@ export class LevelOutpointStore implements OutpointStore {
     return level(this.metadataDbLocation)
   }
 
-  getOutpoint(id: OutpointId): Outpoint | undefined {
+  getById(id: UtxoId): Utxo | undefined {
     return this.cache.get(id)
   }
 
-  deleteOutpoint(id: OutpointId) {
+  deleteById(id: UtxoId) {
     this.cache.delete(id)
     // TODO: Handle errors here.
     this.db.del(id)
-    this.deletedOutpoints.add(id)
+    this.deletedUtxos.add(id)
   }
 
-  putOutpoint(outpoint: Outpoint) {
-    const index = calcId(outpoint)
-    if (this.deletedOutpoints.has(index)) {
+  put(outpoint: Utxo) {
+    const index = calcUtxoId(outpoint)
+    if (this.deletedUtxos.has(index)) {
       return
     }
     this.cache.set(index, outpoint)
     this.db.put(index, JSON.stringify(outpoint))
   }
 
-  freezeOutpoint(outpointId: OutpointId) {
-    if (this.deletedOutpoints.has(outpointId)) {
+  freezeById(utxoId: UtxoId) {
+    if (this.deletedUtxos.has(utxoId)) {
       return
     }
-    const outpoint = this.getOutpoint(outpointId)
-    if (outpoint === undefined) {
-      console.error(`trying to freeze non-existant outpoint ${outpointId}`)
+    const utxo = this.getById(utxoId)
+    if (utxo === undefined) {
+      console.error(`trying to freeze non-existant utxo ${utxoId}`)
       return
     }
-    outpoint.frozen = true
-    this.putOutpoint(outpoint)
+    utxo.frozen = true
+    this.put(utxo)
   }
 
-  unfreezeOutpoint(outpointId: OutpointId) {
-    const outpoint = this.getOutpoint(outpointId)
-    if (outpoint === undefined) {
-      console.error(`trying to unfreeze non-existant outpoint ${outpointId}`)
+  unfreezeById(utxoId: UtxoId) {
+    const utxo = this.getById(utxoId)
+    if (utxo === undefined) {
+      console.error(`trying to unfreeze non-existant utxo ${utxoId}`)
       return
     }
-    outpoint.frozen = false
-    this.putOutpoint(outpoint)
+    utxo.frozen = false
+    this.put(utxo)
   }
 
   private async getSchemaVersion(): Promise<number> {
@@ -189,22 +189,22 @@ export class LevelOutpointStore implements OutpointStore {
     }
   }
 
-  getOutpoints(): Map<string, Outpoint> {
+  getUtxoMap(): Map<string, Utxo> {
     return this.cache
   }
 
-  async getOutpointIterator(): Promise<AsyncIterableIterator<Outpoint>> {
+  async utxosIter(): Promise<AsyncIterableIterator<Utxo>> {
     return new OutpointIterator(this.db, false)
   }
 
-  async getFrozenOutpointIterator(): Promise<AsyncIterableIterator<Outpoint>> {
+  async frozenUtxosIter(): Promise<AsyncIterableIterator<Utxo>> {
     return new OutpointIterator(this.db, true)
   }
 
   async loadData(): Promise<void> {
-    const outpointIterator = await this.getOutpointIterator()
+    const outpointIterator = await this.utxosIter()
     for await (const outpoint of outpointIterator) {
-      this.cache.set(calcId(outpoint), outpoint)
+      this.cache.set(calcUtxoId(outpoint), outpoint)
     }
   }
 

@@ -66,9 +66,9 @@
                 class="q-ml-sm"
               />
             </q-stepper-navigation>
-            <q-banner inline-actions class="text-white bg-red">{{
-              $t('setup.seedWarning')
-            }}</q-banner>
+            <q-banner inline-actions class="text-white bg-red">
+              {{ $t('setup.seedWarning') }}
+            </q-banner>
           </template>
         </q-stepper>
       </q-page>
@@ -104,7 +104,7 @@ import DepositStep from '../components/setup/DepositStep.vue'
 import EulaStep from '../components/setup/EULAStep.vue'
 
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate'
-import { calcId } from 'src/cashweb/wallet/helpers'
+import { calcUtxoId } from 'src/cashweb/wallet/helpers'
 
 export default defineComponent({
   components: {
@@ -350,8 +350,8 @@ export default defineComponent({
           this.$relayClient.setToken(token)
           await Promise.all(
             // TODO: This should not be touching wallet storage directly.
-            usedUtxos.map(output =>
-              this.$wallet.storage.deleteOutpoint(calcId(output)),
+            usedUtxos.map(utxo =>
+              this.$wallet.storage.deleteById(calcUtxoId(utxo)),
             ),
           )
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

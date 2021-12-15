@@ -1,4 +1,4 @@
-import { Outpoint } from './outpoint'
+import { Utxo } from './utxo'
 
 export interface ReplyItem {
   type: 'reply'
@@ -41,7 +41,7 @@ export interface Message {
   receivedTime: number
   serverTime: number
   items: Array<MessageItem>
-  outpoints: Array<Outpoint>
+  outpoints: Array<Utxo>
   senderAddress: string
 }
 

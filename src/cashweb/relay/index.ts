@@ -21,7 +21,7 @@ import { entryToImage, arrayBufferToBase64 } from './images'
 
 import { PayloadConstructor } from './crypto'
 import { messageMixin } from './extension'
-import { calcId } from '../wallet/helpers'
+import { calcUtxoId } from '../wallet/helpers'
 import assert from 'assert'
 import paymentrequest, { Payment } from '../bip70/paymentrequest_pb'
 
@@ -44,7 +44,7 @@ import {
   MessageItem,
   MessageWrapper,
 } from '../types/messages'
-import { Outpoint } from '../types/outpoint'
+import { Utxo } from '../types/utxo'
 import { defaultAcceptancePrice } from 'src/utils/constants'
 import { pAll } from './pAll'
 
@@ -454,7 +454,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     const senderAddress = this.wallet?.myAddress?.toXAddress()
     assert(senderAddress, 'Unable to set senderAddress')
 
-    const stagedUtxos = [] as Outpoint[]
+    const stagedUtxos = [] as Utxo[]
     const outpoints = [] as UIOutput[]
     const transactions = [] as Transaction[]
 
@@ -617,7 +617,7 @@ export class RelayClient extends ReadOnlyRelayClient {
           })
           // TODO: we shouldn't be dealing with this here. Leaky abstraction
           await Promise.all(
-            stagedUtxos.map(utxo => wallet.deleteOutpoint(calcId(utxo))),
+            stagedUtxos.map(utxo => wallet.deleteUtxo(calcUtxoId(utxo))),
           )
         })
         .catch(async err => {
@@ -626,7 +626,7 @@ export class RelayClient extends ReadOnlyRelayClient {
             console.error(err.response)
           }
           stagedUtxos.forEach(utxo => {
-            wallet.unfreezeOutpoint(calcId(utxo))
+            wallet.unfreezeUtxo(calcUtxoId(utxo))
           })
           if (errCount >= 3) {
             this.events.emit('messageSendError', {
@@ -803,11 +803,11 @@ export class RelayClient extends ReadOnlyRelayClient {
 
         for (const input of p2pkhTxR.inputs) {
           // Don't add these outputs to our wallet. They're the other persons
-          const utxoId = calcId({
+          const utxoId = calcUtxoId({
             txId: input.prevTxId.toString('hex'),
             outputIndex: input.outputIndex,
           })
-          this.wallet.deleteOutpoint(utxoId)
+          this.wallet.deleteUtxo(utxoId)
         }
 
         continue
@@ -914,11 +914,11 @@ export class RelayClient extends ReadOnlyRelayClient {
       if (outbound) {
         for (const input of stampTx.inputs) {
           // In order to update UTXO state more quickly, go ahead and remove the inputs from our set immediately
-          const utxoId = calcId({
+          const utxoId = calcUtxoId({
             txId: input.prevTxId.toString('hex'),
             outputIndex: input.outputIndex,
           })
-          await wallet.deleteOutpoint(utxoId)
+          await wallet.deleteUtxo(utxoId)
         }
       }
       for (const [j, outputIndex] of vouts.entries()) {
@@ -952,13 +952,13 @@ export class RelayClient extends ReadOnlyRelayClient {
           satoshis,
           txId,
           outputIndex,
-        } as Outpoint
+        } as Utxo
         outpoints.push(stampOutput)
         if (outbound) {
           // In order to update UTXO state more quickly, go ahead and remove the inputs from our set immediately
           continue
         }
-        wallet.putOutpoint({
+        wallet.putUtxo({
           ...stampOutput,
           privKey: Object.freeze(outputPrivKey),
         })
@@ -1053,11 +1053,11 @@ export class RelayClient extends ReadOnlyRelayClient {
           if (outbound) {
             for (const input of stealthTx.inputs) {
               // Don't add these outputs to our wallet. They're the other persons
-              const utxoId = calcId({
+              const utxoId = calcUtxoId({
                 txId: input.prevTxId.toString('hex'),
                 outputIndex: input.outputIndex,
               })
-              await wallet.deleteOutpoint(utxoId)
+              await wallet.deleteUtxo(utxoId)
             }
           }
 
@@ -1095,13 +1095,13 @@ export class RelayClient extends ReadOnlyRelayClient {
               satoshis,
               outputIndex,
               txId,
-            } as Outpoint
+            } as Utxo
             outpoints.push(stampOutput)
             if (outbound) {
               // Don't add these outputs to our wallet. They're the other persons
               continue
             }
-            wallet.putOutpoint({
+            wallet.putUtxo({
               ...stampOutput,
               privKey: Object.freeze(outpointPrivKey),
             })

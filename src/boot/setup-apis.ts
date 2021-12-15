@@ -8,13 +8,14 @@ import {
 } from '../utils/constants'
 import { Wallet } from '../cashweb/wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
-import { store as levelDbOutpointStore } from '../adapters/level-outpoint-store'
+import { store as levelDbUtxoStore } from '../adapters/level-utxo-store'
 import { boot } from 'quasar/wrappers'
-import { Outpoint, OutpointId } from 'src/cashweb/types/outpoint'
+import { Utxo, UtxoId } from 'src/cashweb/types/utxo'
 import { reactive } from 'vue'
 import type { App } from 'vue'
 import { Store } from 'vuex'
 import { RootState } from 'src/store/modules'
+import { UtxoStore } from 'src/cashweb/wallet/storage/storage'
 
 function instrumentElectrumClient({
   resolve,
@@ -146,38 +147,38 @@ function createAndBindNewElectrumClient({
 }
 
 async function getWalletClient({ store }: { store: Store<any> }) {
-  const outpointStore = await levelDbOutpointStore
+  const utxoStore = await levelDbUtxoStore
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.
-  const storageAdapter = {
-    getOutpoint(id: OutpointId) {
-      return outpointStore.getOutpoint(id)
+  const storageAdapter: UtxoStore = {
+    getById(id: UtxoId) {
+      return utxoStore.getById(id)
     },
-    deleteOutpoint(id: OutpointId) {
+    deleteById(id: UtxoId) {
       store.commit('wallet/removeUTXO', id)
-      return outpointStore.deleteOutpoint(id)
+      return utxoStore.deleteById(id)
     },
-    putOutpoint(outpoint: Outpoint) {
+    put(outpoint: Utxo) {
       store.commit('wallet/addUTXO', Object.freeze({ ...outpoint }))
-      return outpointStore.putOutpoint(outpoint)
+      return utxoStore.put(outpoint)
     },
-    freezeOutpoint(id: OutpointId) {
-      return outpointStore.freezeOutpoint(id)
+    freezeById(id: UtxoId) {
+      return utxoStore.freezeById(id)
     },
-    unfreezeOutpoint(id: OutpointId) {
-      return outpointStore.unfreezeOutpoint(id)
+    unfreezeById(id: UtxoId) {
+      return utxoStore.unfreezeById(id)
     },
-    getOutpoints() {
-      return outpointStore.getOutpoints()
+    getUtxoMap() {
+      return utxoStore.getUtxoMap()
     },
-    getOutpointIterator() {
-      return outpointStore.getOutpointIterator()
+    utxosIter() {
+      return utxoStore.utxosIter()
     },
-    getFrozenOutpointIterator() {
-      return outpointStore.getFrozenOutpointIterator()
+    frozenUtxosIter() {
+      return utxoStore.frozenUtxosIter()
     },
     clear() {
-      return outpointStore.clear()
+      return utxoStore.clear()
     },
   }
 
