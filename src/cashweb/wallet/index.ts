@@ -70,8 +70,8 @@ export class Wallet {
   electrumClientPromise: Promise<ElectrumClient> | undefined
   _xPrivKey: HDPrivateKey | undefined
   _identityPrivKey: PrivateKey | undefined
-  addresses: Record<string, PrivateKeyData | undefined> = {}
-  changeAddresses: Record<string, PrivateKeyData | undefined> = {}
+  walletKeys: PrivateKeyData[] = []
+  changeKeys: PrivateKeyData[] = []
   electrumScriptHashes: Record<ElectrumScriptHash, AddressData> = {}
 
   scriptHashSubscriber: (response: Error | RequestResponse) => void
@@ -146,8 +146,8 @@ export class Wallet {
     const xPrivKey = this.xPrivKey
     assert(xPrivKey, 'xPrivKey undefined while calling wallet initialization')
 
-    this.addresses = {}
-    this.changeAddresses = {}
+    this.walletKeys = []
+    this.changeKeys = []
     this.electrumScriptHashes = {}
     for (let i = 0; i < this.numAddresses; i++) {
       const privKey = xPrivKey
@@ -156,11 +156,11 @@ export class Wallet {
         .deriveChild(0, true)
         .deriveChild(0)
         .deriveChild(i).privateKey
-      const address = privKey.toAddress(this.networkName).toXAddress()
-      this.setAddress({ address, privKey })
+      this.walletKeys.push({ privKey })
 
       // Index by script hash
-      const scriptHash = toElectrumScriptHash(address)
+      const scriptHash = toElectrumScriptHash(privKey.toPublicKey())
+      const address = privKey.toAddress(this.networkName).toXAddress()
       this.addElectrumScriptHash({
         scriptHash,
         address,
@@ -175,11 +175,11 @@ export class Wallet {
         .deriveChild(0, true)
         .deriveChild(1)
         .deriveChild(j).privateKey
-      const address = privKey.toAddress(this.networkName).toXAddress()
-      this.setChangeAddress({ address, privKey })
+      this.changeKeys.push({ privKey })
 
       // Index by script hash
-      const scriptHash = toElectrumScriptHash(address)
+      const scriptHash = toElectrumScriptHash(privKey.toPublicKey())
+      const address = privKey.toAddress(this.networkName).toXAddress()
       this.addElectrumScriptHash({ scriptHash, address, change: true, privKey })
     }
   }
@@ -191,20 +191,6 @@ export class Wallet {
     privKey,
   }: { scriptHash: string } & AddressData) {
     this.electrumScriptHashes[scriptHash] = { address, change, privKey }
-  }
-
-  setAddress({ address, privKey }: { address: string; privKey: PrivateKey }) {
-    this.addresses[address] = { privKey }
-  }
-
-  setChangeAddress({
-    address,
-    privKey,
-  }: {
-    address: string
-    privKey: PrivateKey
-  }) {
-    this.changeAddresses[address] = { privKey }
   }
 
   async refreshUTXOsByAddr({
@@ -386,12 +372,12 @@ export class Wallet {
     await this.updateUTXOFromScriptHash(scriptHash)
   }
 
-  async forwardUTXOsToAddress({
+  async forwardUTXOsToPubkey({
     utxos,
-    address,
+    pubkey,
   }: {
     utxos: Utxo[]
-    address: string
+    pubkey: PublicKey
   }) {
     let transaction = new Transaction()
 
@@ -423,7 +409,12 @@ export class Wallet {
     const txnSize = this._estimateSize(transaction) + standardUtxoSize
     const fees = txnSize * minFeePerByte
 
-    transaction.to(address, satoshis - fees)
+    transaction.addOutput(
+      new Transaction.Output({
+        satoshis: satoshis - fees,
+        script: Script.buildPublicKeyHashOut(pubkey),
+      }),
+    )
     // Sign transaction
     transaction = transaction.sign(signingKeys)
 
@@ -478,8 +469,8 @@ export class Wallet {
     // Add change outputs using our HD wallet.  We want multiple outputs following a
     // power distribution, so we don't have to combine lots of outputs at later times
     // in order to create specific amounts.
-    const changeAddresses = Object.keys(this.changeAddresses)
-    shuffleArray(changeAddresses)
+    const changeKeys = [...this.changeKeys]
+    shuffleArray(changeKeys)
     const OOM = (amount: number) => Math.floor(Math.log2(amount))
     const amountOOM = OOM(transaction.outputs[0].satoshis)
     // Amount to skip
@@ -487,7 +478,7 @@ export class Wallet {
     // NOTE: We are not using Bitcore to set change or estimate the transaction size. It's implementation is incorrect and gen
     let skipAmount = 0
     // Create change outputs randomly in decreasing orders of magnitude
-    for (const changeAddress of changeAddresses) {
+    for (const changeKey of changeKeys) {
       const estimatedFutureSize =
         this._estimateSize(transaction) + standardUtxoSize
       const delta =
@@ -524,7 +515,9 @@ export class Wallet {
       console.log('Generating a change UTXO for amount:', changeOutputAmount)
       // Create the output
       const output = new Transaction.Output({
-        script: Script.buildPublicKeyHashOut(changeAddress).toHex(),
+        script: Script.buildPublicKeyHashOut(
+          changeKey.privKey.toPublicKey(),
+        ).toHex(),
         satoshis: changeOutputAmount,
       })
       transaction = transaction.addOutput(output)
@@ -541,7 +534,9 @@ export class Wallet {
       const changeOutputAmount = delta - properFee
       if (changeOutputAmount >= minimumNewInputAmount) {
         const output = new Transaction.Output({
-          script: Script.buildPublicKeyHashOut(changeAddresses[0]).toHex(),
+          script: Script.buildPublicKeyHashOut(
+            changeKeys[0].privKey.toPublicKey(),
+          ).toHex(),
           satoshis: changeOutputAmount,
         })
         transaction = transaction.addOutput(output)
@@ -899,10 +894,6 @@ export class Wallet {
     return this.electrumScriptHashes[scriptHash]
   }
 
-  getPaymentAddress(seqNum: number) {
-    return Object.keys(this.addresses)[seqNum]
-  }
-
   get myAddress() {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
@@ -913,18 +904,6 @@ export class Wallet {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
     return this.identityPrivKey?.toAddress(this.networkName).toXAddress()
-  }
-
-  get allAddresses() {
-    return { ...this.addresses, ...this.changeAddresses }
-  }
-
-  get privKeys() {
-    const privKeys = Object.values(this.addresses).map(address => {
-      assert(address, 'address is unset in get privKeys')
-      return Object.freeze(address.privKey)
-    })
-    return Object.freeze(privKeys)
   }
 
   unfreezeUtxo(id: string) {

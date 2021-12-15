@@ -297,12 +297,11 @@ export class RelayClient extends ReadOnlyRelayClient {
     assert(message, 'message not found?')
 
     // Send utxos to a change address
-    const changeAddresses = Object.keys(this.wallet.changeAddresses)
-    const changeAddress =
-      changeAddresses[(changeAddresses.length * Math.random()) << 0]
-    await this.wallet.forwardUTXOsToAddress({
+    const randomChangeIdx = (this.wallet.changeKeys.length * Math.random()) << 0
+    const changeKey = this.wallet.changeKeys[randomChangeIdx]
+    await this.wallet.forwardUTXOsToPubkey({
       utxos: message.message.outpoints,
-      address: changeAddress,
+      pubkey: changeKey.privKey.toPublicKey(),
     })
     assert(this.wallet.myAddress, 'Missing address? Wallet not loaded.')
     const url = `${this.url}/messages/${this.toAPIAddress(
