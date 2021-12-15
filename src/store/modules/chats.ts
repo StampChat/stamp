@@ -6,7 +6,7 @@ import { stampPrice } from '../../cashweb/wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'
-import { Outpoint } from 'src/cashweb/types/outpoint'
+import { Utxo } from 'src/cashweb/types/utxo'
 import {
   Message,
   MessageItem,
@@ -21,7 +21,7 @@ type ChatMessage = {
   receivedTime: number
   serverTime: number
   items: MessageItem[]
-  outpoints: Outpoint[]
+  outpoints: Utxo[]
   senderAddress: string
   payloadDigest: string
 }

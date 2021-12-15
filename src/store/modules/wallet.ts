@@ -1,10 +1,10 @@
 import type { Module } from 'vuex'
 
-import { calcId } from '../../cashweb/wallet/helpers'
-import { store as levelOutpointStore } from '../../adapters/level-outpoint-store'
+import { calcUtxoId } from '../../cashweb/wallet/helpers'
+import { store as levelOutpointStore } from '../../adapters/level-utxo-store'
 import { markRaw } from 'vue'
 import { HDPrivateKey } from 'bitcore-lib-xpi'
-import { Outpoint } from 'src/cashweb/types/outpoint'
+import { Utxo } from 'src/cashweb/types/utxo'
 
 export type State = {
   xPrivKey?: HDPrivateKey
@@ -32,13 +32,13 @@ export async function rehydrateWallet(wallet: RestorableState): Promise<State> {
   // balance updates. In the future, we should just aggregate a total over time here.
   const store = await levelOutpointStore
   await store.loadData()
-  const outpoints = store.getOutpoints()
-  for (const [id, outpoint] of outpoints) {
-    if (!outpoint.address) {
+  const utxoMap = store.getUtxoMap()
+  for (const [utxoId, utxo] of utxoMap) {
+    if (!utxo.address) {
       continue
     }
-    utxos[id] = outpoint.satoshis
-    balance += outpoint.satoshis
+    utxos[utxoId] = utxo.satoshis
+    balance += utxo.satoshis
   }
   return {
     feePerByte: wallet.feePerByte || 2,
@@ -71,10 +71,10 @@ const module: Module<State, unknown> = {
       state.balance -= state.utxos[id] ?? 0
       delete state.utxos[id]
     },
-    addUTXO(state, output: Outpoint) {
-      state.balance += output.satoshis
-      const utxoId = calcId(output)
-      state.utxos[utxoId] = output.satoshis
+    addUTXO(state, utxo: Utxo) {
+      state.balance += utxo.satoshis
+      const utxoId = calcUtxoId(utxo)
+      state.utxos[utxoId] = utxo.satoshis
     },
   },
   getters: {

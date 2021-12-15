@@ -1,18 +1,15 @@
-import { Outpoint } from '../types/outpoint'
+import { Utxo } from '../types/utxo'
 
-export function calcId(output: { txId: string; outputIndex: number }) {
-  if (!output.txId === undefined || !output.outputIndex === undefined) {
-    throw new Error(`Missing values ${JSON.stringify(output)}`)
+export function calcUtxoId(outpoint: { txId: string; outputIndex: number }) {
+  if (!outpoint.txId === undefined || !outpoint.outputIndex === undefined) {
+    throw new Error(`Missing values ${JSON.stringify(outpoint)}`)
   }
-  return output.txId + '_' + output.outputIndex
+  return outpoint.txId + '_' + outpoint.outputIndex
 }
 
-export function stampPrice(outpoints: Outpoint[]) {
-  const amount = outpoints
-    .filter(outpoint => outpoint.type === 'stamp')
-    .reduce(
-      (totalSatoshis, stampOutpoint) => stampOutpoint.satoshis + totalSatoshis,
-      0,
-    )
+export function stampPrice(utxos: Utxo[]) {
+  const amount = utxos
+    .filter(Utxo => Utxo.type === 'stamp')
+    .reduce((totalSatoshis, stampUtxo) => stampUtxo.satoshis + totalSatoshis, 0)
   return amount
 }

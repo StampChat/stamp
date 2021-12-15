@@ -18,8 +18,8 @@ import {
   PublicKey,
 } from 'bitcore-lib-xpi'
 import { Wallet } from '../wallet'
-import { Outpoint } from '../types/outpoint'
-import { calcId } from '../wallet/helpers'
+import { Utxo } from '../types/utxo'
+import { calcUtxoId } from '../wallet/helpers'
 import { Opcode } from 'app/local_modules/bitcore-lib-xpi'
 import { BroadcastEntry, BroadcastMessage, ForumPost } from './broadcast_pb'
 import { ForumMessage, ForumMessageEntry } from '../types/forum'
@@ -221,8 +221,8 @@ export class KeyserverHandler {
     const paymentUrlFull = new URL(paymentUrl, serverUrl)
     const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
     await Promise.all(
-      usedUtxos.map((id: Outpoint) =>
-        this.wallet?.storage.deleteOutpoint(calcId(id)),
+      usedUtxos.map((id: Utxo) =>
+        this.wallet?.storage.deleteById(calcUtxoId(id)),
       ),
     )
 
@@ -314,12 +314,12 @@ export class KeyserverHandler {
         data: authWrapper.serializeBinary(),
       })
       await Promise.all(
-        usedUtxos.map((id: Outpoint) =>
-          this.wallet?.storage.deleteOutpoint(calcId(id)),
+        usedUtxos.map((id: Utxo) =>
+          this.wallet?.storage.deleteById(calcUtxoId(id)),
         ),
       )
     } catch (err) {
-      await Promise.all(usedUtxos.map(utxo => this.wallet?.fixOutpoint(utxo)))
+      await Promise.all(usedUtxos.map(utxo => this.wallet?.fixUtxo(utxo)))
       throw err
     }
     return payloadDigest.toString('hex')
@@ -362,8 +362,8 @@ export class KeyserverHandler {
       data: authWrapper.serializeBinary(),
     })
     await Promise.all(
-      usedUtxos.map((id: Outpoint) =>
-        this.wallet?.storage.deleteOutpoint(calcId(id)),
+      usedUtxos.map((id: Utxo) =>
+        this.wallet?.storage.deleteById(calcUtxoId(id)),
       ),
     )
   }

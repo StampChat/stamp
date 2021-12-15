@@ -7,7 +7,7 @@ import { rehydrateWallet } from './modules/wallet'
 import { path, pathOr, mapObjIndexed } from 'ramda'
 import { rehydrateContacts, defaultContactsState } from './modules/contacts'
 import { displayNetwork } from '../utils/constants'
-import { store as outpointStore } from '../adapters/level-outpoint-store'
+import { store as utxoStore } from '../adapters/level-utxo-store'
 import { store as messageStore } from '../adapters/level-message-store'
 import type { RootState } from './modules'
 
@@ -187,8 +187,8 @@ const storePlugin = (store: Store<RootState>) => {
       await storage.clear()
       const messageDb = await messageStore
       await messageDb.clear()
-      const outpointDb = await outpointStore
-      await outpointDb.clear()
+      const utxoDb = await utxoStore
+      await utxoDb.clear()
     }
 
     const replaceableState: RootState = {
