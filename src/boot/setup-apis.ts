@@ -5,6 +5,7 @@ import {
   electrumPingInterval,
   electrumServers,
   defaultRelayUrl,
+  chronikServers,
 } from '../utils/constants'
 import { Wallet } from '../cashweb/wallet'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
@@ -16,17 +17,20 @@ import type { App } from 'vue'
 import { Store } from 'vuex'
 import { RootState } from 'src/store/modules'
 import { UtxoStore } from 'src/cashweb/wallet/storage/storage'
+import { ChronikClient, WsEndpoint } from 'chronik-client'
 
-function instrumentElectrumClient({
+function instrumentIndexerClient({
   resolve,
   reject,
-  client,
+  electrumClient,
+  chronikWs,
   observables,
   reconnector,
 }: {
   resolve: (value: ElectrumClient | PromiseLike<ElectrumClient>) => void
   reject: (reason?: any) => void
-  client: ElectrumClient
+  electrumClient: ElectrumClient
+  chronikWs: WsEndpoint
   observables: { connected: boolean }
   reconnector: () => void
 }) {
@@ -49,7 +53,7 @@ function instrumentElectrumClient({
   const keepAlive = () => {
     setTimeout(
       () =>
-        client
+        electrumClient
           .request('server_ping')
           .then(() => {
             if (!observables.connected) {
@@ -70,32 +74,44 @@ function instrumentElectrumClient({
     )
   }
 
-  client.connection.on('connect', () => {
+  chronikWs.onConnect = () => {
+    console.log('chronik connected')
+    observables.connected = true
+  }
+
+  electrumClient.connection.on('connect', () => {
     console.log('electrum connected')
     // (Re)set state on Vue prototype
-    resolve(client)
+    resolve(electrumClient)
     connectionAlive = true
     observables.connected = true
     keepAlive()
   })
 
-  client.connection.on('close', () => {
+  chronikWs.onReconnect = () => {
+    console.log('chronik disconnected')
+    observables.connected = false
+  }
+
+  electrumClient.connection.on('close', () => {
     notifyDisconnect()
     reconnector()
   })
 
-  client.connection.on('end', (e?: Error) => {
+  electrumClient.connection.on('end', (e?: Error) => {
     notifyDisconnect()
     console.log(e)
   })
 
-  client.connection.on('error', (err?: Error) => {
-    console.error(err)
+  chronikWs.onError = err => console.error('Chronik error:', err)
+
+  electrumClient.connection.on('error', (err?: Error) => {
+    console.error('Electrum error:', err)
   })
 
   console.log('Attempting to connect')
   // No await here... May cause issues down the road
-  client
+  electrumClient
     .connect()
     .then(() => console.log('connected'))
     .catch(err =>
@@ -103,7 +119,7 @@ function instrumentElectrumClient({
     )
 }
 
-function createAndBindNewElectrumClient({
+function createAndBindNewIndexerClient({
   app,
   observables,
   wallet,
@@ -114,9 +130,12 @@ function createAndBindNewElectrumClient({
 }) {
   const { url, port, scheme } =
     electrumServers[Math.floor(Math.random() * electrumServers.length)]
+  const chronikConf =
+    chronikServers[Math.floor(Math.random() * chronikServers.length)]
   console.log('Using electrum server:', url, port, scheme)
+  console.log('Using chronik server:', chronikConf)
   try {
-    const client = new ElectrumClient(
+    const electrumClient = new ElectrumClient(
       'Stamp Wallet',
       '1.4.1',
       url,
@@ -124,15 +143,18 @@ function createAndBindNewElectrumClient({
       scheme,
       10000,
     )
+    const chronikClient = new ChronikClient(chronikConf.url)
+    const chronikWs = chronikClient.ws({})
 
     const electrumPromise = new Promise<ElectrumClient>((resolve, reject) => {
-      instrumentElectrumClient({
+      instrumentIndexerClient({
         resolve,
         reject,
-        client,
+        electrumClient,
+        chronikWs,
         observables,
         reconnector: () =>
-          createAndBindNewElectrumClient({ app, observables, wallet }),
+          createAndBindNewIndexerClient({ app, observables, wallet }),
       })
     })
     // (Re)set state on Vue prototype
@@ -141,6 +163,8 @@ function createAndBindNewElectrumClient({
     })
     console.log('setting electrum client')
     wallet.setElectrumClient(electrumPromise)
+    wallet.setChronik({ chronikClient, chronikWs })
+    wallet.init()
   } catch (err: any) {
     console.log(err.message)
   }
@@ -189,7 +213,7 @@ export default boot<RootState>(async ({ store, app }) => {
   await (store as any).restored
   const wallet = await getWalletClient({ store })
   const electrumObservables = reactive({ connected: false })
-  createAndBindNewElectrumClient({
+  createAndBindNewIndexerClient({
     app,
     observables: electrumObservables,
     wallet,
