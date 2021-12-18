@@ -145,8 +145,8 @@ export default {
       // const lastReceived = this.lastReceived
       const t0 = performance.now()
       const refreshMessages = () => {
-        // Wait for a connected electrum client
-        if (!this.$electrum.connected) {
+        // Wait for a connected blockchain client
+        if (!this.$indexer.connected) {
           setTimeout(refreshMessages, 100)
           return
         }

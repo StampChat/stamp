@@ -212,10 +212,10 @@ async function getWalletClient({ store }: { store: Store<any> }) {
 export default boot<RootState>(async ({ store, app }) => {
   await (store as any).restored
   const wallet = await getWalletClient({ store })
-  const electrumObservables = reactive({ connected: false })
+  const indexerObservables = reactive({ connected: false })
   createAndBindNewIndexerClient({
     app,
-    observables: electrumObservables,
+    observables: indexerObservables,
     wallet,
   })
   const xPrivKey = store.getters['wallet/getXPrivKey']
@@ -239,7 +239,6 @@ export default boot<RootState>(async ({ store, app }) => {
     await getRelayClient({
       relayUrl: defaultRelayUrl,
       wallet,
-      electrumClient: app.config.globalProperties.$electrumClientPromise,
       store,
     })
   const relayToken: string = store.getters['relayClient/getToken']
@@ -247,7 +246,7 @@ export default boot<RootState>(async ({ store, app }) => {
   relayClient.setToken(relayToken)
 
   app.config.globalProperties.$wallet = wallet
-  app.config.globalProperties.$electrum = electrumObservables
+  app.config.globalProperties.$indexer = indexerObservables
   app.config.globalProperties.$relayClient = relayClient
   app.config.globalProperties.$relay = relayObservables
 })

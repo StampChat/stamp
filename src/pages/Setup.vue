@@ -66,9 +66,9 @@
                 class="q-ml-sm"
               />
             </q-stepper-navigation>
-            <q-banner inline-actions class="text-white bg-red">
-              {{ $t('setup.seedWarning') }}
-            </q-banner>
+            <q-banner inline-actions class="text-white bg-red">{{
+              $t('setup.seedWarning')
+            }}</q-banner>
           </template>
         </q-stepper>
       </q-page>
@@ -251,7 +251,6 @@ export default defineComponent({
         relayUrl: this.relayUrl,
         store: this.$store,
         wallet: this.$wallet,
-        electrumClient: this.$electrum,
       })
       try {
         this.relayData = await relayClient.getRelayData(idAddress)
@@ -305,7 +304,6 @@ export default defineComponent({
       const { client: relayClient } = await getRelayClient({
         relayUrl: this.relayUrl,
         store: this.$store,
-        electrumClient: this.$electrumClientPromise,
         wallet: this.$wallet,
       })
 
@@ -448,7 +446,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({ balance: 'wallet/balance' }),
     forwardEnabled() {
-      if (!this.$electrum.connected) {
+      if (!this.$indexer.connected) {
         return false
       }
       console.log('isWalletValid', this.isWalletValid)
