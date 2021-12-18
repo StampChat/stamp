@@ -420,9 +420,10 @@ export class Wallet {
     console.log('Broadcasting forwarding txn', transaction)
     const txHex = transaction.toString()
     try {
-      const electrumClient = await this.electrumClientPromise
-      assert(electrumClient, 'missing client in forwardUTXOsToAddress')
-      await electrumClient.request('blockchain.transaction.broadcast', txHex)
+      const chronikClient = this.chronikClient
+      assert(chronikClient, 'missing client in forwardUTXOsToPubkey')
+      const broadcastResult = await chronikClient.broadcastTx(txHex)
+      console.log('Successfully broadcast tx', broadcastResult.txid)
       // TODO: we shouldn't be dealing with this here. Leaky abstraction
       stagedUtxos.map(utxo => this.storage.deleteById(calcUtxoId(utxo)))
     } catch (err) {

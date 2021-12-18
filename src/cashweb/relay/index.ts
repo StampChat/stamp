@@ -570,8 +570,8 @@ export class RelayClient extends ReadOnlyRelayClient {
       const destinationAddress = destinationPublicKey
         .toAddress(this.networkName)
         .toCashAddress()
-      const electrumClient = await this.wallet?.electrumClientPromise
-      assert(electrumClient, 'Unable to get electrumClient')
+      const chronikClient = this.wallet?.chronikClient
+      assert(chronikClient, 'Unable to get chronikClient')
       // Ensure all outpoints are on-chain before trying to send message. Don't
       // want to burn other transactions if our state is out of sync with the
       // blockchain.
@@ -593,10 +593,7 @@ export class RelayClient extends ReadOnlyRelayClient {
                 transaction.txid,
                 transaction.toString(),
               )
-              await electrumClient.request(
-                'blockchain.transaction.broadcast',
-                transaction.toString(),
-              )
+              await chronikClient.broadcastTx(transaction.toString())
               console.log('Finished broadcasting tx', transaction.txid)
             }),
           ),
