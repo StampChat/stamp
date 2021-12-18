@@ -46,7 +46,6 @@
     "core-js": "^3.19.2",
     "dompurify": "^2.3.1",
     "electron-windows-badge": "^1.1.0",
-    "electrum-cash": "^2.0.9",
     "google-protobuf": "^3.19.1",
     "isomorphic-ws": "^4.0.1",
     "level": "^7.0.0",

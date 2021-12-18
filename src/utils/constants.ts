@@ -1,15 +1,3 @@
-import { ElectrumTransport } from 'electrum-cash'
-
-// Electrum constants
-export const electrumServers = [
-  // Our mainnet server, we need to setup a testnet server as well.
-  {
-    url: 'fulcrum.cashweb.io',
-    port: 443,
-    scheme: ElectrumTransport.WSS.Scheme,
-  },
-]
-
 export const chronikServers = [{ url: 'https://chronik.be.cash/xpi' }]
 
 // The separation here is due the fork. Not all backends support the new network prefixes yet
@@ -17,8 +5,6 @@ export const chronikServers = [{ url: 'https://chronik.be.cash/xpi' }]
 // the ecash prefix for display
 export const networkName = 'cash-livenet'
 export const displayNetwork = 'livenet'
-
-export const electrumPingInterval = 10_000
 
 // Wallet constants
 export const numAddresses = 10
