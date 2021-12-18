@@ -16,6 +16,7 @@ import { UtxoStore } from './storage/storage'
 import type { ElectrumClient, RequestResponse } from 'electrum-cash'
 
 import { Utxo } from '../types/utxo'
+import { ChronikClient, WsEndpoint } from 'chronik-client'
 
 const standardUtxoSize = 34
 const standardInputSize = 175 // A few extra bytes
@@ -68,6 +69,8 @@ export class Wallet {
   numAddresses: number
   numChangeAddresses: number
   electrumClientPromise: Promise<ElectrumClient> | undefined
+  chronikClient: ChronikClient | undefined
+  chronikWs: WsEndpoint | undefined
   _xPrivKey: HDPrivateKey | undefined
   _identityPrivKey: PrivateKey | undefined
   walletKeys: PrivateKeyData[] = []
@@ -99,7 +102,17 @@ export class Wallet {
 
   setElectrumClient(electrumClientPromise: Promise<ElectrumClient>) {
     this.electrumClientPromise = electrumClientPromise
-    this.init()
+  }
+
+  setChronik({
+    chronikClient,
+    chronikWs,
+  }: {
+    chronikClient: ChronikClient
+    chronikWs: WsEndpoint
+  }) {
+    this.chronikClient = chronikClient
+    this.chronikWs = chronikWs
   }
 
   setXPrivKey(xPrivKey: HDPrivateKey) {
@@ -228,38 +241,24 @@ export class Wallet {
     }
   }
 
-  async updateUTXOFromScriptHash(scriptHash: string) {
-    const client = await this.electrumClientPromise
-    assert(client, 'missing client in updateUTXOFromScriptHash')
+  async updateUTXOsFromScriptHash(scriptHash: string) {
+    const chronikClient = this.chronikClient
+    assert(chronikClient, 'missing client in updateUTXOsFromScriptHash')
     try {
-      const elUtxos: Error | RequestResponse = await client.request(
-        'blockchain.scripthash.listunspent',
-        scriptHash,
-      )
-      assert(
-        elUtxos,
-        `Null response from blockchain.scripthash.listunspent for ${scriptHash}`,
-      )
-      if (elUtxos instanceof Error) {
-        throw elUtxos
-      }
-      assert(
-        elUtxos instanceof Array,
-        'output of blockchain.scripthash.listunspent was not an array!',
-      )
-      const unspentUtxos = elUtxos as ElectrumListUnspentUtxo[]
-      const addressMap = this.getAddressByElectrumScriptHash(scriptHash)
-      const { address, privKey } = addressMap
-      const utxos = unspentUtxos.map((elUtxo: ElectrumListUnspentUtxo) => {
-        const output = {
-          txId: elUtxo.tx_hash,
-          outputIndex: elUtxo.tx_pos,
-          satoshis: elUtxo.value,
+      const { address, privKey } =
+        this.getAddressByElectrumScriptHash(scriptHash)
+      const chronikUtxos = await chronikClient
+        .script('p2pkh', privKey.toAddress().hashBuffer.toString('hex'))
+        .utxos()
+      const utxos: Utxo[] = chronikUtxos.flatMap(scriptUtxos => {
+        return scriptUtxos.utxos.map(utxo => ({
+          txId: utxo.outpoint.txid,
+          outputIndex: utxo.outpoint.outIdx,
+          satoshis: utxo.value.toNumber(),
           type: 'p2pkh',
           address,
           privKey,
-        }
-        return output
+        }))
       })
       await this.refreshUTXOsByAddr({ address, utxos })
     } catch (err) {
@@ -272,7 +271,7 @@ export class Wallet {
     const scriptHashes = Object.keys(this.electrumScriptHashes)
     await P.map(
       scriptHashes,
-      scriptHash => this.updateUTXOFromScriptHash(scriptHash),
+      scriptHash => this.updateUTXOsFromScriptHash(scriptHash),
       { concurrency: 5 },
     )
   }
@@ -369,7 +368,7 @@ export class Wallet {
     const params = response as [string, string] | string
     const [scriptHash, status] = params
     console.log('Subscription hit', scriptHash, status)
-    await this.updateUTXOFromScriptHash(scriptHash)
+    await this.updateUTXOsFromScriptHash(scriptHash)
   }
 
   async forwardUTXOsToPubkey({
