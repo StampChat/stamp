@@ -575,11 +575,8 @@ export class RelayClient extends ReadOnlyRelayClient {
       // Ensure all outpoints are on-chain before trying to send message. Don't
       // want to burn other transactions if our state is out of sync with the
       // blockchain.
-      Promise.all(
-        stagedUtxos.map(async outpoint => {
-          return wallet.checkOutpoint(outpoint)
-        }),
-      )
+      wallet
+        .checkAndFixUtxos(stagedUtxos)
         .then(checks => checks.every(c => c))
         .then(o => {
           if (!o) {
