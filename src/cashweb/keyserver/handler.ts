@@ -319,7 +319,7 @@ export class KeyserverHandler {
         ),
       )
     } catch (err) {
-      await Promise.all(usedUtxos.map(utxo => this.wallet?.fixUtxo(utxo)))
+      await this.wallet?.fixUtxos(usedUtxos)
       throw err
     }
     return payloadDigest.toString('hex')

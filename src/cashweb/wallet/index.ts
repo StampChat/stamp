@@ -56,12 +56,6 @@ type ElectrumScriptHash = string
 type AddressGenerator = (txnNumber: number) => (output: number) => PublicKey
 // UnspendOutpout.fromObject can work with this
 type BuildableUtxo = Utxo & { script?: string }
-// eslint-disable-next-line camelcase, @typescript-eslint/naming-convention
-type ElectrumListUnspentUtxo = {
-  tx_hash: string
-  tx_pos: number
-  value: number
-}
 
 export class Wallet {
   storage: UtxoStore
@@ -296,64 +290,70 @@ export class Wallet {
   async updateAllOutpoints() {
     // Check HD Wallet
     const utxos = [...this.storage.getUtxoMap().values()]
-    await P.map(utxos, utxo => this.fixUtxo(utxo), { concurrency: 5 })
+    await this.fixUtxos(utxos)
   }
 
-  async checkOutpoint(utxo: Utxo) {
-    const utxoId = calcUtxoId(utxo)
-    console.log(`Checking UTXO ${utxoId}`)
-    const client = await this.electrumClientPromise
-    assert(client, 'missing client in fixOutpointId')
-    const scriptHash = toElectrumScriptHash(utxo.address)
-    const elOutputs = await client.request(
-      'blockchain.scripthash.listunspent',
-      scriptHash,
+  async checkAndFixUtxos(utxos: Utxo[]): Promise<boolean[]> {
+    const utxoIds = utxos.map(calcUtxoId)
+    console.log(`Checking UTXOs ${utxoIds}`)
+    const chronikClient = this.chronikClient
+    assert(chronikClient, 'missing client in checkAndFixUtxos')
+    const utxoStates = await chronikClient.validateUtxos(
+      utxos.map(utxo => ({
+        txid: utxo.txId,
+        outIdx: utxo.outputIndex,
+      })),
     )
-    assert(
-      elOutputs,
-      `Null response from blockchain.scripthash.listunspent for ${scriptHash}`,
-    )
-    if (elOutputs instanceof Error) {
-      return false
-    }
-    assert(
-      elOutputs instanceof Array,
-      'output of blockchain.scripthash.listunspent was not an array!',
-    )
-    const unspentOutputs = elOutputs as ElectrumListUnspentUtxo[]
-    if (
-      !unspentOutputs.some(output => {
-        return (
-          output.tx_hash === utxo.txId && output.tx_pos === utxo.outputIndex
-        )
-      })
-    ) {
-      console.log(`UTXO missing on-chain, deleting missing UTXO ${utxoId}`)
+    return utxoStates.map((utxoState, idx) => {
+      const utxoId = utxoIds[idx]
+      switch (utxoState.state) {
+        case 'UNSPENT':
+          console.log('UTXO is valid', utxoId)
+          return true
+        case 'SPENT':
+          console.log('UTXO spent on-chain, deleting spent UTXO', utxoId)
+          break
+        case 'NO_SUCH_TX':
+          console.log(
+            'Invalid UTXO: tx does not exist on-chain, deleting invalid UTXO',
+            utxoId,
+          )
+          break
+        case 'NO_SUCH_OUTPUT':
+          console.log(
+            "Invalid UTXO: tx exists, but output doesn't, deleting invalid UTXO",
+            utxoIds[idx],
+          )
+          break
+      }
       this.storage.deleteById(utxoId)
       return false
-    }
-    console.log(`UTXO is valid ${utxoId}`)
-    return true
+    })
   }
 
-  async fixUtxo(utxo: Utxo) {
-    const utxoId = calcUtxoId(utxo)
+  async fixUtxos(utxos: Utxo[]) {
     // TODO: This needs some thought to ensure we do not delete outpoints that
     // are possibly just out of sync with the mempool.
+    const utxoIds = utxos.map(calcUtxoId)
     try {
       // Unfreeze UTXO if confirmed to be unspent else delete
       // WARNING: This is not thread-safe, do not call when others hold the UTXO
-      const utxo = await this.storage.getById(utxoId)
-      if (!utxo) {
-        console.log(`Missing UTXO for ${utxoId}`)
-        return
-      }
-      if (!(await this.checkOutpoint(utxo))) {
-        return
-      }
-      await this.unfreezeUtxo(utxoId)
+      const storageUtxos = utxoIds.flatMap(utxoId => {
+        const utxo = this.storage.getById(utxoId)
+        if (utxo === undefined) {
+          console.log(`Missing UTXO for ${utxoId}`)
+          return []
+        }
+        return [utxo]
+      })
+      const utxosAreUnspent = await this.checkAndFixUtxos(storageUtxos)
+      utxosAreUnspent.forEach((isUnspent, idx) => {
+        if (isUnspent) {
+          this.unfreezeUtxo(utxoIds[idx])
+        }
+      })
     } catch (err) {
-      console.error('error deserializing utxo address', err, utxoId)
+      console.error('error fixing UTXOs', err, utxoIds)
       throw err
     }
   }
@@ -428,9 +428,7 @@ export class Wallet {
     } catch (err) {
       console.error(err)
       // Fix UTXOs if tx broadcast fails
-      stagedUtxos.forEach(utxo => {
-        this.fixUtxo(utxo)
-      })
+      await this.fixUtxos(stagedUtxos)
       throw new Error('Error broadcasting forwarding transaction')
     }
     return { transaction, usedUtxos: stagedUtxos }
