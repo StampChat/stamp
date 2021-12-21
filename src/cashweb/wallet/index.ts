@@ -7,16 +7,15 @@ import {
   Address,
   Script,
   Transaction,
-  crypto,
   PrivateKey,
   HDPrivateKey,
   PublicKey,
 } from 'bitcore-lib-xpi'
 import { UtxoStore } from './storage/storage'
-import type { ElectrumClient, RequestResponse } from 'electrum-cash'
+import type { ElectrumClient } from 'electrum-cash'
 
 import { Utxo } from '../types/utxo'
-import { ChronikClient, WsEndpoint } from 'chronik-client'
+import { ChronikClient, SubscribeMsg, WsEndpoint } from 'chronik-client'
 
 const standardUtxoSize = 34
 const standardInputSize = 175 // A few extra bytes
@@ -42,17 +41,8 @@ function shuffleArray(arr: unknown[]) {
   return swaps
 }
 
-function toElectrumScriptHash(address: string | Address | PublicKey) {
-  const scriptHash = Script.buildPublicKeyHashOut(address)
-  const scriptHashRaw = scriptHash.toBuffer()
-  const digest = crypto.Hash.sha256(scriptHashRaw)
-  const digestHexReversed = digest.reverse().toString('hex')
-  return digestHexReversed
-}
-
 type PrivateKeyData = { privKey: PrivateKey }
 type AddressData = { address: string; change: boolean } & PrivateKeyData
-type ElectrumScriptHash = string
 type AddressGenerator = (txnNumber: number) => (output: number) => PublicKey
 // UnspendOutpout.fromObject can work with this
 type BuildableUtxo = Utxo & { script?: string }
@@ -69,9 +59,7 @@ export class Wallet {
   _identityPrivKey: PrivateKey | undefined
   walletKeys: PrivateKeyData[] = []
   changeKeys: PrivateKeyData[] = []
-  electrumScriptHashes: Record<ElectrumScriptHash, AddressData> = {}
-
-  scriptHashSubscriber: (response: Error | RequestResponse) => void
+  addressDataByPkh: Map<string, AddressData> = new Map()
 
   constructor(
     storage: UtxoStore,
@@ -85,13 +73,6 @@ export class Wallet {
     this.networkName = networkName
     this.numAddresses = numAddresses
     this.numChangeAddresses = numChangeAddresses
-
-    // Workaround for the way electrum-cash ensures a subscription isn't handled
-    // twice.
-    // Fixes: "MaxListenersExceededWarning: Possible EventEmitter memory leak
-    // detected. 11 blockchain.scripthash.subscribe listeners added to
-    // [ElectrumClient]. Use emitter.setMaxListeners() to increase limit"
-    this.scriptHashSubscriber = this.scriptHashUpdated.bind(this)
   }
 
   setElectrumClient(electrumClientPromise: Promise<ElectrumClient>) {
@@ -155,7 +136,7 @@ export class Wallet {
 
     this.walletKeys = []
     this.changeKeys = []
-    this.electrumScriptHashes = {}
+    this.addressDataByPkh = new Map()
     for (let i = 0; i < this.numAddresses; i++) {
       const privKey = xPrivKey
         .deriveChild(44, true)
@@ -164,16 +145,7 @@ export class Wallet {
         .deriveChild(0)
         .deriveChild(i).privateKey
       this.walletKeys.push({ privKey })
-
-      // Index by script hash
-      const scriptHash = toElectrumScriptHash(privKey.toPublicKey())
-      const address = privKey.toAddress(this.networkName).toXAddress()
-      this.addElectrumScriptHash({
-        scriptHash,
-        address,
-        change: false,
-        privKey,
-      })
+      this.addAddressData({ privKey, change: false })
     }
     for (let j = 0; j < this.numChangeAddresses; j++) {
       const privKey = xPrivKey
@@ -183,21 +155,24 @@ export class Wallet {
         .deriveChild(1)
         .deriveChild(j).privateKey
       this.changeKeys.push({ privKey })
-
-      // Index by script hash
-      const scriptHash = toElectrumScriptHash(privKey.toPublicKey())
-      const address = privKey.toAddress(this.networkName).toXAddress()
-      this.addElectrumScriptHash({ scriptHash, address, change: true, privKey })
+      this.addAddressData({ privKey, change: true })
     }
   }
 
-  addElectrumScriptHash({
-    scriptHash,
-    address,
-    change,
+  addAddressData({
     privKey,
-  }: { scriptHash: string } & AddressData) {
-    this.electrumScriptHashes[scriptHash] = { address, change, privKey }
+    change,
+  }: {
+    privKey: PrivateKey
+    change: boolean
+  }) {
+    const address = privKey.toAddress(this.networkName)
+    const pkh = address.hashBuffer.toString('hex')
+    this.addressDataByPkh.set(pkh, {
+      address: address.toXAddress(),
+      change,
+      privKey,
+    })
   }
 
   async refreshUTXOsByAddr({
@@ -235,53 +210,72 @@ export class Wallet {
     }
   }
 
-  async updateUTXOsFromScriptHash(scriptHash: string) {
+  async updateUTXOsFromTxid(txid: string) {
+    const chronikClient = this.chronikClient
+    assert(chronikClient, 'missing client in updateUTXOsFromTxid')
+    const tx = await chronikClient.tx(txid)
+    const txScripts = new Set<string>()
+    tx.inputs.forEach(
+      input => input.outputScript && txScripts.add(input.outputScript),
+    )
+    tx.outputs.forEach(output => txScripts.add(output.outputScript))
+    for (const scriptHex of txScripts) {
+      const script = new Script(scriptHex)
+      if (!script.isPublicKeyHashOut()) {
+        continue
+      }
+      const pkh = script.getPublicKeyHash().toString('hex')
+      if (!this.addressDataByPkh.has(pkh)) {
+        continue
+      }
+      await this.updateUTXOsFromPkh(pkh)
+    }
+  }
+
+  async updateUTXOsFromPkh(pkh: string) {
     const chronikClient = this.chronikClient
     assert(chronikClient, 'missing client in updateUTXOsFromScriptHash')
     try {
-      const { address, privKey } =
-        this.getAddressByElectrumScriptHash(scriptHash)
-      const chronikUtxos = await chronikClient
-        .script('p2pkh', privKey.toAddress().hashBuffer.toString('hex'))
-        .utxos()
+      const addressData = this.addressDataByPkh.get(pkh)
+      assert(addressData, `missing addressData for pkh ${pkh}`)
+      const chronikUtxos = await chronikClient.script('p2pkh', pkh).utxos()
       const utxos: Utxo[] = chronikUtxos.flatMap(scriptUtxos => {
         return scriptUtxos.utxos.map(utxo => ({
           txId: utxo.outpoint.txid,
           outputIndex: utxo.outpoint.outIdx,
           satoshis: utxo.value.toNumber(),
           type: 'p2pkh',
-          address,
-          privKey,
+          address: addressData.address,
+          privKey: addressData.privKey,
         }))
       })
-      await this.refreshUTXOsByAddr({ address, utxos })
+      await this.refreshUTXOsByAddr({ address: addressData.address, utxos })
     } catch (err) {
-      console.error('error deserializing utxo address', err, scriptHash)
+      console.error('error in updateUTXOsFromPkh', err, pkh)
     }
   }
 
   async updateHDUTXOs() {
     // Check HD Wallet
-    const scriptHashes = Object.keys(this.electrumScriptHashes)
     await P.map(
-      scriptHashes,
-      scriptHash => this.updateUTXOsFromScriptHash(scriptHash),
+      this.addressDataByPkh.keys(),
+      pkh => this.updateUTXOsFromPkh(pkh),
       { concurrency: 5 },
     )
   }
 
   async startListeners() {
-    const client = await this.electrumClientPromise
-    assert(client, 'missing client in startListeners')
-    const scriptHashes = Object.keys(this.electrumScriptHashes)
+    const chronikWs = this.chronikWs
+    assert(chronikWs, 'missing WebSocket client in startListeners')
+
+    chronikWs.onMessage = msg => this.addressUpdated(msg)
 
     await P.map(
-      scriptHashes,
-      scriptHash =>
-        client.subscribe(
-          this.scriptHashSubscriber,
-          'blockchain.scripthash.subscribe',
-          scriptHash,
+      [...this.walletKeys, ...this.changeKeys],
+      key =>
+        chronikWs.subscribe(
+          'p2pkh',
+          key.privKey.toAddress().hashBuffer.toString('hex'),
         ),
       { concurrency: 5 },
     )
@@ -358,17 +352,17 @@ export class Wallet {
     }
   }
 
-  async scriptHashUpdated(response: RequestResponse | Error) {
-    if (!(response instanceof Array)) {
-      // Electrum-cash client is dumb and sends the initial subscription call response to our
-      // callback handler. The data is not the same, and is actually a string with the
-      // status of the particular scriptHash
-      return
+  async addressUpdated(msg: SubscribeMsg) {
+    switch (msg.type) {
+      case 'AddedToMempool':
+      case 'Confirmed':
+        console.log('Subscription hit', msg)
+        await this.updateUTXOsFromTxid(msg.txid)
+        return
+      case 'Error':
+        console.error('Error from ws:', msg.errorCode, msg.msg)
+        return
     }
-    const params = response as [string, string] | string
-    const [scriptHash, status] = params
-    console.log('Subscription hit', scriptHash, status)
-    await this.updateUTXOsFromScriptHash(scriptHash)
   }
 
   async forwardUTXOsToPubkey({
@@ -886,10 +880,6 @@ export class Wallet {
 
   get feePerByte() {
     return 2
-  }
-
-  getAddressByElectrumScriptHash(scriptHash: string) {
-    return this.electrumScriptHashes[scriptHash]
   }
 
   get myAddress() {
