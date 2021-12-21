@@ -5,12 +5,11 @@ import { toRaw, reactive } from 'vue'
 
 export async function getRelayClient({
   wallet,
-  electrumClient,
   store,
   relayUrl = defaultRelayUrl,
 }) {
   const observables = reactive({ connected: false })
-  const client = new RelayClient(relayUrl, wallet, electrumClient, {
+  const client = new RelayClient(relayUrl, wallet, {
     getPubKey: address => {
       const destPubKey = store.getters['contacts/getPubKey'](address)
       return destPubKey

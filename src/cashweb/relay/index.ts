@@ -34,7 +34,6 @@ import {
   Address,
   PrivateKey,
 } from 'bitcore-lib-xpi'
-import type { ElectrumClient } from 'electrum-cash'
 import { MessageStore } from './storage/storage'
 import { Wallet } from '../wallet'
 import {
@@ -160,7 +159,6 @@ export class RelayClient extends ReadOnlyRelayClient {
   url: string
   events: EventEmitter
   wallet?: Wallet
-  electrumClientPromise: Promise<ElectrumClient>
   getPubKey: (address: string) => PublicKey
   messageStore: MessageStore
   relayReconnectInterval: number
@@ -171,7 +169,6 @@ export class RelayClient extends ReadOnlyRelayClient {
   constructor(
     url: string,
     wallet: Wallet,
-    electrumClientPromise: Promise<ElectrumClient>,
     {
       networkName = 'testnet',
       relayReconnectInterval = 10_000,
@@ -193,7 +190,6 @@ export class RelayClient extends ReadOnlyRelayClient {
     this.url = url
     this.events = new EventEmitter()
     this.wallet = wallet
-    this.electrumClientPromise = electrumClientPromise
     this.getPubKey = getPubKey
     this.messageStore = messageStore
     this.relayReconnectInterval = relayReconnectInterval

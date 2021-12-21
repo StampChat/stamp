@@ -8,7 +8,7 @@ declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
     // Vuejs props
     // Stamp properties
-    $electrum: {
+    $indexer: {
       connected: boolean
     }
     $electrumClientPromise: Promise<ElectrumClient>

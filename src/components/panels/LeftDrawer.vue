@@ -19,9 +19,7 @@
       <q-item clickable>
         <q-item-section @click="receiveECash">
           <q-item-label>{{ $t('chatList.balance') }}</q-item-label>
-          <q-item-label caption>
-            {{ formattedBalance }}
-          </q-item-label>
+          <q-item-label caption>{{ formattedBalance }}</q-item-label>
         </q-item-section>
         <q-item-section v-if="!walletConnected" side>
           <q-btn icon="account_balance_wallet" flat round color="red" />
@@ -118,7 +116,7 @@ export default {
       return this.$relay.connected
     },
     walletConnected() {
-      return this.$electrum.connected
+      return this.$indexer.connected
     },
     formattedBalance() {
       if (!this.balance) {

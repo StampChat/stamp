@@ -24,7 +24,7 @@ export default {
   },
   computed: {
     connected() {
-      return this.$electrum.connected
+      return this.$indexer.connected
     },
   },
 }
