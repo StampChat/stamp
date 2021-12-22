@@ -582,15 +582,10 @@ export class RelayClient extends ReadOnlyRelayClient {
           }
         })
         .then(() =>
-          Promise.all(
-            transactions.map(async transaction => {
-              console.log(
-                'Broadcasting a transaction',
-                transaction.txid,
-                transaction.toString(),
-              )
-              await chronikClient.broadcastTx(transaction.toString())
-              console.log('Finished broadcasting tx', transaction.txid)
+          chronikClient.broadcastTxs(
+            transactions.map(tx => {
+              console.log('Broadcasting a transaction', tx.txid, tx.toString())
+              return tx.toString()
             }),
           ),
         )

@@ -3048,10 +3048,10 @@ chromium-pickle-js@^0.2.0:
   resolved "https://registry.yarnpkg.com/chromium-pickle-js/-/chromium-pickle-js-0.2.0.tgz#04a106672c18b085ab774d983dfa3ea138f22205"
   integrity sha1-BKEGZywYsIWrd02YPfo+oTjyIgU=
 
-chronik-client@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/chronik-client/-/chronik-client-0.3.0.tgz#48b85056c1588a0c141ae6e4c149045f25a2a1b7"
-  integrity sha512-Lma8k4JLQkrO7YP0ynZ4N3v3QGyUt7U4O5AosrDOkBzEP9BUHHpAdaYQqa8RCZGGfOGK9nJJzV5oiLeI+P5D+w==
+chronik-client@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/chronik-client/-/chronik-client-0.4.0.tgz#ff7c0527fca983d55ccc54b09ed6c1e9e049666d"
+  integrity sha512-VgxGHPYN3rlRcn7g1gEh562Tj/2dEDlXQnbhU3qQYgfFIRnBt80TP4Rq2raek7nUy+TIen0d4JK7zxoSK5Kauw==
   dependencies:
     "@types/ws" "^8.2.1"
     axios "^0.21.1"
