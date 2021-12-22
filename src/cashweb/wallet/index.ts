@@ -12,7 +12,6 @@ import {
   PublicKey,
 } from 'bitcore-lib-xpi'
 import { UtxoStore } from './storage/storage'
-import type { ElectrumClient } from 'electrum-cash'
 
 import { Utxo } from '../types/utxo'
 import { ChronikClient, SubscribeMsg, WsEndpoint } from 'chronik-client'
@@ -52,7 +51,6 @@ export class Wallet {
   networkName: string
   numAddresses: number
   numChangeAddresses: number
-  electrumClientPromise: Promise<ElectrumClient> | undefined
   chronikClient: ChronikClient | undefined
   chronikWs: WsEndpoint | undefined
   _xPrivKey: HDPrivateKey | undefined
@@ -73,10 +71,6 @@ export class Wallet {
     this.networkName = networkName
     this.numAddresses = numAddresses
     this.numChangeAddresses = numChangeAddresses
-  }
-
-  setElectrumClient(electrumClientPromise: Promise<ElectrumClient>) {
-    this.electrumClientPromise = electrumClientPromise
   }
 
   setChronik({
