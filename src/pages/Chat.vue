@@ -36,14 +36,11 @@
   <q-footer bordered>
     <div
       v-if="!!replyDigest"
-      class="reply col q-px-md q-pt-sm"
+      class="reply q-px-md q-pt-sm"
       ref="replyBox"
     >
       <!-- Reply box -->
-      <div class="row">
-        <div class="col text-weight-bold">
-          {{ replyName }}
-        </div>
+      <div class="row justify-end">
         <div class="col-auto">
           <q-btn
             dense
@@ -55,18 +52,12 @@
         </div>
       </div>
       <div class="row q-px-sm q-pt-sm">
-        <chat-message-text
-          v-if="replyItem.type=='text'"
-          :text="replyItem.text"
-        />
-        <chat-message-image
-          v-else-if="replyItem.type=='image'"
-          :image="replyItem.image"
-        />
-        <chat-message-stealth
-          v-else-if="replyItem.type=='stealth'"
-          :amount="replyItem.amount"
-        />
+        <div class="col-12">
+          <chat-message-reply
+            :payload-digest="replyDigest"
+            @replyMounted="replyMounted()"
+          />
+        </div>
       </div>
     </div>
 
@@ -86,9 +77,10 @@
 import { mapState, mapGetters, mapActions } from 'vuex'
 import ChatMessageStack from '../components/chat/messages/ChatMessageStack.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
-import ChatMessageText from '../components/chat/messages/ChatMessageText.vue'
-import ChatMessageImage from '../components/chat/messages/ChatMessageImage.vue'
-import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.vue'
+import ChatMessageReply from '../components/chat/messages/ChatMessageReply.vue'
+// import ChatMessageText from '../components/chat/messages/ChatMessageText.vue'
+// import ChatMessageImage from '../components/chat/messages/ChatMessageImage.vue'
+// import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.vue'
 
 import { addressColorFromStr } from '../utils/formatting'
 import { insufficientStampNotify } from '../utils/notifications'
@@ -99,9 +91,10 @@ const scrollDuration = 0
 export default {
   components: {
     ChatMessageStack,
-    ChatMessageText,
-    ChatMessageImage,
-    ChatMessageStealth,
+    ChatMessageReply,
+    // ChatMessageText,
+    // ChatMessageImage,
+    // ChatMessageStealth,
     ChatInput
   },
   beforeRouteUpdate (to, from, next) {
@@ -192,6 +185,9 @@ export default {
     setReply (payloadDigest) {
       console.log('setting reply')
       this.replyDigest = payloadDigest
+    },
+    replyMounted () {
+      this.$refs.chatInput.focusInput()
     }
   },
   computed: {

@@ -1,7 +1,6 @@
 <template>
-  <q-item
-    class="q-pa-none"
-    dense
+  <div
+    style="width: 100%"
     @mouseover="mouseover = true"
     @mouseleave="mouseover = false"
   >
@@ -33,35 +32,74 @@
       @deleteClick="deleteDialog = true"
       @replyClick="replyClicked({ address, payloadDigest: message.payloadDigest })"
     />
-
     <div
-      class="col"
       v-if="message.payloadDigest"
     >
       <div
-        class="q-px-lg"
-        v-for="(item, key) in message.items"
-        :key="key"
+        v-if="messageItem.type === 'stealth'"
       >
-        <chat-message-reply
-          v-if="item.type=='reply'"
-          :payload-digest="item.payloadDigest"
-          :address="address"
-          :mouseover="mouseover"
-        />
-        <chat-message-text
-          v-else-if="item.type=='text'"
-          :text="item.text"
-        />
-        <chat-message-image
-          v-else-if="item.type=='image'"
-          :image="item.image"
-        />
         <chat-message-stealth
-          v-else-if="item.type=='stealth'"
-          :amount="item.amount"
+          :amount="messageItem.amount"
+          :outbound="message.outbound"
         />
       </div>
+      <!-- Sent Message -->
+      <q-chat-message
+        v-else-if="message.outbound"
+        sent
+      >
+        <div>
+          <chat-message-reply
+            v-if="replyItem.payloadDigest !== ''"
+            :payload-digest="replyItem.payloadDigest"
+          />
+          <chat-message-text
+            v-if="messageItem.type === 'text'"
+            :text="messageItem.text"
+          />
+          <chat-message-image
+            v-else-if="messageItem.type === 'image'"
+            :image="messageItem.image"
+          />
+        </div>
+        <template
+          #stamp
+        >
+          <chat-message-suffix
+            :stamp="reactiveTimestamp"
+            :amount="stampAmount"
+            :status="message.status"
+          />
+        </template>
+      </q-chat-message>
+      <!-- Received Message -->
+      <q-chat-message
+        v-else
+      >
+        <div>
+          <chat-message-reply
+            v-if="replyItem.payloadDigest !== ''"
+            :payload-digest="replyItem.payloadDigest"
+          />
+          <chat-message-text
+            v-if="messageItem.type === 'text'"
+            :text="messageItem.text"
+          />
+          <chat-message-image
+            v-else-if="messageItem.type === 'image'"
+            :image="messageItem.image"
+          />
+        </div>
+        <template
+          #stamp
+        >
+          <chat-message-suffix
+            :stamp="reactiveTimestamp"
+            :amount="stampAmount"
+            :status="message.status"
+          />
+        </template>
+      </q-chat-message>
     </div>
     <div
       class="col"
@@ -69,24 +107,7 @@
     >
       Unable to find message payload
     </div>
-
-    <q-tooltip>
-      {{ stampAmount }}
-    </q-tooltip>
-    <div class="q-px-sm col-auto">
-      {{ shortTime }}
-    </div>
-
-    <div
-      v-if="message.status==='error'"
-      class="col-auto"
-    >
-      <q-icon
-        name="error"
-        color="red"
-      />
-    </div>
-  </q-item>
+  </div>
 </template>
 
 <script>
@@ -96,6 +117,7 @@ import ChatMessageReply from './ChatMessageReply.vue'
 import ChatMessageText from './ChatMessageText.vue'
 import ChatMessageImage from './ChatMessageImage.vue'
 import ChatMessageStealth from './ChatMessageStealth.vue'
+import ChatMessageSuffix from './ChatMessageSuffix.vue'
 import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog.vue'
 import TransactionDialog from '../../dialogs/TransactionDialog.vue'
 import { stampPrice } from '../../../cashweb/wallet/helpers'
@@ -108,15 +130,19 @@ export default {
     ChatMessageText,
     ChatMessageImage,
     ChatMessageStealth,
+    ChatMessageSuffix,
     TransactionDialog,
     DeleteMessageDialog
   },
   emits: ['replyClicked'],
   data () {
     return {
+      isLastMessageItem: false,
       transactionDialog: false,
       deleteDialog: false,
-      mouseover: false
+      mouseover: false,
+      reactiveTimestamp: this.howLongAgo(),
+      messageTimestampInterval: null
     }
   },
   props: {
@@ -128,7 +154,7 @@ export default {
       type: Object,
       required: true
     },
-    nameColor: {
+    name: {
       type: String,
       required: true
     },
@@ -147,13 +173,56 @@ export default {
   methods: {
     replyClicked (args) {
       this.$emit('replyClicked', args)
-    }
-  },
-  computed: {
-    shortTimestamp () {
+    },
+    howLongAgo () {
       switch (this.message.status) {
         case 'confirmed': {
           const timestamp = this.message.timestamp || this.message.serverTime
+          // return moment(timestamp).fromNow(true)
+          const howLongAgo = moment(timestamp)
+          return howLongAgo.fromNow(true)
+          /*
+          return howLongAgo.calendar(null, {
+            sameDay: 'HH:mm:ss',
+            nextDay: '[Tomorrow] HH:mm:ss',
+            nextWeek: 'dddd',
+            lastDay: 'HH:mm:ss',
+            lastWeek: '[Last] dddd',
+            sameElse: 'DD/MM/YYYY'
+          })
+          */
+        }
+        case 'pending':
+          return 'sending...'
+        case 'error':
+          return ''
+      }
+      return 'N/A'
+    }
+  },
+  mounted () {
+    this.messageTimestampInterval = setInterval(() => {
+      this.reactiveTimestamp = this.howLongAgo()
+    }, 500)
+  },
+  unmounted () {
+    clearInterval(this.messageTimestampInterval)
+  },
+  computed: {
+    // Top-most non-reply message item
+    messageItem () {
+      return this.message.items.find(item => item.type !== 'reply')
+    },
+    // Top-most reply message item
+    replyItem () {
+      // return empty payloadDigest string if reply doesn't exist
+      return this.message.items.find(item => item.type === 'reply') || { payloadDigest: '' }
+    },
+    shortTimestamp () {
+      switch (this.message.status) {
+        case 'confirmed': {
+          const timestamp = this.messageTimestamp || this.message.serverTime
+          // return moment(timestamp).fromNow(true)
           const howLongAgo = moment(timestamp)
           return howLongAgo.calendar(null, {
             sameDay: 'HH:mm:ss',
@@ -185,16 +254,12 @@ export default {
       }
       return 'N/A'
     },
-    timestampString () {
-      const timestamp = this.message.timestamp || this.message.serverTime
-      return moment(timestamp)
-    },
     stampAmount () {
       if (!this.message || !this.message.outpoints) {
-        return '0 Lotus'
+        return '0 XPI'
       }
       const amount = stampPrice(this.message.outpoints)
-      return Number(amount / 1000000).toFixed(2) + ' Lotus'
+      return Number(amount / 1000000).toFixed(2) + ' XPI'
     }
   }
 }

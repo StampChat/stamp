@@ -1,21 +1,21 @@
 <template>
-  <span v-html="markedMessage(text)" />
+  <span v-html="markedMessage" />
 </template>
 
 <script>
-import { toMarkdown } from '../../../utils/markdown'
+import { renderMarkdown } from '../../../utils/markdown'
 
 export default {
-  name: 'ChatMessageSection',
+  name: 'ChatMessageText',
   props: {
     text: {
       type: String,
       required: true
     }
   },
-  methods: {
-    markedMessage (text) {
-      return toMarkdown(text)
+  computed: {
+    markedMessage () {
+      return renderMarkdown(this.text)
     }
   }
 }

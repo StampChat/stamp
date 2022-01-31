@@ -1,16 +1,12 @@
 <template>
-  <div class="q-ml-sm">
-    <q-dialog v-model="imageDialog">
-      <image-dialog :image="image" />
-    </q-dialog>
-
-    <q-img
-      :src="image"
-      contain
-      style="width: 10vw;"
-      @click="showImageDialog"
-    />
-  </div>
+  <q-dialog v-model="imageDialog">
+    <image-dialog :image="image" />
+  </q-dialog>
+  <q-img
+    :src="image"
+    :width="width"
+    @click="showImageDialog"
+  />
 </template>
 
 <script>
@@ -21,6 +17,11 @@ export default {
     image: {
       type: String,
       default: () => ''
+    },
+    width: {
+      type: String,
+      required: false,
+      default: () => '300px'
     }
   },
   components: {

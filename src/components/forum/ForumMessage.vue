@@ -147,7 +147,7 @@
 </template>
 
 <script lang="ts">
-import { toMarkdown } from '../../utils/markdown'
+import { renderMarkdown } from '../../utils/markdown'
 import moment from 'moment'
 
 import { defineComponent } from 'vue'
@@ -202,7 +202,7 @@ export default defineComponent({
       return (value / 1_000_000).toFixed(0)
     },
     markedMessage (text: string) {
-      return toMarkdown(text)
+      return renderMarkdown(text)
     },
     formatAddress (address:string) {
       return address.substring(6, 12) + '...' + address.substring(address.length - 6, address.length)

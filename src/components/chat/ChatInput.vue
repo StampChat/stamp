@@ -81,8 +81,8 @@
         class="full-width q-pl-md"
         dense
         borderless
-        autogrow
         autofocus
+        autogrow
         @keydown.enter.exact.prevent
         @keydown.enter.exact="sendMessage"
         @mousedown.self.stop
@@ -132,7 +132,7 @@ export default {
   },
   emits: ['update:message', 'update:stampAmount', 'sendMessage', 'giveLotusClicked', 'sendFileClicked'],
   methods: {
-    focus () {
+    focusInput () {
       this.$refs.inputBox.focus()
     },
     sendMessage () {

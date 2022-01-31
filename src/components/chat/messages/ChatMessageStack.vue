@@ -1,4 +1,21 @@
 <template>
+  <div
+    class="row q-px-lg"
+    style="max-width: 720px"
+  >
+    <chat-message
+      v-for="(message, index) in messages"
+      :key="index"
+      :message="message"
+      :index="index + globalIndex"
+      :items="message.items"
+      :address="address"
+      :name-color="nameColor"
+      :name="contact.name"
+      @replyClicked="replyClicked"
+    />
+  </div>
+  <!--
   <div class="row">
     <div class="col">
       <div class="stack-header row">
@@ -24,12 +41,12 @@
           :items="message.items"
           :address="address"
           :name-color="nameColor"
-          :name="contact.name"
           @replyClicked="replyClicked"
         />
       </q-list>
     </div>
   </div>
+  -->
 </template>
 
 <script>
@@ -76,9 +93,10 @@ export default {
       const lastMessage = this.messages[nMessages - 1]
       return lastMessage
     },
-    shortTimestamp () {
-      const nMessages = this.messages.length
-      const lastMessage = this.messages[nMessages - 1]
+    lastTimestamp () {
+      // const nMessages = this.messages.length
+      // const lastMessage = this.messages[nMessages - 1]
+      const lastMessage = this.lastMessage
       switch (lastMessage.status) {
         case 'confirmed': {
           const timestamp = lastMessage.timestamp || lastMessage.serverTime

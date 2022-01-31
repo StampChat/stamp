@@ -1,43 +1,72 @@
 <template>
-  <div class="reply">
+  <div
+    class="q-mb-sm q-px-sm q-py-sm"
+    style="border-left: 4px solid black; background-color: rgba(0, 0, 0, 0.21);"
+  >
+    <!-- Redundant to show for stealth messages -->
     <div
-      class="col text-weight-bold"
-      :style="`color: ${nameColor};`"
+      v-show="messageType !== 'stealth'"
+      class="row q-mt-xs q-py-xs"
     >
-      {{ name }}
+      <b>{{ name }}</b>
     </div>
-    <chat-message
-      class="row-auto"
-      :address="address"
-      :message="message"
-      :name-color="nameColor"
+    <chat-message-text
+      v-if="messageType === 'text'"
+      :text="messageItem.text"
+    />
+    <chat-message-image
+      v-else-if="messageType === 'image'"
+      :image="messageItem.image"
+      width="160px"
+    />
+    <chat-message-stealth
+      v-else-if="messageType === 'stealth'"
+      :outbound="message.outbound"
+      :amount="messageItem.amount"
     />
   </div>
 </template>
 
 <script>
-import { defineAsyncComponent } from 'vue'
 import { mapGetters } from 'vuex'
-import { addressColorFromStr } from '../../../utils/formatting'
+import { renderMarkdown } from '../../../utils/markdown'
+import ChatMessageText from './ChatMessageText.vue'
+import ChatMessageImage from './ChatMessageImage.vue'
+import ChatMessageStealth from './ChatMessageStealth.vue'
 
 export default {
   name: 'ChatMessageReply',
   components: {
-    ChatMessage: defineAsyncComponent(() => import('./ChatMessage.vue'))
+    ChatMessageText,
+    ChatMessageImage,
+    ChatMessageStealth
+  },
+  data () {
+    return {
+    }
   },
   props: {
+    /*
     address: {
       type: String,
-      required: true
-    },
-    payloadDigest: {
-      type: String,
-      required: true
+      required: false
     },
     mouseover: {
       type: Boolean,
+      required: false
+    },
+    */
+    payloadDigest: {
+      type: String,
       required: true
     }
+  },
+  emits: ['replyMounted'],
+  mounted () {
+    this.$emit('replyMounted')
+  },
+  unmounted () {
+    this.$emit('replyMounted')
   },
   methods: {
     ...mapGetters({
@@ -49,26 +78,38 @@ export default {
     ...mapGetters({
       getProfile: 'myProfile/getProfile'
     }),
+    markedMessage () {
+      return renderMarkdown(this.messageItem.text)
+    },
     message () {
       const message = this.getMessageByPayloadVuex()(this.payloadDigest)
       return message || { items: [], senderAddress: undefined }
     },
+    messageItem () {
+      // Get the last item from the message, in case it is also a reply
+      // to a different message that we don't care about
+      return this.message.items[this.message.items.length - 1]
+    },
+    messageType () {
+      return this.messageItem.type
+    },
     name () {
       if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
-        return this.getProfile.name
+        return 'You' // this.getProfile.name
       }
       const contact = this.getContact()(this.message.senderAddress)
       if (!contact) {
         return 'Not Found'
       }
       return contact.profile.name
-    },
+    }/* ,
     nameColor () {
       if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
         return 'text-black'
       }
       return addressColorFromStr(this.address)
     }
+    */
   }
 }
 </script>

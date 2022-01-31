@@ -57,7 +57,7 @@
     </q-header>
 
     <q-page-container>
-      <q-page>
+      <q-page class="q-pt-xs">
         <router-view
           @sendFileClicked="sendFileOpen = true"
           @giveLotusClicked="sendMoneyOpen = true"

@@ -1,16 +1,19 @@
 <template>
-  <q-banner
-    rounded
-    class="bg-grey-3"
+  <div
+    class="q-mb-sm"
   >
-    You received
-    <q-icon
-      name="local_florist"
-      size="sm"
-      dense
-    />
-    {{ formatSats(amount) }}
-  </q-banner>
+    <q-banner
+      rounded
+      :class="[bannerColor, 'text-center']"
+    >
+      <q-icon
+        name="local_florist"
+        size="sm"
+      />
+      You {{ stealthDirection }}
+      {{ formatSats(amount) }}
+    </q-banner>
+  </div>
 </template>
 
 <script>
@@ -21,12 +24,29 @@ export default {
     amount: {
       type: Number,
       required: true
+    },
+    outbound: {
+      type: Boolean,
+      required: true
     }
   },
   data () {
     return {
       imageDialog: false,
       image: null
+    }
+  },
+  computed: {
+    stealthDirection () {
+      return this.outbound ? 'sent' : 'received'
+    },
+    // Better theme-based colors for stealth messages
+    bannerColor () {
+      if (this.$q.dark.isActive) {
+        return 'bg-grey-9'
+      } else {
+        return 'bg-grey-3'
+      }
     }
   },
   methods: {
