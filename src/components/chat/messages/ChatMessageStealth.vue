@@ -30,12 +30,6 @@ export default {
       required: true
     }
   },
-  data () {
-    return {
-      imageDialog: false,
-      image: null
-    }
-  },
   computed: {
     stealthDirection () {
       return this.outbound ? 'sent' : 'received'

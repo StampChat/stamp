@@ -20,7 +20,6 @@ export default {
     },
     width: {
       type: String,
-      required: false,
       default: () => '300px'
     }
   },

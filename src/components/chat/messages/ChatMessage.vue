@@ -66,9 +66,9 @@
           #stamp
         >
           <chat-message-suffix
+            :status="message.status"
             :stamp="reactiveTimestamp"
             :amount="stampAmount"
-            :status="message.status"
           />
         </template>
       </q-chat-message>
@@ -94,9 +94,9 @@
           #stamp
         >
           <chat-message-suffix
+            :status="message.status"
             :stamp="reactiveTimestamp"
             :amount="stampAmount"
-            :status="message.status"
           />
         </template>
       </q-chat-message>
@@ -181,16 +181,6 @@ export default {
           // return moment(timestamp).fromNow(true)
           const howLongAgo = moment(timestamp)
           return howLongAgo.fromNow(true)
-          /*
-          return howLongAgo.calendar(null, {
-            sameDay: 'HH:mm:ss',
-            nextDay: '[Tomorrow] HH:mm:ss',
-            nextWeek: 'dddd',
-            lastDay: 'HH:mm:ss',
-            lastWeek: '[Last] dddd',
-            sameElse: 'DD/MM/YYYY'
-          })
-          */
         }
         case 'pending':
           return 'sending...'
@@ -217,42 +207,6 @@ export default {
     replyItem () {
       // return empty payloadDigest string if reply doesn't exist
       return this.message.items.find(item => item.type === 'reply') || { payloadDigest: '' }
-    },
-    shortTimestamp () {
-      switch (this.message.status) {
-        case 'confirmed': {
-          const timestamp = this.messageTimestamp || this.message.serverTime
-          // return moment(timestamp).fromNow(true)
-          const howLongAgo = moment(timestamp)
-          return howLongAgo.calendar(null, {
-            sameDay: 'HH:mm:ss',
-            nextDay: '[Tomorrow] HH:mm:ss',
-            nextWeek: 'dddd',
-            lastDay: 'HH:mm:ss',
-            lastWeek: '[Last] dddd',
-            sameElse: 'DD/MM/YYYY'
-          })
-        }
-        case 'pending':
-          return 'sending...'
-        case 'error':
-          return ''
-      }
-      return 'N/A'
-    },
-    shortTime () {
-      switch (this.message.status) {
-        case 'confirmed': {
-          const timestamp = this.message.timestamp || this.message.serverTime
-          const howLongAgo = moment(timestamp)
-          return howLongAgo.format('HH:mm:ss')
-        }
-        case 'pending':
-          return 'sending...'
-        case 'error':
-          return ''
-      }
-      return 'N/A'
     },
     stampAmount () {
       if (!this.message || !this.message.outpoints) {

@@ -3,7 +3,7 @@
     class="q-mb-sm q-px-sm q-py-sm"
     style="border-left: 4px solid black; background-color: rgba(0, 0, 0, 0.21);"
   >
-    <!-- Redundant to show for stealth messages -->
+    <!-- Redundant to show name for stealth messages -->
     <div
       v-show="messageType !== 'stealth'"
       class="row q-mt-xs q-py-xs"
@@ -46,16 +46,6 @@ export default {
     }
   },
   props: {
-    /*
-    address: {
-      type: String,
-      required: false
-    },
-    mouseover: {
-      type: Boolean,
-      required: false
-    },
-    */
     payloadDigest: {
       type: String,
       required: true
@@ -102,14 +92,7 @@ export default {
         return 'Not Found'
       }
       return contact.profile.name
-    }/* ,
-    nameColor () {
-      if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
-        return 'text-black'
-      }
-      return addressColorFromStr(this.address)
     }
-    */
   }
 }
 </script>

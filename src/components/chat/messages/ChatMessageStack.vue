@@ -15,45 +15,13 @@
       @replyClicked="replyClicked"
     />
   </div>
-  <!--
-  <div class="row">
-    <div class="col">
-      <div class="stack-header row">
-        <div
-          class="q-px-md col text-weight-bold"
-          :style="nameColor"
-        >
-          {{ contact.name }}
-        </div>
-        <div class="col-auto">
-          {{ stampAmount }}
-        </div>
-        <div class="q-px-sm col-auto">
-          {{ shortTimestamp }}
-        </div>
-      </div>
-      <q-list class="q-pt-sm">
-        <chat-message
-          v-for="(message, index) in messages"
-          :key="index"
-          :message="message"
-          :index="index + globalIndex"
-          :items="message.items"
-          :address="address"
-          :name-color="nameColor"
-          @replyClicked="replyClicked"
-        />
-      </q-list>
-    </div>
-  </div>
-  -->
 </template>
 
 <script>
-import moment from 'moment'
 import ChatMessage from './ChatMessage.vue'
-import { stampPrice } from '../../../cashweb/wallet/helpers'
-import { formatBalance } from '../../../utils/formatting'
+// import moment from 'moment'
+// import { stampPrice } from '../../../cashweb/wallet/helpers'
+// import { formatBalance } from '../../../utils/formatting'
 
 export default {
   components: {
@@ -86,7 +54,8 @@ export default {
     replyClicked (args) {
       this.$emit('replyClicked', args)
     }
-  },
+  }
+  /* ,
   computed: {
     lastMessage () {
       const nMessages = this.messages.length
@@ -127,6 +96,7 @@ export default {
       return formatBalance(amount)
     }
   }
+  */
 }
 </script>
 
