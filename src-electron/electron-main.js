@@ -12,10 +12,6 @@ import {
 import path from 'path'
 import fs from 'fs'
 import Badge from 'electron-windows-badge'
-import { initialize, enable } from '@electron/remote/main'
-
-// required for custom qbar
-initialize()
 
 // Enable single instance lock
 const isSingleInstance = app.requestSingleInstanceLock()
@@ -47,7 +43,6 @@ function getIconPNGPath() {
 }
 
 let mainWindow
-let externalUrlWindow
 let tray
 let windowsBadgeUpdater
 const nativeIconSmall = nativeImage
@@ -79,7 +74,6 @@ function createWindow() {
     width: 1000,
     height: 600,
     icon: nativeIcon,
-    frame: false,
     useContentSize: true,
     webPreferences: {
       preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
@@ -89,13 +83,9 @@ function createWindow() {
     },
   })
 
-  // custom qbar enabler
-  enable(mainWindow.webContents)
-
   windowsBadgeUpdater = new Badge(mainWindow, {})
 
   mainWindow.loadURL(process.env.APP_URL)
-  mainWindow.setMenuBarVisibility(false)
 
   let forceQuit = false
   if (process.platform === 'darwin') {
@@ -118,14 +108,11 @@ function createWindow() {
     mainWindow = null
   })
 
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    externalUrlWindow = new BrowserWindow()
-    externalUrlWindow.loadURL(url)
-
-    // we pass 'deny' to disallow the creation of new window
-    // with mainWindow and instead manually use externalUrlWindow.
-    // Passing 'allow' will open link in two windows.
-    return { action: 'deny' }
+  mainWindow.webContents.on('will-navigate', (e, url) => {
+    if (url !== e.sender.getURL()) {
+      e.preventDefault()
+      shell.openExternal(url)
+    }
   })
 }
 

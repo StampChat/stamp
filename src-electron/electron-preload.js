@@ -17,7 +17,6 @@
  */
 
 import { contextBridge, ipcRenderer, shell } from 'electron'
-import { BrowserWindow } from '@electron/remote'
 
 contextBridge.exposeInMainWorld('badge', {
   updateBadge: unread => {
@@ -25,26 +24,6 @@ contextBridge.exposeInMainWorld('badge', {
   },
   setBadgeCount(count) {
     // remote.app.setBadgeCount(unread)
-  },
-})
-
-contextBridge.exposeInMainWorld('myWindowAPI', {
-  minimize() {
-    BrowserWindow.getFocusedWindow().minimize()
-  },
-
-  toggleMaximize() {
-    const win = BrowserWindow.getFocusedWindow()
-
-    if (win.isMaximized()) {
-      win.unmaximize()
-    } else {
-      win.maximize()
-    }
-  },
-
-  close() {
-    BrowserWindow.getFocusedWindow().close()
   },
 })
 
