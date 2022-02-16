@@ -64,7 +64,7 @@
 
     <!-- Message box -->
     <chat-input
-      @sendFileClicked="$emit('sendFileClicked')"
+      @sendFileClicked="toSendFileDialog"
       @giveLotusClicked="$emit('giveLotusClicked')"
       ref="chatInput"
       v-model:message="message"
@@ -122,6 +122,9 @@ export default {
     ...mapActions({
       setStampAmount: 'chats/setStampAmount',
     }),
+    toSendFileDialog(args) {
+      this.$emit('sendFileClicked', args)
+    },
     scrollHandler(details) {
       if (
         // Ten pixels from top

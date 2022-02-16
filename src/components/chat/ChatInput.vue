@@ -60,7 +60,9 @@
         dense
         borderless
         autogrow
-        autofocus
+        @paste="dp($event)"
+        @drop.prevent="dp($event)"
+        @blur.capture="focusInput($event)"
         @keydown.enter.exact.prevent
         @keydown.enter.exact="sendMessage"
         @mousedown.self.stop
@@ -68,19 +70,24 @@
         :placeholder="$t('chatInput.placeHolder')"
       />
       <q-space />
-      <q-btn dense flat class="q-btn q-pa-sm" @mousedown.prevent="sendMessage">
-        <q-icon name="send" />
-      </q-btn>
+      <q-btn
+        dense
+        flat
+        icon="send"
+        class="q-btn"
+        @mousedown.prevent="sendMessage"
+      />
     </q-toolbar>
   </div>
 </template>
 
 <script>
 import emoji from 'node-emoji'
+import { defaultStampAmount } from '../../utils/constants'
+import { processInput } from '../../utils/chat'
 // import { Picker, EmojiIndex } from 'emoji-mart-vue-fast'
 // import data from '../../assets/emoticons/all.json'
 // import 'emoji-mart-vue-fast/css/emoji-mart.css'
-import { defaultStampAmount } from '../../utils/constants'
 
 // const emojiIndex = new EmojiIndex(data)
 
@@ -111,7 +118,23 @@ export default {
     'sendFileClicked',
   ],
   methods: {
-    focus() {
+    // ChatInput drop/paste handler
+    async dp(e) {
+      const items = e.clipboardData?.items || e.dataTransfer?.items
+      const blob = await processInput(items)
+      return blob ? this.$emit('sendFileClicked', blob) : null
+    },
+    focusInput(e) {
+      const relatedTarget = e.relatedTarget
+      if (e.type === 'blur') {
+        // Prevent the focus if the target isn't related
+        if (!relatedTarget) {
+          return
+          // allow focus change to other inputs (e.g. RightPanel)
+        } else if (relatedTarget.localName === 'input') {
+          return
+        }
+      }
       this.$refs.inputBox.focus()
     },
     sendMessage() {

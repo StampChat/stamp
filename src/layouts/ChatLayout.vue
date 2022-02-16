@@ -15,7 +15,7 @@
     <!-- Send file dialog -->
     <!-- TODO: Move this up.  We don't need a copy of this dialog for each address (likely) -->
     <q-dialog v-model="sendFileOpen">
-      <send-file-dialog :address="address" />
+      <send-file-dialog :address="address" :file="pasted.image" />
     </q-dialog>
 
     <!-- Send money dialog -->
@@ -50,9 +50,9 @@
     </q-header>
 
     <q-page-container>
-      <q-page>
+      <q-page class="q-pt-xs">
         <router-view
-          @sendFileClicked="sendFileOpen = true"
+          @sendFileClicked="toSendFileDialog"
           @giveLotusClicked="sendMoneyOpen = true"
         />
       </q-page>
@@ -83,6 +83,9 @@ export default {
       sendMoneyOpen: false,
       address: this.$route.params.address,
       contactDrawerOpen: false,
+      pasted: {
+        image: null,
+      },
     }
   },
   beforeRouteUpdate(to, from, next) {
@@ -91,6 +94,12 @@ export default {
   },
   unmounted() {
     clearTimeout(this.timer)
+  },
+  methods: {
+    toSendFileDialog(args) {
+      this.pasted.image = args
+      this.sendFileOpen = true
+    },
   },
   computed: {
     ...mapGetters({
