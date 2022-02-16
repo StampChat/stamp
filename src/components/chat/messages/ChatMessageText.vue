@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { toMarkdown } from '../../../utils/markdown'
+import { renderMarkdown } from '../../../utils/markdown'
 
 export default {
   name: 'ChatMessageSection',
@@ -15,7 +15,7 @@ export default {
   },
   methods: {
     markedMessage(text) {
-      return toMarkdown(text)
+      return renderMarkdown(text, this.$q.dark.isActive)
     },
   },
 }
