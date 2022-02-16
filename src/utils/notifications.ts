@@ -1,5 +1,4 @@
 import { Notify } from 'quasar'
-import { notificationTimeout } from './constants'
 
 // Error notifications
 
@@ -67,9 +66,8 @@ export function desktopNotify(
     body,
     icon,
   })
+
   notify.onclick = () => {
     callback()
-    notify.close()
   }
-  setTimeout(notify.close.bind(notify), notificationTimeout)
 }
