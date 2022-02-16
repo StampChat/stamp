@@ -6,7 +6,7 @@ import {
 } from 'vue-router'
 import { KeyserverHandler } from 'src/cashweb/keyserver'
 import { ReadOnlyRelayClient } from 'src/cashweb/relay'
-import { toAPIAddress } from 'src/utils/address'
+import { toDisplayAddress } from 'src/utils/address'
 import { keyservers, networkName, displayNetwork } from 'src/utils/constants'
 import type { RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
 import { Store } from 'vuex'
@@ -19,7 +19,7 @@ const protectedRoutes = ['/forum/new-post']
 async function addContactFromNavigation<S>(store: Store<S>, address: string) {
   try {
     // Validate address
-    const apiAddress = toAPIAddress(address) // TODO: Make generic
+    const apiAddress = toDisplayAddress(address) // TODO: Make generic
     // Pull information from keyserver then relay server
     const ksHandler = new KeyserverHandler({ keyservers, networkName })
     const relayURL = await ksHandler.getRelayUrl(apiAddress)

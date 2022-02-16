@@ -44,7 +44,7 @@
           flat
           dense
           @click="contactDrawerOpen = !contactDrawerOpen"
-          icon="person"
+          icon="manage_accounts"
         />
       </q-toolbar>
     </q-header>

@@ -1,16 +1,7 @@
 <template>
   <q-layout view="hHr LpR lff">
-    <q-btn
-      v-show="false"
-      @click="promptNotificationPermission"
-      ref="buttonNotification"
-    />
-    <q-drawer
-      v-model="myDrawerOpen"
-      :width="splitterRatio"
-      :breakpoint="800"
-      show-if-above
-    >
+    <q-btn v-show="false" @click="promptNotificationPermission" ref="buttonNotification" />
+    <q-drawer v-model="myDrawerOpen" :width="splitterRatio" :breakpoint="800" show-if-above>
       <left-drawer />
     </q-drawer>
     <q-dialog v-model="contactBookOpen">

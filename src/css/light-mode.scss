@@ -4,6 +4,11 @@ body.body--light {
   // TODO: Figure out how to use global quasar scss variables
   --q-color-bg-active: #e0e0e0;
   --q-color-active: rgb(221, 221, 221);
+  // ChatMessage.vue + ChatMessageReply.vue
+  --q-message-color-sent: #d1c4e9; // deep-purple-2
+  --q-message-color: #cfd8dc; // blue-grey-2
+  --q-reply-bg: rgba(255, 255, 255, 0.44);
+  --q-reply-border-left: 4px solid black;
 
   background: var(--q-color-background);
   color: var(--q-color-text);

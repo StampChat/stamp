@@ -1,41 +1,50 @@
 <template>
+  <div hidden>{{ messagesToShow }}</div>
   <q-scroll-area
     ref="chatScroll"
     @scroll="scrollHandler"
     class="q-px-none absolute full-width full-height"
   >
-    <template v-for="({ chunk, globalIndex }, index) in chunkedMessages">
-      <chat-message-stack
-        v-if="chunk[0]"
-        :key="index"
-        :address="address"
-        :messages="chunk"
-        :global-index="globalIndex"
-        :contact="getContact(chunk[0].outbound)"
-        :name-color="chunk[0].outbound ? '' : `color: ${nameColor};`"
-        v-bind="$attrs"
-        @replyClicked="({ address, payloadDigest }) => setReply(payloadDigest)"
-      />
-    </template>
+    <div class="row q-px-lg">
+      <template
+        v-for="(msg, index) in chunkedMessages"
+        :key="msg.payloadDigest"
+      >
+        <chat-message
+          :index="index"
+          :message="msg"
+          :address="address"
+          :name="getContact(msg.outbound).name"
+          :chat-width="chatWidth"
+          :payload-digest="msg.payloadDigest"
+          :ref="msg.payloadDigest"
+          @replyClicked="
+            ({ address, payloadDigest }) => setReply(payloadDigest)
+          "
+          @replyDivClick="scrollToMessage"
+        />
+      </template>
+    </div>
   </q-scroll-area>
   <q-page-sticky position="bottom-right" :offset="[18, 18]" v-show="!bottom">
     <q-btn
       round
-      flat
       size="md"
       icon="arrow_downward"
-      @mousedown.prevent="scrollBottom"
+      @mousedown.prevent="buttonScrollBottom"
       color="accent"
     />
   </q-page-sticky>
-
+  <q-inner-loading
+    :dark="$q.dark.isActive"
+    :showing="!!scrollDigest"
+    size="md"
+    label="Loading more messages..."
+  />
   <q-footer bordered>
-    <div v-if="!!replyDigest" class="reply col q-px-md q-pt-sm" ref="replyBox">
+    <div v-if="!!replyDigest" class="q-px-md q-pt-sm" ref="replyBox">
       <!-- Reply box -->
-      <div class="row">
-        <div class="col text-weight-bold">
-          {{ replyName }}
-        </div>
+      <div class="row justify-end">
         <div class="col-auto">
           <q-btn
             dense
@@ -47,21 +56,11 @@
         </div>
       </div>
       <div class="row q-px-sm q-pt-sm">
-        <chat-message-text
-          v-if="replyItem.type == 'text'"
-          :text="replyItem.text"
-        />
-        <chat-message-image
-          v-else-if="replyItem.type == 'image'"
-          :image="replyItem.image"
-        />
-        <chat-message-stealth
-          v-else-if="replyItem.type == 'stealth'"
-          :amount="replyItem.amount"
-        />
+        <div class="col-12">
+          <chat-message-reply :payload-digest="replyDigest" />
+        </div>
       </div>
     </div>
-
     <!-- Message box -->
     <chat-input
       @sendFileClicked="toSendFileDialog"
@@ -76,29 +75,31 @@
 
 <script>
 import { mapState, mapGetters, mapActions } from 'vuex'
-import ChatMessageStack from '../components/chat/messages/ChatMessageStack.vue'
+import ChatMessage from '../components/chat/messages/ChatMessage.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
-import ChatMessageText from '../components/chat/messages/ChatMessageText.vue'
-import ChatMessageImage from '../components/chat/messages/ChatMessageImage.vue'
-import ChatMessageStealth from '../components/chat/messages/ChatMessageStealth.vue'
+import ChatMessageReply from '../components/chat/messages/ChatMessageReply.vue'
 
 import { addressColorFromStr } from '../utils/formatting'
 import { insufficientStampNotify } from '../utils/notifications'
 import { stampLowerLimit } from '../utils/constants'
 
+import { debounce } from 'quasar'
+
 const scrollDuration = 0
 
 export default {
   components: {
-    ChatMessageStack,
-    ChatMessageText,
-    ChatMessageImage,
-    ChatMessageStealth,
+    ChatMessage,
+    ChatMessageReply,
     ChatInput,
   },
   beforeRouteUpdate(to, from, next) {
     this.address = to.params.address
+    this.messagesToShow = 30
     next()
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.resizeHandler)
   },
   data() {
     console.log(this.$route.params.address)
@@ -107,12 +108,23 @@ export default {
       bottom: true,
       messagesToShow: 30,
       replyDigest: null,
+      scrollDigest: null,
+      chatWidth: 0,
       message: '',
     }
   },
   emits: ['giveLotusClicked', 'sendFileClicked'],
   mounted() {
     this.scrollBottom()
+    // set the chat width
+    this.resizeHandler()
+    // Adjust the chat width when window resizes
+    window.addEventListener('resize', debounce(this.resizeHandler, 50))
+  },
+  updated() {
+    if (this.scrollDigest) {
+      this.$nextTick(() => this.scrollToMessage(this.scrollDigest))
+    }
   },
   methods: {
     ...mapGetters({
@@ -124,6 +136,9 @@ export default {
     }),
     toSendFileDialog(args) {
       this.$emit('sendFileClicked', args)
+    },
+    resizeHandler() {
+      this.chatWidth = this.$refs.chatScroll.$el.scrollWidth
     },
     scrollHandler(details) {
       if (
@@ -140,6 +155,22 @@ export default {
           details.verticalPosition -
           details.verticalContainerSize <=
         10
+    },
+    // Used by sticky QButton to scroll to bottom
+    buttonScrollBottom() {
+      const scrollArea = this.$refs.chatScroll
+      if (!scrollArea) {
+        // Not mounted yet
+        return
+      }
+      const scrollTarget = scrollArea.getScrollTarget()
+      this.$nextTick(() => {
+        scrollArea.setScrollPosition(
+          'vertical',
+          scrollTarget.scrollHeight,
+          scrollDuration,
+        )
+      })
     },
     scrollBottom() {
       const scrollArea = this.$refs.chatScroll
@@ -161,6 +192,22 @@ export default {
         )
       })
     },
+    scrollToMessage: debounce(function (digest) {
+      // if no digest, it means message was deleted or otherwise can't be found
+      if (!digest) {
+        return
+      }
+      const message = this.$refs[digest]?.$el
+      // if no message, load more, then try again
+      if (!message) {
+        this.scrollDigest = digest
+        this.messagesToShow += 30
+        return
+      }
+      // Scroll the message into view
+      this.scrollDigest = null
+      this.$nextTick(() => message.scrollIntoView({ behavior: 'smooth' }))
+    }, 50),
     nameColor() {
       return addressColorFromStr(this.address)
     },
@@ -179,6 +226,10 @@ export default {
         })
         this.message = ''
         this.replyDigest = null
+        // After message send, scroll to bottom if not already there
+        if (!this.bottom) {
+          this.$nextTick(this.buttonScrollBottom)
+        }
       }
     },
     getContact(outbound) {
@@ -215,67 +266,7 @@ export default {
       const start = this.messages.length - length
       const end = this.messages.length
 
-      const { chunks, currentChunk, globalIndex } = this.messages
-        .slice(start + 1, end)
-        .reduce(
-          ({ chunks, currentChunk, globalIndex }, message) => {
-            if (currentChunk[0].senderAddress === message.senderAddress) {
-              currentChunk.push(message)
-              return { chunks, currentChunk, globalIndex: globalIndex }
-            } else {
-              chunks.push({ chunk: currentChunk, globalIndex: globalIndex })
-              return {
-                chunks,
-                currentChunk: [message],
-                globalIndex: globalIndex + currentChunk.length,
-              }
-            }
-          },
-          {
-            chunks: [],
-            currentChunk: [this.messages[start]],
-            globalIndex: start,
-          },
-        )
-
-      chunks.push({ chunk: currentChunk, globalIndex: globalIndex })
-      return chunks
-    },
-    replyItem() {
-      if (!this.replyDigest) {
-        return null
-      }
-      const msg = this.getMessageByPayload(this.replyDigest)
-      if (!msg) {
-        return null
-      }
-
-      const firstNonReply = msg.items.find(item => item.type !== 'reply')
-
-      // Focus input box
-      this.$refs.chatInput.focus()
-
-      return firstNonReply
-    },
-    replyName() {
-      const replyAddress = this.getMessageByPayload(
-        this.replyDigest,
-      ).senderAddress
-      if (replyAddress === this.$wallet.myAddress.toXAddress()) {
-        return this.getProfile.name
-      }
-      const contact = this.getContactVuex(replyAddress)
-      return contact.profile.name
-    },
-    replyColor() {
-      const replyAddress = this.getMessageByPayload(
-        this.replyDigest,
-      ).senderAddress
-      if (replyAddress === this.$wallet.myAddress.toXAddress()) {
-        return 'black'
-      }
-
-      return this.addressColorFromStr(this.address)
+      return this.messages.slice(start, end)
     },
     stampAmount: {
       set(stampAmount) {
@@ -299,9 +290,6 @@ export default {
       if (!newActive) {
         return
       }
-
-      // Focus input box
-      this.$refs.chatInput.focus()
       // Scroll to bottom only if the view was effectively in it's initial state.
       this.scrollBottom()
       // TODO: Scroll to last unread
@@ -309,3 +297,12 @@ export default {
   },
 }
 </script>
+
+<style lang="scss" scoped>
+::v-deep .message-color {
+  background-color: var(--q-message-color);
+}
+::v-deep .message-color-sent {
+  background-color: var(--q-message-color-sent);
+}
+</style>

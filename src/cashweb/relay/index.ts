@@ -520,6 +520,9 @@ export class RelayClient extends ReadOnlyRelayClient {
         if (item.type === 'text') {
           return this.messageConstructor.constructTextEntry({ ...item })
         }
+        if (item.type === 'reply') {
+          return this.messageConstructor.constructReplyEntry({ ...item })
+        }
         if (item.type === 'image') {
           return this.messageConstructor.constructImageEntry({ ...item })
         }
