@@ -1,21 +1,27 @@
 <template>
-  <span v-html="markedMessage(text)" />
+  <span v-html="markedMessage" />
 </template>
 
 <script>
-import { renderMarkdown } from '../../../utils/markdown'
+import { renderMarkdown, purify } from '../../../utils/markdown'
 
 export default {
-  name: 'ChatMessageSection',
+  name: 'ChatMessageText',
   props: {
     text: {
       type: String,
       required: true,
     },
+    isReply: {
+      type: Boolean,
+      default: false,
+    },
   },
-  methods: {
-    markedMessage(text) {
-      return renderMarkdown(text, this.$q.dark.isActive)
+  computed: {
+    markedMessage() {
+      return this.isReply
+        ? purify(this.text)
+        : renderMarkdown(this.text, this.$q.dark.isActive)
     },
   },
 }

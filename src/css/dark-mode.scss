@@ -1,8 +1,13 @@
 body.body--dark {
-  --q-color-background: #303030;
+  --q-color-background: #1f1f1f;
   --q-color-text: white;
   // TODO: Figure out how to use global quasar scss variables
-  --q-color-bg-active: #424242;
+  --q-color-bg-active: #3b3b3b;
+  // ChatMessage.vue + ChatMessageReply.vue
+  --q-message-color-sent: #673ab7; // deep-purple
+  --q-message-color: #455a64; // blue-grey-8
+  --q-reply-bg: rgba(0, 0, 0, 0.44);
+  --q-reply-border-left: 4px solid white;
 
   background: var(--q-color-background);
   color: var(--q-color-text);
