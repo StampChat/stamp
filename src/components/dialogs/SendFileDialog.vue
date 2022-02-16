@@ -51,7 +51,11 @@ export default {
   props: {
     address: {
       type: String,
-      default: () => '',
+      default: '',
+    },
+    file: {
+      type: File,
+      default: null,
     },
   },
   data() {
@@ -59,6 +63,11 @@ export default {
       caption: '',
       filePath: null,
       image: null,
+    }
+  },
+  created() {
+    if (this.file) {
+      this.filePath = this.file
     }
   },
   methods: {
