@@ -78,7 +78,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { mapActions, mapGetters, mapMutations } from 'vuex'
-import { toMarkdown } from '../utils/markdown'
+import { renderMarkdown } from '../utils/markdown'
 
 import AMessage from '../components/forum/ForumMessage.vue'
 import { errorNotify, infoNotify } from 'src/utils/notifications'
@@ -112,7 +112,7 @@ export default defineComponent({
     }),
     markedMessage() {
       const text: string = this.message
-      return toMarkdown(text)
+      return renderMarkdown(text, this.$q.dark.isActive)
     },
   },
   methods: {
