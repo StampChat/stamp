@@ -202,7 +202,7 @@ export default defineComponent({
       return (value / 1_000_000).toFixed(0)
     },
     markedMessage (text: string) {
-      return renderMarkdown(text)
+      return renderMarkdown(text, this.$q.dark.isActive)
     },
     formatAddress (address:string) {
       return address.substring(6, 12) + '...' + address.substring(address.length - 6, address.length)

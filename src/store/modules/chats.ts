@@ -255,7 +255,7 @@ const module: Module<State, unknown> = {
     }
   },
   mutations: {
-    deleteMessage (state, { address, index }: { address: string, index: string }) {
+    deleteMessage (state, { address, payloadDigest, index }: { address: string, payloadDigest: string, index: string }) {
       const apiAddress = toDisplayAddress(address)
 
       delete state.messages[index]
@@ -263,7 +263,7 @@ const module: Module<State, unknown> = {
       if (!chat) {
         return
       }
-      const msgIndex = chat.messages.findIndex((msg) => msg.payloadDigest === index)
+      const msgIndex = chat.messages.findIndex((msg) => msg.payloadDigest === payloadDigest)
       chat.messages.splice(msgIndex, 1)
     },
     readAll (state, address: string) {

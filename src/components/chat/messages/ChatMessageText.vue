@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { renderMarkdown } from '../../../utils/markdown'
+import { renderMarkdown, purify } from '../../../utils/markdown'
 
 export default {
   name: 'ChatMessageText',
@@ -11,11 +11,15 @@ export default {
     text: {
       type: String,
       required: true
+    },
+    isReply: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
     markedMessage () {
-      return renderMarkdown(this.text)
+      return this.isReply ? purify(this.text) : renderMarkdown(this.text, this.$q.dark.isActive)
     }
   }
 }

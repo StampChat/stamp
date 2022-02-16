@@ -2,7 +2,8 @@
   <q-layout
     view="lhh LpR lff"
     container
-    class="hide-scrollbar absolute full-width"
+    style="height: 100%"
+    class="hide-scrollbar full-width"
   >
     <q-drawer
       v-model="contactDrawerOpen"
@@ -19,7 +20,10 @@
     <!-- Send file dialog -->
     <!-- TODO: Move this up.  We don't need a copy of this dialog for each address (likely) -->
     <q-dialog v-model="sendFileOpen">
-      <send-file-dialog :address="address" />
+      <send-file-dialog
+        :address="address"
+        :file="pasted.image"
+      />
     </q-dialog>
 
     <!-- Send money dialog -->
@@ -51,7 +55,7 @@
           flat
           dense
           @click="contactDrawerOpen = !contactDrawerOpen"
-          icon="person"
+          icon="manage_accounts"
         />
       </q-toolbar>
     </q-header>
@@ -59,7 +63,7 @@
     <q-page-container>
       <q-page class="q-pt-xs">
         <router-view
-          @sendFileClicked="sendFileOpen = true"
+          @sendFileClicked="toSendFileDialog"
           @giveLotusClicked="sendMoneyOpen = true"
         />
       </q-page>
@@ -89,7 +93,10 @@ export default {
       sendFileOpen: false,
       sendMoneyOpen: false,
       address: this.$route.params.address,
-      contactDrawerOpen: false
+      contactDrawerOpen: false,
+      pasted: {
+        image: null
+      }
     }
   },
   beforeRouteUpdate (to, from, next) {
@@ -98,6 +105,12 @@ export default {
   },
   unmounted () {
     clearTimeout(this.timer)
+  },
+  methods: {
+    toSendFileDialog (args) {
+      this.pasted.image = args
+      this.sendFileOpen = true
+    }
   },
   computed: {
     ...mapGetters({

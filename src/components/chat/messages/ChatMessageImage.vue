@@ -1,12 +1,24 @@
 <template>
-  <q-dialog v-model="imageDialog">
-    <image-dialog :image="image" />
-  </q-dialog>
-  <q-img
-    :src="image"
-    :width="width"
-    @click="showImageDialog"
-  />
+  <template v-if="isReply">
+    <q-img
+      fit="cover"
+      height="100%"
+      width="80px"
+      :src="image"
+      @click="showImageDialog"
+    />
+  </template>
+  <template v-else>
+    <q-dialog v-model="imageDialog">
+      <image-dialog :image="image" />
+    </q-dialog>
+    <q-img
+      class="q-mb-sm"
+      width="100%"
+      :src="image"
+      @click="showImageDialog"
+    />
+  </template>
 </template>
 
 <script>
@@ -18,9 +30,9 @@ export default {
       type: String,
       default: () => ''
     },
-    width: {
-      type: String,
-      default: () => '300px'
+    isReply: {
+      type: Boolean,
+      default: () => false
     }
   },
   components: {

@@ -3,17 +3,20 @@
     class="row q-px-lg"
     style="max-width: 720px"
   >
-    <chat-message
+    <template
       v-for="(message, index) in messages"
       :key="index"
-      :message="message"
-      :index="index + globalIndex"
-      :items="message.items"
-      :address="address"
-      :name-color="nameColor"
-      :name="contact.name"
-      @replyClicked="replyClicked"
-    />
+    >
+      <chat-message
+        :message="message"
+        :index="index + globalIndex"
+        :items="message.items"
+        :address="address"
+        :name-color="nameColor"
+        :name="contact.name"
+        @replyClicked="replyClicked"
+      />
+    </template>
   </div>
 </template>
 
@@ -54,6 +57,9 @@ export default {
     replyClicked (args) {
       this.$emit('replyClicked', args)
     }
+  },
+  mounted () {
+    console.log('ChatMessageStack mounted with globalIndex ', this.globalIndex)
   }
   /* ,
   computed: {

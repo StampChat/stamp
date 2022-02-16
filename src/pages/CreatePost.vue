@@ -147,7 +147,7 @@ export default defineComponent({
     }),
     markedMessage () {
       const text: string = this.message
-      return renderMarkdown(text)
+      return renderMarkdown(text, this.$q.dark.isActive)
     }
   },
   methods: {

@@ -30,3 +30,11 @@ export function addressColorFromStr (addrStr: string) {
   const color = `hsl(${hue}, ${saturation * 100}%, 60%)`
   return color
 }
+
+export function messageBackgroundColor (outbound: boolean, isDark: boolean) {
+  if (outbound) {
+    return isDark ? 'deep-purple' : 'deep-purple-2'
+  } else {
+    return isDark ? 'blue-grey-8' : 'blue-grey-2'
+  }
+}

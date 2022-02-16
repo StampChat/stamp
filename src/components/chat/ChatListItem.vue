@@ -78,7 +78,7 @@ export default {
       if (info.outbound) {
         return 'You: ' + slicedText
       } else {
-        return 'Them:' + slicedText
+        return 'Them: ' + slicedText
       }
     },
     contact () {
@@ -112,8 +112,3 @@ export default {
   }
 }
 </script>
-<style lang="scss" scoped>
-.active-chat-list-item {
-  background: var(--q-color-bg-active);
-}
-</style>

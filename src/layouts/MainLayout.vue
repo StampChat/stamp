@@ -203,6 +203,11 @@ export default {
   },
   mounted () {
     document.addEventListener('keydown', this.shortcutKeyListener)
+    // Request browser notifications
+    const notifyPerms = window.Notification.permission
+    if (notifyPerms !== 'granted' && notifyPerms !== 'denied') {
+      window.Notification.requestPermission()
+    }
   },
   beforeUnmount () {
     document.removeEventListener('keydown', this.shortcutKeyListener)
