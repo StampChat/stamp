@@ -2,7 +2,7 @@ import assert from 'assert'
 import type { Module } from 'vuex'
 import { indexBy, uniq } from 'ramda'
 
-import { KeyserverHandler } from 'src/cashweb/keyserver/handler'
+import { KeyserverHandler } from 'src/cashweb/keyserver'
 import { Wallet } from 'src/cashweb/wallet'
 import { displayNetwork, keyservers } from '../../utils/constants'
 
