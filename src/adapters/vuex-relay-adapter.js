@@ -94,8 +94,8 @@ export async function getRelayClient({
       })
     },
   )
-  client.events.on('receivedMessage', args => {
-    store.dispatch('chats/receiveMessage', args)
+  client.events.on('receivedMessages', messages => {
+    store.dispatch('chats/receiveMessages', messages)
   })
 
   return { client, observables }

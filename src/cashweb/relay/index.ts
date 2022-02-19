@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { flatten, splitEvery } from 'ramda'
 import {
   Payload,
   Message,
@@ -63,6 +62,27 @@ export interface UIStampOutput {
 }
 
 type UIOutput = UIStealthOutput | UIStampOutput
+
+export type ReceivedMessage = {
+  outbound: boolean
+  status: string
+  items: MessageItem[]
+  serverTime: number
+  receivedTime: number
+  outpoints: Utxo[]
+  senderAddress: string
+  destinationAddress: string
+}
+
+export type ReceivedMessageWrapper = {
+  outbound: boolean
+  senderAddress: string
+  copartyAddress: string
+  copartyPubKey: PublicKey
+  index: string
+  stampValue: number
+  message: Readonly<ReceivedMessage>
+}
 
 export class ReadOnlyRelayClient {
   url: string
@@ -226,7 +246,16 @@ export class RelayClient extends ReadOnlyRelayClient {
     socket.onmessage = event => {
       const buffer = event.data as ArrayBuffer
       const message = Message.deserializeBinary(new Uint8Array(buffer))
-      this.receiveMessage(message).catch(err => console.error(err))
+      this.receiveMessage(message)
+        .then(async finalizedMessage => {
+          if (!finalizedMessage) {
+            // We didn't get a valid message, or we already processed it before
+            return
+          }
+          await this.messageStore.saveMessage(finalizedMessage)
+          this.events.emit('receivedMessages', [finalizedMessage])
+        })
+        .catch(err => console.error(err))
     }
 
     const disconnectHandler = () => {
@@ -469,8 +498,8 @@ export class RelayClient extends ReadOnlyRelayClient {
               destPubKey: destinationPublicKey,
             })
           outpoints.push(
-            ...flatten(
-              transactionBundle.map(({ transaction, vouts, usedUtxos }) => {
+            ...transactionBundle
+              .map(({ transaction, vouts, usedUtxos }) => {
                 transactions.push(transaction)
                 stagedUtxos.push(...usedUtxos)
                 return vouts.map(
@@ -482,17 +511,14 @@ export class RelayClient extends ReadOnlyRelayClient {
                       outputIndex: vout,
                     } as UIOutput),
                 )
-              }),
-            ),
+              })
+              .flat(1),
           )
           return paymentEntry
         }
         // TODO: internal type does not match protocol. Consistency is good.
         if (item.type === 'text') {
           return this.messageConstructor.constructTextEntry({ ...item })
-        }
-        if (item.type === 'reply') {
-          return this.messageConstructor.constructReplyEntry({ ...item })
         }
         if (item.type === 'image') {
           return this.messageConstructor.constructImageEntry({ ...item })
@@ -532,8 +558,8 @@ export class RelayClient extends ReadOnlyRelayClient {
       const payloadDigestHex = payloadDigest.toString('hex')
 
       outpoints.push(
-        ...flatten(
-          transactionBundle.map(({ transaction, vouts, usedUtxos }) => {
+        ...transactionBundle
+          .map(({ transaction, vouts, usedUtxos }) => {
             transactions.push(transaction)
             stagedUtxos.push(...usedUtxos)
             return vouts.map(
@@ -545,8 +571,8 @@ export class RelayClient extends ReadOnlyRelayClient {
                   outputIndex: vout,
                 } as UIStampOutput),
             )
-          }),
-        ),
+          })
+          .flat(1),
       )
 
       // Add localy
@@ -799,7 +825,10 @@ export class RelayClient extends ReadOnlyRelayClient {
     }
   }
 
-  async receiveMessage(rawMessage: Message, receivedTime = Date.now()) {
+  async receiveMessage(
+    rawMessage: Message,
+    receivedTime = Date.now(),
+  ): Promise<ReceivedMessageWrapper | null> {
     // Parse message
     const message = messageMixin(this.displayNetwork, rawMessage)
     const preParsedMessage = message.parse()
@@ -824,7 +853,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       if (message) {
         console.log('Already have message', payloadDigestHex)
         // TODO: We really should handle unfreezing UTXOs here via a callback in the future.
-        return
+        return null
       }
       console.log('Message not found locally', payloadDigestHex)
     }
@@ -869,7 +898,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         payloadDigest,
         parsedMessage.payloadDigest,
       )
-      return
+      return null
     }
 
     const destinationAddress = parsedMessage.destinationPublicKey
@@ -957,12 +986,13 @@ export class RelayClient extends ReadOnlyRelayClient {
       : parsedMessage.open(identityPrivateKey)
     const payload = Payload.deserializeBinary(rawPayload)
     if (outbound && myAddress === destinationAddress) {
-      return this.receiveSelfSend({ payload })
+      this.receiveSelfSend({ payload })
+      return null
     }
 
     // Decode entries
     const entriesList = payload.getEntriesList()
-    const newMsg = {
+    const newMsg: ReceivedMessage = {
       outbound,
       status: 'confirmed',
       items: [] as MessageItem[],
@@ -1130,8 +1160,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         totalValue: stampValue + stealthValue,
       }),
     }
-    await this.messageStore.saveMessage(finalizedMessage)
-    this.events.emit('receivedMessage', finalizedMessage)
+    return finalizedMessage
   }
 
   async refresh() {
@@ -1146,20 +1175,20 @@ export class RelayClient extends ReadOnlyRelayClient {
     assert(messagePage, 'no messagePage available?')
     const messageList = messagePage.getMessagesList()
     console.log('processing messages')
-    const messageChunks = splitEvery(50, messageList)
     try {
-      const guiUpdatingMessageList = flatten(
-        messageChunks.map(c => [
-          ...c.map(m => () => this.receiveMessage(m)),
-          () =>
-            new Promise<void>(resolve => {
-              setTimeout(() => {
-                resolve()
-              }, 0)
-            }),
-        ]),
+      const finalizedMessages = await pAll(
+        messageList,
+        async arg => {
+          const message = await this.receiveMessage(arg)
+          if (!message) {
+            return
+          }
+          this.messageStore.saveMessage(message)
+          return message
+        },
+        20,
       )
-      await pAll(guiUpdatingMessageList, 20)
+      this.events.emit('receivedMessages', finalizedMessages.filter(Boolean))
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Unable to deserialize message:', err.message)
@@ -1199,8 +1228,8 @@ export class RelayClient extends ReadOnlyRelayClient {
   ) {
     const messageIterator = await this.messageStore.getIterator()
     // Todo, this rehydrate stuff is common to receiveMessage
-    let messages: (() => Promise<void>)[] = []
-    const deleteMessage = (messageWrapper: MessageWrapper) => async () => {
+    let messages: MessageWrapper[] = []
+    const deleteMessage = async (messageWrapper: MessageWrapper) => {
       const { index, copartyAddress } = messageWrapper
       try {
         console.log('remote deleting message', index)
@@ -1217,9 +1246,9 @@ export class RelayClient extends ReadOnlyRelayClient {
       if (!messageWrapper.message) {
         continue
       }
-      messages.push(deleteMessage(messageWrapper))
+      messages.push(messageWrapper)
       if ((messages.length + 1) % 500 === 0) {
-        await pAll(messages, 20)
+        await pAll(messages, deleteMessage, 20)
         messages = []
         // Allow other parts of the GUI/App to process
         await new Promise<void>(resolve => {
@@ -1229,7 +1258,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         })
       }
     }
-    await pAll(messages, 20)
+    await pAll(messages, deleteMessage, 20)
   }
 }
 
