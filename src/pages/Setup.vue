@@ -86,7 +86,7 @@ import { QStepper } from 'quasar'
 import { HDPrivateKey } from 'bitcore-lib-xpi'
 import { generateMnemonic } from 'bip39'
 
-import { KeyserverHandler } from '../cashweb/keyserver/handler'
+import { KeyserverHandler } from '../cashweb/keyserver'
 import pop from '../cashweb/pop'
 import { getRelayClient } from '../adapters/vuex-relay-adapter'
 import {

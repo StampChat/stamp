@@ -4,7 +4,7 @@ import {
   createWebHistory,
   createWebHashHistory,
 } from 'vue-router'
-import { KeyserverHandler } from 'src/cashweb/keyserver/handler'
+import { KeyserverHandler } from 'src/cashweb/keyserver'
 import { ReadOnlyRelayClient } from 'src/cashweb/relay'
 import { toAPIAddress } from 'src/utils/address'
 import { keyservers, networkName, displayNetwork } from 'src/utils/constants'

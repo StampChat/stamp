@@ -10,7 +10,7 @@ import {
   networkName,
   displayNetwork,
 } from '../../utils/constants'
-import { KeyserverHandler } from '../../cashweb/keyserver/handler'
+import { KeyserverHandler } from '../../cashweb/keyserver'
 import moment from 'moment'
 import { toDisplayAddress } from '../../utils/address'
 
