@@ -5,13 +5,13 @@
     "source.fixAll": true
   },
   "javascript.format.insertSpaceBeforeFunctionParenthesis": false,
-  "javascript.format.insertSpaceAfterConstructor": true,
+  "javascript.format.insertSpaceAfterConstructor": false,
   "javascript.format.placeOpenBraceOnNewLineForControlBlocks": false,
   "javascript.format.placeOpenBraceOnNewLineForFunctions": false,
   "typescript.format.insertSpaceBeforeFunctionParenthesis": false,
   "typescript.format.placeOpenBraceOnNewLineForControlBlocks": false,
   "typescript.format.placeOpenBraceOnNewLineForFunctions": false,
-  "typescript.format.insertSpaceAfterConstructor": true,
+  "typescript.format.insertSpaceAfterConstructor": false,
   "vetur.format.defaultFormatter.html": "prettyhtml",
   "vetur.format.defaultFormatter.js": "prettier-eslint"
 }
