@@ -115,6 +115,7 @@ export default {
       // const lastReceived = this.lastReceived
       const t0 = performance.now()
       const refreshMessages = () => {
+        this.$q.loading.show({ message: 'Loading messages' })
         // Wait for a connected blockchain client
         if (!this.$indexer.connected) {
           setTimeout(refreshMessages, 100)
@@ -126,6 +127,7 @@ export default {
             const t1 = performance.now()
             console.log(`Loading messages took ${t1 - t0}ms`)
             this.$status.loaded = true
+            this.$q.loading.hide()
           })
           .catch(err => {
             console.error(err)
@@ -168,7 +170,6 @@ export default {
             throw err
           })
       })
-      this.$q.loading.hide()
     },
   },
   computed: {

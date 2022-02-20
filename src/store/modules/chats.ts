@@ -7,13 +7,8 @@ import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'
 import { Utxo } from 'src/cashweb/types/utxo'
-import {
-  Message,
-  MessageItem,
-  MessageWrapper,
-  TextItem,
-} from 'src/cashweb/types/messages'
-import { PublicKey } from 'bitcore-lib-xpi'
+import { Message, MessageItem, TextItem } from 'src/cashweb/types/messages'
+import { ReceivedMessageWrapper } from 'src/cashweb/relay'
 
 type ChatMessage = {
   outbound: boolean
@@ -445,68 +440,72 @@ const module: Module<State, unknown> = {
       }
       delete state.chats[apiAddress]
     },
-    receiveMessage(
-      state,
-      {
-        address,
-        index,
-        message: newMsg,
-      }: { address: string; index: string; message: Message },
-    ) {
-      const apiAddress = toDisplayAddress(address)
+    receiveMessages(state, messageWrappers: ReceivedMessageWrapper[]) {
+      for (const wrapper of messageWrappers) {
+        const {
+          copartyAddress,
+          index,
+          message: newMsg,
+        }: { copartyAddress: string; index: string; message: Message } = wrapper
 
-      assert(newMsg.outbound !== undefined, 'outbound is not defined')
-      assert(newMsg.status !== undefined, 'status is not defined')
-      assert(newMsg.receivedTime !== undefined, 'receivedTime is not defined')
-      assert(newMsg.serverTime !== undefined, 'serverTime is not defined')
-      assert(newMsg.items !== undefined, 'items is not defined')
-      assert(newMsg.outpoints !== undefined, 'outpoints is not defined')
-      assert(newMsg.senderAddress !== undefined, 'senderAddress is not defined')
-      assert(address !== undefined, 'address is not defined')
-      assert(index !== undefined, 'index is not defined')
+        assert(newMsg.outbound !== undefined, 'outbound is not defined')
+        assert(newMsg.status !== undefined, 'status is not defined')
+        assert(newMsg.receivedTime !== undefined, 'receivedTime is not defined')
+        assert(newMsg.serverTime !== undefined, 'serverTime is not defined')
+        assert(newMsg.items !== undefined, 'items is not defined')
+        assert(newMsg.outpoints !== undefined, 'outpoints is not defined')
+        assert(
+          newMsg.senderAddress !== undefined,
+          'senderAddress is not defined',
+        )
+        assert(copartyAddress !== undefined, 'address is not defined')
+        assert(index !== undefined, 'index is not defined')
+        const apiAddress = toDisplayAddress(copartyAddress)
 
-      const message = { payloadDigest: index, ...newMsg }
-      if (index in state.messages) {
-        // Mutate the object so that it striggers reactivity
-        state.messages[index] = Object.assign(state.messages[index], message)
-        // We should already have created the chat if we have the message
-        return
-      }
-      // We don't need reactivity here
-      state.messages[index] = message
-      if (!(apiAddress in state.chats)) {
-        // We do need reactivity to create a new chat
-        state.chats[apiAddress] = {
-          ...defaultContactObject,
-          messages: [],
-          address: apiAddress,
+        const message = { payloadDigest: index, ...newMsg }
+        if (index in state.messages) {
+          // Mutate the object so that it striggers reactivity
+          state.messages[index] = Object.assign(state.messages[index], message)
+          // We should already have created the chat if we have the message
+          return
         }
-      }
-      const chat = state.chats[apiAddress]
-      assert(chat, 'not possible')
-
-      // TODO: Better indexing
-      chat.messages.push(message)
-      chat.lastReceived = message.serverTime
-      const messageValue =
-        stampPrice(message.outpoints) +
-        message.items.reduce((totalValue, entry) => {
-          switch (entry.type) {
-            case 'stealth':
-              return totalValue + entry.amount
-            default:
-              return totalValue
+        // We don't need reactivity here
+        state.messages[index] = message
+        if (!(apiAddress in state.chats)) {
+          // We do need reactivity to create a new chat
+          state.chats[apiAddress] = {
+            ...defaultContactObject,
+            messages: [],
+            address: apiAddress,
           }
-        }, 0)
-      if (
-        apiAddress !== state.activeChatAddr &&
-        chat.lastRead < message.serverTime
-      ) {
-        chat.totalUnreadValue += messageValue
-        chat.totalUnreadMessages += 1
+        }
+        const chat = state.chats[apiAddress]
+        assert(chat, 'not possible')
+
+        // TODO: Better indexing
+        chat.messages.push(message)
+        chat.lastReceived = message.serverTime
+        const messageValue =
+          stampPrice(message.outpoints) +
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          message.items.reduce((totalValue: number, entry: any) => {
+            switch (entry.type) {
+              case 'stealth':
+                return totalValue + entry.amount
+              default:
+                return totalValue
+            }
+          }, 0)
+        if (
+          apiAddress !== state.activeChatAddr &&
+          chat.lastRead < message.serverTime
+        ) {
+          chat.totalUnreadValue += messageValue
+          chat.totalUnreadMessages += 1
+        }
+        state.lastReceived = message.serverTime
+        chat.totalValue += messageValue
       }
-      state.lastReceived = message.serverTime
-      chat.totalValue += messageValue
     },
     setStampAmount(state, { address, stampAmount }) {
       const chat = state.chats[address]
@@ -533,46 +532,52 @@ const module: Module<State, unknown> = {
       assert(typeof stampAmount === 'number', 'stampAmount wrong type')
       commit('setStampAmount', { address, stampAmount })
     },
-    receiveMessage(
+    async receiveMessages(
       { dispatch, commit, rootGetters, getters },
-      {
-        outbound,
-        copartyAddress,
-        copartyPubKey,
-        index,
-        message: newMsg,
-        stampValue,
-      }: MessageWrapper & {
-        copartyPubKey: PublicKey
-        stampValue: number
-        totalAmount: number
-      },
+      messageWrappers: ReceivedMessageWrapper[],
     ) {
-      // Check whether contact exists
-      if (!rootGetters['contacts/isContact'](copartyAddress)) {
-        // Add dummy contact
-        dispatch(
-          'contacts/addLoadingContact',
-          { address: copartyAddress, pubKey: copartyPubKey },
-          { root: true },
-        )
+      // Ensure contacts are all setup
+      for (const messageWrapper of messageWrappers) {
+        const {
+          outbound,
+          copartyAddress,
+          copartyPubKey,
+          message: newMsg,
+          stampValue,
+        } = messageWrapper
+        // Check whether contact exists
+        if (!rootGetters['contacts/isContact'](copartyAddress)) {
+          // Add dummy contact
+          await dispatch(
+            'contacts/addLoadingContact',
+            { address: copartyAddress, pubKey: copartyPubKey },
+            { root: true },
+          )
 
-        // Load contact
-        dispatch('contacts/refresh', copartyAddress, { root: true })
-      }
+          // Load contact
+          dispatch('contacts/refresh', copartyAddress, { root: true })
+        }
 
-      // Ignore messages below acceptance price
-      const acceptancePrice = rootGetters['myProfile/getInbox'].acceptancePrice
-      const lastRead = getters.lastRead(copartyAddress)
+        // Ignore messages below acceptance price
+        const acceptancePrice =
+          rootGetters['myProfile/getInbox'].acceptancePrice
+        const lastRead = getters.lastRead(copartyAddress)
 
-      const acceptable = stampValue >= acceptancePrice
-      // If not focused (and not outbox message) then notify
-      if (
-        !document.hasFocus() &&
-        !outbound &&
-        acceptable &&
-        lastRead < newMsg.serverTime
-      ) {
+        const acceptable = stampValue >= acceptancePrice
+        // If not focused (and not outbox message) then notify
+        if (
+          !(
+            !document.hasFocus() &&
+            !outbound &&
+            acceptable &&
+            lastRead < newMsg.serverTime &&
+            // Don't notify or reset active chat if we are bulk loading messages
+            messageWrappers.length === 1
+          )
+        ) {
+          continue
+        }
+
         const contact = rootGetters['contacts/getContact'](copartyAddress)
         const textItem: TextItem = (newMsg.items.find(
           item => item.type === 'text',
@@ -582,17 +587,12 @@ const module: Module<State, unknown> = {
             contact.profile.name,
             textItem.text,
             contact.profile.avatar,
-            () => {
-              dispatch('setActiveChat', copartyAddress)
-            },
+            async () => dispatch('setActiveChat', copartyAddress),
           )
         }
       }
-      commit('receiveMessage', {
-        address: copartyAddress,
-        index,
-        message: newMsg,
-      })
+
+      commit('receiveMessages', messageWrappers)
     },
   },
 }
