@@ -3,7 +3,12 @@
     <q-scroll-area class="q-px-none col">
       <q-list>
         <q-separator />
-        <chat-list-link title="Forum" route="/forum" icon="forum" />
+        <chat-list-link
+          title="Forum"
+          route="/forum"
+          icon="forum"
+          @click="vuexSetActiveChat(undefined)"
+        />
         <chat-list-link
           title="Login/Sign Up"
           route="/setup"
@@ -19,6 +24,7 @@
             :value-unread="formatBalance(contact.totalUnreadValue)"
             :num-unread="contact.totalUnreadMessages"
             :compact="compact"
+            @click="vuexSetActiveChat(contact.address)"
           />
         </template>
         <q-item v-if="getSortedChatOrder.length === 0 && $status.setup">
@@ -34,7 +40,7 @@
 <script>
 import ChatListItem from './ChatListItem.vue'
 import ChatListLink from './ChatListLink.vue'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import { formatBalance } from '../../utils/formatting'
 
 export default {
@@ -53,6 +59,7 @@ export default {
     return {}
   },
   methods: {
+    ...mapActions({ vuexSetActiveChat: 'chats/setActiveChat' }),
     toggleMyDrawerOpen() {
       this.$emit('toggleMyDrawerOpen')
     },

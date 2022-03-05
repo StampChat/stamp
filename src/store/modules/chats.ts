@@ -6,8 +6,15 @@ import { stampPrice } from '../../cashweb/wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'
+import { formatBalance } from '../../utils/formatting'
 import { Utxo } from 'src/cashweb/types/utxo'
-import { Message, MessageItem, TextItem } from 'src/cashweb/types/messages'
+import {
+  Message,
+  MessageItem,
+  TextItem,
+  ImageItem,
+  StealthItem,
+} from 'src/cashweb/types/messages'
 import { ReceivedMessageWrapper } from 'src/cashweb/relay'
 
 type ChatMessage = {
@@ -165,10 +172,10 @@ const module: Module<State, unknown> = {
       return state.messages[payloadDigest]
     },
     getNumUnread: state => (address: string) => {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
-      return state.chats[apiAddress]
-        ? state.chats[apiAddress]?.totalUnreadMessages
+      return state.chats[displayAddress]
+        ? state.chats[displayAddress]?.totalUnreadMessages
         : 0
     },
     totalUnread(state) {
@@ -206,13 +213,13 @@ const module: Module<State, unknown> = {
       return sortedOrder
     },
     lastRead: state => (address: string) => {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
-      return state.chats[apiAddress]?.lastRead ?? 0
+      return state.chats[displayAddress]?.lastRead ?? 0
     },
     getStampAmount: state => (address: string) => {
-      const apiAddress = toDisplayAddress(address)
-      const chat = state.chats[apiAddress]
+      const displayAddress = toDisplayAddress(address)
+      const chat = state.chats[displayAddress]
       if (!chat) {
         return defaultStampAmount
       }
@@ -223,12 +230,12 @@ const module: Module<State, unknown> = {
       return state.activeChatAddr
     },
     getLatestMessage: state => (address: string) => {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
       const nopInfo = {
         outbound: false,
         text: '',
       }
-      const chat = state.chats[apiAddress]
+      const chat = state.chats[displayAddress]
       if (!chat) {
         return nopInfo
       }
@@ -243,7 +250,7 @@ const module: Module<State, unknown> = {
       const lastItem = items[items.length - 1]
 
       if (!lastItem) {
-        console.error(apiAddress)
+        console.error(displayAddress)
         return null
       }
       if (lastItem.type === 'text') {
@@ -279,23 +286,27 @@ const module: Module<State, unknown> = {
   mutations: {
     deleteMessage(
       state,
-      { address, index }: { address: string; index: string },
+      {
+        address,
+        payloadDigest,
+        index,
+      }: { address: string; payloadDigest: string; index: string },
     ) {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
       delete state.messages[index]
-      const chat = state.chats[apiAddress]
+      const chat = state.chats[displayAddress]
       if (!chat) {
         return
       }
       const msgIndex = chat.messages.findIndex(
-        msg => msg.payloadDigest === index,
+        msg => msg.payloadDigest === payloadDigest,
       )
       chat.messages.splice(msgIndex, 1)
     },
     readAll(state, address: string) {
-      const apiAddress = toDisplayAddress(address)
-      const chat = state.chats[apiAddress]
+      const displayAddress = toDisplayAddress(address)
+      const chat = state.chats[displayAddress]
       if (!chat) {
         console.error('Trying to readAll messages from non-existant contact')
         return
@@ -329,30 +340,32 @@ const module: Module<State, unknown> = {
       state.lastReceived = null
     },
     openChat(state, address) {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
-      if (!(apiAddress in state.chats)) {
-        state.chats[apiAddress] = {
+      if (!(displayAddress in state.chats)) {
+        state.chats[displayAddress] = {
           ...defaultContactObject,
           messages: [],
-          address: apiAddress,
+          address: displayAddress,
         }
       }
     },
     setActiveChat(state, address) {
+      // make sure address is defined, e.g. Forum is undefined
       if (!address) {
-        return
+        state.activeChatAddr = undefined
+        return;
       }
-      const apiAddress = toDisplayAddress(address)
-
-      if (!(apiAddress in state.chats)) {
-        state.chats[apiAddress] = {
+      const displayAddress = toDisplayAddress(address)
+      if (!(displayAddress in state.chats)) {
+        state.chats[displayAddress] = {
           ...defaultContactObject,
           messages: [],
-          address: apiAddress,
+          address: displayAddress,
         }
       }
-      state.activeChatAddr = address
+      state.activeChatAddr = displayAddress
+
     },
     sendMessageLocal(
       state,
@@ -524,9 +537,12 @@ const module: Module<State, unknown> = {
       dispatch('setActiveChat', shareAddr)
     },
     setActiveChat({ commit, dispatch }, address) {
-      dispatch('contacts/refresh', address, { root: true })
+      // make sure address is defined, e.g. Forum is undefined
+      if (address) {
+        dispatch('contacts/refresh', address, { root: true })
+        commit('readAll', address)
+      }
       commit('setActiveChat', address)
-      commit('readAll', address)
     },
     setStampAmount({ commit }, { address, stampAmount }) {
       assert(typeof stampAmount === 'number', 'stampAmount wrong type')
@@ -582,10 +598,26 @@ const module: Module<State, unknown> = {
         const textItem: TextItem = (newMsg.items.find(
           item => item.type === 'text',
         ) as TextItem) ?? { text: '' }
+        const stealthItem: StealthItem = (newMsg.items.find(
+          item => item.type === 'stealth',
+        ) as StealthItem) ?? { amount: 0 }
+        const imageItem: ImageItem = (newMsg.items.find(
+          item => item.type === 'image',
+        ) as ImageItem) ?? { image: '' }
+
+        let body = ''
+        if (stealthItem.amount > 0) {
+          const formatted = formatBalance(stealthItem.amount)
+          body = `[${formatted}] ` + body
+        }
+        if (imageItem.image.length > 0) {
+          body = '[Image] ' + body
+        }
+        body = body + textItem.text
         if (contact && contact.notify) {
           desktopNotify(
             contact.profile.name,
-            textItem.text,
+            body,
             contact.profile.avatar,
             async () => dispatch('setActiveChat', copartyAddress),
           )

@@ -1,10 +1,5 @@
 <template>
-  <q-item
-    :active="isActive"
-    active-class="active-chat-list-item"
-    clickable
-    @click="setActiveChat(chatAddress)"
-  >
+  <q-item :active="isActive" active-class="active-chat-list-item" clickable>
     <q-item-section avatar v-if="$status.setup" side>
       <q-avatar rounded>
         <img :src="contact.avatar" />
@@ -42,18 +37,9 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
 
 export default {
-  methods: {
-    ...mapActions({ vuexSetActiveChat: 'chats/setActiveChat' }),
-    setActiveChat(newAddress) {
-      this.vuexSetActiveChat(newAddress)
-      this.$router.push(`/chat/${newAddress}`).catch(() => {
-        // Don't care. Probably duplicate route
-      })
-    },
-  },
   computed: {
     ...mapGetters({
       getContactProfile: 'contacts/getContactProfile',
