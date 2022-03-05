@@ -52,7 +52,7 @@
     "marked": "^4.0.10",
     "moment": "^2.25.3",
     "node-emoji": "^1.11.0",
-    "node-forge": "^0.10.0",
+    "node-forge": "^1.0.0",
     "qrcode.vue": "^3.3.3",
     "quasar": "^2.3.3",
     "ramda": "^0.27.0",
