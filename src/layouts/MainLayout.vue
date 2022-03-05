@@ -1,5 +1,10 @@
 <template>
   <q-layout view="hHr LpR lff">
+    <q-btn
+      v-show="false"
+      @click="promptNotificationPermission"
+      ref="buttonNotification"
+    />
     <q-drawer
       v-model="myDrawerOpen"
       :width="splitterRatio"
@@ -48,6 +53,7 @@ export default {
       contactBookOpen: false,
       compact: false,
       compactWidth,
+      notificationPermission: window.Notification.permission,
     }
   },
   methods: {
@@ -79,6 +85,11 @@ export default {
         this.trueSplitterRatio = compactCutoff
       }
       this.myDrawerOpen = !this.myDrawerOpen
+    },
+    promptNotificationPermission() {
+      window.Notification.requestPermission().then(
+        () => (this.notificationPermission = window.Notification.permission),
+      )
     },
     shortcutKeyListener(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -208,10 +219,15 @@ export default {
   },
   mounted() {
     document.addEventListener('keydown', this.shortcutKeyListener)
-    // Request browser notifications
-    const notifyPerms = window.Notification.permission
-    if (notifyPerms !== 'granted' && notifyPerms !== 'denied') {
-      window.Notification.requestPermission()
+  },
+  updated() {
+    // Ask browser for notification permissions after any DOM update
+    switch (this.notificationPermission) {
+      case 'denied':
+      case 'granted':
+        break
+      default:
+        this.$refs.buttonNotification.click()
     }
   },
   beforeUnmount() {
@@ -220,6 +236,15 @@ export default {
   watch: {
     totalUnread: function (unread) {
       this.updateBadge(unread)
+    },
+    activeChatAddr(newAddress) {
+      // Only route to chat if address defined
+      // e.g. do *not* route when navigating to Forum
+      if (newAddress) {
+        this.$router.push(`/chat/${newAddress}`).catch(() => {
+          // Don't care. Probably duplicate route
+        })
+      }
     },
   },
 }
