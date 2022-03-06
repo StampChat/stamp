@@ -279,17 +279,17 @@ const module: Module<State, unknown> = {
   mutations: {
     deleteMessage(
       state,
-      { address, index }: { address: string; index: string },
+      { address, payloadDigest }: { address: string; payloadDigest: string },
     ) {
       const apiAddress = toDisplayAddress(address)
 
-      delete state.messages[index]
+      delete state.messages[payloadDigest]
       const chat = state.chats[apiAddress]
       if (!chat) {
         return
       }
       const msgIndex = chat.messages.findIndex(
-        msg => msg.payloadDigest === index,
+        msg => msg.payloadDigest === payloadDigest,
       )
       chat.messages.splice(msgIndex, 1)
     },
@@ -359,7 +359,7 @@ const module: Module<State, unknown> = {
       {
         address,
         senderAddress,
-        index,
+        index: payloadDigest,
         items,
         outpoints = [],
         status = 'pending',
@@ -377,7 +377,7 @@ const module: Module<State, unknown> = {
         receivedTime: timestamp,
         outpoints,
         senderAddress,
-        messageHash: index,
+        messageHash: payloadDigest,
       }
       assert(newMsg.outbound !== undefined, 'outbound is not defined')
       assert(newMsg.status !== undefined, 'status is not defined')
@@ -387,10 +387,13 @@ const module: Module<State, unknown> = {
       assert(newMsg.outpoints !== undefined, 'outpoints is not defined')
       assert(newMsg.senderAddress !== undefined, 'senderAddress is not defined')
 
-      const message = { payloadDigest: index, ...newMsg }
-      if (index in state.messages) {
+      const message = { payloadDigest: payloadDigest, ...newMsg }
+      if (payloadDigest in state.messages) {
         // we have the message already, just need to update some fields and return
-        state.messages[index] = Object.assign(state.messages[index], message)
+        state.messages[payloadDigest] = Object.assign(
+          state.messages[payloadDigest],
+          message,
+        )
         return
       }
 
@@ -407,11 +410,11 @@ const module: Module<State, unknown> = {
           msg => msg.payloadDigest === previousHash,
         )
         chat.messages.splice(msgIndex, 1)
-        delete state.messages[index]
+        delete state.messages[payloadDigest]
         return
       }
 
-      state.messages[index] = message
+      state.messages[payloadDigest] = message
       if (apiAddress in state.chats) {
         chat.messages.push(message)
         chat.lastRead = Date.now()
