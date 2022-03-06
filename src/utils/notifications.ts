@@ -62,7 +62,7 @@ export function desktopNotify(
   icon: string,
   callback: () => void,
 ) {
-  const notify = new window.Notification(title, {
+  const notify = new Notification(title, {
     body,
     icon,
   })

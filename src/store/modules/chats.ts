@@ -550,6 +550,9 @@ const module: Module<State, unknown> = {
       { dispatch, commit, rootGetters, getters },
       messageWrappers: ReceivedMessageWrapper[],
     ) {
+
+      console.log('notifying');
+
       // Ensure contacts are all setup
       for (const messageWrapper of messageWrappers) {
         const {
@@ -587,6 +590,7 @@ const module: Module<State, unknown> = {
           // Don't notify or reset active chat if we are bulk loading messages
           messageWrappers.length !== 1
         ) {
+          console.log('skipping notification');
           continue
         }
 
@@ -611,12 +615,15 @@ const module: Module<State, unknown> = {
         }
         body = body + textItem.text
         if (contact && contact.notify) {
+          console.log('notifying', contact.profile.name);
           desktopNotify(
             contact.profile.name,
             body,
             contact.profile.avatar,
             async () => dispatch('setActiveChat', copartyAddress),
           )
+        } else {
+          console.log('not notifying', contact.profile.name);
         }
       }
 
