@@ -1,9 +1,10 @@
 <template>
-  <q-banner rounded class="bg-grey-3">
-    You received
-    <q-icon name="local_florist" size="sm" dense />
-    {{ formatSats(amount) }}
-  </q-banner>
+  <div class="q-mb-sm">
+    <q-banner rounded :class="[this.colors.banner, 'text-center']">
+      <q-icon name="local_florist" size="sm" />
+      {{ formatSats(amount) }}
+    </q-banner>
+  </div>
 </template>
 
 <script>
@@ -18,8 +19,9 @@ export default {
   },
   data() {
     return {
-      imageDialog: false,
-      image: null,
+      colors: {
+        banner: this.$q.dark.isActive ? 'bg-pink-10' : 'bg-pink-2',
+      },
     }
   },
   methods: {

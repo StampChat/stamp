@@ -1,40 +1,68 @@
 <template>
-  <div class="reply">
-    <div class="col text-weight-bold" :style="`color: ${nameColor};`">
-      {{ name }}
+  <div :class="replyOverlay" @click="$emit('replyDivClick', replyDigest)">
+    <div class="q-mb-sm reply">
+      <div class="row">
+        <div class="col q-px-sm q-py-sm">
+          <!-- Sender Name -->
+          <div class="q-mb-xs">
+            <b>{{ name }}</b>
+          </div>
+          <!-- Stealth Message -->
+          <chat-message-stealth
+            v-if="items.stealth !== undefined"
+            :amount="items.stealth.amount"
+          />
+          <!-- Text Message -->
+          <chat-message-text
+            v-if="items.text !== undefined"
+            class="ellipsis-2-lines"
+            :text="items.text.text"
+            :is-reply="true"
+          />
+          <!-- Placeholder text for Image Messages without caption -->
+          <chat-message-text
+            v-else-if="items.image !== undefined"
+            text="Image"
+          />
+        </div>
+        <!-- Image Message -- pull to the right -->
+        <div v-if="items.image !== undefined" class="col-auto">
+          <chat-message-image :image="items.image.image" :is-reply="true" />
+        </div>
+      </div>
     </div>
-    <chat-message
-      class="row-auto"
-      :address="address"
-      :message="message"
-      :name-color="nameColor"
-    />
   </div>
 </template>
 
 <script>
-import { defineAsyncComponent } from 'vue'
+import ChatMessageText from './ChatMessageText.vue'
+import ChatMessageImage from './ChatMessageImage.vue'
+import ChatMessageStealth from './ChatMessageStealth.vue'
 import { mapGetters } from 'vuex'
-import { addressColorFromStr } from '../../../utils/formatting'
 
 export default {
   name: 'ChatMessageReply',
   components: {
-    ChatMessage: defineAsyncComponent(() => import('./ChatMessage.vue')),
+    ChatMessageText,
+    ChatMessageImage,
+    ChatMessageStealth,
   },
   props: {
-    address: {
-      type: String,
-      required: true,
-    },
     payloadDigest: {
       type: String,
       required: true,
     },
-    mouseover: {
-      type: Boolean,
-      required: true,
-    },
+  },
+  emits: ['replyDivClick'],
+  data() {
+    return {
+      colors: {
+        border: '4px solid ' + (this.$q.dark.isActive ? 'white' : 'black'),
+        bg: this.$q.dark.isActive
+          ? 'rgba(0, 0, 0, 0.44)'
+          : 'rgba(255, 255, 255, 0.44)',
+      },
+    }
   },
   methods: {
     ...mapGetters({
@@ -43,28 +71,36 @@ export default {
     }),
   },
   computed: {
-    ...mapGetters({
-      getProfile: 'myProfile/getProfile',
-    }),
     message() {
       const message = this.getMessageByPayloadVuex()(this.payloadDigest)
       return message || { items: [], senderAddress: undefined }
     },
+    replyDigest() {
+      return this.message.senderAddress ? this.payloadDigest : null
+    },
+    items() {
+      const sorted = {}
+      this.message.items.map(item => (sorted[item.type] = item))
+      return sorted
+    },
     name() {
-      if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
-        return this.getProfile.name
+      // if senderAddress undefined, assume deleted message
+      const sender = this.message.senderAddress
+      if (!sender) {
+        return 'Message not found'
       }
-      const contact = this.getContact()(this.message.senderAddress)
+      if (sender === this.$wallet.myAddress.toXAddress()) {
+        return 'You'
+      }
+      const contact = this.getContact()(sender)
       if (!contact) {
         return 'Not Found'
       }
       return contact.profile.name
     },
-    nameColor() {
-      if (this.message.senderAddress === this.$wallet.myAddress.toXAddress()) {
-        return 'text-black'
-      }
-      return addressColorFromStr(this.address)
+    // colorize the reply div to match source sender
+    replyOverlay() {
+      return this.message.outbound ? 'message-color-sent' : 'message-color'
     },
   },
 }
@@ -72,10 +108,7 @@ export default {
 
 <style lang="scss" scoped>
 .reply {
-  padding: 5px 0;
-  padding-left: 8px;
-  border-left: 3px;
-  border-left-style: solid;
-  border-left-color: $primary;
+  background: var(--q-reply-bg);
+  border-left: var(--q-reply-border-left);
 }
 </style>
