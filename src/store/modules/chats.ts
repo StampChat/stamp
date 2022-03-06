@@ -6,8 +6,15 @@ import { stampPrice } from '../../cashweb/wallet/helpers'
 import { desktopNotify } from '../../utils/notifications'
 import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'
+import { formatBalance } from '../../utils/formatting'
 import { Utxo } from 'src/cashweb/types/utxo'
-import { Message, MessageItem, TextItem } from 'src/cashweb/types/messages'
+import {
+  Message,
+  MessageItem,
+  TextItem,
+  ImageItem,
+  StealthItem,
+} from 'src/cashweb/types/messages'
 import { ReceivedMessageWrapper } from 'src/cashweb/relay'
 
 type ChatMessage = {
@@ -340,11 +347,12 @@ const module: Module<State, unknown> = {
       }
     },
     setActiveChat(state, address) {
+      // make sure address is defined, e.g. Forum is undefined
       if (!address) {
+        state.activeChatAddr = undefined
         return
       }
       const displayAddress = toDisplayAddress(address)
-
       if (!(displayAddress in state.chats)) {
         state.chats[displayAddress] = {
           ...defaultContactObject,
@@ -352,7 +360,7 @@ const module: Module<State, unknown> = {
           address: displayAddress,
         }
       }
-      state.activeChatAddr = address
+      state.activeChatAddr = displayAddress
     },
     sendMessageLocal(
       state,
@@ -527,9 +535,12 @@ const module: Module<State, unknown> = {
       dispatch('setActiveChat', shareAddr)
     },
     setActiveChat({ commit, dispatch }, address) {
-      dispatch('contacts/refresh', address, { root: true })
+      // make sure address is defined, e.g. Forum is undefined
+      if (address) {
+        dispatch('contacts/refresh', address, { root: true })
+        commit('readAll', address)
+      }
       commit('setActiveChat', address)
-      commit('readAll', address)
     },
     setStampAmount({ commit }, { address, stampAmount }) {
       assert(typeof stampAmount === 'number', 'stampAmount wrong type')
@@ -569,14 +580,12 @@ const module: Module<State, unknown> = {
         const acceptable = stampValue >= acceptancePrice
         // If not focused (and not outbox message) then notify
         if (
-          !(
-            !document.hasFocus() &&
-            !outbound &&
-            acceptable &&
-            lastRead < newMsg.serverTime &&
-            // Don't notify or reset active chat if we are bulk loading messages
-            messageWrappers.length === 1
-          )
+          document.hasFocus() ||
+          outbound ||
+          !acceptable ||
+          lastRead > newMsg.serverTime ||
+          // Don't notify or reset active chat if we are bulk loading messages
+          messageWrappers.length !== 1
         ) {
           continue
         }
@@ -585,10 +594,26 @@ const module: Module<State, unknown> = {
         const textItem: TextItem = (newMsg.items.find(
           item => item.type === 'text',
         ) as TextItem) ?? { text: '' }
+        const stealthItem: StealthItem = (newMsg.items.find(
+          item => item.type === 'stealth',
+        ) as StealthItem) ?? { amount: 0 }
+        const imageItem: ImageItem = (newMsg.items.find(
+          item => item.type === 'image',
+        ) as ImageItem) ?? { image: '' }
+
+        let body = ''
+        if (stealthItem.amount > 0) {
+          const formatted = formatBalance(stealthItem.amount)
+          body = `[${formatted}] ` + body
+        }
+        if (imageItem.image.length > 0) {
+          body = '[Image] ' + body
+        }
+        body = body + textItem.text
         if (contact && contact.notify) {
           desktopNotify(
             contact.profile.name,
-            textItem.text,
+            body,
             contact.profile.avatar,
             async () => dispatch('setActiveChat', copartyAddress),
           )

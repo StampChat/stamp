@@ -112,7 +112,6 @@ export default {
     addContact() {
       const cashAddress = toAPIAddress(this.address) // TODO: Make generic
       this.addContactVuex({ address: cashAddress, contact: this.contact })
-      this.$router.replace(`/chat/${this.address}`)
     },
     cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
