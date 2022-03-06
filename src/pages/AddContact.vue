@@ -15,10 +15,7 @@
       />
     </q-card-section>
     <q-slide-transition>
-      <q-card-section
-        class="q-py-none"
-        v-if="contact === null && address !== ''"
-      >
+      <q-card-section class="q-py-none" v-if="contact === null && address !== ''">
         <q-item>
           <q-item-section avatar>
             <q-icon color="negative" name="error" size="xl" />
@@ -59,12 +56,7 @@
     </q-slide-transition>
     <q-card-actions align="right">
       <q-btn label="Cancel" color="negative" @click="cancel" />
-      <q-btn
-        :disable="contact === null"
-        label="Add"
-        color="primary"
-        @click="addContact()"
-      />
+      <q-btn :disable="contact === null" label="Add" color="primary" @click="addContact()" />
     </q-card-actions>
   </q-card>
 </template>
@@ -112,7 +104,6 @@ export default {
     addContact() {
       const cashAddress = toAPIAddress(this.address) // TODO: Make generic
       this.addContactVuex({ address: cashAddress, contact: this.contact })
-      this.$router.replace(`/chat/${this.address}`)
     },
     cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
