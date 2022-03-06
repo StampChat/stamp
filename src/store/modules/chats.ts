@@ -165,10 +165,10 @@ const module: Module<State, unknown> = {
       return state.messages[payloadDigest]
     },
     getNumUnread: state => (address: string) => {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
-      return state.chats[apiAddress]
-        ? state.chats[apiAddress]?.totalUnreadMessages
+      return state.chats[displayAddress]
+        ? state.chats[displayAddress]?.totalUnreadMessages
         : 0
     },
     totalUnread(state) {
@@ -206,13 +206,13 @@ const module: Module<State, unknown> = {
       return sortedOrder
     },
     lastRead: state => (address: string) => {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
-      return state.chats[apiAddress]?.lastRead ?? 0
+      return state.chats[displayAddress]?.lastRead ?? 0
     },
     getStampAmount: state => (address: string) => {
-      const apiAddress = toDisplayAddress(address)
-      const chat = state.chats[apiAddress]
+      const displayAddress = toDisplayAddress(address)
+      const chat = state.chats[displayAddress]
       if (!chat) {
         return defaultStampAmount
       }
@@ -223,12 +223,12 @@ const module: Module<State, unknown> = {
       return state.activeChatAddr
     },
     getLatestMessage: state => (address: string) => {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
       const nopInfo = {
         outbound: false,
         text: '',
       }
-      const chat = state.chats[apiAddress]
+      const chat = state.chats[displayAddress]
       if (!chat) {
         return nopInfo
       }
@@ -243,7 +243,7 @@ const module: Module<State, unknown> = {
       const lastItem = items[items.length - 1]
 
       if (!lastItem) {
-        console.error(apiAddress)
+        console.error(displayAddress)
         return null
       }
       if (lastItem.type === 'text') {
@@ -281,10 +281,10 @@ const module: Module<State, unknown> = {
       state,
       { address, payloadDigest }: { address: string; payloadDigest: string },
     ) {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
       delete state.messages[payloadDigest]
-      const chat = state.chats[apiAddress]
+      const chat = state.chats[displayAddress]
       if (!chat) {
         return
       }
@@ -294,8 +294,8 @@ const module: Module<State, unknown> = {
       chat.messages.splice(msgIndex, 1)
     },
     readAll(state, address: string) {
-      const apiAddress = toDisplayAddress(address)
-      const chat = state.chats[apiAddress]
+      const displayAddress = toDisplayAddress(address)
+      const chat = state.chats[displayAddress]
       if (!chat) {
         console.error('Trying to readAll messages from non-existant contact')
         return
@@ -329,13 +329,13 @@ const module: Module<State, unknown> = {
       state.lastReceived = null
     },
     openChat(state, address) {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
-      if (!(apiAddress in state.chats)) {
-        state.chats[apiAddress] = {
+      if (!(displayAddress in state.chats)) {
+        state.chats[displayAddress] = {
           ...defaultContactObject,
           messages: [],
-          address: apiAddress,
+          address: displayAddress,
         }
       }
     },
@@ -343,13 +343,13 @@ const module: Module<State, unknown> = {
       if (!address) {
         return
       }
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
-      if (!(apiAddress in state.chats)) {
-        state.chats[apiAddress] = {
+      if (!(displayAddress in state.chats)) {
+        state.chats[displayAddress] = {
           ...defaultContactObject,
           messages: [],
-          address: apiAddress,
+          address: displayAddress,
         }
       }
       state.activeChatAddr = address
@@ -366,7 +366,7 @@ const module: Module<State, unknown> = {
         previousHash = null,
       },
     ) {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
       const timestamp = Date.now()
       const newMsg = {
@@ -398,7 +398,7 @@ const module: Module<State, unknown> = {
       }
 
       // Chat may be null if it is a self send
-      const chat = state.chats[apiAddress]
+      const chat = state.chats[displayAddress]
       if (!chat) {
         // This was a self send, we don't want to update any particular chats.
         return
@@ -415,33 +415,33 @@ const module: Module<State, unknown> = {
       }
 
       state.messages[payloadDigest] = message
-      if (apiAddress in state.chats) {
+      if (displayAddress in state.chats) {
         chat.messages.push(message)
         chat.lastRead = Date.now()
         return
       }
-      state.chats[apiAddress] = {
+      state.chats[displayAddress] = {
         ...defaultContactObject,
         messages: [message],
-        address: apiAddress,
+        address: displayAddress,
       }
     },
     clearChat(state, address) {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
-      const chat = state.chats[apiAddress]
+      const chat = state.chats[displayAddress]
       if (!chat) {
         return
       }
       chat.messages = []
     },
     deleteChat(state, address) {
-      const apiAddress = toDisplayAddress(address)
+      const displayAddress = toDisplayAddress(address)
 
-      if (state.activeChatAddr === apiAddress) {
+      if (state.activeChatAddr === displayAddress) {
         state.activeChatAddr = undefined
       }
-      delete state.chats[apiAddress]
+      delete state.chats[displayAddress]
     },
     receiveMessages(state, messageWrappers: ReceivedMessageWrapper[]) {
       for (const wrapper of messageWrappers) {
@@ -463,7 +463,7 @@ const module: Module<State, unknown> = {
         )
         assert(copartyAddress !== undefined, 'address is not defined')
         assert(index !== undefined, 'index is not defined')
-        const apiAddress = toDisplayAddress(copartyAddress)
+        const displayAddress = toDisplayAddress(copartyAddress)
 
         const message = { payloadDigest: index, ...newMsg }
         if (index in state.messages) {
@@ -474,15 +474,15 @@ const module: Module<State, unknown> = {
         }
         // We don't need reactivity here
         state.messages[index] = message
-        if (!(apiAddress in state.chats)) {
+        if (!(displayAddress in state.chats)) {
           // We do need reactivity to create a new chat
-          state.chats[apiAddress] = {
+          state.chats[displayAddress] = {
             ...defaultContactObject,
             messages: [],
-            address: apiAddress,
+            address: displayAddress,
           }
         }
-        const chat = state.chats[apiAddress]
+        const chat = state.chats[displayAddress]
         assert(chat, 'not possible')
 
         // TODO: Better indexing
@@ -500,7 +500,7 @@ const module: Module<State, unknown> = {
             }
           }, 0)
         if (
-          apiAddress !== state.activeChatAddr &&
+          displayAddress !== state.activeChatAddr &&
           chat.lastRead < message.serverTime
         ) {
           chat.totalUnreadValue += messageValue
