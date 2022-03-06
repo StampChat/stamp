@@ -1,59 +1,20 @@
 <template>
   <div class="row">
     <q-toolbar class="q-px-sm">
-      <q-btn dense flat icon="unfold_more">
-        <q-menu>
-          <q-list style="min-width: 100px">
-            <q-item clickable v-close-popup @click="giveLotusClicked">
-              <q-item-section avatar side>
-                <q-icon name="local_florist" />
-              </q-item-section>
-              <q-item-section> Give Lotus Secretly </q-item-section>
-            </q-item>
-
-            <q-item clickable v-close-popup @click="sendFileClicked">
-              <q-item-section avatar side>
-                <q-icon name="attach_file" />
-              </q-item-section>
-              <q-item-section> Attach Image </q-item-section>
-            </q-item>
-
-            <!-- <q-item clickable>
-              <q-item-section avatar>
-                <q-icon name="insert_emoticon" />
-              </q-item-section>
-              <q-item-section>
-                Insert Emoji
-              </q-item-section>
-              <q-menu self="center middle">
-                <picker
-                  v-close-popup
-                  :data="emojiIndex"
-                  set="twitter"
-                  @select="addEmoji"
-                  :title="$t('chatInput.emojiPickerTitle')"
-                  :show-skin-tones="false"
-                />
-              </q-menu>
-            </q-item> -->
-            <q-item>
-              <q-item-section>
-                <q-input
-                  dense
-                  outlined
-                  style="width: 150px"
-                  label="Stamp Price"
-                  suffix="XPI"
-                  v-model="innerStampAmount"
-                  input-class="text-right"
-                />
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-menu>
-      </q-btn>
-
-      <!-- <q-separator vertical /> -->
+      <q-btn
+        dense
+        flat
+        icon="attach_file"
+        class="q-btn"
+        @mousedown.prevent="sendFileClicked"
+      />
+      <q-btn
+        dense
+        flat
+        icon="local_florist"
+        class="q-btn"
+        @mousedown.prevent="giveLotusClicked"
+      />
       <q-input
         ref="inputBox"
         class="full-width q-pl-md"
