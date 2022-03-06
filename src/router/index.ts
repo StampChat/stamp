@@ -4,10 +4,6 @@ import {
   createWebHistory,
   createWebHashHistory,
 } from 'vue-router'
-import { KeyserverHandler } from 'src/cashweb/keyserver'
-import { ReadOnlyRelayClient } from 'src/cashweb/relay'
-import { toAPIAddress } from 'src/utils/address'
-import { keyservers, networkName, displayNetwork } from 'src/utils/constants'
 import type { RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
 import { Store } from 'vuex'
 import { createRoutes } from './routes'
@@ -18,27 +14,7 @@ const protectedRoutes = ['/forum/new-post']
 
 async function addContactFromNavigation<S>(store: Store<S>, address: string) {
   try {
-    // Validate address
-    const apiAddress = toAPIAddress(address) // TODO: Make generic
-    // Pull information from keyserver then relay server
-    const ksHandler = new KeyserverHandler({ keyservers, networkName })
-    const relayURL = await ksHandler.getRelayUrl(apiAddress)
-    if (!relayURL) {
-      return
-    }
-    const relayClient = new ReadOnlyRelayClient(
-      relayURL,
-      networkName,
-      displayNetwork,
-    )
-    const relayData = await relayClient.getRelayData(apiAddress)
-    if (!relayData) {
-      return
-    }
-    store.dispatch('contacts/addContact', {
-      address: apiAddress,
-      contact: { ...relayData, relayURL },
-    })
+    store.dispatch('contacts/addContact', { address })
   } catch (ex) {
     console.error('addContactFromNavigation error:', ex)
   }

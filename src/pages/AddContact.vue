@@ -1,9 +1,7 @@
 <template>
   <q-card class="q-ma-sm">
     <q-card-section>
-      <div class="text-h6">
-        {{ $t('newContactDialog.newContact') }}
-      </div>
+      <div class="text-h6">{{ $t('newContactDialog.newContact') }}</div>
     </q-card-section>
     <q-card-section>
       <q-input
@@ -114,7 +112,7 @@ export default {
     addContact() {
       const cashAddress = toAPIAddress(this.address) // TODO: Make generic
       this.addContactVuex({ address: cashAddress, contact: this.contact })
-      this.$router.replace(`/chat/${cashAddress}`)
+      this.$router.replace(`/chat/${this.address}`)
     },
     cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')

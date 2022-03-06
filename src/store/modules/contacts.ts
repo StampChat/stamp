@@ -12,7 +12,7 @@ import {
 } from '../../utils/constants'
 import { KeyserverHandler } from '../../cashweb/keyserver'
 import moment from 'moment'
-import { toDisplayAddress } from '../../utils/address'
+import { toAPIAddress, toDisplayAddress } from '../../utils/address'
 
 type Profile = {
   name?: string
@@ -184,9 +184,43 @@ const module: Module<State, unknown> = {
       commit('chats/deleteChat', address, { root: true })
       commit('deleteContact', address)
     },
-    addContact({ commit }, { address, contact }) {
-      commit('addContact', { address, contact })
-      commit('chats/setActiveChat', address, { root: true })
+    async addContact({ commit, getters }, { address, contact }) {
+      if (getters.isContact(address)) {
+        return
+      }
+      // Validate address
+      const displayAddress = toDisplayAddress(address) // TODO: Make generic
+
+      if (!contact) {
+        // Validate address
+        const apiAddress = toAPIAddress(address) // TODO: Make generic
+
+        // Pull information from keyserver then relay server
+        const ksHandler = new KeyserverHandler({ keyservers, networkName })
+        const relayURL = await ksHandler.getRelayUrl(apiAddress)
+        if (!relayURL) {
+          return
+        }
+        const relayClient = new ReadOnlyRelayClient(
+          relayURL,
+          networkName,
+          displayNetwork,
+        )
+        const relayData = await relayClient.getRelayData(apiAddress)
+        if (!relayData) {
+          return
+        }
+        commit('addContact', {
+          address: displayAddress,
+          contact: { ...relayData, relayURL },
+        })
+      } else {
+        commit('addContact', {
+          address: displayAddress,
+          contact,
+        })
+      }
+      commit('chats/setActiveChat', displayAddress, { root: true })
     },
     addDefaultContact({ commit, getters }, defaultContact) {
       if (getters.isContact(defaultContact.address)) {
