@@ -580,14 +580,12 @@ const module: Module<State, unknown> = {
         const acceptable = stampValue >= acceptancePrice
         // If not focused (and not outbox message) then notify
         if (
-          !(
-            !document.hasFocus() &&
-            !outbound &&
-            acceptable &&
-            lastRead < newMsg.serverTime &&
-            // Don't notify or reset active chat if we are bulk loading messages
-            messageWrappers.length === 1
-          )
+          document.hasFocus() ||
+          outbound ||
+          !acceptable ||
+          lastRead > newMsg.serverTime ||
+          // Don't notify or reset active chat if we are bulk loading messages
+          messageWrappers.length !== 1
         ) {
           continue
         }
