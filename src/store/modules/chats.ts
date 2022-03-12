@@ -8,14 +8,14 @@ import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'
 import { formatBalance } from '../../utils/formatting'
 import { Utxo } from 'src/cashweb/types/utxo'
-import {
+import type {
   Message,
   MessageItem,
   TextItem,
   ImageItem,
   StealthItem,
 } from 'src/cashweb/types/messages'
-import { ReceivedMessageWrapper } from 'src/cashweb/relay'
+import type { ReceivedMessageWrapper } from 'src/cashweb/types/user-interface'
 
 type ChatMessage = {
   outbound: boolean
@@ -253,6 +253,14 @@ const module: Module<State, unknown> = {
         console.error(displayAddress)
         return null
       }
+      if (lastItem.type === 'forward') {
+        const info = {
+          outbound: lastMessage.outbound,
+          text: 'Forwarded from ' + lastItem.from,
+        }
+        return info
+      }
+
       if (lastItem.type === 'text') {
         const info = {
           outbound: lastMessage.outbound,
