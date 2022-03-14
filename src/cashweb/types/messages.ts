@@ -7,10 +7,16 @@ export interface ReplyItem {
 
 export interface ForwardItem {
   type: 'forward'
+<<<<<<< HEAD
   senderName: string
   senderAddress: string
   receivedTime: number
   items: Array<MessageItem>
+=======
+  from: string
+  address: string
+  content: Array<MessageItem>
+>>>>>>> 628ea17 (Correct type casting for forwarded "content" array values)
 }
 
 export interface TextItem {
