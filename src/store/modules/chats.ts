@@ -256,7 +256,11 @@ const module: Module<State, unknown> = {
       if (lastItem.type === 'forward') {
         const info = {
           outbound: lastMessage.outbound,
+<<<<<<< HEAD
           text: 'Forwarded from ' + lastItem.senderName,
+=======
+          text: 'Forwarded from ' + lastItem.from,
+>>>>>>> a5aec92 (Show "Forwarded from <name>" in chat drawer)
         }
         return info
       }
