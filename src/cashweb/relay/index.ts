@@ -7,7 +7,6 @@ import {
   Profile,
   PayloadEntry,
 } from './relay_pb'
-import stealth from './stealth_pb'
 import p2pkh from './p2pkh_pb'
 
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
@@ -16,7 +15,7 @@ import pop from '../pop'
 import VCard from 'vcf'
 import EventEmitter from 'events'
 import { MessageConstructor } from './constructors'
-import { entryToImage, arrayBufferToBase64 } from './images'
+import { arrayBufferToBase64 } from './images'
 
 import { PayloadConstructor } from './crypto'
 import { messageMixin } from './extension'
@@ -35,54 +34,24 @@ import {
 } from 'bitcore-lib-xpi'
 import { MessageStore } from './storage/storage'
 import { Wallet } from '../wallet'
-import {
-  ReplyItem,
-  TextItem,
-  P2PKHSendItem,
-  MessageItem,
-  MessageWrapper,
-} from '../types/messages'
 import { Utxo } from '../types/utxo'
 import { defaultAcceptancePrice } from 'src/utils/constants'
 import { pAll } from './pAll'
-
-// TODO: Fix this, UI should use the same type
-export interface UIStealthOutput {
-  type: 'stealth'
-  txId: string
-  satoshis: number
-  outputIndex: number
-}
-
-export interface UIStampOutput {
-  type: 'stamp'
-  txId: string
-  satoshis: number
-  outputIndex: number
-}
-
-type UIOutput = UIStealthOutput | UIStampOutput
-
-export type ReceivedMessage = {
-  outbound: boolean
-  status: string
-  items: MessageItem[]
-  serverTime: number
-  receivedTime: number
-  outpoints: Utxo[]
-  senderAddress: string
-  destinationAddress: string
-}
-
-export type ReceivedMessageWrapper = {
-  outbound: boolean
-  senderAddress: string
-  copartyAddress: string
-  copartyPubKey: PublicKey
-  index: string
-  stampValue: number
-  message: Readonly<ReceivedMessage>
-}
+import type {
+  ReceivedMessage,
+  ReceivedMessageWrapper,
+  UIOutput,
+  UIStampOutput,
+} from '../types/user-interface'
+import type {
+  MessageItem,
+  MessageWrapper,
+  P2PKHSendItem,
+  ReplyItem,
+  TextItem,
+} from '../types/messages'
+import { encodeEntry } from './encode-entry'
+import { decodeEntry } from './decode-entry'
 
 export class ReadOnlyRelayClient {
   url: string
@@ -478,69 +447,24 @@ export class RelayClient extends ReadOnlyRelayClient {
     const senderAddress = this.wallet?.myAddress?.toXAddress()
     assert(senderAddress, 'Unable to set senderAddress')
 
-    const stagedUtxos = [] as Utxo[]
-    const outpoints = [] as UIOutput[]
-    const transactions = [] as Transaction[]
+    const stagedUtxos: Utxo[] = []
+    const outpoints: UIOutput[] = []
+    const transactions: Transaction[] = []
+    const entries: PayloadEntry[] = []
 
     // Construct payload
-    const entries = await Promise.all(
-      items.map(async (item: MessageItem) => {
-        assert(
-          this.wallet,
-          'wallet missing while trying to construct a message',
-        )
-        // TODO: internal type does not match protocol. Consistency is good.
-        if (item.type === 'stealth') {
-          const { paymentEntry, transactionBundle } =
-            this.messageConstructor.constructStealthEntry({
-              ...item,
-              wallet: this.wallet,
-              destPubKey: destinationPublicKey,
-            })
-          outpoints.push(
-            ...transactionBundle
-              .map(({ transaction, vouts, usedUtxos }) => {
-                transactions.push(transaction)
-                stagedUtxos.push(...usedUtxos)
-                return vouts.map(
-                  vout =>
-                    ({
-                      type: 'stealth',
-                      txId: transaction.txid,
-                      satoshis: transaction.outputs[vout].satoshis,
-                      outputIndex: vout,
-                    } as UIOutput),
-                )
-              })
-              .flat(1),
-          )
-          return paymentEntry
-        }
-        // TODO: internal type does not match protocol. Consistency is good.
-        if (item.type === 'text') {
-          return this.messageConstructor.constructTextEntry({ ...item })
-        }
-        if (item.type === 'reply') {
-          return this.messageConstructor.constructReplyEntry({ ...item })
-        }
-        if (item.type === 'image') {
-          return this.messageConstructor.constructImageEntry({ ...item })
-        }
-        if (item.type === 'p2pkh') {
-          const { entry, transaction, usedUtxos } =
-            this.messageConstructor.constructP2PKHEntry({
-              ...item,
-              wallet: this.wallet,
-            })
-
-          transactions.push(transaction)
-          usedUtxos.push(...usedUtxos)
-
-          return entry
-        }
-        assert(false, 'Unknown entry type')
-      }),
-    )
+    for (const item of items) {
+      assert(this.wallet, 'wallet missing while trying to construct a message')
+      const [entry, entryTransactions, entryUtxos, entryOutpoints] =
+        encodeEntry(item, destinationPublicKey, {
+          wallet,
+          messageConstructor: this.messageConstructor,
+        })
+      stagedUtxos.push(...entryUtxos)
+      outpoints.push(...entryOutpoints)
+      transactions.push(...entryTransactions)
+      entries.push(entry)
+    }
 
     // Construct payload
     const payload = new Payload()
@@ -982,7 +906,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     }
 
     // Ignore messages below acceptance price
-    let stealthValue = 0
+    const stealthValue = 0
 
     const rawPayload = outbound
       ? parsedMessage.openSelf(identityPrivateKey)
@@ -1005,143 +929,22 @@ export class RelayClient extends ReadOnlyRelayClient {
       senderAddress,
       destinationAddress,
     }
-    for (const index in entriesList) {
-      const entry = entriesList[index]
-      // If address data doesn't exist then add it
-      const kind = entry.getKind()
-
-      if (kind === 'reply') {
-        const entryData = entry.getBody()
-        const payloadDigest = Buffer.from(entryData).toString('hex')
-        newMsg.items.push({
-          type: 'reply',
-          payloadDigest,
-        } as ReplyItem)
-        continue
-      }
-
-      if (kind === 'text-utf8') {
-        const entryData = entry.getBody()
-        if (typeof entryData === 'string') {
-          newMsg.items.push({
-            type: 'text',
-            text: entryData,
-          })
-          continue
-        }
-        assert(
-          typeof entryData !== 'string',
-          `text entry data was a string ${entryData}`,
-        )
-        const text = new TextDecoder().decode(entryData)
-        newMsg.items.push({
-          type: 'text',
-          text,
-        })
-        continue
-      }
-
-      if (kind === 'stealth-payment') {
-        const entryData = entry.getBody()
-        assert(
-          typeof entryData !== 'string',
-          'entryData should not have string type',
-        )
-        const stealthMessage =
-          stealth.StealthPaymentEntry.deserializeBinary(entryData)
-
-        // Add stealth outputs
-        const outpointsList = stealthMessage.getOutpointsList()
-        const ephemeralPubKeyRaw = stealthMessage.getEphemeralPubKey()
-        const ephemeralPubKey = PublicKey.fromBuffer(
-          Buffer.from(ephemeralPubKeyRaw),
-        )
-        const stealthHDPrivKey =
+    for (const entry of entriesList) {
+      const entryData = await decodeEntry(entry, outbound, {
+        constructHDStealthPrivateKey: (publicKey: PublicKey) =>
           this.payloadConstructor.constructHDStealthPrivateKey(
-            ephemeralPubKey,
+            publicKey,
             identityPrivateKey,
-          )
-        for (const [i, outpoint] of outpointsList.entries()) {
-          const stealthTxRaw = Buffer.from(outpoint.getStealthTx())
-          const stealthTx = new Transaction(stealthTxRaw)
-          const txId = stealthTx.txid
-          const vouts = outpoint.getVoutsList()
-
-          if (outbound) {
-            for (const input of stealthTx.inputs) {
-              // Don't add these outputs to our wallet. They're the other persons
-              const utxoId = calcUtxoId({
-                txId: input.prevTxId.toString('hex'),
-                outputIndex: input.outputIndex,
-              })
-              await wallet.deleteUtxo(utxoId)
-            }
-          }
-
-          for (const [j, outputIndex] of vouts.entries()) {
-            const output = stealthTx.outputs[outputIndex]
-            const satoshis = output.satoshis
-
-            const outpointPrivKey = stealthHDPrivKey
-              .deriveChild(44)
-              .deriveChild(145)
-              .deriveChild(i)
-              .deriveChild(j).privateKey
-            const address = output.script.toAddress(this.networkName) // TODO: Make generic
-            // Network doesn't really matter here, just serves as a placeholder to avoid needing to compute the
-            // HASH160(SHA256(point)) ourself
-            // Also, ensure the point is compressed first before calculating the address so the hash is deterministic
-            const computedAddress = new PublicKey(
-              crypto.Point.pointToCompressed(
-                outpointPrivKey.toPublicKey().point,
-              ),
-            ).toAddress(this.networkName)
-            if (
-              !outbound &&
-              !address.toBuffer().equals(computedAddress.toBuffer())
-            ) {
-              console.error('invalid stealth address, ignoring')
-              continue
-            }
-            // total up the satoshis only if we know the txn was valid
-            stealthValue += satoshis
-
-            const stampOutput = {
-              type: 'stealth',
-              address: address.toCashAddress(),
-              satoshis,
-              outputIndex,
-              txId,
-            } as Utxo
-            outpoints.push(stampOutput)
-            if (outbound) {
-              // Don't add these outputs to our wallet. They're the other persons
-              continue
-            }
-            wallet.putUtxo({
-              ...stampOutput,
-              privKey: Object.freeze(outpointPrivKey),
-            })
-          }
-        }
-        newMsg.items.push({
-          type: 'stealth',
-          amount: stealthValue,
-        })
+          ),
+        networkName: this.networkName,
+        wallet: wallet,
+      })
+      if (entryData == null) {
         continue
       }
-
-      if (kind === 'image') {
-        const image = entryToImage(entry)
-
-        // TODO: Save to folder instead of in Vuex
-        newMsg.items.push({
-          type: 'image',
-          image,
-        })
-        continue
-      }
-      console.error('Unknown entry Kind', kind)
+      const [messageItem, entryOutpoints] = entryData
+      newMsg.items.push(messageItem)
+      outpoints.push(...entryOutpoints)
     }
 
     const copartyPubKey = outbound

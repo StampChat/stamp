@@ -8,14 +8,14 @@ import { store } from '../../adapters/level-message-store'
 import { toDisplayAddress } from '../../utils/address'
 import { formatBalance } from '../../utils/formatting'
 import { Utxo } from 'src/cashweb/types/utxo'
-import {
+import type {
   Message,
   MessageItem,
   TextItem,
   ImageItem,
   StealthItem,
 } from 'src/cashweb/types/messages'
-import { ReceivedMessageWrapper } from 'src/cashweb/relay'
+import type { ReceivedMessageWrapper } from 'src/cashweb/types/user-interface'
 
 type ChatMessage = {
   outbound: boolean
