@@ -1,8 +1,17 @@
+import { PublicKey } from 'bitcore-lib-xpi'
 import { Utxo } from './utxo'
 
 export interface ReplyItem {
   type: 'reply'
   payloadDigest: string
+}
+
+export interface ForwardItem {
+  type: 'forward'
+  from: string
+  address: PublicKey
+  timestamp: number
+  content: Array<MessageItem>
 }
 
 export interface TextItem {
@@ -33,6 +42,7 @@ export type MessageItem =
   | P2PKHSendItem
   | TextItem
   | ReplyItem
+  | ForwardItem
   | ImageItem
 
 export interface Message {

@@ -47,6 +47,15 @@ export function encodeEntry(
   if (item.type === 'text') {
     return [messageConstructor.constructTextEntry({ ...item }), [], [], []]
   }
+  if (item.type === 'forward') {
+    const forwardEntry = messageConstructor.constructForwardEntry({
+      ...item,
+      encodeEntry: (item: MessageItem) =>
+        encodeEntry(item, destinationPublicKey, { wallet, messageConstructor }),
+    })
+
+    return [forwardEntry, [], [], []]
+  }
   if (item.type === 'reply') {
     return [messageConstructor.constructReplyEntry({ ...item }), [], [], []]
   }

@@ -44,6 +44,7 @@ import type {
   UIStampOutput,
 } from '../types/user-interface'
 import type {
+  ForwardItem,
   MessageItem,
   MessageWrapper,
   P2PKHSendItem,
@@ -631,6 +632,33 @@ export class RelayClient extends ReadOnlyRelayClient {
         payloadDigest: replyDigest,
       } as ReplyItem)
     }
+    await this.sendMessageImpl({ address, items, stampAmount })
+  }
+
+  async forwardMessage({
+    address,
+    from,
+    fromAddress,
+    timestamp,
+    content,
+    stampAmount,
+  }: {
+    address: string
+    from: string
+    fromAddress: string
+    content: Array<MessageItem>
+    stampAmount: number
+    timestamp: number
+  }) {
+    const items: MessageItem[] = [
+      {
+        type: 'forward',
+        address: this.getPubKey(fromAddress),
+        from,
+        content,
+        timestamp,
+      } as ForwardItem,
+    ]
     await this.sendMessageImpl({ address, items, stampAmount })
   }
 

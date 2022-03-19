@@ -2,7 +2,7 @@
   <div :class="replyOverlay" @click="$emit('replyDivClick', replyDigest)">
     <div class="q-mb-sm reply">
       <div class="row">
-        <div class="col q-px-sm q-py-sm">
+        <div class="col q-pa-sm">
           <!-- Sender Name -->
           <div class="q-mb-xs">
             <b>{{ name }}</b>
@@ -54,16 +54,6 @@ export default {
     },
   },
   emits: ['replyDivClick'],
-  data() {
-    return {
-      colors: {
-        border: '4px solid ' + (this.$q.dark.isActive ? 'white' : 'black'),
-        bg: this.$q.dark.isActive
-          ? 'rgba(0, 0, 0, 0.44)'
-          : 'rgba(255, 255, 255, 0.44)',
-      },
-    }
-  },
   methods: {
     ...mapGetters({
       getMessageByPayloadVuex: 'chats/getMessageByPayload',
@@ -78,14 +68,23 @@ export default {
     replyDigest() {
       return this.message.senderAddress ? this.payloadDigest : null
     },
+    forwardedMessage() {
+      return this.message.items.find(item => item.type === 'forward')
+    },
     items() {
       const sorted = {}
-      this.message.items.map(item => (sorted[item.type] = item))
+      this.forwardedMessage
+        ? this.forwardedMessage.content.map(item => (sorted[item.type] = item))
+        : this.message.items.map(item => (sorted[item.type] = item))
       return sorted
     },
     name() {
-      // if senderAddress undefined, assume deleted message
+      // get sender name of forwarded message
+      if (this.forwardedMessage) {
+        return 'Forwarded from ' + this.forwardedMessage.from
+      }
       const sender = this.message.senderAddress
+      // if senderAddress undefined, assume deleted message
       if (!sender) {
         return 'Message not found'
       }

@@ -115,9 +115,11 @@ export default {
     },
     contactClicked(newAddress) {
       this.vuexSetActiveChat(newAddress)
+      /*
       this.$router.push(`/chat/${newAddress}`).catch(() => {
         // Don't care. Probably duplicate route
       })
+      */
     },
     setupConnections() {
       // Not currently setup. User needs to go through setup flow first

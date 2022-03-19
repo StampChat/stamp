@@ -22,6 +22,14 @@
       />
     </q-dialog>
 
+    <!-- Forward Dialog -->
+    <q-dialog v-model="forwardDialog">
+      <forward-message-dialog
+        :payload-digest="payloadDigest"
+        :title="$t('forwardMessageDialog.title')"
+      />
+    </q-dialog>
+
     <template v-if="payloadDigest">
       <q-chat-message
         :sent="message.outbound"
@@ -33,8 +41,14 @@
         <!-- Wrap a div around the template to keep all items within 1 QChatMessasge -->
         <div>
           <template v-for="(item, subIndex) in message.items" :key="subIndex">
+            <chat-message-forward
+              v-if="item.type == 'forward'"
+              :from="item.from"
+              :address="item.address"
+              :content="item.content"
+            />
             <chat-message-reply
-              v-if="item.type == 'reply'"
+              v-else-if="item.type == 'reply'"
               :payload-digest="item.payloadDigest"
               @replyDivClick="handleReplyDivClick"
             />
@@ -60,6 +74,7 @@
             :outbound="message.outbound"
             @infoClick="transactionDialog = true"
             @deleteClick="deleteDialog = true"
+            @forwardClick="forwardDialog = true"
             @replyClick="replyClicked({ address, payloadDigest })"
             @resendClick="resend()"
           />
@@ -74,6 +89,7 @@
 
 <script>
 import moment from 'moment'
+import ChatMessageForward from './ChatMessageForward.vue'
 import ChatMessageReply from './ChatMessageReply.vue'
 import ChatMessageText from './ChatMessageText.vue'
 import ChatMessageImage from './ChatMessageImage.vue'
@@ -81,13 +97,14 @@ import ChatMessageStealth from './ChatMessageStealth.vue'
 import ChatMessageSuffix from './ChatMessageSuffix.vue'
 import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog.vue'
 import TransactionDialog from '../../dialogs/TransactionDialog.vue'
+import ForwardMessageDialog from '../../dialogs/ForwardMessageDialog.vue'
 import { stampPrice } from '../../../cashweb/wallet/helpers'
 import { mapMutations, mapGetters } from 'vuex'
 
 export default {
   name: 'ChatMessage',
   components: {
-    // ChatMessageMenu,
+    ChatMessageForward,
     ChatMessageReply,
     ChatMessageText,
     ChatMessageImage,
@@ -95,12 +112,14 @@ export default {
     ChatMessageSuffix,
     TransactionDialog,
     DeleteMessageDialog,
+    ForwardMessageDialog,
   },
   emits: ['replyClicked', 'replyDivClick'],
   data() {
     return {
       transactionDialog: false,
       deleteDialog: false,
+      forwardDialog: false,
       provided: {
         mouseover: false,
       },
@@ -180,9 +199,14 @@ export default {
     },
   },
   computed: {
+    forwardedMessage() {
+      return this.message.items.find(item => item.type == 'forward')
+    },
     items() {
       const sorted = {}
-      this.message.items.map(item => (sorted[item.type] = item))
+      this.forwardedMessage
+        ? this.forwardedMessage.content.map(item => (sorted[item.type] = item))
+        : this.message.items.map(item => (sorted[item.type] = item))
       return sorted
     },
     bubbleSize() {

@@ -253,6 +253,14 @@ const module: Module<State, unknown> = {
         console.error(displayAddress)
         return null
       }
+      if (lastItem.type === 'forward') {
+        const info = {
+          outbound: lastMessage.outbound,
+          text: 'Forwarded from ' + lastItem.from,
+        }
+        return info
+      }
+
       if (lastItem.type === 'text') {
         const info = {
           outbound: lastMessage.outbound,

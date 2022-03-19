@@ -1,6 +1,11 @@
 import assert from 'assert'
-import type { ReplyItem, StealthItem, ImageItem } from '../types/messages'
-import { PayloadEntry } from './relay_pb'
+import type {
+  ForwardItem,
+  ReplyItem,
+  StealthItem,
+  ImageItem,
+} from '../types/messages'
+import { ForwardBody, PayloadEntry } from './relay_pb'
 import { entryToImage } from './images'
 import stealth from './stealth_pb'
 import { TextItem, MessageItem } from '../types/messages'
@@ -25,6 +30,39 @@ export async function decodeEntry(
   // If address data doesn't exist then add it
   const kind = entry.getKind()
   const outpoints: Utxo[] = []
+
+  if (kind === 'forward') {
+    const rawForwardBody = entry.getBody()
+    assert(typeof rawForwardBody !== 'string', 'rawForwardBody pubkey empty')
+    const forwardBody = ForwardBody.deserializeBinary(rawForwardBody)
+    const from = forwardBody.getName()
+    const timestamp = forwardBody.getTimestamp()
+    const senderRawPubKey = forwardBody.getSourcePublicKey()
+    assert(typeof senderRawPubKey !== 'string', 'Sender pubkey empty')
+    const senderPubKey = PublicKey.fromBuffer(senderRawPubKey)
+    const entries = forwardBody.getEntriesList()
+    const decodedEntries = await Promise.all(
+      entries.map(entry =>
+        decodeEntry(entry, outbound, {
+          networkName,
+          wallet,
+          constructHDStealthPrivateKey,
+        }),
+      ),
+    )
+    return [
+      {
+        type: 'forward',
+        from,
+        address: senderPubKey,
+        timestamp,
+        content: decodedEntries
+          .map(entry => (entry ? entry[0] : null))
+          .filter(entry => !!entry),
+      } as ForwardItem,
+      outpoints,
+    ]
+  }
 
   if (kind === 'reply') {
     const entryData = entry.getBody()

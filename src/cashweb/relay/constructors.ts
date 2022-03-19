@@ -10,6 +10,7 @@ import assert from 'assert'
 import atob from 'atob'
 
 import {
+  ForwardBody,
   Header,
   Message,
   PayloadEntry,
@@ -25,6 +26,9 @@ import { PayloadConstructor } from './crypto'
 import VCard from 'vcf'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import { Wallet } from '../wallet'
+import { MessageItem } from '../types/messages'
+import { Utxo } from '../types/utxo'
+import { UIOutput } from '../types/user-interface'
 
 export class MessageConstructor {
   payloadConstructor: PayloadConstructor
@@ -183,6 +187,61 @@ export class MessageConstructor {
         err,
       })
     }
+  }
+
+  constructForwardEntry({
+    from,
+    address,
+    content,
+    timestamp,
+    encodeEntry,
+  }: {
+    from: string
+    address: PublicKey
+    timestamp: number
+    content: Array<MessageItem>
+    encodeEntry: (
+      item: MessageItem,
+    ) => [PayloadEntry, Transaction[], Utxo[], UIOutput[]]
+  }) {
+    const entries: PayloadEntry[] = []
+
+    // Construct payload
+    for (const item of content) {
+      if (item.type !== 'text' && item.type !== 'image') {
+        continue
+      }
+
+      const [entry, entryTransactions, entryUtxos, entryOutpoints] =
+        encodeEntry(item)
+      assert(
+        entryTransactions.length == 0,
+        'Attempting to forward an incorrect entry type',
+      )
+      assert(
+        entryUtxos.length == 0,
+        'Attempting to forward an incorrect entry type',
+      )
+      assert(
+        entryOutpoints.length === 0,
+        'Attempting to forward an incorrect entry type',
+      )
+
+      entries.push(entry)
+    }
+
+    const forwardBody = new ForwardBody()
+    forwardBody.setTimestamp(timestamp)
+    forwardBody.setSourcePublicKey(address.toBuffer())
+    forwardBody.setName(from)
+    forwardBody.setEntriesList(entries)
+    const rawForwardBody = forwardBody.serializeBinary()
+
+    const entry = new PayloadEntry()
+    entry.setKind('forward')
+    entry.setBody(rawForwardBody)
+
+    return entry
   }
 
   constructReplyEntry({ payloadDigest }: { payloadDigest: string }) {

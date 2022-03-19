@@ -117,6 +117,12 @@ export default {
     delete: 'Delete',
     message: 'Are you sure you want to delete this message?',
   },
+  forwardMessageDialog: {
+    cancel: 'Cancel',
+    send: 'Send',
+    title: 'Forward Message',
+    message: 'Choose the contact(s) to receive the message',
+  },
   imageDialog: {
     close: 'Close',
   },
