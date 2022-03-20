@@ -1,9 +1,7 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
-      <div class="text-h6">
-        {{ title }}
-      </div>
+      <div class="text-h6">{{ title }}</div>
     </q-card-section>
 
     <!-- message being forarded -->
@@ -39,7 +37,7 @@
               </q-avatar>
             </q-item-section>
             <q-item-section>
-              <q-item-label> {{ contact.profile.name }} </q-item-label>
+              <q-item-label>{{ contact.profile.name }}</q-item-label>
             </q-item-section>
           </q-item>
         </template>
@@ -60,11 +58,14 @@
   </q-card>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
+
 import ChatMessageReply from '../chat/messages/ChatMessageReply.vue'
 import { mapGetters } from 'vuex'
+import { ForwardItem, Message } from 'src/cashweb/types/messages'
 
-export default {
+export default defineComponent({
   components: {
     ChatMessageReply,
   },
@@ -81,7 +82,7 @@ export default {
   data() {
     return {
       selectAll: false,
-      selectedContacts: [],
+      selectedContacts: [] as string[],
     }
   },
   methods: {
@@ -90,40 +91,42 @@ export default {
       getStampAmount: 'chats/getStampAmount',
       vuexGetActiveChat: 'chats/getActiveChat',
     }),
-    filterContact(address) {
+    filterContact(address: string) {
       // don't forward to original sender
       // don't forward to current sender
       // don't forward to current recipient
       switch (address) {
-        case this.forwarded?.address:
         case this.message.senderAddress:
         case this.vuexGetActiveChat():
           return true
       }
       return false
     },
-    selectAllContacts(checked) {
+    selectAllContacts(checked: boolean) {
       this.selectedContacts = []
-      if (checked) {
-        Object.keys(this.contacts).map(address =>
-          this.selectedContacts.push(address),
-        )
+      if (!checked) {
+        return
       }
+
+      Object.keys(this.contacts).map((address: string) =>
+        this.selectedContacts.push(address),
+      )
     },
     sendForward() {
       this.$q.loading.show({ message: 'Forwarding message...' })
       this.selectedContacts.forEach(async address => {
-        const from = this.forwarded?.from || this.from
-        const fromAddress =
-          this.forwarded?.address || this.message.senderAddress
-        const content = this.forwarded?.content || this.content
+        const senderName = this.from
+        const senderAddress = this.message.senderAddress
+        const items = this.content
         const stampAmount = this.getStampAmount()(address)
+        const receivedTime = this.message.receivedTime
         await this.$relayClient.forwardMessage({
           address,
-          from,
-          fromAddress,
-          content,
+          senderName,
+          senderAddress,
+          forwardedItems: items,
           stampAmount,
+          receivedTime,
         })
       })
       this.$q.loading.hide()
@@ -134,13 +137,14 @@ export default {
       contacts: 'contacts/getContacts',
       myProfile: 'myProfile/getProfile',
     }),
-    message() {
-      const message = this.getMessageByPayloadVuex()(this.payloadDigest)
-      return message || { items: [], senderAddress: undefined }
-    },
-    // used if we are forwarding an already-forwarded message
-    forwarded() {
-      return this.message.items.find(item => item.type === 'forward')
+    message(): ForwardItem | Message {
+      const message = this.getMessageByPayloadVuex()(
+        this.payloadDigest,
+      ) as Message
+      const forwardedMessage = message.items.find(
+        item => item.type === 'forward',
+      ) as ForwardItem
+      return forwardedMessage ?? message
     },
     content() {
       // remove replyDigest from the content
@@ -148,12 +152,12 @@ export default {
     },
     from() {
       const senderAddress = this.message.senderAddress
-      return senderAddress !== this.$wallet.myAddress.toXAddress()
+      return senderAddress !== this.$wallet.myAddress?.toXAddress()
         ? this.contacts[senderAddress].profile.name
         : this.myProfile.name
     },
   },
-}
+})
 </script>
 
 <style lang="scss" scoped>

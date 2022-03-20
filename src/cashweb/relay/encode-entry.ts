@@ -14,7 +14,12 @@ export function encodeEntry(
   {
     wallet,
     messageConstructor,
-  }: { wallet: Wallet; messageConstructor: MessageConstructor },
+    getPubKey,
+  }: {
+    wallet: Wallet
+    messageConstructor: MessageConstructor
+    getPubKey: (address: string) => PublicKey
+  },
 ): [PayloadEntry, Transaction[], Utxo[], UIOutput[]] {
   // TODO: internal type does not match protocol. Consistency is good.
   if (item.type === 'stealth') {
@@ -51,7 +56,12 @@ export function encodeEntry(
     const forwardEntry = messageConstructor.constructForwardEntry({
       ...item,
       encodeEntry: (item: MessageItem) =>
-        encodeEntry(item, destinationPublicKey, { wallet, messageConstructor }),
+        encodeEntry(item, destinationPublicKey, {
+          wallet,
+          messageConstructor,
+          getPubKey,
+        }),
+      getPubKey,
     })
 
     return [forwardEntry, [], [], []]

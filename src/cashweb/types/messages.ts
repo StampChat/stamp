@@ -1,4 +1,3 @@
-import { PublicKey } from 'bitcore-lib-xpi'
 import { Utxo } from './utxo'
 
 export interface ReplyItem {
@@ -8,10 +7,10 @@ export interface ReplyItem {
 
 export interface ForwardItem {
   type: 'forward'
-  from: string
-  address: PublicKey
-  timestamp: number
-  content: Array<MessageItem>
+  senderName: string
+  senderAddress: string
+  receivedTime: number
+  items: Array<MessageItem>
 }
 
 export interface TextItem {

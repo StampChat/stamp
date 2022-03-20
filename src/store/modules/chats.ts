@@ -256,7 +256,7 @@ const module: Module<State, unknown> = {
       if (lastItem.type === 'forward') {
         const info = {
           outbound: lastMessage.outbound,
-          text: 'Forwarded from ' + lastItem.from,
+          text: 'Forwarded from ' + lastItem.senderName,
         }
         return info
       }

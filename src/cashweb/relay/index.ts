@@ -460,6 +460,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         encodeEntry(item, destinationPublicKey, {
           wallet,
           messageConstructor: this.messageConstructor,
+          getPubKey: this.getPubKey,
         })
       stagedUtxos.push(...entryUtxos)
       outpoints.push(...entryOutpoints)
@@ -637,26 +638,26 @@ export class RelayClient extends ReadOnlyRelayClient {
 
   async forwardMessage({
     address,
-    from,
-    fromAddress,
-    timestamp,
-    content,
+    senderName,
+    senderAddress,
+    receivedTime,
+    forwardedItems,
     stampAmount,
   }: {
     address: string
-    from: string
-    fromAddress: string
-    content: Array<MessageItem>
+    senderName: string
+    senderAddress: string
+    forwardedItems: Array<MessageItem>
     stampAmount: number
-    timestamp: number
+    receivedTime: number
   }) {
     const items: MessageItem[] = [
       {
         type: 'forward',
-        address: this.getPubKey(fromAddress),
-        from,
-        content,
-        timestamp,
+        senderAddress,
+        senderName,
+        items: forwardedItems,
+        receivedTime,
       } as ForwardItem,
     ]
     await this.sendMessageImpl({ address, items, stampAmount })

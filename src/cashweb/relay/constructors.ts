@@ -190,24 +190,26 @@ export class MessageConstructor {
   }
 
   constructForwardEntry({
-    from,
-    address,
-    content,
-    timestamp,
+    senderName,
+    senderAddress,
+    items,
+    receivedTime,
     encodeEntry,
+    getPubKey,
   }: {
-    from: string
-    address: PublicKey
-    timestamp: number
-    content: Array<MessageItem>
+    senderName: string
+    senderAddress: string
+    receivedTime: number
+    items: Array<MessageItem>
     encodeEntry: (
       item: MessageItem,
     ) => [PayloadEntry, Transaction[], Utxo[], UIOutput[]]
+    getPubKey: (address: string) => PublicKey
   }) {
     const entries: PayloadEntry[] = []
 
     // Construct payload
-    for (const item of content) {
+    for (const item of items) {
       if (item.type !== 'text' && item.type !== 'image') {
         continue
       }
@@ -230,10 +232,11 @@ export class MessageConstructor {
       entries.push(entry)
     }
 
+    const senderPublicKey = getPubKey(senderAddress)
     const forwardBody = new ForwardBody()
-    forwardBody.setTimestamp(timestamp)
-    forwardBody.setSourcePublicKey(address.toBuffer())
-    forwardBody.setName(from)
+    forwardBody.setTimestamp(receivedTime)
+    forwardBody.setSourcePublicKey(senderPublicKey.toBuffer())
+    forwardBody.setName(senderName)
     forwardBody.setEntriesList(entries)
     const rawForwardBody = forwardBody.serializeBinary()
 

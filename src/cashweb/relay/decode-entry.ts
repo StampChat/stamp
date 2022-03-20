@@ -35,8 +35,8 @@ export async function decodeEntry(
     const rawForwardBody = entry.getBody()
     assert(typeof rawForwardBody !== 'string', 'rawForwardBody pubkey empty')
     const forwardBody = ForwardBody.deserializeBinary(rawForwardBody)
-    const from = forwardBody.getName()
-    const timestamp = forwardBody.getTimestamp()
+    const senderName = forwardBody.getName()
+    const receivedTime = forwardBody.getTimestamp()
     const senderRawPubKey = forwardBody.getSourcePublicKey()
     assert(typeof senderRawPubKey !== 'string', 'Sender pubkey empty')
     const senderPubKey = PublicKey.fromBuffer(senderRawPubKey)
@@ -53,10 +53,10 @@ export async function decodeEntry(
     return [
       {
         type: 'forward',
-        from,
-        address: senderPubKey,
-        timestamp,
-        content: decodedEntries
+        senderName,
+        senderAddress: senderPubKey.toAddress(networkName).toXAddress(),
+        receivedTime,
+        items: decodedEntries
           .map(entry => (entry ? entry[0] : null))
           .filter(entry => !!entry),
       } as ForwardItem,
