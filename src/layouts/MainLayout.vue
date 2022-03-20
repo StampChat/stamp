@@ -53,7 +53,8 @@ export default {
       contactBookOpen: false,
       compact: false,
       compactWidth,
-      notificationPermission: window.Notification.permission,
+      notificationPermission:
+        typeof Notification !== 'undefined' ? Notification.permission : null,
     }
   },
   methods: {
@@ -87,9 +88,25 @@ export default {
       this.myDrawerOpen = !this.myDrawerOpen
     },
     promptNotificationPermission() {
-      window.Notification.requestPermission().then(
-        () => (this.notificationPermission = window.Notification.permission),
-      )
+      if (typeof Notification === 'undefined') {
+        return
+      }
+      try {
+        Notification.requestPermission().then(
+          () => (this.notificationPermission = Notification.permission),
+        )
+      } catch (error) {
+        // Safari doesn't return a promise for requestPermissions and it
+        // throws a TypeError. It takes a callback as the first argument
+        // instead.
+        if (error instanceof TypeError) {
+          Notification.requestPermission(() => {
+            this.notificationPermission = Notification.permission
+          })
+        } else {
+          throw error
+        }
+      }
     },
     shortcutKeyListener(e) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
