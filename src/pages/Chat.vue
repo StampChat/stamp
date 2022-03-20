@@ -1,9 +1,8 @@
 <template>
-  <div hidden>{{ messagesToShow }}</div>
   <q-scroll-area
     ref="chatScroll"
     @scroll="scrollHandler"
-    class="q-px-none absolute full-width full-height"
+    class="q-px-none absolute full-width full-height column"
   >
     <div class="row q-px-lg">
       <template
@@ -73,7 +72,9 @@
   </q-footer>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
+
 import { mapState, mapGetters, mapActions } from 'vuex'
 import ChatMessage from '../components/chat/messages/ChatMessage.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
@@ -83,18 +84,25 @@ import { addressColorFromStr } from '../utils/formatting'
 import { insufficientStampNotify } from '../utils/notifications'
 import { stampLowerLimit } from '../utils/constants'
 
-import { debounce } from 'quasar'
+import { debounce, QScrollArea } from 'quasar'
+
+import { RouteLocationNormalized } from 'vue-router'
+import { Message } from 'src/cashweb/types/messages'
 
 const scrollDuration = 0
 
-export default {
+export default defineComponent({
   components: {
     ChatMessage,
     ChatMessageReply,
     ChatInput,
   },
-  beforeRouteUpdate(to, from, next) {
-    this.address = to.params.address
+  beforeRouteUpdate(
+    to: RouteLocationNormalized,
+    from: RouteLocationNormalized,
+    next: () => void,
+  ) {
+    this.address = to.params.address as string
     this.messagesToShow = 30
     next()
   },
@@ -102,13 +110,12 @@ export default {
     window.removeEventListener('resize', this.resizeHandler)
   },
   data() {
-    console.log(this.$route.params.address)
     return {
-      address: this.$route.params.address,
-      bottom: true,
+      address: this.$route.params.address as string,
+      bottom: true as boolean,
       messagesToShow: 30,
-      replyDigest: null,
-      scrollDigest: null,
+      replyDigest: null as string | null,
+      scrollDigest: null as string | null,
       chatWidth: 0,
       message: '',
     }
@@ -122,9 +129,12 @@ export default {
     window.addEventListener('resize', debounce(this.resizeHandler, 50))
   },
   updated() {
-    if (this.scrollDigest) {
-      this.$nextTick(() => this.scrollToMessage(this.scrollDigest))
-    }
+    this.$nextTick(() => {
+      if (!this.scrollDigest) {
+        return
+      }
+      this.scrollToMessage(this.scrollDigest)
+    })
   },
   methods: {
     ...mapGetters({
@@ -134,13 +144,21 @@ export default {
     ...mapActions({
       setStampAmount: 'chats/setStampAmount',
     }),
-    toSendFileDialog(args) {
+    toSendFileDialog(args: unknown) {
       this.$emit('sendFileClicked', args)
     },
     resizeHandler() {
-      this.chatWidth = this.$refs.chatScroll.$el.scrollWidth
+      const chatScroll = this.$refs.chatScroll as QScrollArea | undefined
+      if (!chatScroll || !chatScroll.$el) {
+        return
+      }
+      this.chatWidth = chatScroll.$el.scrollWidth
     },
-    scrollHandler(details) {
+    scrollHandler(details: {
+      verticalSize: number
+      verticalContainerSize: number
+      verticalPosition: number
+    }) {
       if (
         // Ten pixels from top
         details.verticalPosition <= 10
@@ -158,7 +176,7 @@ export default {
     },
     // Used by sticky QButton to scroll to bottom
     buttonScrollBottom() {
-      const scrollArea = this.$refs.chatScroll
+      const scrollArea = this.$refs.chatScroll as QScrollArea | undefined
       if (!scrollArea) {
         // Not mounted yet
         return
@@ -173,7 +191,7 @@ export default {
       })
     },
     scrollBottom() {
-      const scrollArea = this.$refs.chatScroll
+      const scrollArea = this.$refs.chatScroll as QScrollArea | undefined
       if (!scrollArea) {
         // Not mounted yet
         return
@@ -192,54 +210,58 @@ export default {
         )
       })
     },
-    scrollToMessage: debounce(function (digest) {
-      // if no digest, it means message was deleted or otherwise can't be found
-      if (!digest) {
-        return
-      }
-      const message = this.$refs[digest]?.$el
-      // if no message, load more, then try again
-      if (!message) {
-        this.scrollDigest = digest
-        this.messagesToShow += 30
-        return
-      }
-      // Scroll the message into view
-      this.scrollDigest = null
-      this.$nextTick(() => message.scrollIntoView({ behavior: 'smooth' }))
-    }, 50),
+    scrollToMessage(digest: string) {
+      return debounce(() => {
+        // if no digest, it means message was deleted or otherwise can't be found
+        if (!digest) {
+          return
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const message = (this.$refs as any)[digest]?.$el
+        // if no message, load more, then try again
+        if (!message) {
+          this.scrollDigest = digest
+          this.messagesToShow += 30
+          return
+        }
+        // Scroll the message into view
+        this.scrollDigest = null
+        this.$nextTick(() => message.scrollIntoView({ behavior: 'smooth' }))
+      }, 50)
+    },
     nameColor() {
       return addressColorFromStr(this.address)
     },
-    sendMessage(message) {
+    sendMessage(message: string) {
       const stampAmount = this.getStampAmount()(this.address)
       const acceptancePrice = this.getAcceptancePrice()(this.address)
       if (stampAmount < acceptancePrice) {
         insufficientStampNotify()
       }
-      if (message !== '') {
-        this.$relayClient.sendMessage({
-          address: this.address,
-          text: message,
-          replyDigest: this.replyDigest,
-          stampAmount,
-        })
-        this.message = ''
-        this.replyDigest = null
-        // After message send, scroll to bottom if not already there
-        if (!this.bottom) {
-          this.$nextTick(this.buttonScrollBottom)
-        }
+      if (!message) {
+        return
+      }
+      this.$relayClient.sendMessage({
+        address: this.address,
+        text: message,
+        replyDigest: this.replyDigest ?? undefined,
+        stampAmount,
+      })
+      this.message = ''
+      this.replyDigest = null
+      // After message send, scroll to bottom if not already there
+      if (!this.bottom) {
+        this.$nextTick(this.buttonScrollBottom)
       }
     },
-    getContact(outbound) {
+    getContact(outbound: boolean) {
       if (outbound) {
         return this.getProfile
       } else {
         return this.getContactVuex(this.address).profile
       }
     },
-    setReply(payloadDigest) {
+    setReply(payloadDigest: string | null) {
       console.log('setting reply')
       this.replyDigest = payloadDigest
     },
@@ -251,7 +273,7 @@ export default {
       getMessageByPayload: 'chats/getMessageByPayload',
     }),
     ...mapState('chats', ['chats']),
-    messages() {
+    messages(): Message[] {
       const activeChat = this.chats[this.address]
       return activeChat ? activeChat.messages : []
     },
@@ -269,7 +291,7 @@ export default {
       return this.messages.slice(start, end)
     },
     stampAmount: {
-      set(stampAmount) {
+      set(stampAmount: string | undefined) {
         const stampAmountNumber = Math.max(stampLowerLimit, Number(stampAmount))
         this.setStampAmount({
           address: this.address,
@@ -295,14 +317,14 @@ export default {
       // TODO: Scroll to last unread
     },
   },
-}
+})
 </script>
 
 <style lang="scss" scoped>
-::v-deep .message-color {
+:deep() .message-color {
   background-color: var(--q-message-color);
 }
-::v-deep .message-color-sent {
+:deep() .message-color-sent {
   background-color: var(--q-message-color-sent);
 }
 </style>

@@ -615,7 +615,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   }: {
     address: string
     text: string
-    replyDigest: string
+    replyDigest?: string
     stampAmount: number
   }) {
     // Send locally

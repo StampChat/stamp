@@ -15,7 +15,7 @@
     <!-- Send file dialog -->
     <!-- TODO: Move this up.  We don't need a copy of this dialog for each address (likely) -->
     <q-dialog v-model="sendFileOpen">
-      <send-file-dialog :address="address" :file="pasted.image" />
+      <send-file-dialog :address="address" :file="image" />
     </q-dialog>
 
     <!-- Send money dialog -->
@@ -35,9 +35,7 @@
         <q-avatar rounded>
           <img :src="contactProfile.avatar" />
         </q-avatar>
-        <q-toolbar-title class="h6">
-          {{ contactProfile.name }}
-        </q-toolbar-title>
+        <q-toolbar-title class="h6">{{ contactProfile.name }}</q-toolbar-title>
         <q-space />
         <q-btn
           class="q-px-sm"
@@ -60,15 +58,16 @@
   </q-layout>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { mapGetters } from 'vuex'
+import { RouteLocationNormalized } from 'vue-router'
 
 import RightDrawer from '../components/panels/ChatRightDrawer.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import SendLotusDialog from '../components/dialogs/SendLotusDialog.vue'
 
-export default {
-  props: {},
+export default defineComponent({
   emits: ['toggleMyDrawerOpen'],
   components: {
     RightDrawer,
@@ -77,27 +76,24 @@ export default {
   },
   data() {
     return {
-      // TODO: Timer isn't used delete
-      timer: null,
-      sendFileOpen: false,
-      sendMoneyOpen: false,
-      address: this.$route.params.address,
+      sendFileOpen: false as boolean,
+      sendMoneyOpen: false as boolean,
+      address: this.$route.params.address as string,
       contactDrawerOpen: false,
-      pasted: {
-        image: null,
-      },
+      image: null as unknown | null,
     }
   },
-  beforeRouteUpdate(to, from, next) {
-    this.address = to.params.address
+  beforeRouteUpdate(
+    to: RouteLocationNormalized,
+    from: RouteLocationNormalized,
+    next: () => void,
+  ) {
+    this.address = to.params.address as string
     next()
   },
-  unmounted() {
-    clearTimeout(this.timer)
-  },
   methods: {
-    toSendFileDialog(args) {
-      this.pasted.image = args
+    toSendFileDialog(args: unknown) {
+      this.image = args
       this.sendFileOpen = true
     },
   },
@@ -109,7 +105,7 @@ export default {
       return this.getContact(this.address).profile
     },
   },
-}
+})
 </script>
 
 <style lang="scss" scoped>
