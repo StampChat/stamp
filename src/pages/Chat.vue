@@ -5,10 +5,7 @@
     class="q-px-none absolute full-width full-height column"
   >
     <div class="row q-px-lg">
-      <template
-        v-for="(msg, index) in chunkedMessages"
-        :key="msg.payloadDigest"
-      >
+      <template v-for="(msg, index) in chunkedMessages" :key="msg.payloadDigest">
         <chat-message
           :index="index"
           :message="msg"
@@ -45,13 +42,7 @@
       <!-- Reply box -->
       <div class="row justify-end">
         <div class="col-auto">
-          <q-btn
-            dense
-            flat
-            color="accent"
-            icon="close"
-            @click="setReply(null)"
-          />
+          <q-btn dense flat color="accent" icon="close" @click="setReply(null)" />
         </div>
       </div>
       <div class="row q-px-sm q-pt-sm">
