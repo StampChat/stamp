@@ -23,9 +23,17 @@
   </q-card>
 </template>
 
-<script>
-import { mapMutations } from 'vuex'
-export default {
+<script lang="ts">
+import { useChatStore } from 'src/stores/chats'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  setup() {
+    const chatStore = useChatStore()
+    return {
+      deleteMessage: chatStore.deleteMessage,
+    }
+  },
   props: {
     address: {
       type: String,
@@ -41,9 +49,6 @@ export default {
     },
   },
   methods: {
-    ...mapMutations({
-      deleteMessage: 'chats/deleteMessage',
-    }),
     async deleteMessageBoth() {
       // TODO: Move this into wallet API
       // TODO: More private
@@ -54,9 +59,9 @@ export default {
         this.deleteMessage({
           address: this.address,
           payloadDigest: this.payloadDigest,
-          index: this.index,
         })
-      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         console.error(err)
         if (err.response) {
           console.error(err.response)
@@ -64,5 +69,5 @@ export default {
       }
     },
   },
-}
+})
 </script>

@@ -20,10 +20,11 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { mapGetters } from 'vuex'
-import AMessage from '../components/forum/ForumMessage.vue'
 
+import { useForumStore } from 'src/stores/forum'
 import { sortPostsByMode } from '../utils/sorting'
+
+import AMessage from '../components/forum/ForumMessage.vue'
 
 export default defineComponent({
   props: {},
@@ -33,6 +34,17 @@ export default defineComponent({
   data() {
     return {}
   },
+  setup() {
+    const forumStore = useForumStore()
+    return {
+      messages: forumStore.getMessages,
+      sortMode: forumStore.getSortMode,
+      topics: forumStore.getTopics,
+      selectedTopic: forumStore.getSelectedTopic,
+      voteThreshold: forumStore.getVoteThreshold,
+      compactView: forumStore.getCompactView,
+    }
+  },
   emits: ['set-topic'],
   methods: {
     showMessage(topic: string) {
@@ -40,14 +52,6 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapGetters({
-      messages: 'forum/getMessages',
-      sortMode: 'forum/getSortMode',
-      topics: 'forum/getTopics',
-      selectedTopic: 'forum/getSelectedTopic',
-      voteThreshold: 'forum/getVoteThreshold',
-      compactView: 'forum/getCompactView',
-    }),
     sortedPosts() {
       return sortPostsByMode(this.messages, this.sortMode).filter(
         msg => msg.satoshis >= this.voteThreshold * 1_000_000,

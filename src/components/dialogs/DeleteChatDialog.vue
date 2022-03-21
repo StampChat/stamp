@@ -25,10 +25,17 @@
   </q-card>
 </template>
 
-<script>
-import { mapMutations } from 'vuex'
+<script lang="ts">
+import { useChatStore } from 'src/stores/chats'
+import { defineComponent } from 'vue'
 
-export default {
+export default defineComponent({
+  setup() {
+    const chatStore = useChatStore()
+    return {
+      deleteChat: chatStore.deleteChat,
+    }
+  },
   props: {
     address: {
       type: String,
@@ -39,10 +46,5 @@ export default {
       default: () => '',
     },
   },
-  methods: {
-    ...mapMutations({
-      deleteChat: 'chats/deleteChat',
-    }),
-  },
-}
+})
 </script>

@@ -72,7 +72,11 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, PropType } from 'vue'
+
+import { useChatStore } from '../../../stores/chats'
+
 import moment from 'moment'
 import ChatMessageReply from './ChatMessageReply.vue'
 import ChatMessageText from './ChatMessageText.vue'
@@ -82,9 +86,9 @@ import ChatMessageSuffix from './ChatMessageSuffix.vue'
 import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog.vue'
 import TransactionDialog from '../../dialogs/TransactionDialog.vue'
 import { stampPrice } from '../../../cashweb/wallet/helpers'
-import { mapMutations, mapGetters } from 'vuex'
+import { Message, MessageItem } from 'src/cashweb/types/messages'
 
-export default {
+export default defineComponent({
   name: 'ChatMessage',
   components: {
     // ChatMessageMenu,
@@ -108,13 +112,21 @@ export default {
       // reactiveTimestampInterval: null
     }
   },
+  setup() {
+    const chats = useChatStore()
+
+    return {
+      deleteMessage: chats.deleteMessage,
+      getStampAmount: chats.getStampAmount,
+    }
+  },
   props: {
     address: {
       type: String,
       required: true,
     },
     message: {
-      type: Object,
+      type: Object as PropType<Message>,
       required: true,
     },
     name: {
@@ -143,13 +155,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations({
-      deleteMessage: 'chats/deleteMessage',
-    }),
-    ...mapGetters({
-      getStampAmount: 'chats/getStampAmount',
-    }),
-    handleReplyDivClick(args) {
+    handleReplyDivClick(args: MouseEvent) {
       this.$emit('replyDivClick', args)
     },
     swipeRight() {
@@ -162,16 +168,15 @@ export default {
       this.deleteMessage({
         address: this.address,
         payloadDigest: this.payloadDigest,
-        index: this.index,
       })
-      const stampAmount = this.getStampAmount()(this.address)
+      const stampAmount = this.getStampAmount(this.address)
       return this.$relayClient.sendMessageImpl({
         address: this.address,
         items: this.message.items,
         stampAmount,
       })
     },
-    replyClicked(args) {
+    replyClicked(args: { address: string; payloadDigest: string }) {
       this.$emit('replyClicked', args)
     },
     mouseoverCheckMobile() {
@@ -181,7 +186,13 @@ export default {
   },
   computed: {
     items() {
-      const sorted = {}
+      const sorted: {
+        text?: MessageItem
+        image?: MessageItem
+        reply?: MessageItem
+        stealth?: MessageItem
+        p2pkh?: MessageItem
+      } = {}
       this.message.items.map(item => (sorted[item.type] = item))
       return sorted
     },
@@ -199,9 +210,13 @@ export default {
         base = 3
         textLen = 70
       }
-      const text = this.items.text?.text
-      const image = this.items.image?.image
-      const reply = this.items.reply?.payloadDigest
+      const text = this.items.text?.type === 'text' ? this.items.text?.text : ''
+      const image =
+        this.items.image?.type === 'image' ? this.items.image?.image : ''
+      const reply =
+        this.items.reply?.type === 'reply'
+          ? this.items.reply?.payloadDigest
+          : ''
       if ((text && text.length >= textLen) || image) {
         base += 1
         return String(base)
@@ -214,7 +229,7 @@ export default {
     shortTimestamp() {
       switch (this.message.status) {
         case 'confirmed': {
-          const timestamp = this.message.timestamp || this.message.serverTime
+          const timestamp = this.message.receivedTime || this.message.serverTime
           // return moment(timestamp).fromNow(true)
           const howLongAgo = moment(timestamp)
           return howLongAgo.calendar(null, {
@@ -252,5 +267,5 @@ export default {
       return this.$q.dark.isActive ? 'white' : 'black'
     },
   },
-}
+})
 </script>

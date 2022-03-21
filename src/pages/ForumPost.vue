@@ -8,13 +8,21 @@
 </template>
 
 <script lang="ts">
-import { ForumMessage } from 'src/cashweb/types/forum'
 import { defineComponent } from 'vue'
-import { mapActions, mapGetters } from 'vuex'
+
+import { useForumStore, MessageWithReplies } from 'src/stores/forum'
 
 import AMessage from '../components/forum/ForumMessage.vue'
 
 export default defineComponent({
+  setup() {
+    const forumStore = useForumStore()
+
+    return {
+      getMessage: forumStore.getMessage,
+      fetchMessage: forumStore.fetchMessage,
+    }
+  },
   components: {
     AMessage,
   },
@@ -23,34 +31,30 @@ export default defineComponent({
     const payloadDigest = this.$route.params.payloadDigest as string
     return {
       payloadDigest,
-      message: {} as Partial<ForumMessage>,
+      message: {} as Partial<MessageWithReplies>,
     }
   },
   async mounted() {
     this.payloadDigest = this.$route.params.payloadDigest as string
-    this.message = (await this.$store.dispatch('forum/fetchMessage', {
+    const message = await this.fetchMessage({
       wallet: this.$wallet,
       payloadDigest: this.payloadDigest,
-    })) as ForumMessage
+    })
+    if (message) {
+      this.message = message
+    }
   },
   async beforeRouteUpdate(to, from, next) {
     this.payloadDigest = to.params.payloadDigest as string
-    this.message = (await this.$store.dispatch('forum/fetchMessage', {
+    const message = await this.fetchMessage({
       wallet: this.$wallet,
       payloadDigest: this.payloadDigest,
-    })) as ForumMessage
+    })
+    if (message) {
+      this.message = message
+    }
     console.log('returned msg', this.message)
     next()
-  },
-  computed: {
-    ...mapGetters({
-      getMessage: 'forum/getMessage',
-    }),
-  },
-  methods: {
-    ...mapActions({
-      fetchMessage: 'forum/fetchMessage',
-    }),
   },
 })
 </script>

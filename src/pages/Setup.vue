@@ -79,8 +79,7 @@
 <script lang="ts">
 import assert from 'assert'
 
-import { defineComponent } from 'vue'
-import { mapActions, mapGetters, mapMutations } from 'vuex'
+import { defineComponent, computed } from 'vue'
 import { QStepper } from 'quasar'
 
 import { HDPrivateKey } from 'bitcore-lib-xpi'
@@ -88,7 +87,7 @@ import { generateMnemonic } from 'bip39'
 
 import { KeyserverHandler } from '../cashweb/keyserver'
 import pop from '../cashweb/pop'
-import { getRelayClient } from '../adapters/vuex-relay-adapter'
+import { getRelayClient } from '../adapters/pinia-relay-adapter'
 import {
   defaultRelayData,
   defaultRelayUrl,
@@ -105,6 +104,12 @@ import EulaStep from '../components/setup/EULAStep.vue'
 
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate'
 import { calcUtxoId } from 'src/cashweb/wallet/helpers'
+import { useRelayClientStore } from 'src/stores/relay-client'
+import { useWalletStore } from 'src/stores/wallet'
+import { useChatStore } from 'src/stores/chats'
+import { useAppearanceStore } from 'src/stores/appearance'
+import { useProfileStore } from 'src/stores/my-profile'
+import { useContactStore } from 'src/stores/contacts'
 
 export default defineComponent({
   components: {
@@ -112,13 +117,38 @@ export default defineComponent({
     DepositStep,
     EulaStep,
   },
+  setup() {
+    const relayClient = useRelayClientStore()
+    const chats = useChatStore()
+    const wallet = useWalletStore()
+    const appearance = useAppearanceStore()
+    const myProfile = useProfileStore()
+    const contacts = useContactStore()
+
+    return {
+      setRelayToken: relayClient.setToken,
+      resetChats: chats.reset,
+      darkMode: appearance.setDarkMode,
+      updateInterval: computed(() => contacts.updateInterval),
+      setUpdateInterval: contacts.setUpdateInterval,
+      seedPhrase: computed(() => wallet.seedPhrase),
+      setRelayData: myProfile.setRelayData,
+      resetWallet: wallet.reset,
+      setXPrivKey: wallet.setXPrivKey,
+      setSeedPhrase: wallet.setSeedPhrase,
+      balance: computed(() => wallet.balance),
+    }
+  },
   data() {
+    const wallet = useWalletStore()
+    const contacts = useContactStore()
+
     return {
       step: 1,
       accountData: {
         name: '',
         valid: false,
-        seed: this.getSeedPhrase() || generateMnemonic(),
+        seed: wallet.seedPhrase || generateMnemonic(),
       },
       relayData: defaultRelayData,
       relayUrl: defaultRelayUrl,
@@ -126,33 +156,13 @@ export default defineComponent({
       seed: '',
       settings: {
         networking: {
-          updateInterval: this.getUpdateInterval() / 1_000,
-        },
-        appearance: {
-          darkMode: this.getDarkMode(),
+          updateInterval: contacts.updateInterval / 1_000,
         },
       },
     }
   },
   emits: ['setupCompleted', 'toggleMyDrawerOpen'],
   methods: {
-    ...mapActions({
-      setRelayToken: 'relayClient/setToken',
-      resetChats: 'chats/reset',
-      darkMode: 'appearance/setDarkMode',
-    }),
-    ...mapGetters({
-      getUpdateInterval: 'contacts/getUpdateInterval',
-      getDarkMode: 'appearance/getDarkMode',
-      getSeedPhrase: 'wallet/getSeedPhrase',
-    }),
-    ...mapMutations({
-      setRelayData: 'myProfile/setRelayData',
-      resetWallet: 'wallet/reset',
-      setXPrivKey: 'wallet/setXPrivKey',
-      setSeedPhrase: 'wallet/setSeedPhrase',
-      updateInterval: 'contacts/setUpdateInterval',
-    }),
     selectRandomAvatar() {
       const avatarName =
         defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)]
@@ -249,7 +259,6 @@ export default defineComponent({
       // We do this first to prevent uploading broken URL to keyserver
       const { client: relayClient } = await getRelayClient({
         relayUrl: this.relayUrl,
-        store: this.$store,
         wallet: this.$wallet,
       })
       try {
@@ -303,7 +312,6 @@ export default defineComponent({
     async setupRelay() {
       const { client: relayClient } = await getRelayClient({
         relayUrl: this.relayUrl,
-        store: this.$store,
         wallet: this.$wallet,
       })
 
@@ -414,7 +422,9 @@ export default defineComponent({
       await this.resetChats()
       await this.setUpKeyserver()
       await this.setupRelay()
-      await this.updateInterval(this.settings.networking.updateInterval * 1_000)
+      await this.setUpdateInterval(
+        this.settings.networking.updateInterval * 1_000,
+      )
       await this.$emit('setupCompleted')
     },
     next() {
@@ -444,7 +454,6 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapGetters({ balance: 'wallet/balance' }),
     forwardEnabled() {
       if (!this.$indexer.connected) {
         return false
@@ -493,3 +502,6 @@ export default defineComponent({
   },
 })
 </script>
+
+function useApperanceStore() { throw new Error('Function not implemented.') }
+function useApperanceStore() { throw new Error('Function not implemented.') }

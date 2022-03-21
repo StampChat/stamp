@@ -320,14 +320,18 @@ export class MessageConstructor {
   }
 
   constructProfileMetadata(
-    profileObj: { name: string; bio: string; avatar: string },
+    profileObj: { name?: string; bio?: string; avatar?: string },
     priceFilter: PriceFilter,
     privKey: PrivateKey,
   ) {
     // Construct vCard
     const vCard = new VCard()
-    vCard.set('fn', profileObj.name)
-    vCard.set('note', profileObj.bio)
+    if (profileObj.name) {
+      vCard.set('fn', profileObj.name)
+    }
+    if (profileObj.bio) {
+      vCard.set('note', profileObj.bio)
+    }
     const rawCard = new TextEncoder().encode(vCard.toString())
 
     const cardEntry = new ProfileEntry()
@@ -338,23 +342,25 @@ export class MessageConstructor {
     const imgEntry = new ProfileEntry()
     imgEntry.setKind('avatar')
 
-    const arr = profileObj.avatar.split(',')
-    assert(arr.length > 0, 'image string is invalid.')
-    const matches = arr[0].match(/:(.*?);/)
-    assert(matches && matches.length > 1, 'matches is the wrong length')
-    const avatarType = matches[1]
-    const bstr = atob(arr[1])
-    let n = bstr.length
-    const rawAvatar = new Uint8Array(n)
+    if (profileObj.avatar) {
+      const arr = profileObj.avatar.split(',')
+      assert(arr.length > 0, 'image string is invalid.')
+      const matches = arr[0].match(/:(.*?);/)
+      assert(matches && matches.length > 1, 'matches is the wrong length')
+      const avatarType = matches[1]
+      const bstr = atob(arr[1])
+      let n = bstr.length
+      const rawAvatar = new Uint8Array(n)
 
-    while (n--) {
-      rawAvatar[n] = bstr.charCodeAt(n)
+      while (n--) {
+        rawAvatar[n] = bstr.charCodeAt(n)
+      }
+      const imgHeader = new Header()
+      imgHeader.setName('data')
+      imgHeader.setValue(avatarType)
+      imgEntry.setBody(rawAvatar)
+      imgEntry.addHeaders(imgHeader)
     }
-    const imgHeader = new Header()
-    imgHeader.setName('data')
-    imgHeader.setValue(avatarType)
-    imgEntry.setBody(rawAvatar)
-    imgEntry.addHeaders(imgHeader)
 
     // Construct price filter
     const filterEntry = new ProfileEntry()

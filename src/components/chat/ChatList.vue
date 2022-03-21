@@ -7,7 +7,7 @@
           title="Forum"
           route="/forum"
           icon="forum"
-          @click="vuexSetActiveChat(undefined)"
+          @click="setActiveChat(undefined)"
         />
         <chat-list-link
           title="Login/Sign Up"
@@ -24,7 +24,7 @@
             :value-unread="formatBalance(contact.totalUnreadValue)"
             :num-unread="contact.totalUnreadMessages"
             :compact="compact"
-            @click="vuexSetActiveChat(contact.address)"
+            @click="setActiveChat(contact.address)"
           />
         </template>
         <q-item v-if="getSortedChatOrder.length === 0 && $status.setup">
@@ -37,13 +37,29 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
+import { storeToRefs } from 'pinia'
+
 import ChatListItem from './ChatListItem.vue'
 import ChatListLink from './ChatListLink.vue'
-import { mapGetters, mapActions } from 'vuex'
 import { formatBalance } from '../../utils/formatting'
+import { useChatStore } from '../../stores/chats'
+import { useWalletStore } from '../../stores/wallet'
 
-export default {
+export default defineComponent({
+  setup() {
+    const chatStore = useChatStore()
+    const { getSortedChatOrder } = storeToRefs(chatStore)
+    const walletStore = useWalletStore()
+    const { balance } = storeToRefs(walletStore)
+
+    return {
+      getSortedChatOrder,
+      balance,
+      setStoredActiveChat: chatStore.setActiveChat,
+    }
+  },
   props: {
     compact: {
       type: Boolean,
@@ -59,26 +75,22 @@ export default {
     return {}
   },
   methods: {
-    ...mapActions({ vuexSetActiveChat: 'chats/setActiveChat' }),
+    setActiveChat(address: string) {
+      this.setStoredActiveChat(address)
+    },
     toggleMyDrawerOpen() {
       this.$emit('toggleMyDrawerOpen')
     },
-    formatBalance(balance) {
+    formatBalance(balance?: number) {
       if (!balance) {
         return
       }
       return formatBalance(balance)
     },
   },
-  computed: {
-    ...mapGetters({
-      getSortedChatOrder: 'chats/getSortedChatOrder',
-      getNumUnread: 'chats/getNumUnread',
-      balance: 'wallet/balance',
-    }),
-  },
-}
+})
 </script>
+
 <style lang="scss" scoped>
 .active-chat-list-item {
   background: var(--q-color-bg-active);

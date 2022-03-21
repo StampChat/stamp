@@ -1,6 +1,6 @@
 <template>
   <q-card class="q-ma-sm">
-    <q-splitter :value="110" unit="px" disable>
+    <q-splitter :model-value="110" unit="px" disable>
       <template #before>
         <q-tabs v-model="tab" vertical class="text-primary">
           <q-tab
@@ -62,34 +62,31 @@
   </q-card>
 </template>
 
-<script>
-import { mapGetters, mapActions, mapMutations } from 'vuex'
+<script lang="ts">
+import { defineComponent, ref } from 'vue'
+import { QInput } from 'quasar'
 
-export default {
-  props: {
-    value: {
-      type: Object,
-      default: () => ({}),
-    },
+import { useAppearanceStore } from 'src/stores/appearance'
+import { useContactStore } from 'src/stores/contacts'
+
+export default defineComponent({
+  setup() {
+    const appearanceStore = useAppearanceStore()
+    const contactStore = useContactStore()
+    return {
+      darkMode: ref(appearanceStore.darkMode),
+      setDarkMode: appearanceStore.setDarkMode,
+      setUpdateInterval: contactStore.setUpdateInterval,
+      updateInterval: contactStore.updateInterval,
+      contactRefreshInterval: ref<QInput | null>(null),
+    }
   },
   data() {
     return {
       tab: 'networking',
-      darkMode: this.getDarkMode(),
-      updateInterval: this.getUpdateInterval() / 60000,
     }
   },
   methods: {
-    ...mapGetters({
-      getUpdateInterval: 'contacts/getUpdateInterval',
-      getDarkMode: 'appearance/getDarkMode',
-    }),
-    ...mapActions({
-      setDarkMode: 'appearance/setDarkMode',
-    }),
-    ...mapMutations({
-      setUpdateInterval: 'contacts/setUpdateInterval',
-    }),
     save() {
       this.setDarkMode(this.darkMode)
       this.$q.dark.set(this.darkMode)
@@ -101,7 +98,7 @@ export default {
     },
   },
   mounted() {
-    this.$refs.contactRefreshInterval.$el.focus()
+    this.contactRefreshInterval?.focus()
   },
-}
+})
 </script>

@@ -6,9 +6,7 @@
     </q-dialog>
 
     <q-card-section>
-      <div class="text-h6">
-        {{ $t('receiveBitcoinDialog.walletStatus') }}
-      </div>
+      <div class="text-h6">{{ $t('receiveBitcoinDialog.walletStatus') }}</div>
     </q-card-section>
     <q-card-section>
       <div class="text-bold text-subtitle1 text-center">
@@ -59,42 +57,42 @@
   </q-card>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, computed } from 'vue'
+
 import QrcodeVue from 'qrcode.vue'
 import SeedPhraseDialog from '../components/dialogs/SeedPhraseDialog.vue'
-import { mapGetters } from 'vuex'
 import { formatBalance } from '../utils/formatting'
 import { copyToClipboard } from 'quasar'
+import { useWalletStore } from 'src/stores/wallet'
 
-export default {
+export default defineComponent({
+  setup() {
+    const wallet = useWalletStore()
+    return {
+      formattedBalance: computed(() => {
+        return formatBalance(wallet.balance)
+      }),
+    }
+  },
   components: {
     SeedPhraseDialog,
     QrcodeVue,
   },
   data() {
     return {
-      seedPhraseOpen: false,
-      legacy: false,
+      seedPhraseOpen: false as boolean,
+      legacy: false as boolean,
     }
-  },
-  computed: {
-    ...mapGetters({
-      balance: 'wallet/balance',
-    }),
-    formattedBalance() {
-      return formatBalance(this.balance)
-    },
-    displayAddress() {
-      return this.legacy
-        ? this.$wallet.myAddress.toXAddress()
-        : this.$wallet.displayAddress
-    },
   },
   methods: {
     toggleLegacy() {
       this.legacy = !this.legacy
     },
     copyAddress() {
+      if (!this.displayAddress) {
+        return
+      }
       copyToClipboard(this.displayAddress)
         .then(() => {
           this.$q.notify({
@@ -113,5 +111,12 @@ export default {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     },
   },
-}
+  computed: {
+    displayAddress(): string | undefined {
+      return this.legacy
+        ? this.$wallet.myAddress?.toXAddress()
+        : this.$wallet.displayAddress
+    },
+  },
+})
 </script>

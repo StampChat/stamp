@@ -16,12 +16,12 @@
 
       <q-item>
         <q-item-section>
-          <q-item-label class="text-weight-bold text-white" lines="1">
-            {{ name }}
-          </q-item-label>
-          <q-item-label class="text-white" caption lines="1">
-            {{ displayAddress }}
-          </q-item-label>
+          <q-item-label class="text-weight-bold text-white" lines="1">{{
+            name
+          }}</q-item-label>
+          <q-item-label class="text-white" caption lines="1">{{
+            displayAddress
+          }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-btn

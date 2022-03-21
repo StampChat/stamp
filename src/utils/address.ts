@@ -5,14 +5,14 @@ import { networkName, displayNetwork } from './constants'
 // different addresses in the codebase in different places.
 // TODO: Need to audit everything to make sure the same versions
 // are used everywhere.
-export function toAPIAddress(address: string) {
+export function toAPIAddress(address: string | Address) {
   return new Address(
     new Address(address).hashBuffer,
     Networks.get(networkName, undefined),
   ).toCashAddress()
 }
 
-export function toDisplayAddress(address: string) {
+export function toDisplayAddress(address: string | Address) {
   return new Address(
     new Address(address).hashBuffer,
     Networks.get(displayNetwork, undefined),

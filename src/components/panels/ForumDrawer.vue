@@ -67,10 +67,10 @@
 </template>
 
 <script lang="ts">
+import { useForumStore } from 'src/stores/forum'
 import { defineComponent } from 'vue'
-import { mapActions, mapGetters, mapMutations } from 'vuex'
 
-import { sortModes } from '../../utils/sorting'
+import { sortModes, SortMode } from '../../utils/sorting'
 
 const DURATIONS = [
   { label: '1 Day', value: 1000 * 60 * 60 * 24 * 1 },
@@ -78,6 +78,23 @@ const DURATIONS = [
 ]
 
 export default defineComponent({
+  setup() {
+    const forum = useForumStore()
+    return {
+      topics: forum.getTopics,
+      getSelectedTopic: forum.getSelectedTopic,
+      getSortMode: forum.getSortMode,
+      getDuration: forum.getDuration,
+      getVoteThreshold: forum.getVoteThreshold,
+      getCompactView: forum.getCompactView,
+      refreshMessages: forum.refreshMessages,
+      setSelectedTopic: forum.setSelectedTopic,
+      setSortMode: forum.setSortMode,
+      setDuration: forum.setDuration,
+      setVoteThreshold: forum.setVoteThreshold,
+      setCompactView: forum.setCompactView,
+    }
+  },
   components: {},
   data() {
     return {
@@ -87,16 +104,6 @@ export default defineComponent({
     }
   },
   methods: {
-    ...mapActions({
-      refreshMessages: 'forum/refreshMessages',
-    }),
-    ...mapMutations({
-      setSelectedTopic: 'forum/setSelectedTopic',
-      setSortMode: 'forum/setSortMode',
-      setDuration: 'forum/setDuration',
-      setVoteThreshold: 'forum/setVoteThreshold',
-      setCompactView: 'forum/setCompactView',
-    }),
     refreshContent() {
       this.refreshMessages({ wallet: this.$wallet, topic: this.selectedTopic })
     },
@@ -106,17 +113,12 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapGetters({
-      topics: 'forum/getTopics',
-      getSelectedTopic: 'forum/getSelectedTopic',
-      getSortMode: 'forum/getSortMode',
-      getDuration: 'forum/getDuration',
-      getVoteThreshold: 'forum/getVoteThreshold',
-      getCompactView: 'forum/getCompactView',
-    }),
     sortMode: {
       set(newVal?: string) {
-        this.setSortMode(newVal ?? 'hot')
+        if (!newVal || !sortModes.includes(newVal as SortMode)) {
+          return
+        }
+        this.setSortMode(newVal as SortMode)
       },
       get(): string {
         return this.getSortMode
@@ -133,7 +135,7 @@ export default defineComponent({
     duration: {
       set(newVal?: { label: string; value: number }) {
         console.log(newVal)
-        this.setDuration(newVal?.value ?? '')
+        this.setDuration(newVal?.value ?? 0)
         this.refreshContent()
       },
       get(): { label: string; value: number } | undefined {
@@ -142,7 +144,7 @@ export default defineComponent({
     },
     compactView: {
       set(newVal?: boolean) {
-        this.setCompactView(newVal)
+        this.setCompactView(newVal ?? false)
       },
       get(): boolean {
         return this.getCompactView
@@ -155,7 +157,7 @@ export default defineComponent({
         this.setVoteThreshold(newThreshold)
       },
       get(): string {
-        return this.getVoteThreshold
+        return this.getVoteThreshold.toString()
       },
     },
   },

@@ -1,18 +1,26 @@
 import { RelayClient } from '../cashweb/relay'
 import { defaultRelayUrl, networkName } from '../utils/constants'
-import { store as levelDbStore } from '../adapters/level-message-store'
+import { store as levelDbStore } from './level-message-store'
 import { toRaw, reactive } from 'vue'
+import { Wallet } from 'src/cashweb/wallet'
+import { useContactStore } from 'src/stores/contacts'
+import { useChatStore } from 'src/stores/chats'
 
 export async function getRelayClient({
   wallet,
-  store,
   relayUrl = defaultRelayUrl,
+}: {
+  wallet: Wallet
+  relayUrl: string
 }) {
+  const contacts = useContactStore()
+  const chats = useChatStore()
+
   const observables = reactive({ connected: false })
   const client = new RelayClient(relayUrl, wallet, {
     getPubKey: address => {
-      const destPubKey = store.getters['contacts/getPubKey'](address)
-      return destPubKey
+      const destPubKey = contacts.getPubKey(address)
+      return destPubKey ?? null
     },
     networkName,
     messageStore: await levelDbStore,
@@ -34,17 +42,18 @@ export async function getRelayClient({
       index,
       items,
       outpoints,
-      transactions,
+      // transactions,
       previousHash,
     }) => {
-      store.commit('chats/sendMessageLocal', {
+      chats.sendMessageLocal({
         address,
         senderAddress,
         index,
         items,
         outpoints: toRaw(outpoints),
-        transactions,
+        // transactions,
         previousHash,
+        status: 'sending',
       })
     },
   )
@@ -56,16 +65,16 @@ export async function getRelayClient({
       index,
       items,
       outpoints,
-      transactions,
+      // transactions,
       previousHash,
     }) => {
-      store.commit('chats/sendMessageLocal', {
+      chats.sendMessageLocal({
         address,
         senderAddress,
         index,
         items,
         outpoints: toRaw(outpoints),
-        transactions,
+        // transactions,
         previousHash,
         status: 'error',
       })
@@ -79,23 +88,23 @@ export async function getRelayClient({
       index,
       items,
       outpoints,
-      transactions,
+      // transactions,
       previousHash,
     }) => {
-      store.commit('chats/sendMessageLocal', {
+      chats.sendMessageLocal({
         address,
         senderAddress,
         index,
         items,
         outpoints: toRaw(outpoints),
-        transactions,
+        // transactions,
         previousHash,
         status: 'confirmed',
       })
     },
   )
   client.events.on('receivedMessages', messages => {
-    store.dispatch('chats/receiveMessages', messages)
+    chats.receiveMessages(messages)
   })
 
   return { client, observables }

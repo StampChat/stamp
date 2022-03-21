@@ -31,7 +31,7 @@
         >
           <template #no-option>
             <q-item>
-              <q-item-section class="text-grey"> No results </q-item-section>
+              <q-item-section class="text-grey">No results</q-item-section>
             </q-item>
           </template>
         </q-select>
@@ -66,7 +66,7 @@
   </q-card>
 
   <q-card class="q-ma-sm" v-if="getMessage(parentDigest)">
-    <q-card-section> Replying to: </q-card-section>
+    <q-card-section>Replying to:</q-card-section>
     <a-message
       :message="getMessage(parentDigest)"
       :show-replies="false"
@@ -77,23 +77,34 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { mapActions, mapGetters, mapMutations } from 'vuex'
+
 import { renderMarkdown } from '../utils/markdown'
+import { useForumStore } from 'src/stores/forum'
 
 import AMessage from '../components/forum/ForumMessage.vue'
 import { errorNotify, infoNotify } from 'src/utils/notifications'
 
 export default defineComponent({
+  setup() {
+    const forum = useForumStore()
+    return {
+      getMessage: forum.getMessage,
+      availableTopics: forum.getTopics,
+      pushNewTopic: forum.pushNewTopic,
+      postMessage: forum.putMessage,
+    }
+  },
   components: {
     AMessage,
   },
   emits: ['setTopic'],
   props: {},
   data() {
+    const forum = useForumStore()
     const parentDigest = this.$route.params.parentDigest as string
     return {
       offering: 10,
-      topic: this.$store.state.forum.index[parentDigest]?.topic ?? '',
+      topic: forum.index[parentDigest]?.topic ?? '',
       topics: [] as string[],
       title: '',
       url: null,
@@ -106,20 +117,12 @@ export default defineComponent({
     next()
   },
   computed: {
-    ...mapGetters({
-      getMessage: 'forum/getMessage',
-      availableTopics: 'forum/getTopics',
-    }),
     markedMessage() {
       const text: string = this.message
       return renderMarkdown(text, this.$q.dark.isActive)
     },
   },
   methods: {
-    ...mapMutations({ pushNewTopic: 'forum/pushNewTopic' }),
-    ...mapActions({
-      postMessage: 'forum/putMessage',
-    }),
     filterTopics(inputTopic: string, update: (arg: () => void) => void) {
       update(() => {
         this.topics = [
@@ -147,12 +150,16 @@ export default defineComponent({
     },
     async post() {
       const entry = {
-        kind: 'post',
+        kind: 'post' as const,
         title: this.title,
-        url: this.url ? this.url : null,
+        url: this.url ? this.url : undefined,
         message: this.message,
       }
       console.log('posting message', entry)
+      if (!entry) {
+        console.error('entry is null in CreatePost.vue post handler')
+        return
+      }
 
       try {
         await this.postMessage({

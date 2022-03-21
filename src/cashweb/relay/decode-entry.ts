@@ -152,8 +152,6 @@ export async function decodeEntry(
 
   if (kind === 'image') {
     const image = entryToImage(entry)
-
-    // TODO: Save to folder instead of in Vuex
     return [
       {
         type: 'image',

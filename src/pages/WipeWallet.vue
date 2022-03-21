@@ -27,27 +27,32 @@
   </q-card>
 </template>
 
-<script>
-import { errorNotify } from '../utils/notifications'
-import { mapMutations } from 'vuex'
+<script lang="ts">
+import { defineComponent } from 'vue'
 
-export default {
+import { useChatStore } from 'src/stores/chats'
+import { errorNotify } from '../utils/notifications'
+
+export default defineComponent({
+  setup() {
+    const chatStore = useChatStore()
+    return {
+      deleteMessage: chatStore.deleteMessage,
+    }
+  },
   props: {},
   data() {
     return {}
   },
   methods: {
-    ...mapMutations({
-      deleteMessage: 'chats/deleteMessage',
-    }),
     wipeWallet() {
       this.$q.loading.show({
         delay: 100,
         message: this.$t('wipeWallet.spinnerText'),
       })
       this.$relayClient
-        .wipeWallet(({ address, payloadDigest, index }) => {
-          this.deleteMessage({ address, payloadDigest, index })
+        .wipeWallet(({ address, payloadDigest }) => {
+          this.deleteMessage({ address, payloadDigest })
         })
         .then(() => this.$q.loading.hide())
         .catch(err => {
@@ -59,5 +64,5 @@ export default {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     },
   },
-}
+})
 </script>

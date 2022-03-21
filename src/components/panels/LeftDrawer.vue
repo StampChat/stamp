@@ -37,18 +37,44 @@
   </div>
 </template>
 
-<script>
-import { mapActions, mapGetters, mapState } from 'vuex'
+<script lang="ts">
+import { defineComponent, computed } from 'vue'
 
 import ChatList from '../chat/ChatList.vue'
 import SettingsPanel from '../panels/SettingsPanel.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 import { formatBalance } from '../../utils/formatting'
 import { openPage } from '../../utils/routes'
+import { useWalletStore } from 'src/stores/wallet'
+import { useChatStore } from 'src/stores/chats'
+import { useAppearanceStore } from 'src/stores/appearance'
+import { useProfileStore } from 'src/stores/my-profile'
+import { useContactStore } from 'src/stores/contacts'
 
 const compactCutoff = 325
 
-export default {
+export default defineComponent({
+  setup() {
+    const chats = useChatStore()
+    const wallet = useWalletStore()
+    const appearance = useAppearanceStore()
+    const myProfile = useProfileStore()
+    const contacts = useContactStore()
+
+    return {
+      setActiveChat: chats.setActiveChat,
+      addDefaultContact: contacts.addDefaultContact,
+      darkMode: computed(() => appearance.darkMode),
+      activeCharAddr: computed(() => chats.activeChatAddr),
+      getContact: contacts.getContact,
+      lastReceived: chats.getLastReceived,
+      totalUnread: chats.totalUnread,
+      getRelayData: myProfile,
+      getSortedChatOrder: chats.getSortedChatOrder,
+      getNumUnread: chats.getNumUnread,
+      formattedBalance: computed(() => formatBalance(wallet.balance)),
+    }
+  },
   components: {
     ChatList,
     SettingsPanel,
@@ -63,17 +89,13 @@ export default {
       newContactOpen: false,
       //
       trueSplitterRatio: compactCutoff,
+      contactBookOpen: false as boolean,
+      compact: false as boolean,
+      myDrawerOpen: false as boolean,
     }
   },
   methods: {
-    ...mapActions({
-      setActiveChat: 'chats/setActiveChat',
-      addDefaultContact: 'contacts/addDefaultContact',
-    }),
-    ...mapGetters({
-      getDarkMode: 'appearance/getDarkMode',
-    }),
-    tweak(offset, viewportHeight) {
+    tweak(offset: number, viewportHeight: number) {
       const height = viewportHeight - offset + 'px'
       return { height, minHeight: height }
     },
@@ -87,12 +109,12 @@ export default {
       }
       this.myDrawerOpen = !this.myDrawerOpen
     },
-    shortcutKeyListener(e) {
+    shortcutKeyListener(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         this.toggleContactBookOpen()
       }
     },
-    contactClicked(address) {
+    contactClicked(address: string) {
       this.contactBookOpen = false
 
       return this.setActiveChat(address)
@@ -102,28 +124,12 @@ export default {
     },
   },
   computed: {
-    ...mapState('chats', ['chats', 'activeChatAddr']),
-    ...mapGetters({
-      getContact: 'contacts/getContact',
-      lastReceived: 'chats/getLastReceived',
-      totalUnread: 'chats/totalUnread',
-      getRelayData: 'myProfile/getRelayData',
-      getSortedChatOrder: 'chats/getSortedChatOrder',
-      getNumUnread: 'chats/getNumUnread',
-      balance: 'wallet/balance',
-    }),
-    relayConnected() {
+    relayConnected(): boolean {
       return this.$relay.connected
     },
-    walletConnected() {
+    walletConnected(): boolean {
       return this.$indexer.connected
     },
-    formattedBalance() {
-      if (!this.balance) {
-        return
-      }
-      return formatBalance(this.balance)
-    },
   },
-}
+})
 </script>

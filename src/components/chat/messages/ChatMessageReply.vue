@@ -34,13 +34,16 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
 import ChatMessageText from './ChatMessageText.vue'
 import ChatMessageImage from './ChatMessageImage.vue'
 import ChatMessageStealth from './ChatMessageStealth.vue'
-import { mapGetters } from 'vuex'
+import { useChatStore } from 'src/stores/chats'
+import { useContactStore } from 'src/stores/contacts'
+import { MessageItem } from 'src/cashweb/types/messages'
 
-export default {
+export default defineComponent({
   name: 'ChatMessageReply',
   components: {
     ChatMessageText,
@@ -64,22 +67,31 @@ export default {
       },
     }
   },
-  methods: {
-    ...mapGetters({
-      getMessageByPayloadVuex: 'chats/getMessageByPayload',
-      getContact: 'contacts/getContact',
-    }),
+  setup() {
+    const chats = useChatStore()
+    const contacts = useContactStore()
+
+    return {
+      getMessageByPayloadVuex: chats.getMessageByPayload,
+      getContact: contacts.getContact,
+    }
   },
   computed: {
     message() {
-      const message = this.getMessageByPayloadVuex()(this.payloadDigest)
-      return message || { items: [], senderAddress: undefined }
+      const message = this.getMessageByPayloadVuex(this.payloadDigest)
+      return message || { items: [], senderAddress: undefined, outbound: false }
     },
     replyDigest() {
       return this.message.senderAddress ? this.payloadDigest : null
     },
     items() {
-      const sorted = {}
+      const sorted: {
+        text?: MessageItem
+        image?: MessageItem
+        reply?: MessageItem
+        stealth?: MessageItem
+        p2pkh?: MessageItem
+      } = {}
       this.message.items.map(item => (sorted[item.type] = item))
       return sorted
     },
@@ -89,10 +101,10 @@ export default {
       if (!sender) {
         return 'Message not found'
       }
-      if (sender === this.$wallet.myAddress.toXAddress()) {
+      if (sender === this.$wallet.myAddress?.toXAddress()) {
         return 'You'
       }
-      const contact = this.getContact()(sender)
+      const contact = this.getContact(sender)
       if (!contact) {
         return 'Not Found'
       }
@@ -103,7 +115,7 @@ export default {
       return this.message.outbound ? 'message-color-sent' : 'message-color'
     },
   },
-}
+})
 </script>
 
 <style lang="scss" scoped>

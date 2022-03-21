@@ -106,11 +106,14 @@ export class ReadOnlyRelayClient {
     const entryList = payload.getEntriesList()
     const rawCard = entryList.find(isVCard)?.getBody() // TODO: Cancel if not found
     assert(typeof rawCard !== 'string')
-    const strCard = new TextDecoder().decode(rawCard)
-    const vCard = new VCard().parse(strCard)
-
-    const name = vCard.data.fn.valueOf().toString()
-
+    let name = 'Undefined'
+    try {
+      const strCard = new TextDecoder().decode(rawCard)
+      const vCard = new VCard().parse(strCard)
+      name = vCard.data.fn.valueOf().toString()
+    } catch (err) {
+      console.error('Error parsing vcard', err)
+    }
     // const bio = vCard.data.note._data
     const bio = ''
 
@@ -148,7 +151,7 @@ export class RelayClient extends ReadOnlyRelayClient {
   url: string
   events: EventEmitter
   wallet?: Wallet
-  getPubKey: (address: string) => PublicKey
+  getPubKey: (address: string) => PublicKey | null
   messageStore: MessageStore
   relayReconnectInterval: number
   payloadConstructor: PayloadConstructor
@@ -167,7 +170,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       relayReconnectInterval?: number
       networkName?: string
       messageStore: MessageStore
-      getPubKey: (address: string) => PublicKey
+      getPubKey: (address: string) => PublicKey | null
     },
   ) {
     super(url, networkName, 'livenet')
@@ -671,7 +674,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     address: string
     image: string
     caption: string
-    replyDigest: string
+    replyDigest?: string
     stampAmount: number
   }) {
     const items: MessageItem[] = [
@@ -1006,9 +1009,9 @@ export class RelayClient extends ReadOnlyRelayClient {
   async updateProfile(
     idPrivKey: PrivateKey,
     profile: {
-      name: string
-      bio: string
-      avatar: string
+      name?: string
+      bio?: string
+      avatar?: string
     },
     acceptancePrice?: number,
   ) {

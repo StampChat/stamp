@@ -29,7 +29,7 @@
           </q-item-section>
         </q-item>
       </q-card-section>
-      <q-card-section class="q-py-none" v-else-if="contact === 'loading'">
+      <q-card-section class="q-py-none" v-else-if="loading">
         <q-item>
           <q-item-section avatar>
             <q-skeleton type="QAvatar" />
@@ -69,18 +69,34 @@
   </q-card>
 </template>
 
-<script>
-import { mapActions } from 'vuex'
+<script lang="ts">
+import { defineComponent, ref } from 'vue'
+import { QInput } from 'quasar'
+
+import { ContactState, useContactStore } from 'src/stores/contacts'
 import { KeyserverHandler } from '../cashweb/keyserver'
 import { toAPIAddress } from '../utils/address'
 import { keyservers, networkName } from '../utils/constants'
+import { PublicKey } from 'bitcore-lib-xpi'
 
-export default {
+export default defineComponent({
   data() {
     return {
       address: '',
-      contact: null,
+      contact: {} as Partial<ContactState> | null,
     }
+  },
+  setup() {
+    const contactStore = useContactStore()
+    return {
+      addressRef: ref<QInput | null>(null),
+      addContactToStore: contactStore.addContact,
+    }
+  },
+  computed: {
+    loading(): boolean {
+      return this.address !== '' && this.contact === null
+    },
   },
   watch: {
     address: async function (newAddress) {
@@ -88,7 +104,6 @@ export default {
         this.contact = null
         return
       }
-      this.contact = 'loading'
       try {
         // Validate address
         const address = toAPIAddress(newAddress.trim()) // TODO: Make generic
@@ -98,27 +113,33 @@ export default {
         const relayURL = await ksHandler.getRelayUrl(address)
         const relayData = await this.$relayClient.getRelayData(address)
         relayData.notify = true
-        this.contact = relayData
-        this.contact.relayURL = relayURL
+        this.contact = {
+          ...relayData,
+          profile: {
+            ...relayData.profile,
+            pubKey: PublicKey.fromBuffer(relayData.profile.pubKey),
+          },
+        }
+        this.contact.relayURL = relayURL ?? null
       } catch {
         this.contact = null
       }
     },
   },
   methods: {
-    ...mapActions({
-      addContactVuex: 'contacts/addContact',
-    }),
     addContact() {
+      if (!this.contact) {
+        return
+      }
       const cashAddress = toAPIAddress(this.address) // TODO: Make generic
-      this.addContactVuex({ address: cashAddress, contact: this.contact })
+      this.addContactToStore({ address: cashAddress, contact: this.contact })
     },
     cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     },
   },
   mounted() {
-    this.$refs.address.$el.focus()
+    this.addressRef?.$el.focus()
   },
-}
+})
 </script>

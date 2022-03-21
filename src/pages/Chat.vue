@@ -73,21 +73,23 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 
-import { mapState, mapGetters, mapActions } from 'vuex'
 import ChatMessage from '../components/chat/messages/ChatMessage.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessageReply from '../components/chat/messages/ChatMessageReply.vue'
 
 import { addressColorFromStr } from '../utils/formatting'
 import { insufficientStampNotify } from '../utils/notifications'
-import { stampLowerLimit } from '../utils/constants'
+import { defaultAcceptancePrice, stampLowerLimit } from '../utils/constants'
 
 import { debounce, QScrollArea } from 'quasar'
 
 import { RouteLocationNormalized } from 'vue-router'
 import { Message } from 'src/cashweb/types/messages'
+import { useContactStore } from 'src/stores/contacts'
+import { useProfileStore } from 'src/stores/my-profile'
+import { useChatStore } from 'src/stores/chats'
 
 const scrollDuration = 0
 
@@ -120,6 +122,22 @@ export default defineComponent({
       message: '',
     }
   },
+  setup() {
+    const chats = useChatStore()
+    const contacts = useContactStore()
+    const myProfile = useProfileStore()
+
+    return {
+      getAcceptancePrice: contacts.getAcceptancePrice,
+      getStampAmount: chats.getStampAmount,
+      setStampAmount: chats.setStampAmount,
+      getContactVuex: contacts.getContact,
+      getProfile: myProfile,
+      getMessageByPayload: chats.getMessageByPayload,
+      chats: chats.chats,
+      chatScroll: ref<QScrollArea | null>(null),
+    }
+  },
   emits: ['giveLotusClicked', 'sendFileClicked'],
   mounted() {
     this.scrollBottom()
@@ -137,18 +155,11 @@ export default defineComponent({
     })
   },
   methods: {
-    ...mapGetters({
-      getAcceptancePrice: 'contacts/getAcceptancePrice',
-      getStampAmount: 'chats/getStampAmount',
-    }),
-    ...mapActions({
-      setStampAmount: 'chats/setStampAmount',
-    }),
     toSendFileDialog(args: unknown) {
       this.$emit('sendFileClicked', args)
     },
     resizeHandler() {
-      const chatScroll = this.$refs.chatScroll as QScrollArea | undefined
+      const chatScroll = this.chatScroll
       if (!chatScroll || !chatScroll.$el) {
         return
       }
@@ -176,7 +187,7 @@ export default defineComponent({
     },
     // Used by sticky QButton to scroll to bottom
     buttonScrollBottom() {
-      const scrollArea = this.$refs.chatScroll as QScrollArea | undefined
+      const scrollArea = this.chatScroll
       if (!scrollArea) {
         // Not mounted yet
         return
@@ -191,7 +202,7 @@ export default defineComponent({
       })
     },
     scrollBottom() {
-      const scrollArea = this.$refs.chatScroll as QScrollArea | undefined
+      const scrollArea = this.chatScroll
       if (!scrollArea) {
         // Not mounted yet
         return
@@ -233,8 +244,9 @@ export default defineComponent({
       return addressColorFromStr(this.address)
     },
     sendMessage(message: string) {
-      const stampAmount = this.getStampAmount()(this.address)
-      const acceptancePrice = this.getAcceptancePrice()(this.address)
+      const stampAmount = this.getStampAmount(this.address)
+      const acceptancePrice =
+        this.getAcceptancePrice(this.address) ?? defaultAcceptancePrice
       if (stampAmount < acceptancePrice) {
         insufficientStampNotify()
       }
@@ -256,9 +268,9 @@ export default defineComponent({
     },
     getContact(outbound: boolean) {
       if (outbound) {
-        return this.getProfile
+        return this.getProfile.profile
       } else {
-        return this.getContactVuex(this.address).profile
+        return this.getContactVuex(this.address)?.profile
       }
     },
     setReply(payloadDigest: string | null) {
@@ -267,12 +279,6 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapGetters({
-      getContactVuex: 'contacts/getContact',
-      getProfile: 'myProfile/getProfile',
-      getMessageByPayload: 'chats/getMessageByPayload',
-    }),
-    ...mapState('chats', ['chats']),
     messages(): Message[] {
       const activeChat = this.chats[this.address]
       return activeChat ? activeChat.messages : []
@@ -299,7 +305,7 @@ export default defineComponent({
         })
       },
       get() {
-        return Number(this.getStampAmount()(this.address))
+        return Number(this.getStampAmount(this.address))
       },
     },
   },

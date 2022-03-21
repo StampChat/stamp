@@ -13,7 +13,7 @@
         :address="address"
         :name="contact.profile.name"
       />
-    </q-dialog> -->
+    </q-dialog>-->
 
     <!-- Delete chat dialog -->
     <!-- <q-dialog v-model="confirmDeleteOpen">
@@ -22,7 +22,7 @@
         :name="contact.profile.name"
       />
     </q-dialog>
- -->
+    -->
     <!-- Contact book dialog -->
     <q-dialog v-model="contactBookOpen">
       <contact-book-dialog
@@ -49,7 +49,7 @@
           <q-item-section avatar>
             <q-icon name="post_add" />
           </q-item-section>
-          <q-item-section> Stamp Price </q-item-section>
+          <q-item-section>Stamp Price</q-item-section>
           <q-item-section>
             <q-input
               dense
@@ -64,7 +64,7 @@
           <q-item-section avatar>
             <q-icon name="attach_money" />
           </q-item-section>
-          <q-item-section> Send Lotus </q-item-section>
+          <q-item-section>Send Lotus</q-item-section>
         </q-item>
 
         <q-separator />
@@ -77,77 +77,40 @@
           <q-item-section avatar>
             <q-icon name="notifications_none" />
           </q-item-section>
-          <q-item-section> Notifications </q-item-section>
+          <q-item-section>Notifications</q-item-section>
           <q-item-section side>
             <q-toggle v-model="notifications" />
           </q-item-section>
         </q-item>
-
-        <!-- This does not work anymore due to the way it operates w/ setting message text which was previously refactored. -->
-        <!-- <q-item
-          clickable
-          v-ripple
-          @click="contactBookOpen = true"
-        >
-          <q-item-section avatar>
-            <q-icon name="share" />
-          </q-item-section>
-
-          <q-item-section>
-            Share Contact
-          </q-item-section>
-        </q-item> -->
-
-        <!-- <q-separator />
-        <q-item
-          clickable
-          v-ripple
-          @click="confirmClearOpen = true"
-        >
-          <q-item-section avatar>
-            <q-icon name="clear_all" />
-          </q-item-section>
-
-          <q-item-section>
-            Clear History
-          </q-item-section>
-        </q-item> -->
-
-        <!-- TODO: Enable per-chat deletion. This currently does not work remotely, so it is being disabled. -->
-        <!-- <q-item
-          clickable
-          v-ripple
-          @click="confirmDeleteOpen = true"
-        >
-          <q-item-section avatar>
-            <q-icon
-              name="delete"
-              color="red"
-            />
-          </q-item-section>
-
-          <q-item-section>
-            Delete
-          </q-item-section>
-        </q-item> -->
       </q-list>
     </q-scroll-area>
   </div>
 </template>
 
-<script>
-import { mapGetters, mapActions, mapMutations } from 'vuex'
+<script lang="ts">
+import { defineComponent } from 'vue'
+
 import ContactCard from './ContactCard.vue'
-// import ClearHistoryDialog from '../dialogs/ClearHistoryDialog.vue'
-// import DeleteChatDialog from '../dialogs/DeleteChatDialog.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import SendLotusDialog from '../dialogs/SendLotusDialog.vue'
+import { useContactStore } from 'src/stores/contacts'
+import { useChatStore } from 'src/stores/chats'
 
-export default {
+export default defineComponent({
+  setup() {
+    const chatsStore = useChatStore()
+    const contactStore = useContactStore()
+
+    return {
+      shareContact: chatsStore.shareContact,
+      setStampAmount: chatsStore.setStampAmount,
+      setNotify: contactStore.setNotify,
+      getNotify: contactStore.getNotify,
+      getStampAmount: chatsStore.getStampAmount,
+    }
+  },
   components: {
     ContactCard,
-    // ClearHistoryDialog,
-    // DeleteChatDialog,
     ContactBookDialog,
     SendLotusDialog,
   },
@@ -163,33 +126,20 @@ export default {
       }),
     },
   },
-  methods: {
-    ...mapActions({
-      shareContact: 'chats/shareContact',
-      setStampAmount: 'chats/setStampAmount',
-    }),
-    ...mapMutations({
-      setNotify: 'contacts/setNotify',
-    }),
-  },
   computed: {
-    ...mapGetters({
-      getNotify: 'contacts/getNotify',
-      getStampAmount: 'chats/getStampAmount',
-    }),
     notifications: {
       get() {
         return this.getNotify(this.address)
       },
-      set(value) {
-        this.setNotify({ address: this.address, value })
+      set(value: string) {
+        this.setNotify({ address: this.address, value: Boolean(value) })
       },
     },
     stampAmount: {
       get() {
         return Number(this.getStampAmount(this.address) / 1000000).toFixed(2)
       },
-      set(amount) {
+      set(amount: string) {
         const amountNumber = Number(amount)
         if (isNaN(amountNumber)) {
           return
@@ -209,5 +159,5 @@ export default {
       sendBitcoinOpen: false,
     }
   },
-}
+})
 </script>

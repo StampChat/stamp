@@ -15,9 +15,7 @@
     </q-item-section>
     <q-item-section v-show="!compact">
       <q-item-label>{{ contact.name }}</q-item-label>
-      <q-item-label caption lines="2">
-        {{ latestMessageBody }}
-      </q-item-label>
+      <q-item-label caption lines="2">{{ latestMessageBody }}</q-item-label>
     </q-item-section>
     <q-item-section v-show="!compact" side>
       <q-badge
@@ -36,15 +34,22 @@
   </q-item>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
+<script lang="ts">
+import { useChatStore } from 'src/stores/chats'
+import { useContactStore } from 'src/stores/contacts'
+import { defineComponent } from 'vue'
 
-export default {
+export default defineComponent({
+  setup() {
+    const contacts = useContactStore()
+    const chats = useChatStore()
+
+    return {
+      getContactProfile: contacts.getContactProfile,
+      getLatestMessage: chats.getLatestMessage,
+    }
+  },
   computed: {
-    ...mapGetters({
-      getContactProfile: 'contacts/getContactProfile',
-      getLatestMessage: 'chats/getLatestMessage',
-    }),
     latestMessageBody() {
       const info = this.getLatestMessage(this.chatAddress)
       if (info === null) {
@@ -89,5 +94,5 @@ export default {
       required: true,
     },
   },
-}
+})
 </script>

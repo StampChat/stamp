@@ -17,7 +17,7 @@
           @click="toggleSettingsDrawerOpen"
           icon="menu"
         />
-        <q-toolbar-title class="h6"> Forum </q-toolbar-title>
+        <q-toolbar-title class="h6">Forum</q-toolbar-title>
         <q-space />
         <q-btn
           icon="refresh"
@@ -50,7 +50,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { mapGetters, mapActions, mapMutations } from 'vuex'
+
+import { useForumStore } from 'src/stores/forum'
 
 import ForumDrawer from '../components/panels/ForumDrawer.vue'
 
@@ -60,18 +61,22 @@ export default defineComponent({
       showForumDrawer: false,
     }
   },
+  setup() {
+    const forumStore = useForumStore()
+
+    return {
+      refreshMessages: forumStore.refreshMessages,
+      setSelectedTopic: forumStore.setSelectedTopic,
+      topics: forumStore.getTopics,
+      getSelectedTopic: forumStore.getSelectedTopic,
+    }
+  },
   components: { ForumDrawer },
   emits: ['toggleMyDrawerOpen'],
   mounted() {
     this.refreshContent()
   },
   methods: {
-    ...mapActions({
-      refreshMessages: 'forum/refreshMessages',
-    }),
-    ...mapMutations({
-      setSelectedTopic: 'forum/setSelectedTopic',
-    }),
     toggleSettingsDrawerOpen() {
       this.$emit('toggleMyDrawerOpen')
     },
@@ -84,10 +89,6 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapGetters({
-      topics: 'forum/getTopics',
-      getSelectedTopic: 'forum/getSelectedTopic',
-    }),
     selectedTopic: {
       set(newVal?: string) {
         this.setSelectedTopic(newVal ?? '')
