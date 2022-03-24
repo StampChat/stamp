@@ -311,6 +311,8 @@ const module: Module<State, unknown> = {
               case 'text':
                 messagePlaceholder += ' ' + (i as TextItem).text
                 break
+              case 'forward':
+                messagePlaceholder += `[Forwarded from ${i.senderName}]`
             }
           })
         }
