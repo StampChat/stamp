@@ -43,9 +43,9 @@
           <template v-for="(item, subIndex) in message.items" :key="subIndex">
             <chat-message-forward
               v-if="item.type == 'forward'"
-              :from="item.from"
-              :address="item.address"
-              :content="item.content"
+              :senderName="item.senderName"
+              :senderAddress="item.senderAddress"
+              :items="item.items"
             />
             <chat-message-reply
               v-else-if="item.type == 'reply'"
@@ -205,7 +205,7 @@ export default {
     items() {
       const sorted = {}
       this.forwardedMessage
-        ? this.forwardedMessage.content.map(item => (sorted[item.type] = item))
+        ? this.forwardedMessage.items.map(item => (sorted[item.type] = item))
         : this.message.items.map(item => (sorted[item.type] = item))
       return sorted
     },

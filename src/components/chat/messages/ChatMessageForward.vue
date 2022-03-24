@@ -5,10 +5,10 @@
       <div class="q-mb-xs">
         <b>
           Forwarded from
-          <span v-html="linkedName" @click="vuexSetActiveChat(address)" />
+          <span v-html="linkedName" @click="vuexSetActiveChat(senderAddress)" />
         </b>
       </div>
-      <template v-for="(item, index) in content" :key="index">
+      <template v-for="(item, index) in items" :key="index">
         <chat-message-stealth
           v-if="item.type == 'stealth'"
           :amount="item.amount"
@@ -35,15 +35,15 @@ export default {
     ChatMessageStealth,
   },
   props: {
-    from: {
+    senderName: {
       type: String,
       required: true,
     },
-    address: {
+    senderAddress: {
       type: String,
       required: true,
     },
-    content: {
+    items: {
       type: Array,
       required: true,
     },
@@ -56,7 +56,7 @@ export default {
   computed: {
     linkedName() {
       return renderForwardTitle(
-        `[${this.from}](/#/chat/${this.address})`,
+        `[${this.senderName}](/#/chat/${this.senderAddress})`,
         this.$q.dark.isActive,
       )
     },
