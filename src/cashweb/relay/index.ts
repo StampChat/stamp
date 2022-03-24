@@ -965,7 +965,7 @@ export class RelayClient extends ReadOnlyRelayClient {
             publicKey,
             identityPrivateKey,
           ),
-        networkName: this.networkName,
+        networkName: this.displayNetwork,
         wallet: wallet,
       })
       if (entryData == null) {
