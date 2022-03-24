@@ -645,15 +645,9 @@ export class RelayClient extends ReadOnlyRelayClient {
     stampAmount,
   }: {
     address: string
-<<<<<<< HEAD
     senderName: string
     senderAddress: string
     forwardedItems: Array<MessageItem>
-=======
-    from: string
-    fromAddress: string
-    content: Array<MessageItem>
->>>>>>> 628ea17 (Correct type casting for forwarded "content" array values)
     stampAmount: number
     receivedTime: number
   }) {

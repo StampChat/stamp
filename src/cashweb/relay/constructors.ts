@@ -27,11 +27,8 @@ import VCard from 'vcf'
 import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
 import { Wallet } from '../wallet'
 import { MessageItem } from '../types/messages'
-<<<<<<< HEAD
 import { Utxo } from '../types/utxo'
 import { UIOutput } from '../types/user-interface'
-=======
->>>>>>> 628ea17 (Correct type casting for forwarded "content" array values)
 
 export class MessageConstructor {
   payloadConstructor: PayloadConstructor
@@ -200,7 +197,6 @@ export class MessageConstructor {
     encodeEntry,
     getPubKey,
   }: {
-<<<<<<< HEAD
     senderName: string
     senderAddress: string
     receivedTime: number
@@ -209,11 +205,6 @@ export class MessageConstructor {
       item: MessageItem,
     ) => [PayloadEntry, Transaction[], Utxo[], UIOutput[]]
     getPubKey: (address: string) => PublicKey
-=======
-    from: string
-    address: string
-    content: Array<MessageItem>
->>>>>>> 628ea17 (Correct type casting for forwarded "content" array values)
   }) {
     const entries: PayloadEntry[] = []
 
