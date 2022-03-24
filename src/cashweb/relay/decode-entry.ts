@@ -1,11 +1,12 @@
 import assert from 'assert'
 import type {
   ForwardItem,
+  ReactionItem,
   ReplyItem,
   StealthItem,
   ImageItem,
 } from '../types/messages'
-import { ForwardBody, PayloadEntry } from './relay_pb'
+import { ForwardBody, ReactionBody, PayloadEntry } from './relay_pb'
 import { entryToImage } from './images'
 import stealth from './stealth_pb'
 import { TextItem, MessageItem } from '../types/messages'
@@ -60,6 +61,25 @@ export async function decodeEntry(
           .map(entry => (entry ? entry[0] : null))
           .filter(entry => !!entry),
       } as ForwardItem,
+      outpoints,
+    ]
+  }
+
+  if (kind === 'reaction') {
+    const rawReactionBody = entry.getBody()
+    assert(typeof rawReactionBody !== 'string', 'rawReactionBody empty')
+    const reactionBody = ReactionBody.deserializeBinary(rawReactionBody)
+    const rawReaction = reactionBody.getReaction()
+    const rawPayloadDigest = reactionBody.getPayloadDigest()
+    const reaction = Buffer.from(rawReaction).toString('utf-8')
+    const payloadDigest = Buffer.from(rawPayloadDigest).toString('hex')
+
+    return [
+      {
+        type: 'reaction',
+        reaction,
+        payloadDigest,
+      } as ReactionItem,
       outpoints,
     ]
   }

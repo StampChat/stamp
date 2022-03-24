@@ -82,6 +82,14 @@ export const defaultContacts = [
   },
 ]
 
+export const emojiReactions = [
+  ['👍', '👎', '❤️', '🔥', '😂'],
+  ['🤯', '😑', '😍', '🥰', '😘'],
+  ['🥳', '🤮', '😭', '😠', '😅'],
+  ['😉', '😎', '😏', '😋', '🙃'],
+  ['🥺', '💩', '👌', '🤦', '🙏'],
+]
+
 // Notification constants
 export const notificationTimeout = 4000
 

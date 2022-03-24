@@ -4,6 +4,12 @@
     @mouseover="mouseoverCheckMobile()"
     @mouseleave="provided.mouseover = false"
   >
+    <chat-message-reaction-menu
+      :address="address"
+      :payload-digest="payloadDigest"
+      :my-reaction="myReaction"
+    />
+
     <!-- Transaction Dialog -->
     <q-dialog v-model="transactionDialog">
       <!-- Switch to outpoints -->
@@ -77,7 +83,21 @@
             @forwardClick="forwardDialog = true"
             @replyClick="replyClicked({ address, payloadDigest })"
             @resendClick="resend()"
+            style="opacity: 0.6"
           />
+          <q-list :class="reactionPosition" v-if="!!sortedReactions">
+            <q-item dense class="q-py-xs q-px-none">
+              <template
+                v-for="(addresses, reaction) in sortedReactions"
+                :key="reaction"
+              >
+                <chat-message-reaction
+                  :reaction="reaction"
+                  :addresses="addresses"
+                />
+              </template>
+            </q-item>
+          </q-list>
         </template>
       </q-chat-message>
     </template>
@@ -87,8 +107,10 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import moment from 'moment'
+import ChatMessageReactionMenu from '../../context_menus/ChatMessageReactionMenu.vue'
+import ChatMessageReaction from './ChatMessageReaction.vue'
 import ChatMessageForward from './ChatMessageForward.vue'
 import ChatMessageReply from './ChatMessageReply.vue'
 import ChatMessageText from './ChatMessageText.vue'
@@ -99,11 +121,19 @@ import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog.vue'
 import TransactionDialog from '../../dialogs/TransactionDialog.vue'
 import ForwardMessageDialog from '../../dialogs/ForwardMessageDialog.vue'
 import { stampPrice } from '../../../cashweb/wallet/helpers'
+import { defineComponent } from 'vue'
 import { mapMutations, mapGetters } from 'vuex'
+import type {
+  MessageItem,
+  ForwardItem,
+  ReactionObject,
+} from 'src/cashweb/types/messages'
 
-export default {
+export default defineComponent({
   name: 'ChatMessage',
   components: {
+    ChatMessageReactionMenu,
+    ChatMessageReaction,
     ChatMessageForward,
     ChatMessageReply,
     ChatMessageText,
@@ -167,8 +197,9 @@ export default {
     }),
     ...mapGetters({
       getStampAmount: 'chats/getStampAmount',
+      getMessageReactions: 'chats/getMessageReactions',
     }),
-    handleReplyDivClick(args) {
+    handleReplyDivClick(args: any) {
       this.$emit('replyDivClick', args)
     },
     swipeRight() {
@@ -190,7 +221,7 @@ export default {
         stampAmount,
       })
     },
-    replyClicked(args) {
+    replyClicked(args: any) {
       this.$emit('replyClicked', args)
     },
     mouseoverCheckMobile() {
@@ -200,14 +231,40 @@ export default {
   },
   computed: {
     forwardedMessage() {
-      return this.message.items.find(item => item.type == 'forward')
+      return this.message.items.find(
+        (item: MessageItem) => item.type == 'forward',
+      ) as ForwardItem
     },
     items() {
-      const sorted = {}
+      const sorted: any = {}
       this.forwardedMessage
         ? this.forwardedMessage.items.map(item => (sorted[item.type] = item))
-        : this.message.items.map(item => (sorted[item.type] = item))
-      return sorted
+        : this.message.items.map(
+            (item: MessageItem) => (sorted[item.type] = item),
+          )
+      return sorted as any
+    },
+    reactions() {
+      const reactions = this.getMessageReactions()(this.payloadDigest)
+      if (reactions && typeof reactions != 'string') {
+        return reactions as ReactionObject[]
+      }
+      return []
+    },
+    sortedReactions() {
+      const sorted = {} as any
+      this.reactions.map((reactionItem: ReactionObject) => {
+        if (!sorted[reactionItem.reaction]) {
+          sorted[reactionItem.reaction] = []
+        }
+        sorted[reactionItem.reaction].push(reactionItem.address)
+      })
+      return Object.keys(sorted).length > 0 ? sorted : null
+    },
+    myReaction() {
+      const address = this.$wallet.myAddress?.toXAddress()
+      const myReaction = this.reactions.find((r: any) => r.address == address)
+      return myReaction?.reaction || ''
     },
     bubbleSize() {
       // Default chatbubble size; assume small screen
@@ -275,6 +332,9 @@ export default {
     textColor() {
       return this.$q.dark.isActive ? 'white' : 'black'
     },
+    reactionPosition() {
+      return this.message.outbound ? 'float-right' : 'float-left'
+    },
   },
-}
+})
 </script>

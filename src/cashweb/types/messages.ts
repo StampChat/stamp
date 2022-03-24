@@ -13,6 +13,17 @@ export interface ForwardItem {
   items: Array<MessageItem>
 }
 
+export interface ReactionItem {
+  type: 'reaction'
+  reaction: string
+  payloadDigest: string
+}
+
+export interface ReactionObject {
+  address: string
+  reaction: string
+}
+
 export interface TextItem {
   type: 'text'
   text: string
@@ -43,6 +54,7 @@ export type MessageItem =
   | ReplyItem
   | ForwardItem
   | ImageItem
+  | ReactionItem
 
 export interface Message {
   outbound: boolean
@@ -50,6 +62,7 @@ export interface Message {
   receivedTime: number
   serverTime: number
   items: Array<MessageItem>
+  reactions: Array<ReactionObject>
   outpoints: Array<Utxo>
   senderAddress: string
 }

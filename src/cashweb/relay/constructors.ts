@@ -16,6 +16,7 @@ import {
   PayloadEntry,
   Profile,
   ProfileEntry,
+  ReactionBody,
   Stamp,
   StampOutpoints,
 } from './relay_pb'
@@ -244,6 +245,29 @@ export class MessageConstructor {
     entry.setKind('forward')
     entry.setBody(rawForwardBody)
 
+    return entry
+  }
+
+  constructReactionEntry({
+    reaction,
+    payloadDigest,
+  }: {
+    reaction: string
+    payloadDigest: string
+  }) {
+    assert(typeof reaction === 'string', 'reaction is wrong type')
+    const reactionBuffer = Buffer.from(reaction, 'utf-8')
+    assert(typeof payloadDigest === 'string', 'payloadDigest is wrong type')
+    const payloadDigestBuffer = Buffer.from(payloadDigest, 'hex')
+
+    const reactionBody = new ReactionBody()
+    reactionBody.setReaction(reactionBuffer)
+    reactionBody.setPayloadDigest(payloadDigestBuffer)
+    const rawReactionBody = reactionBody.serializeBinary()
+
+    const entry = new PayloadEntry()
+    entry.setKind('reaction')
+    entry.setBody(rawReactionBody)
     return entry
   }
 

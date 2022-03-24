@@ -1,5 +1,5 @@
 import { PublicKey } from 'bitcore-lib-xpi'
-import { MessageItem } from './messages'
+import { MessageItem, ReactionObject } from './messages'
 import { Utxo } from './utxo'
 
 export interface UIStealthOutput {
@@ -22,6 +22,7 @@ export type ReceivedMessage = {
   outbound: boolean
   status: string
   items: MessageItem[]
+  reactions: ReactionObject[]
   serverTime: number
   receivedTime: number
   outpoints: Utxo[]

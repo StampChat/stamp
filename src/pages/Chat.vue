@@ -253,7 +253,14 @@ export default {
     ...mapState('chats', ['chats']),
     messages() {
       const activeChat = this.chats[this.address]
-      return activeChat ? activeChat.messages : []
+      // filter reaction messages; these are polled via ChatMessage.vue
+      if (activeChat) {
+        const messages = activeChat.messages?.filter(m => {
+          return !m.items.find(item => item.type == 'reaction')
+        })
+        return messages
+      }
+      return []
     },
     chunkedMessages() {
       // TODO: Improve stacking logic e.g. long durations between messages prevent stacking

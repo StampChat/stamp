@@ -14,6 +14,8 @@ import type {
   TextItem,
   ImageItem,
   StealthItem,
+  ReactionItem,
+  ReactionObject,
 } from 'src/cashweb/types/messages'
 import type { ReceivedMessageWrapper } from 'src/cashweb/types/user-interface'
 
@@ -23,6 +25,7 @@ type ChatMessage = {
   receivedTime: number
   serverTime: number
   items: MessageItem[]
+  reactions: ReactionObject[]
   outpoints: Utxo[]
   senderAddress: string
   payloadDigest: string
@@ -152,7 +155,38 @@ export async function rehydateChat(chatState: RestorableState): Promise<State> {
     chats[contactAddress]?.messages.sort(
       (messageA, messageB) => messageA.serverTime - messageB.serverTime,
     )
+    // Set reactions on messages
+    chats[contactAddress]?.messages.forEach(
+      (message: ChatMessage, index: number, arr: Array<ChatMessage>) => {
+        const reactionItem = message.items.find(
+          item => item.type == 'reaction',
+        ) as ReactionItem
+        if (reactionItem) {
+          const { reaction, payloadDigest } = reactionItem
+          const senderAddress = message.senderAddress
+          // find the message we're reacting to
+          const messageIndex = arr.findIndex(
+            m => m.payloadDigest == payloadDigest,
+          )
+          if (Array.isArray(arr[messageIndex].reactions)) {
+            // Update sender address's reaction if one already exists
+            const reactionIndex = arr[messageIndex].reactions.findIndex(
+              r => r.address == senderAddress,
+            )
+            if (reactionIndex > -1) {
+              arr[messageIndex].reactions[reactionIndex].reaction = reaction
+            } else {
+              arr[messageIndex].reactions.push({
+                address: senderAddress,
+                reaction: reaction,
+              } as ReactionObject)
+            }
+          }
+        }
+      },
+    )
   }
+
   return {
     chats,
     messages,
@@ -261,6 +295,32 @@ const module: Module<State, unknown> = {
         return info
       }
 
+      if (lastItem.type === 'reaction') {
+        const message = state.messages[lastItem.payloadDigest]
+        const messageItems = message?.items
+        let messagePlaceholder = ''
+        if (messageItems) {
+          messageItems.map((i: MessageItem) => {
+            switch (i.type) {
+              case 'image':
+                messagePlaceholder += '[Image] '
+                break
+              case 'stealth':
+                messagePlaceholder += '[Lotus] '
+                break
+              case 'text':
+                messagePlaceholder += ' ' + (i as TextItem).text
+                break
+            }
+          })
+        }
+        const info = {
+          outbound: lastMessage.outbound,
+          text: `Reacted ${lastItem.reaction} to: ${messagePlaceholder}`,
+        }
+        return info
+      }
+
       if (lastItem.type === 'text') {
         const info = {
           outbound: lastMessage.outbound,
@@ -289,6 +349,9 @@ const module: Module<State, unknown> = {
     },
     getLastReceived(state) {
       return state.lastReceived
+    },
+    getMessageReactions: state => (payloadDigest: string) => {
+      return state.messages[payloadDigest]?.reactions
     },
   },
   mutations: {
@@ -370,6 +433,30 @@ const module: Module<State, unknown> = {
       }
       state.activeChatAddr = displayAddress
     },
+    setMessageReaction(
+      state,
+      {
+        address, // the sender address
+        reaction, // the emoji unicode string
+        payloadDigest, // reacting to this message
+      },
+    ) {
+      const message = state.messages[payloadDigest]
+      if (message) {
+        // Update address's reaction if one exists
+        const reactionIndex = message.reactions.findIndex(
+          r => r.address == address,
+        )
+        if (reactionIndex > -1) {
+          message.reactions[reactionIndex].reaction = reaction
+        } else {
+          message.reactions.push({
+            address,
+            reaction,
+          } as ReactionObject)
+        }
+      }
+    },
     sendMessageLocal(
       state,
       {
@@ -389,6 +476,7 @@ const module: Module<State, unknown> = {
         outbound: true,
         status,
         items,
+        reactions: [],
         serverTime: timestamp,
         receivedTime: timestamp,
         outpoints,
@@ -586,11 +674,27 @@ const module: Module<State, unknown> = {
         const lastRead = getters.lastRead(copartyAddress)
 
         const acceptable = stampValue >= acceptancePrice
+        if (!acceptable) {
+          continue
+        }
+
+        // If reaction to another message, set the reaction on that message
+        const reactionItem = newMsg.items.find(
+          item => item.type == 'reaction',
+        ) as ReactionItem
+        if (reactionItem) {
+          const { reaction, payloadDigest } = reactionItem
+          commit('setMessageReaction', {
+            address: newMsg.senderAddress,
+            reaction,
+            payloadDigest,
+          })
+        }
+
         // If not focused (and not outbox message) then notify
         if (
           document.hasFocus() ||
           outbound ||
-          !acceptable ||
           lastRead > newMsg.serverTime ||
           // Don't notify or reset active chat if we are bulk loading messages
           messageWrappers.length !== 1

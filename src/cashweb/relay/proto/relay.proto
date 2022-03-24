@@ -43,6 +43,13 @@ message ForwardBody {
   repeated PayloadEntry entries = 4;
 }
 
+message ReactionBody {
+  // The emoji unicode string
+  bytes reaction = 1;
+  // The message being reacted to
+  bytes payload_digest = 2;
+}
+
 // Entry is an individual piece of structured data.
 message PayloadEntry {
   // Informs the wallet what to do with this payload.

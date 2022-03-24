@@ -15,6 +15,14 @@
   background: var(--q-color-background);
 }
 
+// override default q-message-stamp class
+// ensure that reactions (rendered in QChatMessage#stamp) are 100% opaque
+.q-message-stamp {
+  margin-top: 4px;
+  color: inherit;
+  opacity: 1;
+}
+
 .bg-on-secondary {
   background: var(--q-color-background);
 }

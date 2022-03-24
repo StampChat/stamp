@@ -45,6 +45,8 @@ import type {
 } from '../types/user-interface'
 import type {
   ForwardItem,
+  ReactionItem,
+  ReactionObject,
   MessageItem,
   MessageWrapper,
   P2PKHSendItem,
@@ -636,6 +638,27 @@ export class RelayClient extends ReadOnlyRelayClient {
     await this.sendMessageImpl({ address, items, stampAmount })
   }
 
+  async sendReaction({
+    address,
+    reaction,
+    payloadDigest,
+    stampAmount,
+  }: {
+    address: string
+    reaction: string
+    payloadDigest: string
+    stampAmount: number
+  }) {
+    const items: MessageItem[] = [
+      {
+        type: 'reaction',
+        reaction,
+        payloadDigest,
+      } as ReactionItem,
+    ]
+    await this.sendMessageImpl({ address, items, stampAmount })
+  }
+
   async forwardMessage({
     address,
     senderName,
@@ -952,6 +975,7 @@ export class RelayClient extends ReadOnlyRelayClient {
       outbound,
       status: 'confirmed',
       items: [] as MessageItem[],
+      reactions: [] as ReactionObject[],
       serverTime,
       receivedTime,
       outpoints,

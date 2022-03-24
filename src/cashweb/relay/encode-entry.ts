@@ -66,6 +66,9 @@ export function encodeEntry(
 
     return [forwardEntry, [], [], []]
   }
+  if (item.type === 'reaction') {
+    return [messageConstructor.constructReactionEntry({ ...item }), [], [], []]
+  }
   if (item.type === 'reply') {
     return [messageConstructor.constructReplyEntry({ ...item }), [], [], []]
   }
