@@ -43,8 +43,8 @@
           <template v-for="(item, subIndex) in message.items" :key="subIndex">
             <chat-message-forward
               v-if="item.type == 'forward'"
-              :senderName="item.senderName"
-              :senderAddress="item.senderAddress"
+              :sender-name="item.senderName"
+              :sender-address="item.senderAddress"
               :items="item.items"
             />
             <chat-message-reply
