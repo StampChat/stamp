@@ -3,24 +3,24 @@
     <!-- Who Reacted -->
     <q-menu no-focus auto-close transition-duration="50">
       <q-list dense>
-        <q-item v-for="address in addresses" :key="address">
+        <q-item v-for="(reactor, index) in reactors" :key="index">
           <q-item-section avatar>
             <q-img
-              :src="getProfileAvatar(address)"
+              :src="reactor.avatar"
               width="24px"
               height="24px"
               fit="contain"
             />
           </q-item-section>
           <q-item-section side no-wrap>
-            {{ getProfileName(address) }}
+            {{ reactor.name }}
           </q-item-section>
         </q-item>
       </q-list>
     </q-menu>
     <!-- Reaction -->
-    <span v-if="addresses.length > 1" class="reaction-count text-bold">
-      {{ addresses.length }}
+    <span v-if="reactors.length > 1" class="reaction-count text-bold">
+      {{ reactors.length }}
     </span>
     <span class="reaction-size">
       {{ reaction }}
@@ -62,6 +62,16 @@ export default defineComponent({
       } else {
         return this.getContact()(address).profile.name
       }
+    },
+  },
+  computed: {
+    reactors() {
+      return this.addresses.map(address => {
+        return {
+          name: this.getProfileName(address as string),
+          avatar: this.getProfileAvatar(address as string),
+        }
+      })
     },
   },
 })
