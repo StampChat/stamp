@@ -125,6 +125,34 @@ export namespace ForwardBody {
   }
 }
 
+export class ReactionBody extends jspb.Message {
+  getReaction(): Uint8Array | string;
+  getReaction_asU8(): Uint8Array;
+  getReaction_asB64(): string;
+  setReaction(value: Uint8Array | string): void;
+
+  getPayloadDigest(): Uint8Array | string;
+  getPayloadDigest_asU8(): Uint8Array;
+  getPayloadDigest_asB64(): string;
+  setPayloadDigest(value: Uint8Array | string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ReactionBody.AsObject;
+  static toObject(includeInstance: boolean, msg: ReactionBody): ReactionBody.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ReactionBody, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ReactionBody;
+  static deserializeBinaryFromReader(message: ReactionBody, reader: jspb.BinaryReader): ReactionBody;
+}
+
+export namespace ReactionBody {
+  export type AsObject = {
+    reaction: Uint8Array | string,
+    payloadDigest: Uint8Array | string,
+  }
+}
+
 export class PayloadEntry extends jspb.Message {
   getKind(): string;
   setKind(value: string): void;
