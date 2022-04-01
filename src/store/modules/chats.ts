@@ -164,21 +164,17 @@ export async function rehydateChat(chatState: RestorableState): Promise<State> {
         if (reactionItem) {
           const { reaction, payloadDigest } = reactionItem
           const senderAddress = message.senderAddress
-          // find the message we're reacting to
-          const messageIndex = arr.findIndex(
-            m => m.payloadDigest == payloadDigest,
-          )
-          if (Array.isArray(arr[messageIndex]?.reactions)) {
-            // Update sender address's reaction if one already exists
-            const reactionIndex = arr[messageIndex].reactions.findIndex(
+          const reactedMessage = messages[payloadDigest]
+          if (reactedMessage) {
+            const senderReactionIndex = reactedMessage.reactions.findIndex(
               r => r.address == senderAddress,
             )
-            if (reactionIndex > -1) {
-              arr[messageIndex].reactions[reactionIndex].reaction = reaction
+            if (senderReactionIndex > -1) {
+              reactedMessage.reactions[senderReactionIndex].reaction = reaction
             } else {
-              arr[messageIndex].reactions.push({
+              reactedMessage.reactions.push({
                 address: senderAddress,
-                reaction: reaction,
+                reaction,
               } as ReactionObject)
             }
           }
