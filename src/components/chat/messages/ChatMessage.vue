@@ -8,6 +8,7 @@
       :address="address"
       :payload-digest="payloadDigest"
       :my-reaction="myReaction"
+      v-if="message.status == 'confirmed'"
     />
 
     <!-- Transaction Dialog -->
