@@ -1,7 +1,6 @@
 // this is mapped in jest.config.js to resolve @vue/test-utils
 import { createLocalVue, shallowMount } from 'test-utils'
 
-import Vuex from 'vuex'
 import VueRouter from 'vue-router'
 import Quasar, { Cookies } from 'quasar'
 
@@ -21,7 +20,6 @@ export const mountQuasar = (component, options = {}) => {
   const localVue = createLocalVue()
   const app = {}
 
-  localVue.use(Vuex)
   localVue.use(VueRouter)
   localVue.use(Quasar)
   const store = new Vuex.Store({})

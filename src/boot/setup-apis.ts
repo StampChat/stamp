@@ -2,15 +2,16 @@
 
 import { defaultRelayUrl, chronikServers } from '../utils/constants'
 import { Wallet } from '../cashweb/wallet'
-import { getRelayClient } from '../adapters/vuex-relay-adapter'
+import { getRelayClient } from '../adapters/pinia-relay-adapter'
 import { store as levelDbUtxoStore } from '../adapters/level-utxo-store'
 import { boot } from 'quasar/wrappers'
 import { Utxo, UtxoId } from 'src/cashweb/types/utxo'
 import { reactive } from 'vue'
-import { Store } from 'vuex'
-import { RootState } from 'src/store/modules'
 import { UtxoStore } from 'src/cashweb/wallet/storage/storage'
 import { ChronikClient, WsEndpoint } from 'chronik-client'
+import { useWalletStore } from 'src/stores/wallet'
+import { useProfileStore } from 'src/stores/my-profile'
+import { useRelayClientStore } from 'src/stores/relay-client'
 
 function instrumentIndexerClient({
   chronikWs,
@@ -58,8 +59,9 @@ function createAndBindNewIndexerClient({
   }
 }
 
-async function getWalletClient({ store }: { store: Store<any> }) {
+async function getWalletClient() {
   const utxoStore = await levelDbUtxoStore
+  const wallet = useWalletStore()
   // FIXME: This shouldn't be necessary, but the GUI needs real time
   // balance updates. In the future, we should just aggregate a total over time here.
   const storageAdapter: UtxoStore = {
@@ -67,11 +69,11 @@ async function getWalletClient({ store }: { store: Store<any> }) {
       return utxoStore.getById(id)
     },
     deleteById(id: UtxoId) {
-      store.commit('wallet/removeUTXO', id)
+      wallet.removeUTXO(id)
       return utxoStore.deleteById(id)
     },
     put(outpoint: Utxo) {
-      store.commit('wallet/addUTXO', Object.freeze({ ...outpoint }))
+      wallet.addUTXO(Object.freeze({ ...outpoint }))
       return utxoStore.put(outpoint)
     },
     freezeById(id: UtxoId) {
@@ -97,15 +99,19 @@ async function getWalletClient({ store }: { store: Store<any> }) {
   return new Wallet(storageAdapter)
 }
 
-export default boot<RootState>(async ({ store, app }) => {
-  await (store as any).restored
-  const wallet = await getWalletClient({ store })
+export default boot(async ({ app }) => {
+  const wallet = await getWalletClient()
   const indexerObservables = reactive({ connected: false })
   createAndBindNewIndexerClient({
     observables: indexerObservables,
     wallet,
   })
-  const xPrivKey = store.getters['wallet/getXPrivKey']
+  const walletStore = useWalletStore()
+  await walletStore.restored
+  const profileStore = useProfileStore()
+  await profileStore.restored
+
+  const xPrivKey = walletStore.xPrivKey
   const status = reactive({
     loaded: false,
     setup: false,
@@ -114,9 +120,9 @@ export default boot<RootState>(async ({ store, app }) => {
   console.log('xPrivKey', xPrivKey)
   // Check if setup was finished.
   // TODO: There should be a better way to do this.
-  const profile = store.getters['myProfile/getProfile']
+  const profile = profileStore.profile
   console.log('profile.name', profile.name)
-  status.setup = xPrivKey && profile.name
+  status.setup = !!xPrivKey && !!profile.name
   if (xPrivKey && profile.name) {
     console.log('Loaded previous private key')
     wallet.setXPrivKey(xPrivKey)
@@ -126,14 +132,19 @@ export default boot<RootState>(async ({ store, app }) => {
     await getRelayClient({
       relayUrl: defaultRelayUrl,
       wallet,
-      store,
     })
-  const relayToken: string = store.getters['relayClient/getToken']
-  console.log('relayToken', relayToken)
-  relayClient.setToken(relayToken)
+
+  const relayStore = useRelayClientStore()
+  await relayStore.restored
+  const token = relayStore.token
+  console.log('relayToken', token)
+  if (token) {
+    relayClient.setToken(token)
+  }
 
   app.config.globalProperties.$wallet = wallet
   app.config.globalProperties.$indexer = indexerObservables
   app.config.globalProperties.$relayClient = relayClient
   app.config.globalProperties.$relay = relayObservables
+  app.config.globalProperties.$status = status
 })

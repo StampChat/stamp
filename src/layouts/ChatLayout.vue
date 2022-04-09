@@ -60,12 +60,12 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { mapGetters } from 'vuex'
 import { RouteLocationNormalized } from 'vue-router'
 
 import RightDrawer from '../components/panels/ChatRightDrawer.vue'
 import SendFileDialog from '../components/dialogs/SendFileDialog.vue'
 import SendLotusDialog from '../components/dialogs/SendLotusDialog.vue'
+import { useContactStore } from 'src/stores/contacts'
 
 export default defineComponent({
   emits: ['toggleMyDrawerOpen'],
@@ -73,6 +73,13 @@ export default defineComponent({
     RightDrawer,
     SendFileDialog,
     SendLotusDialog,
+  },
+  setup() {
+    const contactStore = useContactStore()
+
+    return {
+      getContact: contactStore.getContact,
+    }
   },
   data() {
     return {
@@ -98,11 +105,8 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapGetters({
-      getContact: 'contacts/getContact',
-    }),
     contactProfile() {
-      return this.getContact(this.address).profile
+      return this.getContact(this.address)?.profile
     },
   },
 })

@@ -15,7 +15,7 @@
       <q-file
         ref="filePicker"
         v-model="filePath"
-        filled=""
+        filled
         style="display: none"
       />
       <q-img v-if="image" :src="image" spinner-color="white" />
@@ -44,10 +44,19 @@
   </q-card>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
+<script lang="ts">
+import assert from 'assert'
+import { defineComponent } from 'vue'
 
-export default {
+import { useChatStore } from 'src/stores/chats'
+
+export default defineComponent({
+  setup() {
+    const chatStore = useChatStore()
+    return {
+      getStampAmount: chatStore.getStampAmount,
+    }
+  },
   props: {
     address: {
       type: String,
@@ -61,8 +70,8 @@ export default {
   data() {
     return {
       caption: '',
-      filePath: null,
-      image: null,
+      filePath: null as File | null,
+      image: null as string | ArrayBuffer | null,
     }
   },
   created() {
@@ -71,11 +80,13 @@ export default {
     }
   },
   methods: {
-    ...mapGetters({
-      getStampAmount: 'chats/getStampAmount',
-    }),
     async sendImage() {
-      const stampAmount = this.getStampAmount()(this.address)
+      if (!this.image) {
+        console.error('Attempting to send null image', this.image)
+        return
+      }
+      const stampAmount = this.getStampAmount(this.address)
+      assert(typeof this.image === 'string', 'image not properly a string?')
       await this.$relayClient.sendImage({
         address: this.address,
         image: this.image,
@@ -93,9 +104,9 @@ export default {
       const reader = new FileReader()
       reader.readAsDataURL(val)
       reader.onload = evt => {
-        this.image = evt.target.result
+        this.image = evt.target?.result ?? null
       }
     },
   },
-}
+})
 </script>

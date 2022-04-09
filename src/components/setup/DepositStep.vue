@@ -44,25 +44,33 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, computed } from 'vue'
 import QrcodeVue from 'qrcode.vue'
 import { copyToClipboard } from 'quasar'
-import { mapGetters } from 'vuex'
+
 import { recomendedBalance } from '../../utils/constants'
 import { addressCopiedNotify } from '../../utils/notifications'
 import { formatBalance } from '../../utils/formatting'
 import { toAPIAddress, toDisplayAddress } from '../../utils/address'
+import { useWalletStore } from 'src/stores/wallet'
 
-export default {
+export default defineComponent({
   components: {
     QrcodeVue,
+  },
+  setup() {
+    const walletStore = useWalletStore()
+
+    return {
+      balance: computed(() => walletStore.balance),
+    }
   },
   data() {
     return {
       paymentAddrCounter: 0,
-      recomendedBalance,
       qrSize: 300,
-      legacy: false,
+      legacy: false as boolean,
     }
   },
   methods: {
@@ -78,34 +86,39 @@ export default {
           // fail
         })
     },
-    setQRSize(size) {
+    setQRSize(size: { height: number; width: number }) {
       this.qrSize = size.height
     },
     openFaucet() {
+      if (!this.$wallet.myAddress) {
+        return
+      }
       this.openURL(
         `https://faucet.lotuslounge.org/?address=${toDisplayAddress(
-          this.$wallet.myAddress,
+          this.$wallet.myAddress?.toXAddress(),
         )}`,
       )
     },
   },
   computed: {
-    ...mapGetters({ balance: 'wallet/balance' }),
-    displayAddress() {
+    displayAddress(): string {
+      if (!this.$wallet.myAddress) {
+        return 'Error'
+      }
       return this.legacy
         ? toAPIAddress(this.$wallet.myAddress)
         : toDisplayAddress(this.$wallet.myAddress)
     },
-    percentageBalance() {
-      const percentage = this.balance / this.recomendedBalance
+    percentageBalance(): number {
+      const percentage = this.balance / recomendedBalance
       return percentage
     },
-    formatRecommended() {
-      return formatBalance(this.recomendedBalance)
+    formatRecommended(): string {
+      return formatBalance(recomendedBalance)
     },
-    formatBalance() {
+    formatBalance(): string {
       return formatBalance(this.balance)
     },
   },
-}
+})
 </script>

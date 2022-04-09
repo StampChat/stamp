@@ -28,28 +28,83 @@
   </q-layout>
 </template>
 
-<script>
+<script lang="ts">
+import assert from 'assert'
+
+import { defineComponent, ref, watch } from 'vue'
+import { QBtn } from 'quasar'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
+
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
-import { mapActions, mapGetters, mapState } from 'vuex'
-import { debounce } from 'quasar'
 import { defaultContacts, keyservers, networkName } from '../utils/constants'
 import { KeyserverHandler } from '../cashweb/keyserver'
 import { errorNotify } from '../utils/notifications'
+import { useRelayClientStore } from 'src/stores/relay-client'
+import { useAppearanceStore } from 'src/stores/appearance'
+import { useProfileStore } from 'src/stores/my-profile'
+import { useContactStore } from 'src/stores/contacts'
+import { useChatStore } from 'src/stores/chats'
 
 const compactWidth = 70
 const compactCutoff = 325
 const compactMidpoint = (compactCutoff + compactWidth) / 2
 
-export default {
+export default defineComponent({
   components: {
     LeftDrawer,
     ContactBookDialog,
   },
+  setup() {
+    const chatStore = useChatStore()
+    const relayClient = useRelayClientStore()
+    const contacts = useContactStore()
+    const appearanceStore = useAppearanceStore()
+    const { darkMode } = storeToRefs(appearanceStore)
+    const myProfile = useProfileStore()
+
+    const {
+      getLastReceived: lastReceived,
+      totalUnread,
+      getSortedChatOrder,
+      activeChatAddr,
+    } = storeToRefs(chatStore)
+
+    const router = useRouter()
+
+    watch(activeChatAddr, newAddress => {
+      // Only route to chat if address defined
+      // e.g. do *not* route when navigating to Forum
+      if (!newAddress) {
+        return
+      }
+      router.push(`/chat/${newAddress}`).catch(() => {
+        // Don't care. Probably duplicate route
+      })
+    })
+
+    return {
+      setActiveChat: chatStore.setActiveChat,
+      addDefaultContact: contacts.addDefaultContact,
+      refreshContacts: contacts.refreshContacts,
+      // FIXME: Some kind of race condition here where if this is computed,
+      // it won't be set yet by the time the setupConnections function is called
+      // after signing up or logging in.
+      relayToken: () => relayClient.token,
+      getSortedChatOrder,
+      darkMode,
+      lastReceived,
+      totalUnread,
+      getRelayData: myProfile,
+      buttonNotification: ref<QBtn | null>(null),
+    }
+  },
   data() {
     return {
       trueSplitterRatio: compactCutoff,
-      myDrawerOpen: !!this.activeChatAddr,
+      myDrawerOpen: !!this.activeChatAddr as boolean,
+      contactDrawerOpen: false as boolean,
       contactBookOpen: false,
       compact: false,
       compactWidth,
@@ -58,17 +113,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions({
-      vuexSetActiveChat: 'chats/setActiveChat',
-      addDefaultContact: 'contacts/addDefaultContact',
-      refreshContacts: 'contacts/refreshContacts',
-    }),
-    ...mapGetters({
-      getRelayToken: 'relayClient/getToken',
-      getSortedChatOrder: 'chats/getSortedChatOrder',
-      getDarkMode: 'appearance/getDarkMode',
-    }),
-    tweak(offset, viewportHeight) {
+    tweak(offset: number, viewportHeight: number) {
       const height = viewportHeight - offset + 'px'
       return { height, minHeight: height }
     },
@@ -108,20 +153,17 @@ export default {
         }
       }
     },
-    shortcutKeyListener(e) {
+    shortcutKeyListener(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         this.toggleContactBookOpen()
       }
     },
-    contactClicked(newAddress) {
-      this.vuexSetActiveChat(newAddress)
-      this.$router.push(`/chat/${newAddress}`).catch(() => {
-        // Don't care. Probably duplicate route
-      })
+    contactClicked(newAddress: string) {
+      this.setActiveChat(newAddress)
     },
     setupConnections() {
       // Not currently setup. User needs to go through setup flow first
-      if (!this.getRelayToken()) {
+      if (!this.relayToken()) {
         return
       }
       this.$status.setup = true
@@ -129,7 +171,13 @@ export default {
       console.log('Loading')
       // Setup everything at once. This are independent processes
       try {
-        this.$relayClient.setUpWebsocket(this.$wallet.myAddress)
+        if (this.$wallet.myAddress) {
+          this.$relayClient.setUpWebsocket(this.$wallet.myAddress)
+        } else {
+          console.error(
+            'this.$wallet.myAddress not setup yet in MainLayout.vue',
+          )
+        }
       } catch (err) {
         console.error(err)
       }
@@ -138,7 +186,9 @@ export default {
       for (const defaultContact of defaultContacts) {
         this.addDefaultContact(defaultContact)
       }
-      this.$nextTick(this.refreshContacts)
+      this.$nextTick(() =>
+        this.refreshContacts().catch(err => console.error(err)),
+      )
 
       // const lastReceived = this.lastReceived
       const t0 = performance.now()
@@ -169,8 +219,13 @@ export default {
         keyservers: keyservers,
         networkName,
       })
+      assert(this.$wallet.myAddress, 'Address not yet defined?')
+
       // Update keyserver data if it doesn't exist.
-      handler.getRelayUrl(this.$wallet.myAddress.toXAddress()).catch(() => {
+      handler.getRelayUrl(this.$wallet.myAddress?.toXAddress()).catch(() => {
+        if (!this.$wallet.identityPrivKey) {
+          return
+        }
         handler.updateKeyMetadata(
           this.$relayClient.url,
           this.$wallet.identityPrivKey,
@@ -179,7 +234,11 @@ export default {
 
       // Update profile if it doesn't exist.
       this.$relayClient.getRelayData(this.$wallet.myAddress).catch(() => {
-        const relayData = this.getRelayData()
+        if (!this.$wallet.identityPrivKey) {
+          return
+        }
+        const relayData = this.getRelayData
+
         this.$relayClient
           .updateProfile(
             this.$wallet.identityPrivKey,
@@ -201,17 +260,11 @@ export default {
     },
   },
   computed: {
-    ...mapState('chats', ['chats', 'activeChatAddr']),
-    ...mapGetters({
-      lastReceived: 'chats/getLastReceived',
-      totalUnread: 'chats/totalUnread',
-      getRelayData: 'myProfile/getRelayData',
-    }),
     splitterRatio: {
-      get: function () {
+      get(): number {
         return this.trueSplitterRatio
       },
-      set: debounce(function (inputRatio) {
+      set(inputRatio: number): void {
         this.trueSplitterRatio = inputRatio
         this.$nextTick(() => {
           if (inputRatio < compactMidpoint) {
@@ -227,11 +280,11 @@ export default {
             this.compact = false
           }
         })
-      }, 100),
+      },
     },
   },
   created() {
-    this.$q.dark.set(this.getDarkMode())
+    this.$q.dark.set(this.darkMode)
     this.setupConnections()
   },
   mounted() {
@@ -244,25 +297,11 @@ export default {
       case 'granted':
         break
       default:
-        this.$refs.buttonNotification.click()
+        this.buttonNotification?.click()
     }
   },
   beforeUnmount() {
     document.removeEventListener('keydown', this.shortcutKeyListener)
   },
-  watch: {
-    totalUnread: function (unread) {
-      this.updateBadge(unread)
-    },
-    activeChatAddr(newAddress) {
-      // Only route to chat if address defined
-      // e.g. do *not* route when navigating to Forum
-      if (newAddress) {
-        this.$router.push(`/chat/${newAddress}`).catch(() => {
-          // Don't care. Probably duplicate route
-        })
-      }
-    },
-  },
-}
+})
 </script>

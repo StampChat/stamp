@@ -1,9 +1,7 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section class="row items-center q-pb-none">
-      <div class="text-h6">
-        {{ $t('contactBookDialog.contacts') }}
-      </div>
+      <div class="text-h6">{{ $t('contactBookDialog.contacts') }}</div>
       <q-space />
       <q-btn
         flat
@@ -41,31 +39,46 @@
   </q-card>
 </template>
 
-<script>
+<script lang="ts">
 import ContactList from '../contacts/ContactList.vue'
-import { mapGetters } from 'vuex'
+import { defineComponent } from 'vue'
+import { ContactState, useContactStore } from 'src/stores/contacts'
+import { QInput } from 'quasar'
 
-export default {
+export default defineComponent({
   props: {
     contactClick: {
       type: Function,
       required: true,
     },
   },
+  setup() {
+    const contactStore = useContactStore()
+    return {
+      contacts: contactStore.getContacts,
+    }
+  },
   components: {
     ContactList,
   },
   methods: {
-    searchContacts(searchPrefix) {
-      const sortedContacts = Object.entries(this.contacts).sort((e1, e2) => {
-        return e1[0] < e2[0]
+    searchContacts(searchPrefix: string) {
+      const contacts = this.contacts
+      if (!contacts) {
+        return
+      }
+      const sortedContacts = Object.entries(contacts).sort((e1, e2) => {
+        return Number(e1[0]) - Number(e2[0])
       })
 
-      const result = {}
+      const result = {} as Record<string, ContactState>
       for (const [address, contact] of sortedContacts) {
         const lowerSearch = searchPrefix.toLowerCase()
+        if (!contact) {
+          continue
+        }
         if (
-          contact.profile.name.toLowerCase().includes(lowerSearch) ||
+          contact?.profile.name?.toLowerCase().includes(lowerSearch) ||
           address.toLowerCase().includes(lowerSearch)
         ) {
           result[address] = contact
@@ -75,11 +88,6 @@ export default {
       return result
     },
   },
-  computed: {
-    ...mapGetters({
-      contacts: 'contacts/getContacts',
-    }),
-  },
   data() {
     return {
       search: '',
@@ -87,7 +95,8 @@ export default {
     }
   },
   mounted() {
-    this.$refs.contactSearch.$el.focus()
+    const contactSearch = this.$refs.contactSearch as QInput
+    contactSearch.$el.focus()
   },
-}
+})
 </script>

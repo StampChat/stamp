@@ -25,33 +25,58 @@
   </q-card>
 </template>
 
-<script>
-import { mapMutations, mapGetters } from 'vuex'
-import Profile from '../components/Profile'
+<script lang="ts">
+import { defineComponent } from 'vue'
+
+import { useProfileStore } from 'src/stores/my-profile'
+
+import Profile from '../components/Profile.vue'
 import { errorNotify } from '../utils/notifications'
 
-export default {
-  data() {
-    const relayData = this.getRelayData()
+type ProfileData = {
+  name?: string
+  bio?: string
+  avatar?: string
+}
+
+type RelayData = {
+  profile: ProfileData
+  inbox: {
+    acceptancePrice?: number
+  }
+}
+
+export default defineComponent({
+  setup() {
+    const myProfile = useProfileStore()
     return {
-      name: relayData.profile.name,
-      bio: relayData.profile.bio,
-      avatar: relayData.profile.avatar,
-      acceptancePrice: relayData.inbox.acceptancePrice,
+      setRelayData: myProfile.setRelayData,
+      storedRelayData: myProfile,
+    }
+  },
+  data() {
+    const myProfile = useProfileStore()
+
+    return {
+      name: myProfile.profile.name,
+      bio: myProfile.profile.bio,
+      avatar: myProfile.profile.avatar,
+      acceptancePrice: myProfile.inbox.acceptancePrice,
     }
   },
   components: {
     Profile,
   },
   methods: {
-    ...mapMutations({ setRelayData: 'myProfile/setRelayData' }),
-    ...mapGetters('myProfile', ['getRelayData']),
     async updateRelayData() {
       // Set profile
       const client = this.$relayClient
 
       // Create metadata
       const idPrivKey = this.$wallet.identityPrivKey
+      if (!idPrivKey) {
+        return
+      }
       const acceptancePrice = this.relayData.inbox.acceptancePrice
 
       this.$q.loading.show({
@@ -66,7 +91,8 @@ export default {
           acceptancePrice,
         )
         this.setRelayData(this.relayData)
-      } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         console.error(err)
         // TODO: Move specialization down error displayer
         if (err.response.status === 413) {
@@ -86,14 +112,14 @@ export default {
     },
   },
   computed: {
-    profile() {
+    profile(): ProfileData {
       return {
         name: this.name,
         bio: this.bio,
         avatar: this.avatar,
       }
     },
-    relayData() {
+    relayData(): RelayData {
       return {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         profile: this.profile,
@@ -102,8 +128,8 @@ export default {
         },
       }
     },
-    identical() {
-      const currentProfile = this.getRelayData().profile
+    identical(): boolean {
+      const currentProfile = this.storedRelayData.profile
       return (
         currentProfile.name === this.name &&
         currentProfile.bio === this.bio &&
@@ -111,5 +137,5 @@ export default {
       )
     },
   },
-}
+})
 </script>

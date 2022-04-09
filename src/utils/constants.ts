@@ -49,13 +49,13 @@ export const pendingRelayData = {
   profile: {
     name: 'Loading...',
     bio: '',
-    avatar: null,
-    pubKey: null,
+    avatar: '',
   },
   inbox: {
     acceptancePrice: NaN,
   },
   notify: true,
+  lastUpdateTime: 0,
 }
 
 // Avatar constants

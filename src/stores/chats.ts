@@ -1,12 +1,12 @@
 import assert from 'assert'
-import type { Module } from 'vuex'
+import { defineStore } from 'pinia'
 
-import { defaultStampAmount } from '../../utils/constants'
-import { stampPrice } from '../../cashweb/wallet/helpers'
-import { desktopNotify } from '../../utils/notifications'
-import { store } from '../../adapters/level-message-store'
-import { toDisplayAddress } from '../../utils/address'
-import { formatBalance } from '../../utils/formatting'
+import { defaultStampAmount, displayNetwork } from '../utils/constants'
+import { stampPrice } from '../cashweb/wallet/helpers'
+import { desktopNotify } from '../utils/notifications'
+import { store } from '../adapters/level-message-store'
+import { toDisplayAddress } from '../utils/address'
+import { formatBalance } from '../utils/formatting'
 import { Utxo } from 'src/cashweb/types/utxo'
 import type {
   Message,
@@ -16,6 +16,10 @@ import type {
   StealthItem,
 } from 'src/cashweb/types/messages'
 import type { ReceivedMessageWrapper } from 'src/cashweb/types/user-interface'
+import { useProfileStore } from './my-profile'
+import { useContactStore } from './contacts'
+import { mapObjIndexed, pathOr } from 'ramda'
+import { STORE_SCHEMA_VERSION } from 'src/boot/pinia'
 
 type ChatMessage = {
   outbound: boolean
@@ -48,8 +52,8 @@ const defaultContactObject: Omit<ChatState, 'messages' | 'address'> = {
   lastRead: 0,
 }
 
-export type State = {
-  activeChatAddr?: string
+export interface State {
+  activeChatAddr: string | null
   chats: Record<string, ChatState | undefined>
   messages: Record<string, Message | undefined>
   lastReceived: number | null
@@ -59,10 +63,11 @@ export const defaultChatsState: State = {
   chats: {},
   messages: {},
   lastReceived: null,
+  activeChatAddr: null,
 }
 
 export type RestorableState = {
-  activeChatAddr?: string
+  activeChatAddr: string | null
   chats: Record<string, ChatState | undefined>
   messages: Record<string, Message | undefined>
   lastReceived: number | null
@@ -161,9 +166,8 @@ export async function rehydateChat(chatState: RestorableState): Promise<State> {
   }
 }
 
-const module: Module<State, unknown> = {
-  namespaced: true,
-  state: defaultChatsState,
+export const useChatStore = defineStore('chats', {
+  state: (): State => ({ ...defaultChatsState }),
   getters: {
     getMessageByPayload: state => (payloadDigest: string) => {
       if (!state.messages) {
@@ -226,9 +230,6 @@ const module: Module<State, unknown> = {
 
       return chat.stampAmount ?? defaultStampAmount
     },
-    getActiveChat(state) {
-      return state.activeChatAddr
-    },
     getLatestMessage: state => (address: string) => {
       const displayAddress = toDisplayAddress(address)
       const nopInfo = {
@@ -283,15 +284,18 @@ const module: Module<State, unknown> = {
       return state.lastReceived
     },
   },
-  mutations: {
-    deleteMessage(
-      state,
-      { address, payloadDigest }: { address: string; payloadDigest: string },
-    ) {
+  actions: {
+    deleteMessage({
+      address,
+      payloadDigest,
+    }: {
+      address: string
+      payloadDigest: string
+    }) {
       const displayAddress = toDisplayAddress(address)
 
-      delete state.messages[payloadDigest]
-      const chat = state.chats[displayAddress]
+      delete this.messages[payloadDigest]
+      const chat = this.chats[displayAddress]
       if (!chat) {
         return
       }
@@ -300,9 +304,9 @@ const module: Module<State, unknown> = {
       )
       chat.messages.splice(msgIndex, 1)
     },
-    readAll(state, address: string) {
+    readAll(address: string) {
       const displayAddress = toDisplayAddress(address)
-      const chat = state.chats[displayAddress]
+      const chat = this.chats[displayAddress]
       if (!chat) {
         console.error('Trying to readAll messages from non-existant contact')
         return
@@ -319,9 +323,9 @@ const module: Module<State, unknown> = {
       chat.totalUnreadMessages = 0
       chat.totalUnreadValue = 0
     },
-    reset(state) {
-      state.chats = Object.fromEntries(
-        Object.entries(state.chats).map(([address, chatData]) => {
+    reset() {
+      this.chats = Object.fromEntries(
+        Object.entries(this.chats).map(([address, chatData]) => {
           assert(chatData, 'Not possible')
           return [
             address,
@@ -332,50 +336,38 @@ const module: Module<State, unknown> = {
           ]
         }),
       )
-      state.messages = {}
-      state.lastReceived = null
+      this.messages = {}
+      this.lastReceived = null
     },
-    openChat(state, address) {
+    openChat(address: string) {
       const displayAddress = toDisplayAddress(address)
 
-      if (!(displayAddress in state.chats)) {
-        state.chats[displayAddress] = {
+      if (!(displayAddress in this.chats)) {
+        this.chats[displayAddress] = {
           ...defaultContactObject,
           messages: [],
           address: displayAddress,
         }
       }
     },
-    setActiveChat(state, address) {
-      // make sure address is defined, e.g. Forum is undefined
-      if (!address) {
-        state.activeChatAddr = undefined
-        return
-      }
+    sendMessageLocal({
+      address,
+      senderAddress,
+      index: payloadDigest,
+      items,
+      outpoints = [],
+      status = 'pending',
+      previousHash = null,
+    }: {
+      address: string
+      senderAddress: string
+      index: string
+      items: MessageItem[]
+      outpoints: Utxo[]
+      status: string
+      previousHash: string | null
+    }) {
       const displayAddress = toDisplayAddress(address)
-      if (!(displayAddress in state.chats)) {
-        state.chats[displayAddress] = {
-          ...defaultContactObject,
-          messages: [],
-          address: displayAddress,
-        }
-      }
-      state.activeChatAddr = displayAddress
-    },
-    sendMessageLocal(
-      state,
-      {
-        address,
-        senderAddress,
-        index: payloadDigest,
-        items,
-        outpoints = [],
-        status = 'pending',
-        previousHash = null,
-      },
-    ) {
-      const displayAddress = toDisplayAddress(address)
-
       const timestamp = Date.now()
       const newMsg = {
         outbound: true,
@@ -396,62 +388,176 @@ const module: Module<State, unknown> = {
       assert(newMsg.senderAddress !== undefined, 'senderAddress is not defined')
 
       const message = { payloadDigest: payloadDigest, ...newMsg }
-      if (payloadDigest in state.messages) {
+      if (payloadDigest in this.messages) {
         // we have the message already, just need to update some fields and return
-        state.messages[payloadDigest] = Object.assign(
-          state.messages[payloadDigest],
+        this.messages[payloadDigest] = Object.assign(
+          this.messages[payloadDigest],
           message,
         )
         return
       }
 
       // Chat may be null if it is a self send
-      const chat = state.chats[displayAddress]
+      const chat = this.chats[displayAddress]
       if (!chat) {
         // This was a self send, we don't want to update any particular chats.
         return
       }
 
-      if (previousHash in state.messages) {
+      if (previousHash && previousHash in this.messages) {
         // we have the message already, just need to update some fields and return
         const msgIndex = chat.messages.findIndex(
           msg => msg.payloadDigest === previousHash,
         )
         chat.messages.splice(msgIndex, 1)
-        delete state.messages[payloadDigest]
+        delete this.messages[payloadDigest]
         return
       }
 
-      state.messages[payloadDigest] = message
-      if (displayAddress in state.chats) {
+      this.messages[payloadDigest] = message
+      if (displayAddress in this.chats) {
         chat.messages.push(message)
         chat.lastRead = Date.now()
         return
       }
-      state.chats[displayAddress] = {
+      this.chats[displayAddress] = {
         ...defaultContactObject,
         messages: [message],
         address: displayAddress,
       }
     },
-    clearChat(state, address) {
+    clearChat(address: string) {
       const displayAddress = toDisplayAddress(address)
 
-      const chat = state.chats[displayAddress]
+      const chat = this.chats[displayAddress]
       if (!chat) {
         return
       }
       chat.messages = []
     },
-    deleteChat(state, address) {
+    deleteChat(address: string) {
       const displayAddress = toDisplayAddress(address)
 
-      if (state.activeChatAddr === displayAddress) {
-        state.activeChatAddr = undefined
+      if (this.activeChatAddr === displayAddress) {
+        this.activeChatAddr = null
       }
-      delete state.chats[displayAddress]
+      delete this.chats[displayAddress]
     },
-    receiveMessages(state, messageWrappers: ReceivedMessageWrapper[]) {
+    setStampAmount({
+      address,
+      stampAmount,
+    }: {
+      address: string
+      stampAmount: number
+    }) {
+      const chat = this.chats[address]
+      if (!chat) {
+        console.error('attempting to set stamp amount for non-existant contact')
+        return
+      }
+      chat.stampAmount = stampAmount
+    },
+    shareContact({ shareAddr }: { shareAddr: string }) {
+      this.setActiveChat(shareAddr)
+    },
+    setActiveChat(address: string) {
+      // make sure address is defined, e.g. Forum is undefined
+      if (address) {
+        const contacts = useContactStore()
+        contacts.refresh(address)
+        this.readAll(address)
+      }
+      // make sure address is defined, e.g. Forum is undefined
+      if (!address) {
+        this.activeChatAddr = null
+        return
+      }
+      const displayAddress = toDisplayAddress(address)
+      if (!(displayAddress in this.chats)) {
+        this.chats[displayAddress] = {
+          ...defaultContactObject,
+          messages: [],
+          address: displayAddress,
+        }
+      }
+      this.activeChatAddr = displayAddress
+    },
+    async receiveMessages(messageWrappers: ReceivedMessageWrapper[]) {
+      console.log('receiving messages')
+      // Ensure contacts are all setup
+      for (const messageWrapper of messageWrappers) {
+        const {
+          outbound,
+          copartyAddress,
+          copartyPubKey,
+          message: newMsg,
+          stampValue,
+        } = messageWrapper
+        // Check whether contact exists
+        const contacts = useContactStore()
+        if (!contacts.isContact(copartyAddress)) {
+          // Add dummy contact
+
+          contacts.addLoadingContact({
+            address: copartyAddress,
+            pubKey: copartyPubKey,
+          })
+
+          // Load contact
+          await contacts.refresh(copartyAddress)
+        }
+
+        const profileStore = useProfileStore()
+
+        // Ignore messages below acceptance price
+        const acceptancePrice = profileStore.inbox.acceptancePrice ?? 0
+        const lastRead = this.lastRead(copartyAddress)
+
+        const acceptable = stampValue >= acceptancePrice
+        // If not focused (and not outbox message) then notify
+        if (
+          document.hasFocus() ||
+          outbound ||
+          !acceptable ||
+          lastRead > newMsg.serverTime ||
+          // Don't notify or reset active chat if we are bulk loading messages
+          messageWrappers.length !== 1
+        ) {
+          continue
+        }
+
+        const contactStore = useContactStore()
+
+        const contact = contactStore.getContact(copartyAddress)
+        const textItem: TextItem = (newMsg.items.find(
+          item => item.type === 'text',
+        ) as TextItem) ?? { text: '' }
+        const stealthItem: StealthItem = (newMsg.items.find(
+          item => item.type === 'stealth',
+        ) as StealthItem) ?? { amount: 0 }
+        const imageItem: ImageItem = (newMsg.items.find(
+          item => item.type === 'image',
+        ) as ImageItem) ?? { image: '' }
+
+        let body = ''
+        if (stealthItem.amount > 0) {
+          const formatted = formatBalance(stealthItem.amount)
+          body = `[${formatted}] ` + body
+        }
+        if (imageItem.image.length > 0) {
+          body = '[Image] ' + body
+        }
+        body = body + textItem.text
+        if (contact && contact.notify) {
+          desktopNotify(
+            contact.profile.name ?? 'Unknown',
+            body,
+            contact.profile.avatar ?? '',
+            async () => this.setActiveChat(copartyAddress),
+          )
+        }
+      }
+
       for (const wrapper of messageWrappers) {
         const {
           copartyAddress,
@@ -474,23 +580,23 @@ const module: Module<State, unknown> = {
         const displayAddress = toDisplayAddress(copartyAddress)
 
         const message = { payloadDigest: index, ...newMsg }
-        if (index in state.messages) {
+        if (index in this.messages) {
           // Mutate the object so that it striggers reactivity
-          state.messages[index] = Object.assign(state.messages[index], message)
+          this.messages[index] = Object.assign(this.messages[index], message)
           // We should already have created the chat if we have the message
           return
         }
         // We don't need reactivity here
-        state.messages[index] = message
-        if (!(displayAddress in state.chats)) {
+        this.messages[index] = message
+        if (!(displayAddress in this.chats)) {
           // We do need reactivity to create a new chat
-          state.chats[displayAddress] = {
+          this.chats[displayAddress] = {
             ...defaultContactObject,
             messages: [],
             address: displayAddress,
           }
         }
-        const chat = state.chats[displayAddress]
+        const chat = this.chats[displayAddress]
         assert(chat, 'not possible')
 
         // TODO: Better indexing
@@ -508,121 +614,54 @@ const module: Module<State, unknown> = {
             }
           }, 0)
         if (
-          displayAddress !== state.activeChatAddr &&
+          displayAddress !== this.activeChatAddr &&
           chat.lastRead < message.serverTime
         ) {
           chat.totalUnreadValue += messageValue
           chat.totalUnreadMessages += 1
         }
-        state.lastReceived = message.serverTime
+        this.lastReceived = message.serverTime
         chat.totalValue += messageValue
       }
     },
-    setStampAmount(state, { address, stampAmount }) {
-      const chat = state.chats[address]
-      if (!chat) {
-        console.error('attempting to set stamp amount for non-existant contact')
-        return
+  },
+  storage: {
+    save(storage, _mutation, state): void {
+      const chats = {
+        activeChatAddr: pathOr(undefined, ['activeChatAddr'], state),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        chats: mapObjIndexed((addressData: Record<string, unknown>) => {
+          return {
+            ...addressData,
+            // Overwrite messages because storing them would be prohibitive.
+            messages: [],
+          }
+        }, state.chats),
+        messages: {},
+        lastReceived: state.lastReceived ?? 0,
       }
-      chat.stampAmount = stampAmount
+      storage.put('chats', JSON.stringify(chats))
+    },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async restore(storage, metadata): Promise<Partial<State>> {
+      let chats = '{}'
+      try {
+        chats = await storage.get('chats')
+      } catch (err) {
+        //
+      }
+      const deserializedChats = JSON.parse(chats) as RestorableState
+
+      const invalidStore =
+        metadata.networkName !== displayNetwork ||
+        metadata.version !== STORE_SCHEMA_VERSION
+      if (invalidStore) {
+        return { ...defaultChatsState }
+      }
+
+      const rehydratedChat = await rehydateChat(deserializedChats)
+
+      return rehydratedChat
     },
   },
-  actions: {
-    reset({ commit }) {
-      commit('reset')
-    },
-    shareContact({ dispatch }, { shareAddr }) {
-      dispatch('setActiveChat', shareAddr)
-    },
-    setActiveChat({ commit, dispatch }, address) {
-      // make sure address is defined, e.g. Forum is undefined
-      if (address) {
-        dispatch('contacts/refresh', address, { root: true })
-        commit('readAll', address)
-      }
-      commit('setActiveChat', address)
-    },
-    setStampAmount({ commit }, { address, stampAmount }) {
-      assert(typeof stampAmount === 'number', 'stampAmount wrong type')
-      commit('setStampAmount', { address, stampAmount })
-    },
-    async receiveMessages(
-      { dispatch, commit, rootGetters, getters },
-      messageWrappers: ReceivedMessageWrapper[],
-    ) {
-      // Ensure contacts are all setup
-      for (const messageWrapper of messageWrappers) {
-        const {
-          outbound,
-          copartyAddress,
-          copartyPubKey,
-          message: newMsg,
-          stampValue,
-        } = messageWrapper
-        // Check whether contact exists
-        if (!rootGetters['contacts/isContact'](copartyAddress)) {
-          // Add dummy contact
-          await dispatch(
-            'contacts/addLoadingContact',
-            { address: copartyAddress, pubKey: copartyPubKey },
-            { root: true },
-          )
-
-          // Load contact
-          dispatch('contacts/refresh', copartyAddress, { root: true })
-        }
-
-        // Ignore messages below acceptance price
-        const acceptancePrice =
-          rootGetters['myProfile/getInbox'].acceptancePrice
-        const lastRead = getters.lastRead(copartyAddress)
-
-        const acceptable = stampValue >= acceptancePrice
-        // If not focused (and not outbox message) then notify
-        if (
-          document.hasFocus() ||
-          outbound ||
-          !acceptable ||
-          lastRead > newMsg.serverTime ||
-          // Don't notify or reset active chat if we are bulk loading messages
-          messageWrappers.length !== 1
-        ) {
-          continue
-        }
-
-        const contact = rootGetters['contacts/getContact'](copartyAddress)
-        const textItem: TextItem = (newMsg.items.find(
-          item => item.type === 'text',
-        ) as TextItem) ?? { text: '' }
-        const stealthItem: StealthItem = (newMsg.items.find(
-          item => item.type === 'stealth',
-        ) as StealthItem) ?? { amount: 0 }
-        const imageItem: ImageItem = (newMsg.items.find(
-          item => item.type === 'image',
-        ) as ImageItem) ?? { image: '' }
-
-        let body = ''
-        if (stealthItem.amount > 0) {
-          const formatted = formatBalance(stealthItem.amount)
-          body = `[${formatted}] ` + body
-        }
-        if (imageItem.image.length > 0) {
-          body = '[Image] ' + body
-        }
-        body = body + textItem.text
-        if (contact && contact.notify) {
-          desktopNotify(
-            contact.profile.name,
-            body,
-            contact.profile.avatar,
-            async () => dispatch('setActiveChat', copartyAddress),
-          )
-        }
-      }
-
-      commit('receiveMessages', messageWrappers)
-    },
-  },
-}
-
-export default module
+})

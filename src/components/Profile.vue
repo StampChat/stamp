@@ -52,7 +52,7 @@
                   <q-file
                     ref="filePicker"
                     v-model="avatarPath"
-                    filled=""
+                    filled
                     style="display: none"
                   />
                   <q-btn
@@ -90,10 +90,15 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
+
 import { defaultAvatars } from '../utils/constants'
 
-export default {
+export default defineComponent({
+  setup() {
+    return {}
+  },
   props: {
     name: {
       type: String,
@@ -121,7 +126,7 @@ export default {
   data() {
     return {
       splitterSize: 110,
-      internalAvatar: this.avatar,
+      internalAvatar: this.avatar as string | ArrayBuffer,
       internalBio: this.bio,
       internalName: this.name,
       internalAcceptancePrice: this.acceptancePrice,
@@ -131,16 +136,26 @@ export default {
     }
   },
   methods: {
-    selectLocalAvatar(name) {
-      const toDataURL = callback => {
+    selectLocalAvatar(name: string) {
+      const toDataURL = (callback: (dataUrl: string) => void) => {
         const img = new Image()
         img.crossOrigin = 'Anonymous'
-        img.onload = function () {
-          const canvas = document.createElement('CANVAS')
+        img.onload = function (e: Event) {
+          const target = e.target as HTMLImageElement
+          if (!target) {
+            console.error(
+              'err finding target in Profile.vue image onload handler',
+            )
+            return
+          }
+          const canvas = document.createElement('CANVAS') as HTMLCanvasElement
           const ctx = canvas.getContext('2d')
-          canvas.height = this.naturalHeight
-          canvas.width = this.naturalWidth
-          ctx.drawImage(this, 0, 0)
+          if (!ctx) {
+            return
+          }
+          canvas.height = target.naturalHeight
+          canvas.width = target.naturalWidth
+          ctx.drawImage(target, 0, 0)
           const dataURL = canvas.toDataURL()
           callback(dataURL)
         }
@@ -182,7 +197,10 @@ export default {
       const reader = new FileReader()
       reader.readAsDataURL(val)
       reader.onload = evt => {
-        this.internalAvatar = evt.target.result
+        if (!evt.target?.result) {
+          return
+        }
+        this.internalAvatar = evt.target?.result
       }
     },
   },
@@ -191,5 +209,5 @@ export default {
       this.selectLocalAvatar(defaultAvatars[this.defaultAvatarIndex])
     }
   },
-}
+})
 </script>

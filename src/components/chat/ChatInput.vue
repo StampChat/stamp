@@ -8,14 +8,14 @@
               <q-item-section avatar side>
                 <q-icon name="local_florist" />
               </q-item-section>
-              <q-item-section> Give Lotus Secretly </q-item-section>
+              <q-item-section>Give Lotus Secretly</q-item-section>
             </q-item>
 
             <q-item clickable v-close-popup @click="sendFileClicked">
               <q-item-section avatar side>
                 <q-icon name="attach_file" />
               </q-item-section>
-              <q-item-section> Attach Image </q-item-section>
+              <q-item-section>Attach Image</q-item-section>
             </q-item>
 
             <!-- <q-item clickable>
@@ -35,7 +35,7 @@
                   :show-skin-tones="false"
                 />
               </q-menu>
-            </q-item> -->
+            </q-item>-->
             <q-item>
               <q-item-section>
                 <q-input
@@ -81,24 +81,18 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
 import emoji from 'node-emoji'
 import { defaultStampAmount } from '../../utils/constants'
 import { processInput } from '../../utils/chat'
-// import { Picker, EmojiIndex } from 'emoji-mart-vue-fast'
-// import data from '../../assets/emoticons/all.json'
-// import 'emoji-mart-vue-fast/css/emoji-mart.css'
 
-// const emojiIndex = new EmojiIndex(data)
-
-export default {
+export default defineComponent({
   components: {
     // Picker
   },
   data() {
-    return {
-      // emojiIndex
-    }
+    return {}
   },
   props: {
     message: {
@@ -119,23 +113,27 @@ export default {
   ],
   methods: {
     // ChatInput drop/paste handler
-    async dp(e) {
-      const items = e.clipboardData?.items || e.dataTransfer?.items
+    async dp(e: ClipboardEvent | DragEvent) {
+      const items =
+        'clipboardData' in e ? e.clipboardData?.items : e.dataTransfer?.items
+      if (!items) {
+        console.error('No items found in DP event handler', e)
+        return
+      }
       const blob = await processInput(items)
       return blob ? this.$emit('sendFileClicked', blob) : null
     },
-    focusInput(e) {
-      const relatedTarget = e.relatedTarget
+    focusInput(e: FocusEvent) {
       if (e.type === 'blur') {
+        const relatedTarget = e.relatedTarget as Element
         // Prevent the focus if the target isn't related
-        if (!relatedTarget) {
+        if (!relatedTarget || relatedTarget.localName === 'input') {
           return
           // allow focus change to other inputs (e.g. RightPanel)
-        } else if (relatedTarget.localName === 'input') {
-          return
         }
       }
-      this.$refs.inputBox.focus()
+      const inputBox = this.$refs.inputBox as HTMLElement
+      inputBox.focus()
     },
     sendMessage() {
       this.$emit('sendMessage', this.innerMessage)
@@ -146,7 +144,7 @@ export default {
     sendFileClicked() {
       this.$emit('sendFileClicked')
     },
-    addEmoji(value) {
+    addEmoji(value: { id: string }) {
       // TODO: This needs to be cursor position aware
       this.innerMessage += `:${value.id}:`
     },
@@ -156,8 +154,8 @@ export default {
       get() {
         return this.message
       },
-      set(val) {
-        const replacer = match => emoji.emojify(match)
+      set(val: string) {
+        const replacer = (match: string) => emoji.emojify(match)
         // TODO: Remove emojify
         const emojifiedValue = val.replace(/(:.*:)/g, replacer)
         this.$emit('update:message', emojifiedValue)
@@ -167,10 +165,10 @@ export default {
       get() {
         return Number(this.stampAmount / 1000000).toFixed(2)
       },
-      set(val) {
+      set(val: string) {
         this.$emit('update:stampAmount', Number(val) * 1000000)
       },
     },
   },
-}
+})
 </script>

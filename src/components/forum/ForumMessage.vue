@@ -10,9 +10,9 @@
         <q-card-section class="q-pa-none text-center">
           <q-btn flat icon="arrow_drop_up" padding="0" @click="addVotes(10)" />
         </q-card-section>
-        <q-card-section class="q-pa-none q-mt-xs text-center">
-          {{ formatSatoshis(message.satoshis) }}
-        </q-card-section>
+        <q-card-section class="q-pa-none q-mt-xs text-center">{{
+          formatSatoshis(message.satoshis)
+        }}</q-card-section>
         <q-card-section class="q-pa-none q-mt-xs text-center">
           <q-btn
             flat
@@ -41,9 +41,9 @@
               class="text-h6 text-bold q-mr-md post-title"
               >{{ entry.title || 'Untitled' }}</a
             >
-            <span v-if="!entry.url" class="text-h6 text-bold q-mr-md">{{
-              entry.title || 'Untitled'
-            }}</span>
+            <span v-if="!entry.url" class="text-h6 text-bold q-mr-md">
+              {{ entry.title || 'Untitled' }}
+            </span>
             <div class="q-mt-xs">
               <q-btn
                 rounded
@@ -68,15 +68,11 @@
             <div v-if="haveContact(message.poster)">
               {{ getContactProfile(message.poster).name }}
             </div>
-            <div v-else>
-              {{ formatAddress(message.poster) }}
-            </div>
+            <div v-else>{{ formatAddress(message.poster) }}</div>
           </q-btn>
           <div class="text-bold q-ml-sm text-caption">
             {{ timestamp }}
-            <q-tooltip>
-              {{ fullTimestamp }}
-            </q-tooltip>
+            <q-tooltip>{{ fullTimestamp }}</q-tooltip>
           </div>
           <q-btn
             flat
@@ -101,7 +97,7 @@
           v-if="showParent && parentDigest && parentMessage"
           class="q-pa-none"
         >
-          <q-card-section class="q-pa-sm"> In reply to: </q-card-section>
+          <q-card-section class="q-pa-sm">In reply to:</q-card-section>
           <forum-message
             v-bind="$attrs"
             class="q-ma-none"
@@ -121,12 +117,28 @@ import moment from 'moment'
 
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
-import { mapActions, mapGetters } from 'vuex'
 import AMessageReplies from './ForumMessageReplies.vue'
 
 import { ForumMessage } from '../../cashweb/types/forum'
+import { useForumStore } from 'src/stores/forum'
+import { useContactStore } from 'src/stores/contacts'
 
 export default defineComponent({
+  setup() {
+    const forumStore = useForumStore()
+    const contactStore = useContactStore()
+
+    return {
+      getMessages: forumStore.getMessages,
+      getMessage: forumStore.getMessage,
+      topics: forumStore.getTopics,
+      getContactProfile: contactStore.getContactProfile,
+      haveContact: contactStore.haveContact,
+      getSelectedTopic: forumStore.getSelectedTopic,
+
+      addOffering: forumStore.addOffering,
+    }
+  },
   props: {
     message: {
       default: () => ({
@@ -171,9 +183,6 @@ export default defineComponent({
   },
   emits: ['set-topic'],
   methods: {
-    ...mapActions({
-      addOffering: 'forum/addOffering',
-    }),
     formatSatoshis(value: number) {
       return (value / 1_000_000).toFixed(0)
     },
@@ -210,14 +219,6 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapGetters({
-      getMessages: 'forum/getMessages',
-      getMessage: 'forum/getMessage',
-      topics: 'forum/getTopics',
-      getContactProfile: 'contacts/getContactProfile',
-      haveContact: 'contacts/haveContact',
-      getSelectedTopic: 'forum/getSelectedTopic',
-    }),
     timestamp() {
       if (!this.message) {
         return ''

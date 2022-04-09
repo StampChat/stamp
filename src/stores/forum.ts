@@ -1,17 +1,19 @@
 import assert from 'assert'
-import type { Module } from 'vuex'
+import { defineStore } from 'pinia'
 import { indexBy, uniq } from 'ramda'
 
 import { KeyserverHandler } from 'src/cashweb/keyserver'
 import { Wallet } from 'src/cashweb/wallet'
-import { displayNetwork, keyservers } from '../../utils/constants'
+import { displayNetwork, keyservers } from '../utils/constants'
 
 import { ForumMessage, ForumMessageEntry } from 'src/cashweb/types/forum'
 import { SortMode } from 'src/utils/sorting'
 
-type MessageWithReplies = ForumMessage & { replies: MessageWithReplies[] }
+export type MessageWithReplies = ForumMessage & {
+  replies: MessageWithReplies[]
+}
 
-export type State = {
+export interface State {
   messages: MessageWithReplies[]
   index: Record<string, MessageWithReplies | undefined>
   topics: string[]
@@ -22,9 +24,8 @@ export type State = {
   compactView: boolean
 }
 
-const module: Module<State, unknown> = {
-  namespaced: true,
-  state: {
+export const useForumStore = defineStore('forum', {
+  state: (): State => ({
     messages: [],
     index: {},
     topics: [],
@@ -34,7 +35,7 @@ const module: Module<State, unknown> = {
     duration: 1000 * 60 * 60 * 24 * 7,
     voteThreshold: 0,
     compactView: false,
-  },
+  }),
   getters: {
     getMessages(state) {
       return state.messages
@@ -74,48 +75,48 @@ const module: Module<State, unknown> = {
       return state.compactView
     },
   },
-  mutations: {
-    setSortMode(state, sortMode) {
-      state.sortMode = sortMode
+  actions: {
+    setSortMode(sortMode: SortMode) {
+      this.sortMode = sortMode
     },
-    setDuration(state, duration: number) {
-      state.duration = duration
+    setDuration(duration: number) {
+      this.duration = duration
     },
-    setVoteThreshold(state, voteThreshold: number) {
-      state.voteThreshold = voteThreshold
+    setVoteThreshold(voteThreshold: number) {
+      this.voteThreshold = voteThreshold
     },
-    setCompactView(state, compactView: boolean) {
-      state.compactView = compactView
+    setCompactView(compactView: boolean) {
+      this.compactView = compactView
     },
-    setEntries(state, messages: ForumMessage[]) {
+    setEntries(messages: ForumMessage[]) {
       const newMessages = messages
-        .filter(m => !(m.payloadDigest in state.index))
+        .filter(m => !(m.payloadDigest in this.index))
         .map(m => ({ ...m, replies: [] }))
-      state.messages.push(
-        ...newMessages.filter(m => !(m.payloadDigest in state.index)),
+      this.messages.push(
+        ...newMessages.filter(m => !(m.payloadDigest in this.index)),
       )
-      state.index = indexBy(message => message.payloadDigest, state.messages)
-      state.topics = uniq(messages.map(message => message.topic))
+      this.index = indexBy(message => message.payloadDigest, this.messages)
+      this.topics = uniq(messages.map(message => message.topic))
       for (const message of newMessages) {
         if (!message.parentDigest) {
           continue
         }
-        if (!(message.parentDigest in state.index)) {
+        if (!(message.parentDigest in this.index)) {
           continue
         }
-        const replies = state.index[message.parentDigest]?.replies
+        const replies = this.index[message.parentDigest]?.replies
         const found = replies?.some(
           reply => reply.payloadDigest === message.payloadDigest,
         )
         if (found) {
           return
         }
-        state.index[message.parentDigest]?.replies.push(message)
+        this.index[message.parentDigest]?.replies.push(message)
       }
     },
-    setMessage(state, message: ForumMessage) {
-      if (message.payloadDigest in state.index) {
-        const oldMessage = state.index[message.payloadDigest]
+    setMessage(message: ForumMessage) {
+      if (message.payloadDigest in this.index) {
+        const oldMessage = this.index[message.payloadDigest]
         assert(oldMessage, 'Not possible, typescript hole')
         oldMessage.satoshis = message.satoshis
         return
@@ -127,68 +128,60 @@ const module: Module<State, unknown> = {
 
       console.log('Saving specific message', message)
       const mesageWithReplies = { ...message, replies: [] }
-      state.messages.push(mesageWithReplies)
-      state.index = indexBy(message => message.payloadDigest, state.messages)
-      state.topics = uniq(state.messages.map(message => message.topic))
+      this.messages.push(mesageWithReplies)
+      this.index = indexBy(message => message.payloadDigest, this.messages)
+      this.topics = uniq(this.messages.map(message => message.topic))
       if (!mesageWithReplies.parentDigest) {
         return
       }
-      if (!(mesageWithReplies.parentDigest in state.index)) {
+      if (!(mesageWithReplies.parentDigest in this.index)) {
         return
       }
-      const replies = state.index[mesageWithReplies.parentDigest]?.replies
+      const replies = this.index[mesageWithReplies.parentDigest]?.replies
       const found = replies?.some(
         reply => reply.payloadDigest === mesageWithReplies.payloadDigest,
       )
       if (found) {
         return
       }
-      state.index[mesageWithReplies.parentDigest]?.replies.push(
+      this.index[mesageWithReplies.parentDigest]?.replies.push(
         mesageWithReplies,
       )
     },
-    setSelectedTopic(state, topic: string) {
-      state.selectedTopic = topic
+    setSelectedTopic(topic: string) {
+      this.selectedTopic = topic
     },
-    pushNewTopic(state, topic: string) {
-      state.topics.push(topic)
+    pushNewTopic(topic: string) {
+      this.topics.push(topic)
     },
-  },
-  actions: {
-    async refreshMessages(
-      { commit, getters },
-      { wallet }: { topic: string; wallet: Wallet },
-    ) {
+    async refreshMessages({ wallet }: { topic: string; wallet: Wallet }) {
       const keyserver = new KeyserverHandler({
         wallet,
         networkName: displayNetwork,
         keyservers,
       })
       console.log('fetching messages')
-      const from = Date.now() - getters.getDuration
+      const from = Date.now() - this.getDuration
       console.log(from)
       const entries = await keyserver.getBroadcastMessages('', from)
       if (!entries) {
         return
       }
-      commit('setEntries', entries)
+      this.setEntries(entries)
     },
-    async putMessage(
-      { dispatch },
-      {
-        wallet,
-        entry,
-        satoshis,
-        topic,
-        parentDigest,
-      }: {
-        wallet: Wallet
-        entry: ForumMessageEntry
-        satoshis: number
-        topic: string
-        parentDigest?: string
-      },
-    ) {
+    async putMessage({
+      wallet,
+      entry,
+      satoshis,
+      topic,
+      parentDigest,
+    }: {
+      wallet: Wallet
+      entry: ForumMessageEntry
+      satoshis: number
+      topic: string
+      parentDigest?: string
+    }) {
       const keyserver = new KeyserverHandler({
         wallet,
         networkName: displayNetwork,
@@ -201,12 +194,15 @@ const module: Module<State, unknown> = {
         satoshis,
         parentDigest,
       )
-      await dispatch('fetchMessage', { payloadDigest, wallet })
+      this.fetchMessage({ payloadDigest, wallet })
     },
-    async fetchMessage(
-      { commit, getters },
-      { wallet, payloadDigest }: { wallet: Wallet; payloadDigest: string },
-    ) {
+    async fetchMessage({
+      wallet,
+      payloadDigest,
+    }: {
+      wallet: Wallet
+      payloadDigest: string
+    }) {
       const keyserver = new KeyserverHandler({
         wallet,
         networkName: displayNetwork,
@@ -214,18 +210,23 @@ const module: Module<State, unknown> = {
       })
       console.log('fetching message', payloadDigest)
       const message = await keyserver.getBroadcastMessage(payloadDigest)
-      commit('setMessage', message)
+      if (!message) {
+        console.log('could not fetch message', payloadDigest)
+        return
+      }
+      this.setMessage(message)
       // Need to refetch so we get the right proxy object
-      return getters.getMessage(payloadDigest)
+      return this.getMessage(payloadDigest)
     },
-    async addOffering(
-      { dispatch },
-      {
-        wallet,
-        payloadDigest,
-        satoshis,
-      }: { wallet: Wallet; payloadDigest: string; satoshis: number },
-    ) {
+    async addOffering({
+      wallet,
+      payloadDigest,
+      satoshis,
+    }: {
+      wallet: Wallet
+      payloadDigest: string
+      satoshis: number
+    }) {
       const keyserver = new KeyserverHandler({
         wallet,
         networkName: displayNetwork,
@@ -233,9 +234,23 @@ const module: Module<State, unknown> = {
       })
       console.log('voting towards message', payloadDigest, satoshis)
       await keyserver.addOfferings(payloadDigest, satoshis)
-      await dispatch('fetchMessage', { payloadDigest, wallet })
+      await this.fetchMessage({ payloadDigest, wallet })
     },
   },
-}
-
-export default module
+  storage: {
+    save(storage, _mutation, state): void {
+      storage.put('forum', JSON.stringify(state))
+    },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async restore(storage): Promise<Partial<State>> {
+      let forum = '{}'
+      try {
+        forum = await storage.get('forum')
+      } catch (err) {
+        //
+      }
+      const deserializedForum = JSON.parse(forum) as State
+      return deserializedForum
+    },
+  },
+})

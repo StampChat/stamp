@@ -1,18 +1,21 @@
 import RelayClient from 'src/cashweb/relay'
 import { Wallet } from 'src/cashweb/wallet'
-import { RootState } from 'src/store/modules'
-import { Store } from 'vuex'
 
 declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
-    // Vuejs props
-    // Stamp properties
+    $wallet: Wallet
+    $relayClient: RelayClient
+    $relay: {
+      connected: boolean
+    }
     $indexer: {
       connected: boolean
     }
+    $status: {
+      loaded: boolean
+      setup: boolean
+    }
 
-    $wallet: Wallet
-    $relayClient: RelayClient
-    $store: Store<RootState>
+    openURL: (url: string) => void
   }
 }

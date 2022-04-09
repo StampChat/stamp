@@ -39,10 +39,18 @@
   </q-card>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
+<script lang="ts">
+import { QInput } from 'quasar'
+import { useChatStore } from 'src/stores/chats'
+import { defineComponent } from 'vue'
 
-export default {
+export default defineComponent({
+  setup() {
+    const chatStore = useChatStore()
+    return {
+      getStampAmount: chatStore.getStampAmount,
+    }
+  },
   data() {
     return {
       amount: 0,
@@ -60,11 +68,8 @@ export default {
     },
   },
   methods: {
-    ...mapGetters({
-      getStampAmount: 'chats/getStampAmount',
-    }),
     async sendStealthPayment() {
-      const stampAmount = this.getStampAmount()(this.address)
+      const stampAmount = this.getStampAmount(this.address)
       const amount = Number(this.amount * 1000000)
       await this.$relayClient.sendStealthPayment({
         address: this.address,
@@ -75,7 +80,8 @@ export default {
     },
   },
   mounted() {
-    this.$refs.amount.$el.focus()
+    const amountInput = this.$refs.amount as QInput
+    amountInput.$el.focus()
   },
-}
+})
 </script>

@@ -2,10 +2,10 @@
   <div class="full-width column col">
     <contact-card
       :address="getMyAddressStr"
-      :name="getProfile.name"
-      :bio="getProfile.bio"
-      :avatar="getProfile.avatar"
-      :acceptance-price="getInbox.acceptancePrice"
+      :name="profile.name"
+      :bio="profile.bio"
+      :avatar="profile.avatar"
+      :acceptance-price="inbox.acceptancePrice"
     />
 
     <!-- Contact book dialog -->
@@ -46,9 +46,9 @@
             <q-icon name="send" />
           </q-item-section>
 
-          <q-item-section>{{
-            $t('SettingPanel.sendBitcoinCash')
-          }}</q-item-section>
+          <q-item-section>
+            {{ $t('SettingPanel.sendBitcoinCash') }}
+          </q-item-section>
         </q-item>
 
         <q-item clickable v-ripple @click="receiveECash">
@@ -56,9 +56,9 @@
             <q-icon name="account_balance_wallet" />
           </q-item-section>
 
-          <q-item-section>{{
-            $t('SettingPanel.recieveBitcoinCash')
-          }}</q-item-section>
+          <q-item-section>
+            {{ $t('SettingPanel.recieveBitcoinCash') }}
+          </q-item-section>
         </q-item>
 
         <q-separator />
@@ -108,13 +108,28 @@
   </div>
 </template>
 
-<script>
-import { mapActions, mapGetters, mapMutations } from 'vuex'
+<script lang="ts">
+import { defineComponent } from 'vue'
+
 import ContactCard from './ContactCard.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import { openPage } from '../../utils/routes'
+import { useChatStore } from 'src/stores/chats'
+import { useProfileStore } from 'src/stores/my-profile'
+import { storeToRefs } from 'pinia'
 
-export default {
+export default defineComponent({
+  setup() {
+    const chats = useChatStore()
+    const myProfile = useProfileStore()
+    const { profile, inbox } = storeToRefs(myProfile)
+    return {
+      deleteMessage: chats.deleteMessage,
+      setActiveChat: chats.setActiveChat,
+      profile,
+      inbox,
+    }
+  },
   components: {
     ContactCard,
     ContactBookDialog,
@@ -136,12 +151,6 @@ export default {
     event: 'update:drawerOpen',
   },
   methods: {
-    ...mapMutations({
-      deleteMessage: 'chats/deleteMessage',
-    }),
-    ...mapActions({
-      setActiveChat: 'chats/setActiveChat',
-    }),
     getIdentityPrivKey() {
       return this.$wallet.identityPrivKey
     },
@@ -168,21 +177,17 @@ export default {
     },
   },
   computed: {
-    ...mapGetters({
-      getProfile: 'myProfile/getProfile',
-      getInbox: 'myProfile/getInbox',
-    }),
     getMyAddressStr() {
-      return this.$wallet.myAddress.toXAddress()
+      return this.$wallet.myAddress?.toXAddress()
     },
     drawerOpenModel: {
       get() {
         return this.drawerOpen
       },
-      set(value) {
+      set(value: boolean) {
         this.$emit('update:drawerOpen', value)
       },
     },
   },
-}
+})
 </script>

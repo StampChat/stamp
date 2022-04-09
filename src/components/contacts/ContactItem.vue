@@ -29,17 +29,15 @@
         </q-avatar>
       </q-item-section>
       <q-item-section @click="contactClick(address, contact)">
-        <q-item-label> {{ contact.profile.name }} </q-item-label>
+        <q-item-label>{{ contact.profile.name }}</q-item-label>
         <q-item-label lines="1" caption>
-          <span class="text-weight-bold"
-            >{{ $t('contactItem.address') }}:
-          </span>
+          <span class="text-weight-bold">{{ $t('contactItem.address') }}:</span>
           {{ address }}
         </q-item-label>
         <q-item-label caption>
           <span class="text-weight-bold"
-            >{{ $t('contactItem.inboxPrice') }}:
-          </span>
+            >{{ $t('contactItem.inboxPrice') }}:</span
+          >
           {{ contact.inbox.acceptancePrice }}
         </q-item-label>
       </q-item-section>
@@ -50,10 +48,11 @@
   </div>
 </template>
 
-<script>
-import { mapActions } from 'vuex'
+<script lang="ts">
+import { useContactStore } from 'src/stores/contacts'
+import { defineComponent } from 'vue'
 
-export default {
+export default defineComponent({
   props: {
     address: {
       type: String,
@@ -69,10 +68,11 @@ export default {
     },
   },
   emits: ['mouseover-contact'],
-  methods: {
-    ...mapActions({
-      deleteContact: 'contacts/deleteContact',
-    }),
+  setup() {
+    const contactStore = useContactStore()
+    return {
+      deleteContact: contactStore.deleteContact,
+    }
   },
-}
+})
 </script>

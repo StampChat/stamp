@@ -1,16 +1,14 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
-      <div class="text-h6">
-        {{ $t('seedPhraseDialog.seedPhrase') }}
-      </div>
+      <div class="text-h6">{{ $t('seedPhraseDialog.seedPhrase') }}</div>
     </q-card-section>
 
     <q-card-section>
       <q-input
         autogrow
         class="text-bold text-h6"
-        v-model="getSeedPhrase"
+        v-model="seedPhrase"
         filled
         readonly
       />
@@ -27,10 +25,17 @@
   </q-card>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
+<script lang="ts">
+import { useWalletStore } from 'src/stores/wallet'
+import { defineComponent, computed } from 'vue'
 
-export default {
+export default defineComponent({
+  setup() {
+    const walletStore = useWalletStore()
+    return {
+      seedPhrase: computed(() => walletStore.seedPhrase),
+    }
+  },
   props: {
     address: {
       type: String,
@@ -41,10 +46,5 @@ export default {
       default: () => '',
     },
   },
-  computed: {
-    ...mapGetters({
-      getSeedPhrase: 'wallet/getSeedPhrase',
-    }),
-  },
-}
+})
 </script>

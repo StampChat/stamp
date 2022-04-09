@@ -5,40 +5,45 @@ import {
   createWebHashHistory,
 } from 'vue-router'
 import type { RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
-import { Store } from 'vuex'
 import { createRoutes } from './routes'
-import { RootState } from 'src/store/modules'
+import { useContactStore } from 'src/stores/contacts'
+import { useProfileStore } from 'src/stores/my-profile'
 
 const unprotectedRoutes = ['/', '/setup', '/forum', '/changelog']
 const protectedRoutes = ['/forum/new-post']
 
-async function addContactFromNavigation<S>(store: Store<S>, address: string) {
+async function addContactFromNavigation(address: string) {
+  const contacsStore = useContactStore()
   try {
-    store.dispatch('contacts/addContact', { address })
+    contacsStore.fetchAndAddContact({ address, contact: {} })
   } catch (ex) {
     console.error('addContactFromNavigation error:', ex)
   }
 }
 
 // Note: ssrContext is also available
-export default ({ store }: { store: Store<RootState> }) => {
+export default () => {
   async function redirectIfNoProfile(
     to: RouteLocationNormalized,
     from: RouteLocationNormalized,
     next: NavigationGuardNext,
   ) {
-    await (store as unknown as { restored: Promise<unknown> }).restored
-    const profile = store.getters['myProfile/getProfile']
+    const profileStore = useProfileStore()
     if (
       to.fullPath.startsWith('/chat') &&
       to.params.address &&
       typeof to.params.address === 'string'
     ) {
-      addContactFromNavigation(store, to.params.address as string)
+      addContactFromNavigation(to.params.address as string)
     }
-    console.log('Navigating to', to.fullPath, to.params.address, profile.name)
+    console.log(
+      'Navigating to',
+      to.fullPath,
+      to.params.address,
+      profileStore.profile.name,
+    )
     if (
-      profile.name ||
+      profileStore.profile.name ||
       (unprotectedRoutes.some(path => to.fullPath.startsWith(path)) &&
         !protectedRoutes.some(path => to.fullPath.startsWith(path)))
     ) {

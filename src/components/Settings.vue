@@ -48,20 +48,36 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent, PropType, ref } from 'vue'
+
+import { defaultUpdateInterval } from 'src/utils/constants'
+import { QInput } from 'quasar'
+
+interface ModelValueType {
+  appearance: { darkMode: boolean }
+  networking: { updateInterval: number }
+}
+
+export default defineComponent({
+  setup() {
+    return { contactRefreshInterval: ref<QInput | null>(null) }
+  },
   props: {
     modelValue: {
-      type: Object,
-      default: () => ({}),
+      type: Object as PropType<ModelValueType>,
+      default: () => ({
+        apperance: { darkMode: false },
+        networking: { updateInterval: defaultUpdateInterval },
+      }),
     },
   },
   emits: ['update:modelValue'],
   data() {
     return {
       tab: 'networking',
-      darkMode: this.value.appearance.darkMode,
-      updateInterval: this.value.networking.updateInterval,
+      darkMode: this.modelValue.appearance.darkMode,
+      updateInterval: this.modelValue.networking.updateInterval,
     }
   },
   computed: {
@@ -85,7 +101,7 @@ export default {
     },
   },
   mounted() {
-    this.$refs.contactRefreshInterval.$el.focus()
+    this.contactRefreshInterval?.$el.focus()
   },
-}
+})
 </script>
