@@ -19,7 +19,7 @@ import { ChronikClient, SubscribeMsg, WsEndpoint } from 'chronik-client'
 const standardUtxoSize = 34
 const standardInputSize = 175 // A few extra bytes
 const minimumNewInputAmount = 5120
-const dustLimit = 546
+const dustLimit = 1000 // Dust relay fee is 1000 in lotusd
 const minFeePerByte = 2
 const maxFeePerByte = 3
 // Don't build transactions larger than this
