@@ -17,7 +17,7 @@ import { KeyserverHandler } from '../cashweb/keyserver'
 import moment from 'moment'
 import { toAPIAddress, toDisplayAddress } from '../utils/address'
 import { mapObjIndexed } from 'ramda'
-import { assert } from 'console'
+import assert from 'assert'
 import { STORE_SCHEMA_VERSION } from 'src/boot/pinia'
 import { markRaw } from 'vue'
 
@@ -375,7 +375,27 @@ export const useContactStore = defineStore('contacts', {
   },
   storage: {
     save(storage, _mutation, state): void {
-      storage.put('contacts', JSON.stringify(state))
+      const reducedState = {
+        ...state,
+        contacts: mapObjIndexed(contact => {
+          assert(contact, 'Missing contact?? Logic error')
+          const profile = contact?.profile
+          assert(
+            typeof profile !== 'undefined',
+            'Profile is undefined for contact',
+          )
+          return {
+            ...contact,
+            profile: {
+              ...profile,
+              pubKey: profile.pubKey
+                ? new Uint8Array(profile.pubKey.toBuffer())
+                : undefined,
+            },
+          }
+        }, state.contacts),
+      }
+      storage.put('contacts', JSON.stringify(reducedState))
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async restore(storage, metadata): Promise<Partial<State>> {
