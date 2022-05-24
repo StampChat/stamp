@@ -86,7 +86,11 @@ export function rehydrateContacts(contactState?: RestorableState): State {
             profile: {
               ...profile,
               pubKey: profile?.pubKey
-                ? markRaw(PublicKey.fromBuffer(new Uint8Array(Object.values(profile?.pubKey))))
+                ? markRaw(
+                    PublicKey.fromBuffer(
+                      new Uint8Array(Object.values(profile?.pubKey)),
+                    ),
+                  )
                 : null,
             },
           }

@@ -142,7 +142,7 @@ export default boot(async ({ app }) => {
   if (token) {
     relayClient.setToken(token)
   }
-  
+
   const contactStore = useContactStore()
   await contactStore.restored
 
