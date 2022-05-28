@@ -6,8 +6,8 @@
         <q-btn
           class="q-ma-xs q-ma-xsrow"
           color="primary"
-          label="New Character"
-          @click="newCharacter"
+          label="New Account"
+          @click="newAccount"
         />
         <q-space />
       </div>
@@ -16,8 +16,8 @@
         <q-btn
           class="row q-ma-xs q-ma-xs"
           color="primary"
-          label="Import Character"
-          @click="importCharacter"
+          label="Import Account"
+          @click="importAccount"
         />
         <q-space />
       </div>
@@ -109,11 +109,12 @@ export default {
       document.body.removeChild(el)
       this.$nextTick(() => this.$refs.seedInput.select())
     },
-    newCharacter() {
+    newAccount() {
+      this.generateMnemonic()
       this.action = 'new'
       this.rawName = ''
     },
-    importCharacter() {
+    importAccount() {
       this.action = 'import'
       this.rawSeed = ''
     },

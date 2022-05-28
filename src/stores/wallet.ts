@@ -62,6 +62,7 @@ export const useWalletStore = defineStore('wallet', {
     reset() {
       this.xPrivKey = null
       this.utxos = {}
+      this.balance = 0
     },
     setXPrivKey(xPrivKey: HDPrivateKey) {
       this.xPrivKey = markRaw(xPrivKey)
