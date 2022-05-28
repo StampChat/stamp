@@ -26,7 +26,10 @@ export type RestorableState = Omit<State, 'xPrivKey'> & { xPrivKey: unknown }
 
 export async function rehydrateWallet(wallet: RestorableState): Promise<State> {
   if (!wallet || !wallet.xPrivKey) {
-    return defaultWalletState
+    return {
+      ...defaultWalletState,
+      seedPhrase: wallet.seedPhrase,
+    }
   }
   let balance = 0
   const utxos: Record<string, number> = {}
@@ -99,8 +102,8 @@ export const useWalletStore = defineStore('wallet', {
         //
       }
       const deserializedWallet = JSON.parse(wallet) as RestorableState
-      const rehydratedChat = await rehydrateWallet(deserializedWallet)
-      return rehydratedChat
+      const rehydratedWallet = await rehydrateWallet(deserializedWallet)
+      return rehydratedWallet
     },
   },
 })

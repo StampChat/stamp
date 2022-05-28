@@ -110,7 +110,6 @@ export default {
       this.$nextTick(() => this.$refs.seedInput.select())
     },
     newCharacter() {
-      this.generateMnemonic()
       this.action = 'new'
       this.rawName = ''
     },
