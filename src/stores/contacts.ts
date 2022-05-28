@@ -68,7 +68,9 @@ export type RestorableState = {
   updateInterval: number
 }
 
-export function rehydrateContacts(contactState?: RestorableState): State {
+export async function rehydrateContacts(
+  contactState?: RestorableState,
+): Promise<State> {
   if (!contactState) {
     return defaultContactsState
   }
