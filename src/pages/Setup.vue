@@ -124,6 +124,9 @@ export default defineComponent({
     const appearance = useAppearanceStore()
     const myProfile = useProfileStore()
     const contacts = useContactStore()
+    if (!wallet.seedPhrase) {
+      wallet.setSeedPhrase(generateMnemonic())
+    }
 
     return {
       setRelayToken: relayClient.setToken,
@@ -148,7 +151,7 @@ export default defineComponent({
       accountData: {
         name: '',
         valid: false,
-        seed: wallet.seedPhrase || generateMnemonic(),
+        seed: wallet.seedPhrase,
       },
       relayData: defaultRelayData,
       relayUrl: defaultRelayUrl,
@@ -211,6 +214,10 @@ export default defineComponent({
             reject(err)
           }
         }
+        assert(
+          this.accountData.seed,
+          'Missing seed phrase? State ordering issue?',
+        )
         this.seed = this.accountData.seed
         this.setSeedPhrase(this.seed)
         worker.postMessage(this.seed)
