@@ -68,7 +68,9 @@ export type RestorableState = {
   updateInterval: number
 }
 
-export function rehydrateContacts(contactState?: RestorableState): State {
+export async function rehydrateContacts(
+  contactState?: RestorableState,
+): Promise<State> {
   if (!contactState) {
     return defaultContactsState
   }
@@ -86,7 +88,7 @@ export function rehydrateContacts(contactState?: RestorableState): State {
             profile: {
               ...profile,
               pubKey: profile?.pubKey
-                ? markRaw(PublicKey.fromBuffer(profile?.pubKey))
+                ? markRaw(PublicKey.fromBuffer(profile.pubKey))
                 : null,
             },
           }
@@ -395,7 +397,19 @@ export const useContactStore = defineStore('contacts', {
           }
         }, state.contacts),
       }
-      storage.put('contacts', JSON.stringify(reducedState))
+      storage.put(
+        'contacts',
+        JSON.stringify(reducedState, (k, v) => {
+          switch (k) {
+            // Convert the pubKey Uint8Array into a binary string for storage
+            case 'pubKey': {
+              // only buffer if pubKey defined
+              return v ? Buffer.from(v).toString('binary') : v
+            }
+          }
+          return v
+        }),
+      )
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async restore(storage, metadata): Promise<Partial<State>> {
@@ -412,7 +426,20 @@ export const useContactStore = defineStore('contacts', {
         return { ...defaultContactsState }
       }
 
-      const deserializedProfile = JSON.parse(contacts) as RestorableState
+      const deserializedProfile = JSON.parse(contacts, (k, v) => {
+        switch (k) {
+          // Restore pubKey binary string to Uint8Array
+          case 'pubKey': {
+            // pubKey will be an object if not processed via JSON.stringify replacer function
+            const buf =
+              typeof v != 'string'
+                ? Object.values(v as object)
+                : Buffer.from(v, 'binary')
+            return new Uint8Array(buf)
+          }
+        }
+        return v
+      }) as RestorableState
       const rehydratedContacts = await rehydrateContacts(deserializedProfile)
       return rehydratedContacts
     },

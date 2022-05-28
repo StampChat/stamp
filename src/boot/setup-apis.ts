@@ -12,6 +12,7 @@ import { ChronikClient, WsEndpoint } from 'chronik-client'
 import { useWalletStore } from 'src/stores/wallet'
 import { useProfileStore } from 'src/stores/my-profile'
 import { useRelayClientStore } from 'src/stores/relay-client'
+import { useContactStore } from 'src/stores/contacts'
 
 function instrumentIndexerClient({
   chronikWs,
@@ -141,6 +142,9 @@ export default boot(async ({ app }) => {
   if (token) {
     relayClient.setToken(token)
   }
+
+  const contactStore = useContactStore()
+  await contactStore.restored
 
   app.config.globalProperties.$wallet = wallet
   app.config.globalProperties.$indexer = indexerObservables
