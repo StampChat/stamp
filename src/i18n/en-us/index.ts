@@ -40,8 +40,8 @@ export default {
     watchingWallet: 'Watching wallet...',
     searchingExistingMetaData: 'Searching for existing keyserver metadata...',
     errorContactKeyServer: 'Unable to contact keyserver',
-    accountSetupNext: 'Proceed',
-    depositStepNext: 'Enter the Masquerade',
+    accountSetupNext: 'Next',
+    depositStepNext: 'Next',
   },
   newContactDialog: {
     newContact: 'New Contact',
