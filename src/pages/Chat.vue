@@ -238,7 +238,7 @@ export default defineComponent({
         // Scroll the message into view
         this.scrollDigest = null
         this.$nextTick(() => message.scrollIntoView({ behavior: 'smooth' }))
-      }, 50)
+      }, 50)()
     },
     nameColor() {
       return addressColorFromStr(this.address)
