@@ -20,6 +20,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { storeToRefs } from 'pinia'
 
 import { useForumStore } from 'src/stores/forum'
 import { sortPostsByMode } from '../utils/sorting'
@@ -36,13 +37,21 @@ export default defineComponent({
   },
   setup() {
     const forumStore = useForumStore()
+    const {
+      getMessages,
+      getSortMode,
+      getTopics,
+      getSelectedTopic,
+      getVoteThreshold,
+      getCompactView,
+    } = storeToRefs(forumStore)
     return {
-      messages: forumStore.getMessages,
-      sortMode: forumStore.getSortMode,
-      topics: forumStore.getTopics,
-      selectedTopic: forumStore.getSelectedTopic,
-      voteThreshold: forumStore.getVoteThreshold,
-      compactView: forumStore.getCompactView,
+      messages: getMessages,
+      sortMode: getSortMode,
+      topics: getTopics,
+      selectedTopic: getSelectedTopic,
+      voteThreshold: getVoteThreshold,
+      compactView: getCompactView,
     }
   },
   emits: ['set-topic'],
