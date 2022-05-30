@@ -13,6 +13,8 @@ import { useWalletStore } from 'src/stores/wallet'
 import { useProfileStore } from 'src/stores/my-profile'
 import { useRelayClientStore } from 'src/stores/relay-client'
 import { useContactStore } from 'src/stores/contacts'
+import { useAppearanceStore } from 'src/stores/appearance'
+import { useForumStore } from 'src/stores/forum'
 
 function instrumentIndexerClient({
   chronikWs,
@@ -145,6 +147,12 @@ export default boot(async ({ app }) => {
 
   const contactStore = useContactStore()
   await contactStore.restored
+
+  const appearanceStore = useAppearanceStore()
+  await appearanceStore.restored
+
+  const forumStore = useForumStore()
+  await forumStore.restored
 
   app.config.globalProperties.$wallet = wallet
   app.config.globalProperties.$indexer = indexerObservables
