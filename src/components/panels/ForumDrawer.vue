@@ -68,6 +68,7 @@
 
 <script lang="ts">
 import { useForumStore } from 'src/stores/forum'
+import { storeToRefs } from 'pinia'
 import { defineComponent } from 'vue'
 
 import { sortModes, SortMode } from '../../utils/sorting'
@@ -80,13 +81,21 @@ const DURATIONS = [
 export default defineComponent({
   setup() {
     const forum = useForumStore()
+    const {
+      getTopics,
+      getSelectedTopic,
+      getSortMode,
+      getDuration,
+      getVoteThreshold,
+      getCompactView,
+    } = storeToRefs(forum)
     return {
-      topics: forum.getTopics,
-      getSelectedTopic: forum.getSelectedTopic,
-      getSortMode: forum.getSortMode,
-      getDuration: forum.getDuration,
-      getVoteThreshold: forum.getVoteThreshold,
-      getCompactView: forum.getCompactView,
+      topics: getTopics,
+      getSelectedTopic,
+      getSortMode,
+      getDuration,
+      getVoteThreshold,
+      getCompactView,
       refreshMessages: forum.refreshMessages,
       setSelectedTopic: forum.setSelectedTopic,
       setSortMode: forum.setSortMode,
