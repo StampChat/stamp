@@ -75,24 +75,32 @@ export async function rehydrateContacts(
     return defaultContactsState
   }
 
-  // This is currentlœy a shim, we don't need any special rehydrate contact at this time.
+  // This is currently a shim, we don't need any special rehydrate contact at this time.
+  const contacts: Record<string, ContactState | undefined> =
+    defaultContactsState.contacts
+  for (const [address, contact] of Object.entries(
+    contactState.contacts ?? {},
+  )) {
+    assert(contact, 'Undefined contact?')
+    const profile = contact?.profile
+    try {
+      contacts[address] = {
+        ...contact,
+        profile: {
+          ...profile,
+          pubKey: profile?.pubKey
+            ? markRaw(PublicKey.fromBuffer(profile.pubKey))
+            : null,
+        },
+      }
+    } catch (e) {
+      // Ignore contact if it fails to deserialize
+    }
+  }
+
   return {
     ...contactState,
-    contacts: !contactState.contacts
-      ? defaultContactsState.contacts
-      : mapObjIndexed(contact => {
-          assert(contact, 'Undefined contact?')
-          const profile = contact?.profile
-          return {
-            ...contact,
-            profile: {
-              ...profile,
-              pubKey: profile?.pubKey
-                ? markRaw(PublicKey.fromBuffer(profile.pubKey))
-                : null,
-            },
-          }
-        }, contactState.contacts),
+    contacts: contacts,
   }
 }
 
