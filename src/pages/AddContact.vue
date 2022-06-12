@@ -46,13 +46,13 @@
       </q-card-section>
       <q-card-section v-else-if="contact" class="q-py-none">
         <q-item>
-          <q-item-section avatar>
+          <q-item-section avatar v-if="contact?.profile?.avatar">
             <q-avatar rounded>
-              <img :src="contact.profile.avatar" size="xl" />
+              <img :src="contact?.profile?.avatar" size="xl" />
             </q-avatar>
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{ contact.profile.name }}</q-item-label>
+            <q-item-label>{{ contact?.profile?.name }}</q-item-label>
           </q-item-section>
         </q-item>
       </q-card-section>
@@ -70,7 +70,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, markRaw, ref } from 'vue'
 import { QInput } from 'quasar'
 
 import { ContactState, useContactStore } from 'src/stores/contacts'
@@ -78,19 +78,23 @@ import { KeyserverHandler } from '../cashweb/keyserver'
 import { toAPIAddress } from '../utils/address'
 import { keyservers, networkName } from '../utils/constants'
 import { PublicKey } from 'bitcore-lib-xpi'
+import { useChatStore } from 'src/stores/chats'
 
 export default defineComponent({
   data() {
     return {
       address: '',
-      contact: {} as Partial<ContactState> | null,
+      contact: null as Partial<ContactState> | null,
     }
   },
   setup() {
     const contactStore = useContactStore()
+    const chats = useChatStore()
+
     return {
       addressRef: ref<QInput | null>(null),
       addContactToStore: contactStore.addContact,
+      openChat: chats.openChat,
     }
   },
   computed: {
@@ -117,7 +121,7 @@ export default defineComponent({
           ...relayData,
           profile: {
             ...relayData.profile,
-            pubKey: PublicKey.fromBuffer(relayData.profile.pubKey),
+            pubKey: markRaw(PublicKey.fromBuffer(relayData.profile.pubKey)),
           },
         }
         this.contact.relayURL = relayURL ?? null
@@ -132,7 +136,11 @@ export default defineComponent({
         return
       }
       const cashAddress = toAPIAddress(this.address) // TODO: Make generic
-      this.addContactToStore({ address: cashAddress, contact: this.contact })
+      this.addContactToStore({
+        address: cashAddress,
+        contact: this.contact,
+      })
+      this.openChat(this.address)
     },
     cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')

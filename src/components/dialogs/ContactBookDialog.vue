@@ -40,10 +40,12 @@
 </template>
 
 <script lang="ts">
-import ContactList from '../contacts/ContactList.vue'
 import { defineComponent } from 'vue'
-import { ContactState, useContactStore } from 'src/stores/contacts'
 import { QInput } from 'quasar'
+import { storeToRefs } from 'pinia'
+
+import ContactList from '../contacts/ContactList.vue'
+import { ContactState, useContactStore } from 'src/stores/contacts'
 
 export default defineComponent({
   props: {
@@ -54,8 +56,9 @@ export default defineComponent({
   },
   setup() {
     const contactStore = useContactStore()
+    const { getContacts } = storeToRefs(contactStore)
     return {
-      contacts: contactStore.getContacts,
+      contacts: getContacts,
     }
   },
   components: {

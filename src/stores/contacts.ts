@@ -294,7 +294,7 @@ export const useContactStore = defineStore('contacts', {
             relayURL,
             profile: {
               ...relayData.profile,
-              pubKey: PublicKey.fromBuffer(relayData.profile.pubKey),
+              pubKey: markRaw(PublicKey.fromBuffer(relayData.profile.pubKey)),
             },
           },
         })

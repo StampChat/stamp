@@ -349,6 +349,7 @@ export const useChatStore = defineStore('chats', {
           address: displayAddress,
         }
       }
+      this.activeChatAddr = displayAddress
     },
     sendMessageLocal({
       address,
