@@ -82,20 +82,20 @@ export default defineComponent({
   setup() {
     const forum = useForumStore()
     const {
-      getTopics,
-      getSelectedTopic,
-      getSortMode,
-      getDuration,
-      getVoteThreshold,
-      getCompactView,
+      topics,
+      selectedTopic,
+      sortMode,
+      duration,
+      voteThreshold,
+      compactView,
     } = storeToRefs(forum)
     return {
-      topics: getTopics,
-      getSelectedTopic,
-      getSortMode,
-      getDuration,
-      getVoteThreshold,
-      getCompactView,
+      topics,
+      storeSelectedTopic: selectedTopic,
+      storeSortMode: sortMode,
+      storeDuration: duration,
+      storeVoteThreshold: voteThreshold,
+      storeCompactView: compactView,
       refreshMessages: forum.refreshMessages,
       setSelectedTopic: forum.setSelectedTopic,
       setSortMode: forum.setSortMode,
@@ -130,7 +130,7 @@ export default defineComponent({
         this.setSortMode(newVal as SortMode)
       },
       get(): string {
-        return this.getSortMode
+        return this.storeSortMode
       },
     },
     selectedTopic: {
@@ -138,17 +138,16 @@ export default defineComponent({
         this.setSelectedTopic(newVal ?? '')
       },
       get(): string {
-        return this.getSelectedTopic
+        return this.storeSelectedTopic
       },
     },
     duration: {
       set(newVal?: { label: string; value: number }) {
-        console.log(newVal)
         this.setDuration(newVal?.value ?? 0)
         this.refreshContent()
       },
       get(): { label: string; value: number } | undefined {
-        return DURATIONS.find(duration => duration.value === this.getDuration)
+        return DURATIONS.find(duration => duration.value === this.storeDuration)
       },
     },
     compactView: {
@@ -156,7 +155,7 @@ export default defineComponent({
         this.setCompactView(newVal ?? false)
       },
       get(): boolean {
-        return this.getCompactView
+        return this.storeCompactView
       },
     },
     threshold: {
@@ -166,7 +165,7 @@ export default defineComponent({
         this.setVoteThreshold(newThreshold)
       },
       get(): string {
-        return this.getVoteThreshold.toString()
+        return this.storeVoteThreshold.toString()
       },
     },
   },

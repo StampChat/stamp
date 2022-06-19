@@ -77,6 +77,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { storeToRefs } from 'pinia'
 
 import { renderMarkdown } from '../utils/markdown'
 import { useForumStore } from 'src/stores/forum'
@@ -87,9 +88,10 @@ import { errorNotify, infoNotify } from 'src/utils/notifications'
 export default defineComponent({
   setup() {
     const forum = useForumStore()
+    const { topics, getMessage } = storeToRefs(forum)
     return {
-      getMessage: forum.getMessage,
-      availableTopics: forum.getTopics,
+      getMessage: getMessage,
+      availableTopics: topics,
       pushNewTopic: forum.pushNewTopic,
       postMessage: forum.putMessage,
     }

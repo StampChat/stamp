@@ -1,5 +1,5 @@
 <template>
-  <template v-if="messages.length > 0">
+  <template v-if="sortedPosts?.length > 0">
     <template v-for="message in sortedPosts" :key="message.payloadDigest">
       <a-message
         v-show="showMessage(message.topic)"
@@ -19,7 +19,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 
 import { useForumStore } from 'src/stores/forum'
@@ -32,40 +32,46 @@ export default defineComponent({
   components: {
     AMessage,
   },
-  data() {
-    return {}
-  },
+  emits: ['set-topic'],
   setup() {
     const forumStore = useForumStore()
     const {
-      getMessages,
-      getSortMode,
-      getTopics,
-      getSelectedTopic,
-      getVoteThreshold,
-      getCompactView,
+      messages,
+      sortMode,
+      topics,
+      selectedTopic,
+      voteThreshold,
+      compactView,
+      duration,
     } = storeToRefs(forumStore)
-    return {
-      messages: getMessages,
-      sortMode: getSortMode,
-      topics: getTopics,
-      selectedTopic: getSelectedTopic,
-      voteThreshold: getVoteThreshold,
-      compactView: getCompactView,
-    }
-  },
-  emits: ['set-topic'],
-  methods: {
-    showMessage(topic: string) {
-      return topic.startsWith(this.selectedTopic)
-    },
-  },
-  computed: {
-    sortedPosts() {
-      return sortPostsByMode(this.messages, this.sortMode).filter(
-        msg => msg.satoshis >= this.voteThreshold * 1_000_000,
+    const sortedPosts = computed(() => {
+      if (!messages) {
+        return
+      }
+      const from = Date.now() - duration.value
+      const filteredMessages = messages.value.filter(message => {
+        // FIXME: Something is converting the timestamp to a string.
+        return new Date(message.timestamp).valueOf() >= from
+      })
+      console.log(filteredMessages)
+      return sortPostsByMode(filteredMessages, sortMode.value).filter(
+        msg => msg.satoshis >= voteThreshold.value * 1_000_000,
       )
-    },
+    })
+    const showMessage = (topic: string) => {
+      return topic.startsWith(selectedTopic.value)
+    }
+
+    return {
+      duration,
+      sortedPosts,
+      sortMode,
+      topics,
+      selectedTopic,
+      voteThreshold,
+      compactView,
+      showMessage,
+    }
   },
 })
 </script>

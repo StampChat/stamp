@@ -24,7 +24,7 @@ export function halfLifeSort(posts: ForumMessage[]) {
 export function timeSort(posts: ForumMessage[]) {
   return posts
     .slice()
-    .sort((a, b) => b.timestamp.valueOf() - a.timestamp.valueOf())
+    .sort((a, b) => a.timestamp.valueOf() - b.timestamp.valueOf())
 }
 
 export function voteSort(posts: ForumMessage[]) {

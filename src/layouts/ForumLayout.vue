@@ -50,6 +50,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { storeToRefs } from 'pinia'
 
 import { useForumStore } from 'src/stores/forum'
 
@@ -63,12 +64,13 @@ export default defineComponent({
   },
   setup() {
     const forumStore = useForumStore()
+    const { topics, selectedTopic } = storeToRefs(forumStore)
 
     return {
       refreshMessages: forumStore.refreshMessages,
       setSelectedTopic: forumStore.setSelectedTopic,
-      topics: forumStore.getTopics,
-      getSelectedTopic: forumStore.getSelectedTopic,
+      topics,
+      storeSelectedTopic: selectedTopic,
     }
   },
   components: { ForumDrawer },
@@ -98,7 +100,7 @@ export default defineComponent({
         }
       },
       get(): string {
-        return this.getSelectedTopic
+        return this.storeSelectedTopic
       },
     },
   },
