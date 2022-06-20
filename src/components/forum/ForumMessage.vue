@@ -10,9 +10,9 @@
         <q-card-section class="q-pa-none text-center">
           <q-btn flat icon="arrow_drop_up" padding="0" @click="addVotes(10)" />
         </q-card-section>
-        <q-card-section class="q-pa-none q-mt-xs text-center">{{
-          formatSatoshis(message.satoshis)
-        }}</q-card-section>
+        <q-card-section class="q-pa-none q-mt-xs text-center">
+          {{ formatSatoshis(message.satoshis) }}
+        </q-card-section>
         <q-card-section class="q-pa-none q-mt-xs text-center">
           <q-btn
             flat
@@ -41,9 +41,9 @@
               class="text-h6 text-bold q-mr-md post-title"
               >{{ entry.title || 'Untitled' }}</a
             >
-            <span v-if="!entry.url" class="text-h6 text-bold q-mr-md">
-              {{ entry.title || 'Untitled' }}
-            </span>
+            <span v-if="!entry.url" class="text-h6 text-bold q-mr-md">{{
+              entry.title || 'Untitled'
+            }}</span>
             <div class="q-mt-xs">
               <q-btn
                 rounded
@@ -112,11 +112,13 @@
 </template>
 
 <script lang="ts">
-import { renderMarkdown } from '../../utils/markdown'
 import moment from 'moment'
-
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
+import { storeToRefs } from 'pinia'
+
+import { renderMarkdown } from '../../utils/markdown'
+
 import AMessageReplies from './ForumMessageReplies.vue'
 
 import { ForumMessage } from '../../cashweb/types/forum'
@@ -127,15 +129,15 @@ export default defineComponent({
   setup() {
     const forumStore = useForumStore()
     const contactStore = useContactStore()
+    const { messages, topics, selectedTopic } = storeToRefs(forumStore)
 
     return {
-      getMessages: forumStore.getMessages,
+      storeMessages: messages,
       getMessage: forumStore.getMessage,
-      topics: forumStore.getTopics,
+      topics,
       getContactProfile: contactStore.getContactProfile,
       haveContact: contactStore.haveContact,
-      getSelectedTopic: forumStore.getSelectedTopic,
-
+      selectedTopic,
       addOffering: forumStore.addOffering,
     }
   },
@@ -245,7 +247,7 @@ export default defineComponent({
       return this.getMessage(this.parentDigest)
     },
     messages() {
-      return this.getMessages.filter((message: ForumMessage) =>
+      return this.storeMessages.filter((message: ForumMessage) =>
         message.entries.some(entry => entry.kind === 'post'),
       )
     },

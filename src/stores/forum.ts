@@ -37,15 +37,6 @@ export const useForumStore = defineStore('forum', {
     compactView: false,
   }),
   getters: {
-    getMessages(state) {
-      return state.messages
-    },
-    getTopics(state) {
-      return state.topics
-    },
-    getSelectedTopic(state) {
-      return state.selectedTopic
-    },
     getMessage(state) {
       return (messageDigest?: string) => {
         console.log('messageDigest', messageDigest)
@@ -54,25 +45,6 @@ export const useForumStore = defineStore('forum', {
         }
         return state.index[messageDigest]
       }
-    },
-    lastMessageTime(state) {
-      return state.messages.reduce(
-        (maxDate, message) =>
-          !maxDate || maxDate < message.timestamp ? message.timestamp : maxDate,
-        undefined as Date | undefined,
-      )
-    },
-    getSortMode(state) {
-      return state.sortMode
-    },
-    getDuration(state) {
-      return state.duration
-    },
-    getVoteThreshold(state) {
-      return state.voteThreshold
-    },
-    getCompactView(state) {
-      return state.compactView
     },
   },
   actions: {
@@ -161,7 +133,7 @@ export const useForumStore = defineStore('forum', {
         keyservers,
       })
       console.log('fetching messages')
-      const from = Date.now() - this.getDuration
+      const from = Date.now() - this.duration
       console.log(from)
       const entries = await keyserver.getBroadcastMessages('', from)
       if (!entries) {
