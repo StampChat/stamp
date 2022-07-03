@@ -134,6 +134,7 @@ export async function decodeEntry(
         outpoints.push(stampOutput)
         if (outbound) {
           // Don't add these outputs to our wallet. They're the other persons
+          continue
         }
         wallet.putUtxo({
           ...stampOutput,
