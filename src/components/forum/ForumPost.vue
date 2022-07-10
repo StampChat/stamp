@@ -1,19 +1,11 @@
 <template>
-  <q-card
-    class="q-pa-none max-w-720"
-    :class="{ 'q-ma-sm': !compact }"
-    flat
-    bordered
-  >
+  <q-card class="q-pa-none q-ma-sm max-w-720" flat bordered>
     <q-card-section class="row" horizontal>
-      <q-card-section class="col-shrink q-pa-sm bg-on-secondary">
-        <q-card-section class="q-pa-none text-center">
+      <q-card-section class="col-shrink q-pa-none q-ma-none bg-on-secondary">
+        <q-card-section class="q-pa-none q-ma-none text-center">
           <q-btn flat icon="arrow_drop_up" padding="0" @click="addVotes(10)" />
         </q-card-section>
-        <q-card-section class="q-pa-none q-mt-xs text-center">{{
-          formatSatoshis(message.satoshis)
-        }}</q-card-section>
-        <q-card-section class="q-pa-none q-mt-xs text-center">
+        <q-card-section class="q-pa-none q-ma-none text-center">
           <q-btn
             flat
             icon="arrow_drop_down"
@@ -31,81 +23,69 @@
         >
           <q-card-section
             horizontal
-            class="q-ma-none q-pa-sm col-grow text-bold"
+            class="q-ma-none q-pa-none col-grow text-bold"
           >
-            <q-icon name="link" v-if="entry.url" class="text-h6 q-pa-xs" />
             <a
               :href="entry.url"
               target="_blank"
               v-if="entry.url"
-              class="text-h6 text-bold q-mr-md post-title"
-              >{{ entry.title || 'Untitled' }}</a
+              class="post-title"
+              >{{ entry.title || 'untitled' }}</a
             >
-            <span v-if="!entry.url" class="text-h6 text-bold q-mr-md">
-              {{ entry.title || 'Untitled' }}
-            </span>
-            <div class="q-mt-xs">
-              <q-btn
-                rounded
-                no-caps
-                unelevated
-                color="primary"
-                size="sm"
-                @click.prevent="$emit('set-topic', message.topic)"
-                :label="message.topic"
-              />
-            </div>
-          </q-card-section>
-          <q-card-section
-            class="q-ma-none q-px-sm q-pt-none q-pb-sm col-grow"
-            v-if="renderBody"
-          >
-            <span class="mdstyle" v-html="markedMessage(entry.message)" />
+            <router-link
+              v-if="!entry.url"
+              :to="`/forum/${message.payloadDigest}`"
+              class="post-title"
+              >{{ entry.title || 'untitled' }}</router-link
+            >
+            <q-space />
+            <a
+              class="q-pr-sm post-title"
+              @click.prevent="$emit('set-topic', message.topic)"
+              >{{ message.topic }}</a
+            >
           </q-card-section>
         </template>
         <q-card-actions class="q-ma-none q-pa-none">
-          <q-btn no-caps flat stretch dense :to="`/chat/${message.poster}`">
+          <span>{{ formatSatoshis(message.satoshis) }} xpi by</span>
+          <q-btn
+            no-caps
+            flat
+            stretch
+            dense
+            :to="`/chat/${message.poster}`"
+            class="q-pa-none q-ma-none"
+          >
             <div v-if="haveContact(message.poster)">
               {{ getContactProfile(message.poster).name }}
             </div>
             <div v-else>{{ formatAddress(message.poster) }}</div>
           </q-btn>
-          <div class="text-bold q-ml-sm text-caption">
+          <q-space />
+          <span class="q-ma-none q-pa-none q-pr-sm">
             {{ timestamp }}
             <q-tooltip>{{ fullTimestamp }}</q-tooltip>
-          </div>
+          </span>
           <q-btn
-            flat
             no-caps
-            icon="forum"
-            class="q-ml-md"
-            :label="`${message.replies.length} replies`"
+            flat
+            stretch
+            dense
+            class="q-pa-none q-ma-none"
+            :label="`${message.replies.length} comments`"
             :to="`/forum/${message.payloadDigest}`"
           />
           <q-btn
-            flat
             no-caps
-            icon="reply"
-            label="Reply"
-            class="q-ml-sm"
+            flat
+            stretch
+            dense
+            class="q-pa-none q-ma-none"
+            label="reply"
             :to="`/new-post/${message.payloadDigest}`"
           />
         </q-card-actions>
         <a-message-replies :messages="message.replies" v-if="showReplies" />
-        <q-separator v-if="showParent && parentDigest && parentMessage" />
-        <q-card-section
-          v-if="showParent && parentDigest && parentMessage"
-          class="q-pa-none"
-        >
-          <q-card-section class="q-pa-sm">In reply to:</q-card-section>
-          <forum-message
-            v-bind="$attrs"
-            class="q-ma-none"
-            :message="parentMessage"
-            :show-replies="false"
-            :render-body="false"
-          />
-        </q-card-section>
       </q-card-section>
     </q-card-section>
   </q-card>

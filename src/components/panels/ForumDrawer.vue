@@ -54,13 +54,6 @@
             to="/new-post"
           />
         </q-item>
-        <q-item>
-          <q-checkbox
-            v-model="compactView"
-            class="q-mx-sm q-pa-sm"
-            label="Compact View"
-          />
-        </q-item>
       </q-list>
     </q-scroll-area>
   </div>
@@ -76,32 +69,25 @@ import { sortModes, SortMode } from '../../utils/sorting'
 const DURATIONS = [
   { label: '1 Day', value: 1000 * 60 * 60 * 24 * 1 },
   { label: '1 Week', value: 1000 * 60 * 60 * 24 * 7 },
+  { label: '1 Month', value: 1000 * 60 * 60 * 24 * 31 },
 ]
 
 export default defineComponent({
   setup() {
     const forum = useForumStore()
-    const {
-      topics,
-      selectedTopic,
-      sortMode,
-      duration,
-      voteThreshold,
-      compactView,
-    } = storeToRefs(forum)
+    const { topics, selectedTopic, sortMode, duration, voteThreshold } =
+      storeToRefs(forum)
     return {
       topics,
       storeSelectedTopic: selectedTopic,
       storeSortMode: sortMode,
       storeDuration: duration,
       storeVoteThreshold: voteThreshold,
-      storeCompactView: compactView,
       refreshMessages: forum.refreshMessages,
       setSelectedTopic: forum.setSelectedTopic,
       setSortMode: forum.setSortMode,
       setDuration: forum.setDuration,
       setVoteThreshold: forum.setVoteThreshold,
-      setCompactView: forum.setCompactView,
     }
   },
   components: {},
@@ -148,14 +134,6 @@ export default defineComponent({
       },
       get(): { label: string; value: number } | undefined {
         return DURATIONS.find(duration => duration.value === this.storeDuration)
-      },
-    },
-    compactView: {
-      set(newVal?: boolean) {
-        this.setCompactView(newVal ?? false)
-      },
-      get(): boolean {
-        return this.storeCompactView
       },
     },
     threshold: {
