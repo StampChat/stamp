@@ -1,13 +1,12 @@
 <template>
   <template v-if="sortedPosts?.length > 0">
     <template v-for="message in sortedPosts" :key="message.payloadDigest">
-      <a-message
+      <forum-post
         v-show="showMessage(message.topic)"
         @set-topic="(...args) => $emit('set-topic', ...args)"
         :message="message"
         :show-parent="true"
         :show-replies="false"
-        :compact-view="compactView"
       />
     </template>
   </template>
@@ -25,12 +24,12 @@ import { storeToRefs } from 'pinia'
 import { useForumStore } from 'src/stores/forum'
 import { sortPostsByMode } from '../utils/sorting'
 
-import AMessage from '../components/forum/ForumMessage.vue'
+import ForumPost from '../components/forum/ForumPost.vue'
 
 export default defineComponent({
   props: {},
   components: {
-    AMessage,
+    ForumPost,
   },
   emits: ['set-topic'],
   setup() {
@@ -41,7 +40,6 @@ export default defineComponent({
       topics,
       selectedTopic,
       voteThreshold,
-      compactView,
       duration,
     } = storeToRefs(forumStore)
     const sortedPosts = computed(() => {
@@ -69,7 +67,6 @@ export default defineComponent({
       topics,
       selectedTopic,
       voteThreshold,
-      compactView,
       showMessage,
     }
   },

@@ -21,7 +21,6 @@ export interface State {
   sortMode: SortMode
   duration: number
   voteThreshold: number
-  compactView: boolean
 }
 
 export const useForumStore = defineStore('forum', {
@@ -34,7 +33,6 @@ export const useForumStore = defineStore('forum', {
     // 1 week
     duration: 1000 * 60 * 60 * 24 * 7,
     voteThreshold: 0,
-    compactView: false,
   }),
   getters: {
     getMessage(state) {
@@ -57,9 +55,7 @@ export const useForumStore = defineStore('forum', {
     setVoteThreshold(voteThreshold: number) {
       this.voteThreshold = voteThreshold
     },
-    setCompactView(compactView: boolean) {
-      this.compactView = compactView
-    },
+
     setEntries(messages: ForumMessage[]) {
       const newMessages = messages
         .filter(m => !(m.payloadDigest in this.index))
