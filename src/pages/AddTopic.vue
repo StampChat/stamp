@@ -6,9 +6,15 @@
     <q-card-section>
       <q-input
         class="text-bold text-h6"
+        valid
         v-model="topic"
         filled
         dense
+        reactive-rules
+        :rules="[ 
+          val => val.length > 3 || 'Please use minimum of 3 characters',
+          val => /^[a-zA-Z0-9.]+$/.test(val) || 'A-Z, a-z, 0-9, and periods are the only valid characters'
+          ]"
         :placeholder="$t('newTopicDialog.enterTopic')"
         ref="topicInput"
         @keydown.enter.prevent="addTopic()"
@@ -16,12 +22,7 @@
     </q-card-section>
     <q-card-actions align="right">
       <q-btn label="Cancel" color="negative" @click="cancel" />
-      <q-btn
-        :disable="topic === ''"
-        label="Add"
-        color="primary"
-        @click="addTopic()"
-      />
+      <q-btn :disable="topic === ''" label="Add" color="primary" @click="addTopic()" />
     </q-card-actions>
   </q-card>
 </template>
@@ -43,7 +44,7 @@ export default defineComponent({
       if (!topic.value) {
         return
       }
-      topicStore.ensureTopic(topic.value)
+      topicStore.ensureTopic(topic.value.toLowerCase())
     }
     const cancel = () => {
       window.history.length > 1 ? router.go(-1) : router.push('/')

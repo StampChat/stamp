@@ -280,6 +280,18 @@ export const useTopicStore = defineStore('topics', {
             offering: 1000,
             messages: [],
           },
+          news: {
+            topic: 'news',
+            threshold: 0,
+            offering: 1000,
+            messages: [],
+          },
+          crypto: {
+            topic: 'crypto',
+            threshold: 0,
+            offering: 1000,
+            messages: [],
+          },
         },
       }
     },
