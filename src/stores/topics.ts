@@ -13,6 +13,26 @@ export type MessageWithReplies = ForumMessage & {
 
 type Topic = string
 
+const defaultOffering = 100_000_000
+const defaultTopics = [{
+  topic: 'stamp',
+  threshold: 0,
+  offering: defaultOffering,
+  messages: [],
+},
+{
+  topic: 'news',
+  threshold: 0,
+  offering: defaultOffering,
+  messages: [],
+},
+{
+  topic: 'crypto',
+  threshold: 0,
+  offering: defaultOffering,
+  messages: [],
+}]
+
 export type TopicData = {
   threshold: number
   offering: number
@@ -59,7 +79,7 @@ export const useTopicStore = defineStore('topics', {
           threshold: 0,
           messages: [],
           topic,
-          offering: 1_000_000,
+          offering: defaultOffering,
           lastUpdate: 0,
         }
       }
@@ -262,38 +282,35 @@ export const useTopicStore = defineStore('topics', {
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async restore(storage): Promise<Partial<State>> {
-      console.log('restoring topics')
+      const addDefaultTopics = (newState: Partial<State>) => {
+        if (!('messageIndex' in newState)) {
+          newState.messageIndex = {}
+        }
+        if (!('topics' in newState)) {
+          newState.topics = {}
+        }
+        for (const topic of defaultTopics) {
+          assert(newState.topics)
+          if (topic.topic in newState.topics) {
+            continue
+          }
+          newState.topics[topic.topic] = { ...topic }
+        }
+        return newState
+      }
+
       try {
         const topics = await storage.get('topics')
         const deserializedTopics = JSON.parse(topics) as Partial<State>
         console.log('loaded topics', deserializedTopics)
-        return deserializedTopics
+        return addDefaultTopics(deserializedTopics)
       } catch (err) {
         console.log('Unable to load topics store', err)
       }
-      return {
+      return addDefaultTopics({
         messageIndex: {},
-        topics: {
-          stamp: {
-            topic: 'stamp',
-            threshold: 0,
-            offering: 1000,
-            messages: [],
-          },
-          news: {
-            topic: 'news',
-            threshold: 0,
-            offering: 1000,
-            messages: [],
-          },
-          crypto: {
-            topic: 'crypto',
-            threshold: 0,
-            offering: 1000,
-            messages: [],
-          },
-        },
-      }
+        topics: {}
+      })
     },
   },
 })
