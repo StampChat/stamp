@@ -19,7 +19,7 @@
 import { useRouter } from 'vue-router'
 
 import { useTopicStore } from 'src/stores/topics'
-import { computed, defineComponent, nextTick } from 'vue'
+import { computed, defineComponent } from 'vue'
 
 export default defineComponent({
   props: {
@@ -38,9 +38,20 @@ export default defineComponent({
     const router = useRouter()
     const route = computed(() => `/topic/${props.topic}`)
 
-    const deleteTopic = (e: Event) => {
-      router.back()
-      nextTick(() => topicStore.deleteTopic(props.topic))
+    const isActive = computed(() => {
+      return router.currentRoute.value.path === route.value
+    })
+
+    const deleteTopic = async (e: Event) => {
+      if (isActive.value) {
+        await router.replace('/topic/news').catch(() => {
+          //Do Nothing
+        })
+        topicStore.deleteTopic(props.topic)
+        e.preventDefault()
+        return
+      }
+      topicStore.deleteTopic(props.topic)
       e.preventDefault()
     }
 
@@ -49,10 +60,6 @@ export default defineComponent({
         // Don't care. Probably duplicate route
       })
     }
-
-    const isActive = computed(() => {
-      return router.currentRoute.value.path === route.value
-    })
 
     return {
       deleteTopic,

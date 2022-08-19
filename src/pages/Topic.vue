@@ -29,7 +29,7 @@ import { defineComponent, computed, ref, nextTick, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { RouteLocationNormalized, useRouter } from 'vue-router'
 import assert from 'assert'
-import { debounce, QScrollArea } from 'quasar'
+import { QScrollArea } from 'quasar'
 
 import { useTopicStore } from 'src/stores/topics'
 
@@ -61,27 +61,6 @@ export default defineComponent({
 
     const chatScroll = ref<QScrollArea | null>(null)
 
-    const scrollBottom = () => {
-      const scrollArea = chatScroll.value
-      if (!scrollArea) {
-        // Not mounted yet
-        return
-      }
-      const scrollTarget = scrollArea.getScrollTarget()
-      // If we're not at the bottom, and we're not at the top, leave the scroll
-      // alone.
-      if (!bottom.value && scrollTarget.scrollTop >= 10) {
-        return
-      }
-      nextTick(() => {
-        scrollArea.setScrollPosition(
-          'vertical',
-          scrollTarget.scrollHeight,
-          scrollDuration,
-        )
-      })
-    }
-
     watch([messages], () => {
       const scrollArea = chatScroll.value
       if (!scrollArea) {
@@ -109,8 +88,60 @@ export default defineComponent({
       topic: ref(topic),
       timeoutId: undefined as ReturnType<typeof setTimeout> | undefined,
       bottom,
-      scrollBottom,
       chatScroll,
+      buttonScrollBottom: () => {
+        if (!chatScroll.value) {
+          // Not mounted yet
+          return
+        }
+        const scrollTarget = chatScroll.value.getScrollTarget()
+        nextTick(() => {
+          chatScroll.value?.setScrollPosition(
+            'vertical',
+            scrollTarget.scrollHeight,
+            scrollDuration,
+          )
+        })
+      },
+      scrollBottom: () => {
+        const scrollArea = chatScroll.value
+        if (!scrollArea) {
+          // Not mounted yet
+          return
+        }
+        const scrollTarget = scrollArea.getScrollTarget()
+        // If we're not at the bottom, and we're not at the top, leave the scroll
+        // alone.
+        if (!bottom.value && scrollTarget.scrollTop >= 10) {
+          return
+        }
+        nextTick(() => {
+          scrollArea.setScrollPosition(
+            'vertical',
+            scrollTarget.scrollHeight,
+            scrollDuration,
+          )
+        })
+      },
+      scrollHandler: (details: {
+        verticalSize: number
+        verticalContainerSize: number
+        verticalPosition: number
+      }) => {
+        if (
+          // Ten pixels from top
+          details.verticalPosition <= 10
+        ) {
+          return
+        }
+        // Set this afterwards, incase we were at the bottom already.
+        // We want to ensure that we scroll!
+        bottom.value =
+          details.verticalSize -
+            details.verticalPosition -
+            details.verticalContainerSize <=
+          10
+      },
     }
   },
   beforeRouteUpdate(
@@ -118,7 +149,6 @@ export default defineComponent({
     from: RouteLocationNormalized,
     next: () => void,
   ) {
-    console.log('moving')
     this.topic = to.params.topic as string
     this.refreshContent()
     next()
@@ -130,58 +160,14 @@ export default defineComponent({
     }
     timedRefresh()
     this.scrollBottom()
-    // set the chat width
-    this.resizeHandler()
-    // Adjust the chat width when window resizes
-    window.addEventListener('resize', debounce(this.resizeHandler, 50))
   },
   unmounted() {
     clearTimeout(this.timeoutId as ReturnType<typeof setTimeout>)
   },
   methods: {
+    // FIXME: We need a `useWallet` function so we don't need to use the old object API
     refreshContent() {
       this.refreshMessages({ wallet: this.$wallet, topic: this.topic })
-    },
-    // Used by sticky QButton to scroll to bottom
-    buttonScrollBottom() {
-      const scrollArea = this.chatScroll
-      if (!scrollArea) {
-        // Not mounted yet
-        return
-      }
-      const scrollTarget = scrollArea.getScrollTarget()
-      this.$nextTick(() => {
-        scrollArea.setScrollPosition(
-          'vertical',
-          scrollTarget.scrollHeight,
-          scrollDuration,
-        )
-      })
-    },
-    resizeHandler() {
-      const chatScroll = this.chatScroll
-      if (!chatScroll || !chatScroll.$el) {
-        return
-      }
-    },
-    scrollHandler(details: {
-      verticalSize: number
-      verticalContainerSize: number
-      verticalPosition: number
-    }) {
-      if (
-        // Ten pixels from top
-        details.verticalPosition <= 10
-      ) {
-        return
-      }
-      // Set this afterwards, incase we were at the bottom already.
-      // We want to ensure that we scroll!
-      this.bottom =
-        details.verticalSize -
-          details.verticalPosition -
-          details.verticalContainerSize <=
-        10
     },
   },
 })

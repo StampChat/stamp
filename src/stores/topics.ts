@@ -118,38 +118,41 @@ export const useTopicStore = defineStore('topics', {
         )
       topicState.messages.push(...messagesNewToTopic)
     },
-    setMessage(topic: string, message: ForumMessage) {
-      if (message.payloadDigest in this.messageIndex) {
-        const oldMessage = this.messageIndex[message.payloadDigest]
+    setMessage(topic: string, newMessage: ForumMessage) {
+      if (newMessage.payloadDigest in this.messageIndex) {
+        const oldMessage = this.messageIndex[newMessage.payloadDigest]
         assert(oldMessage, 'Not possible, typescript hole')
-        oldMessage.satoshis = message.satoshis
-        return
+        oldMessage.satoshis = newMessage.satoshis
+      } else {
+        const mesageWithReplies = { ...newMessage, replies: [] }
+        this.messageIndex[newMessage.payloadDigest] = mesageWithReplies
       }
-      const containsPost = message.entries.some(entry => entry.kind === 'post')
-      if (!containsPost) {
-        return
-      }
-      const topicData = this.ensureTopic(topic)
 
-      console.log('Saving specific message', message)
-      const mesageWithReplies = { ...message, replies: [] }
-      topicData.messages.push(mesageWithReplies)
-      this.messageIndex[message.payloadDigest] = mesageWithReplies
-      if (!mesageWithReplies.parentDigest) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const message = this.messageIndex[newMessage.payloadDigest]!
+      const topicData = this.ensureTopic(topic)
+      if (!topicData.messages.some(
+        oldMessage => message.payloadDigest === oldMessage.payloadDigest,
+      )
+      )
+
+        topicData.messages.push(message)
+      this.messageIndex[message.payloadDigest] = message
+      if (!message.parentDigest) {
         return
       }
-      if (!(mesageWithReplies.parentDigest in this.messageIndex)) {
+      if (!(message.parentDigest in this.messageIndex)) {
         return
       }
-      const replies = this.messageIndex[mesageWithReplies.parentDigest]?.replies
+      const replies = this.messageIndex[message.parentDigest]?.replies
       const found = replies?.some(
-        reply => reply.payloadDigest === mesageWithReplies.payloadDigest,
+        reply => reply.payloadDigest === message.payloadDigest,
       )
       if (found) {
         return
       }
-      this.messageIndex[mesageWithReplies.parentDigest]?.replies.push(
-        mesageWithReplies,
+      this.messageIndex[message.parentDigest]?.replies.push(
+        message,
       )
     },
     async refreshMessages({
