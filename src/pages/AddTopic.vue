@@ -40,14 +40,15 @@ export default defineComponent({
     const router = useRouter()
     const topic = ref('')
 
+    const cancel = () => {
+      window.history.length > 1 ? router.go(-1) : router.push('/')
+    }
     const addTopic = () => {
       if (!topic.value) {
         return
       }
       topicStore.ensureTopic(topic.value.toLowerCase())
-    }
-    const cancel = () => {
-      window.history.length > 1 ? router.go(-1) : router.push('/')
+      router.replace(`/topic/${topic.value}`)
     }
     return {
       topic,
