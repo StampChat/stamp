@@ -9,6 +9,7 @@
           icon="forum"
           @click="setActiveChat(undefined)"
         />
+        <chat-list-link title="Crypto" route="/topic/crypto" icon="forum" />
         <chat-list-link
           title="Login/Sign Up"
           route="/setup"

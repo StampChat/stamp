@@ -26,6 +26,16 @@ export function createRoutes(): RouteRecordRaw[] {
             },
           ],
         },
+        {
+          path: 'topic',
+          component: () => import('layouts/TopicLayout.vue'),
+          children: [
+            {
+              path: ':topic',
+              component: () => import('pages/Topic.vue'),
+            },
+          ],
+        },
         { path: 'agora', redirect: '/forum' },
         { path: 'changelog', component: () => import('pages/Changelog.vue') },
         {

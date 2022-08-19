@@ -15,6 +15,7 @@ import { useRelayClientStore } from 'src/stores/relay-client'
 import { useContactStore } from 'src/stores/contacts'
 import { useAppearanceStore } from 'src/stores/appearance'
 import { useForumStore } from 'src/stores/forum'
+import { useTopicStore } from 'src/stores/topics'
 
 function instrumentIndexerClient({
   chronikWs,
@@ -153,6 +154,9 @@ export default boot(async ({ app }) => {
 
   const forumStore = useForumStore()
   await forumStore.restored
+
+  const topicSTore = useTopicStore()
+  await topicSTore.restored
 
   app.config.globalProperties.$wallet = wallet
   app.config.globalProperties.$indexer = indexerObservables
