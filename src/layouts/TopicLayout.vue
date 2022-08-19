@@ -1,31 +1,15 @@
 <template>
-  <q-layout
-    view="lhh LpR lff"
-    container
-    class="hide-scrollbar absolute full-width"
-  >
+  <q-layout view="lhh LpR lff" container class="hide-scrollbar absolute full-width">
     <q-drawer v-model="showTopicDrawer" side="right" :breakpoint="800">
       <topic-drawer :topic="topic" />
     </q-drawer>
 
     <q-header>
       <q-toolbar class="q-pl-sm">
-        <q-btn
-          class="q-px-sm"
-          flat
-          dense
-          @click="toggleSettingsDrawerOpen"
-          icon="menu"
-        />
+        <q-btn class="q-px-sm" flat dense @click="toggleSettingsDrawerOpen" icon="menu" />
         <q-toolbar-title class="h6">{{ topic }}</q-toolbar-title>
         <q-space />
-        <q-btn
-          class="q-px-sm"
-          flat
-          dense
-          @click="toggleTopicDrawer"
-          icon="menu"
-        />
+        <q-btn class="q-px-sm" flat dense @click="toggleTopicDrawer" icon="menu" />
       </q-toolbar>
     </q-header>
 
@@ -35,7 +19,7 @@
       </q-page>
     </q-page-container>
 
-    <q-footer bordered>
+    <q-footer bordered v-if="$status.setup">
       <topic-input @send-message="sendMessage" v-model:message="message" />
     </q-footer>
   </q-layout>
