@@ -4,7 +4,7 @@ export function createRoutes(): RouteRecordRaw[] {
   const routes: RouteRecordRaw[] = [
     {
       path: '/',
-      redirect: '/agora',
+      redirect: '/topic/news',
       component: () => import('layouts/MainLayout.vue'),
       children: [
         {
