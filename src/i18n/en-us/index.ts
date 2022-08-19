@@ -48,6 +48,10 @@ export default {
     enterBitcoinCashAddress: 'Enter Lotus address...',
     notFound: 'Not Found',
   },
+  newTopicDialog: {
+    newTopic: 'Add Topic',
+    enterTopic: 'Enter topic...',
+  },
   SettingPanel: {
     newContact: 'New Contact',
     contacts: 'Contacts',

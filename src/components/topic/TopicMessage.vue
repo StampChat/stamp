@@ -1,5 +1,6 @@
 <template>
-  <div style="border-top: 1px solid black">
+  <div>
+    <q-separator />
     <div class="row">
       <router-link
         :to="`/chat/${message.poster}`"
@@ -12,7 +13,10 @@
         <div v-else>{{ formatAddress(message.poster) }}</div>
       </router-link>
       <q-space />
-      <span>{{ formatSatoshis(message.satoshis) }} XPI</span>
+      <span class="q-ma-none q-pa-none q-pl-sm">{{ message.topic }}</span>
+      <span class="q-ma-none q-pa-none q-pl-sm"
+        >{{ formatSatoshis(message.satoshis) }} XPI</span
+      >
       <span class="q-ma-none q-pa-none q-pl-sm">
         {{ timestamp }}
         <q-tooltip>{{ fullTimestamp }}</q-tooltip>

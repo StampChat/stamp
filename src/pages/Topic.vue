@@ -6,13 +6,11 @@
   >
     <template v-if="messages?.length > 0">
       <template v-for="message in messages" :key="message.payloadDigest">
-        <TopicMessage :message="message" />
+        <topic-message :message="message" />
       </template>
     </template>
     <template v-else>
-      <div>
-        <q-spinner-puff class="absolute-center" color="purple" size="20rem" />
-      </div>
+      <div>No messages loaded...</div>
     </template>
   </q-scroll-area>
   <q-page-sticky position="bottom-right" :offset="[18, 18]" v-show="!bottom">
@@ -27,9 +25,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref } from 'vue'
+import { defineComponent, computed, ref, nextTick, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
+import { RouteLocationNormalized, useRouter } from 'vue-router'
 import assert from 'assert'
 import { debounce, QScrollArea } from 'quasar'
 
@@ -48,24 +46,82 @@ export default defineComponent({
     const topicStore = useTopicStore()
     const router = useRouter()
     const routeParams = router.currentRoute.value.params
-    const topic = routeParams['topic']
+    const topicParam = routeParams['topic']
     const { topics } = storeToRefs(topicStore)
-    assert(typeof topic === 'string', "topic param isn't a string?")
+    assert(typeof topicParam === 'string', "topic param isn't a string?")
 
+    const topic = ref(topicParam)
+    const bottom = ref(true)
     const messages = computed(() => {
-      topicStore.ensureTopic(topic)
+      topicStore.ensureTopic(topic.value)
+      const topicData = topics.value[topic.value]
+      const threshold = topicData.threshold
+      return topicData.messages.filter(message => message.satoshis >= threshold)
+    })
 
-      return topics.value[topic].messages
+    const chatScroll = ref<QScrollArea | null>(null)
+
+    const scrollBottom = () => {
+      const scrollArea = chatScroll.value
+      if (!scrollArea) {
+        // Not mounted yet
+        return
+      }
+      const scrollTarget = scrollArea.getScrollTarget()
+      // If we're not at the bottom, and we're not at the top, leave the scroll
+      // alone.
+      if (!bottom.value && scrollTarget.scrollTop >= 10) {
+        return
+      }
+      nextTick(() => {
+        scrollArea.setScrollPosition(
+          'vertical',
+          scrollTarget.scrollHeight,
+          scrollDuration,
+        )
+      })
+    }
+
+    watch([messages], () => {
+      const scrollArea = chatScroll.value
+      if (!scrollArea) {
+        // Not mounted yet
+        return
+      }
+      const scrollTarget = scrollArea.getScrollTarget()
+      // If we're not at the bottom, and we're not at the top, leave the scroll
+      // alone.
+      if (!bottom.value && scrollTarget.scrollTop >= 10) {
+        return
+      }
+      nextTick(() => {
+        scrollArea.setScrollPosition(
+          'vertical',
+          scrollTarget.scrollHeight,
+          scrollDuration,
+        )
+      })
     })
 
     return {
       refreshMessages: topicStore.refreshMessages,
       messages,
-      topic,
+      topic: ref(topic),
       timeoutId: undefined as ReturnType<typeof setTimeout> | undefined,
-      chatScroll: ref<QScrollArea | null>(null),
-      bottom: true as boolean,
+      bottom,
+      scrollBottom,
+      chatScroll,
     }
+  },
+  beforeRouteUpdate(
+    to: RouteLocationNormalized,
+    from: RouteLocationNormalized,
+    next: () => void,
+  ) {
+    console.log('moving')
+    this.topic = to.params.topic as string
+    this.refreshContent()
+    next()
   },
   mounted() {
     const timedRefresh = () => {
@@ -102,26 +158,6 @@ export default defineComponent({
         )
       })
     },
-    scrollBottom() {
-      const scrollArea = this.chatScroll
-      if (!scrollArea) {
-        // Not mounted yet
-        return
-      }
-      const scrollTarget = scrollArea.getScrollTarget()
-      // If we're not at the bottom, and we're not at the top, leave the scroll
-      // alone.
-      if (!this.bottom && scrollTarget.scrollTop >= 10) {
-        return
-      }
-      this.$nextTick(() => {
-        scrollArea.setScrollPosition(
-          'vertical',
-          scrollTarget.scrollHeight,
-          scrollDuration,
-        )
-      })
-    },
     resizeHandler() {
       const chatScroll = this.chatScroll
       if (!chatScroll || !chatScroll.$el) {
@@ -146,7 +182,6 @@ export default defineComponent({
           details.verticalPosition -
           details.verticalContainerSize <=
         10
-      console.log('bottom?', this.bottom)
     },
   },
 })

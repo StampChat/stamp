@@ -1,0 +1,65 @@
+<template>
+  <q-card class="q-ma-sm">
+    <q-card-section>
+      <div class="text-h6">{{ $t('newTopicDialog.newTopic') }}</div>
+    </q-card-section>
+    <q-card-section>
+      <q-input
+        class="text-bold text-h6"
+        v-model="topic"
+        filled
+        dense
+        :placeholder="$t('newTopicDialog.enterTopic')"
+        ref="topicInput"
+        @keydown.enter.prevent="addTopic()"
+      />
+    </q-card-section>
+    <q-card-actions align="right">
+      <q-btn label="Cancel" color="negative" @click="cancel" />
+      <q-btn
+        :disable="topic === ''"
+        label="Add"
+        color="primary"
+        @click="addTopic()"
+      />
+    </q-card-actions>
+  </q-card>
+</template>
+
+<script lang="ts">
+import { defineComponent, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { QInput } from 'quasar'
+
+import { useTopicStore } from 'src/stores/topics'
+
+export default defineComponent({
+  setup() {
+    const topicStore = useTopicStore()
+    const router = useRouter()
+    const topic = ref('')
+
+    const addTopic = () => {
+      if (!topic.value) {
+        return
+      }
+      topicStore.ensureTopic(topic.value)
+    }
+    const cancel = () => {
+      window.history.length > 1 ? router.go(-1) : router.push('/')
+    }
+    return {
+      topic,
+      topicInput: ref<QInput | null>(null),
+      addTopic,
+      cancel,
+    }
+  },
+  mounted() {
+    if (!this.topicInput) {
+      return
+    }
+    this.topicInput.focus()
+  },
+})
+</script>

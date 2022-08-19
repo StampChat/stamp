@@ -15,7 +15,7 @@ type Topic = string
 
 export type TopicData = {
   threshold: number
-  amount: number
+  offering: number
   messages: MessageWithReplies[]
   topic: string
   // Last update from Epoch in seconds
@@ -41,8 +41,14 @@ export const useTopicStore = defineStore('topics', {
         return state.messageIndex[messageDigest]
       }
     },
+    getTopics(state) {
+      return Object.keys(state.topics)
+    },
   },
   actions: {
+    deleteTopic(topic: string) {
+      delete this.topics[topic]
+    },
     ensureTopic(topic: string): TopicData {
       if (!this.topics) {
         this.topics = {}
@@ -53,7 +59,7 @@ export const useTopicStore = defineStore('topics', {
           threshold: 0,
           messages: [],
           topic,
-          amount: 1000,
+          offering: 1_000_000,
           lastUpdate: 0,
         }
       }
@@ -66,15 +72,19 @@ export const useTopicStore = defineStore('topics', {
     setEntries(topic: string, messages: ForumMessage[], until: number) {
       const topicState = this.ensureTopic(topic)
       topicState.lastUpdate = until
+      console.log('settings entries', messages)
 
-      // FIXME: It may be that a message exists in multiple topics due to the hierarchical nature
-      const newMessages = messages
-        .filter(m => !(m.payloadDigest in this.messageIndex))
-        .map(m => ({ ...m, replies: [] }))
+      const transformedMessages = messages.map(m => ({ ...m, replies: [] }))
 
-      topicState.messages.push(
-        ...newMessages.filter(m => !(m.payloadDigest in this.messageIndex)),
+      const newMessages = transformedMessages.filter(
+        m => !(m.payloadDigest in this.messageIndex),
       )
+
+      for (const message of newMessages) {
+        this.messageIndex[message.payloadDigest] = message
+      }
+
+      // Setup all the reply data
       for (const message of newMessages) {
         if (!message.parentDigest) {
           continue
@@ -87,10 +97,26 @@ export const useTopicStore = defineStore('topics', {
           reply => reply.payloadDigest === message.payloadDigest,
         )
         if (found) {
-          return
+          continue
         }
         this.messageIndex[message.parentDigest]?.replies.push(message)
       }
+      // FIXME: Linear search not ideal
+
+      const messagesNewToTopic = transformedMessages
+        .map(message => {
+          const existingMessageObject = this.messageIndex[message.payloadDigest]
+          // We know this is not undefined here, but check
+          assert(existingMessageObject)
+          return existingMessageObject
+        })
+        .filter(
+          message =>
+            !topicState.messages.some(
+              oldMessage => message.payloadDigest === oldMessage.payloadDigest,
+            ),
+        )
+      topicState.messages.push(...messagesNewToTopic)
     },
     setMessage(topic: string, message: ForumMessage) {
       if (message.payloadDigest in this.messageIndex) {
@@ -153,22 +179,22 @@ export const useTopicStore = defineStore('topics', {
       if (!entries) {
         return
       }
-      console.log('found entries', entries)
+      console.log('found entries', topic, entries.length)
       this.setEntries(topic, entries, to)
     },
     async putMessage({
       wallet,
       topic,
       entry,
-      satoshis,
       parentDigest,
     }: {
       wallet: Wallet
       entry: ForumMessageEntry
-      satoshis: number
       topic: string
       parentDigest?: string
     }) {
+      const topicData = this.ensureTopic(topic)
+      const satoshis = topicData.offering
       const keyserver = new KeyserverHandler({
         wallet,
         networkName: displayNetwork,
@@ -248,7 +274,7 @@ export const useTopicStore = defineStore('topics', {
           stamp: {
             topic: 'stamp',
             threshold: 0,
-            amount: 1000,
+            offering: 1000,
             messages: [],
           },
         },

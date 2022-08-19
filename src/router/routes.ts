@@ -53,6 +53,10 @@ export function createRoutes(): RouteRecordRaw[] {
           path: 'add-contact',
           component: () => import('pages/AddContact.vue'),
         },
+        {
+          path: 'add-topic',
+          component: () => import('pages/AddTopic.vue'),
+        },
         { path: 'setup', component: () => import('pages/Setup.vue') },
         {
           path: 'wipe-wallet',
