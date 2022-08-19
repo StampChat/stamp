@@ -14,13 +14,22 @@
             <q-item-label caption>({{ transformedFilter }} XPI)</q-item-label>
           </q-item-section>
           <q-item-section>
-            <q-slider v-model="filterModel" dense :min="-3" :max="10" markers marker-labels>
+            <q-slider
+              v-model="filterModel"
+              dense
+              :min="-3"
+              :max="10"
+              markers
+              marker-labels
+            >
               <template #marker-label-group="scope">
                 <div
                   v-for="marker in scope.markerList"
                   :key="marker.index"
                   :style="marker.style"
-                >{{ marker.value }}</div>
+                >
+                  {{ marker.value }}
+                </div>
               </template>
             </q-slider>
           </q-item-section>
@@ -32,13 +41,21 @@
             <q-item-label caption>({{ transformedOffering }} XPI)</q-item-label>
           </q-item-section>
           <q-item-section>
-            <q-slider v-model="offeringModel" :min="0" :max="10" markers marker-labels>
+            <q-slider
+              v-model="offeringModel"
+              :min="0"
+              :max="10"
+              markers
+              marker-labels
+            >
               <template #marker-label-group="scope">
                 <div
                   v-for="marker in scope.markerList"
                   :key="marker.index"
                   :style="marker.style"
-                >{{ marker.value }}</div>
+                >
+                  {{ marker.value }}
+                </div>
               </template>
             </q-slider>
           </q-item-section>

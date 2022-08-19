@@ -11,10 +11,12 @@
         filled
         dense
         reactive-rules
-        :rules="[ 
+        :rules="[
           val => val.length > 3 || 'Please use minimum of 3 characters',
-          val => /^[a-zA-Z0-9.]+$/.test(val) || 'A-Z, a-z, 0-9, and periods are the only valid characters'
-          ]"
+          val =>
+            /^[a-zA-Z0-9.]+$/.test(val) ||
+            'A-Z, a-z, 0-9, and periods are the only valid characters',
+        ]"
         :placeholder="$t('newTopicDialog.enterTopic')"
         ref="topicInput"
         @keydown.enter.prevent="addTopic()"
@@ -22,7 +24,12 @@
     </q-card-section>
     <q-card-actions align="right">
       <q-btn label="Cancel" color="negative" @click="cancel" />
-      <q-btn :disable="topic === ''" label="Add" color="primary" @click="addTopic()" />
+      <q-btn
+        :disable="topic === ''"
+        label="Add"
+        color="primary"
+        @click="addTopic()"
+      />
     </q-card-actions>
   </q-card>
 </template>

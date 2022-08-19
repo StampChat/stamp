@@ -14,24 +14,26 @@ export type MessageWithReplies = ForumMessage & {
 type Topic = string
 
 const defaultOffering = 100_000_000
-const defaultTopics = [{
-  topic: 'stamp',
-  threshold: 0,
-  offering: defaultOffering,
-  messages: [],
-},
-{
-  topic: 'news',
-  threshold: 0,
-  offering: defaultOffering,
-  messages: [],
-},
-{
-  topic: 'crypto',
-  threshold: 0,
-  offering: defaultOffering,
-  messages: [],
-}]
+const defaultTopics = [
+  {
+    topic: 'stamp',
+    threshold: 0,
+    offering: defaultOffering,
+    messages: [],
+  },
+  {
+    topic: 'news',
+    threshold: 0,
+    offering: defaultOffering,
+    messages: [],
+  },
+  {
+    topic: 'crypto',
+    threshold: 0,
+    offering: defaultOffering,
+    messages: [],
+  },
+]
 
 export type TopicData = {
   threshold: number
@@ -151,11 +153,11 @@ export const useTopicStore = defineStore('topics', {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const message = this.messageIndex[newMessage.payloadDigest]!
       const topicData = this.ensureTopic(topic)
-      if (!topicData.messages.some(
-        oldMessage => message.payloadDigest === oldMessage.payloadDigest,
+      if (
+        !topicData.messages.some(
+          oldMessage => message.payloadDigest === oldMessage.payloadDigest,
+        )
       )
-      )
-
         topicData.messages.push(message)
       this.messageIndex[message.payloadDigest] = message
       if (!message.parentDigest) {
@@ -171,9 +173,7 @@ export const useTopicStore = defineStore('topics', {
       if (found) {
         return
       }
-      this.messageIndex[message.parentDigest]?.replies.push(
-        message,
-      )
+      this.messageIndex[message.parentDigest]?.replies.push(message)
     },
     async refreshMessages({
       topic,
@@ -309,7 +309,7 @@ export const useTopicStore = defineStore('topics', {
       }
       return addDefaultTopics({
         messageIndex: {},
-        topics: {}
+        topics: {},
       })
     },
   },

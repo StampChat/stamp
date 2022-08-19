@@ -7,12 +7,16 @@
         class="q-pa-none q-ma-none"
         style="text-decoration: none"
       >
-        <div v-if="haveContact(message.poster)">{{ getContactProfile(message.poster)?.name }}</div>
+        <div v-if="haveContact(message.poster)">
+          {{ getContactProfile(message.poster)?.name }}
+        </div>
         <div v-else>{{ formatAddress(message.poster) }}</div>
       </router-link>
       <q-space />
       <span class="q-ma-none q-pa-none q-pl-sm">{{ message.topic }}</span>
-      <span class="q-ma-none q-pa-none q-pl-sm">{{ formatSatoshis(message.satoshis) }} XPI</span>
+      <span class="q-ma-none q-pa-none q-pl-sm"
+        >{{ formatSatoshis(message.satoshis) }} XPI</span
+      >
       <span class="q-ma-none q-pa-none q-pl-sm">
         {{ timestamp }}
         <q-tooltip>{{ fullTimestamp }}</q-tooltip>
@@ -20,13 +24,17 @@
     </div>
 
     <template v-for="(entry, index) in message.entries" :key="index">
-      <div :v-if="entry.kind === 'post'" class="q-ma-none q-pa-none col-grow q-ml-lg">
+      <div
+        :v-if="entry.kind === 'post'"
+        class="q-ma-none q-pa-none col-grow q-ml-lg"
+      >
         <a
           :href="entry.url"
           target="_blank"
           v-if="entry.url"
           class="post-title"
-        >{{ entry.title || 'untitled' }}</a>
+          >{{ entry.title || 'untitled' }}</a
+        >
         <span class="mdstyle" v-html="markedMessage(entry.message)" />
       </div>
     </template>
