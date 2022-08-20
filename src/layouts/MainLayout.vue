@@ -42,6 +42,7 @@ import { useAppearanceStore } from 'src/stores/appearance'
 import { useProfileStore } from 'src/stores/my-profile'
 import { useContactStore } from 'src/stores/contacts'
 import { useChatStore } from 'src/stores/chats'
+import { openChat } from 'src/utils/routes'
 
 const compactWidth = 70
 const compactCutoff = 325
@@ -75,13 +76,15 @@ export default defineComponent({
       if (!newAddress) {
         return
       }
-      router.push(`/chat/${newAddress}`).catch(() => {
-        // Don't care. Probably duplicate route
-      })
+      openChat(router, newAddress)
     })
 
+    const contactClicked = (newAddress: string) => {
+      openChat(router, newAddress)
+    }
+
     return {
-      setActiveChat: chatStore.setActiveChat,
+      contactClicked,
       addDefaultContact: contacts.addDefaultContact,
       refreshContacts: contacts.refreshContacts,
       // FIXME: Some kind of race condition here where if this is computed,
@@ -99,7 +102,7 @@ export default defineComponent({
   data() {
     return {
       trueSplitterRatio: compactCutoff,
-      myDrawerOpen: !!this.activeChatAddr as boolean,
+      myDrawerOpen: true,
       contactDrawerOpen: false as boolean,
       contactBookOpen: false,
       compact: false,
@@ -149,9 +152,6 @@ export default defineComponent({
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         this.toggleContactBookOpen()
       }
-    },
-    contactClicked(newAddress: string) {
-      this.setActiveChat(newAddress)
     },
     setupConnections() {
       // Not currently setup. User needs to go through setup flow first
