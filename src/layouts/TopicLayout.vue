@@ -1,9 +1,5 @@
 <template>
-  <q-layout
-    view="lhh LpR lff"
-    container
-    class="hide-scrollbar absolute full-width"
-  >
+  <div>
     <q-drawer v-model="showTopicDrawer" side="right" :breakpoint="800">
       <topic-drawer :topic="topic" />
     </q-drawer>
@@ -38,7 +34,7 @@
     <q-footer bordered v-if="$status.setup">
       <topic-input @send-message="sendMessage" v-model:message="message" />
     </q-footer>
-  </q-layout>
+  </div>
 </template>
 
 <script lang="ts">

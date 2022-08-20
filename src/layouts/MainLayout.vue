@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="hHr LpR lff">
+  <q-layout view="lHr lpr lFr">
     <q-btn
       v-show="false"
       @click="promptNotificationPermission"
@@ -16,15 +16,11 @@
     <q-dialog v-model="contactBookOpen">
       <contact-book-dialog :contact-click="contactClicked" />
     </q-dialog>
-    <q-page-container>
-      <q-page :style-fn="tweak">
-        <router-view
-          @toggleContactDrawerOpen="toggleContactDrawerOpen"
-          @toggleMyDrawerOpen="toggleMyDrawerOpen"
-          @setupCompleted="setupConnections"
-        />
-      </q-page>
-    </q-page-container>
+    <router-view
+      @toggleContactDrawerOpen="toggleContactDrawerOpen"
+      @toggleMyDrawerOpen="toggleMyDrawerOpen"
+      @setupCompleted="setupConnections"
+    />
   </q-layout>
 </template>
 
@@ -113,10 +109,6 @@ export default defineComponent({
     }
   },
   methods: {
-    tweak(offset: number, viewportHeight: number) {
-      const height = viewportHeight - offset + 'px'
-      return { height, minHeight: height }
-    },
     toggleContactDrawerOpen() {
       console.log('toggleContactDrawerOpen')
       this.contactDrawerOpen = !this.contactDrawerOpen

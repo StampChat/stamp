@@ -1,75 +1,85 @@
 <template>
-  <q-scroll-area
-    ref="chatScroll"
-    @scroll="scrollHandler"
-    class="q-px-none absolute full-width full-height column"
-  >
-    <div class="row q-px-lg">
-      <template
-        v-for="(msg, index) in chunkedMessages"
-        :key="msg.payloadDigest"
-      >
-        <chat-message
-          :index="index"
-          :message="msg"
-          :address="address"
-          :name="getContact(msg.outbound).name"
-          :chat-width="chatWidth"
-          :payload-digest="msg.payloadDigest"
-          :ref="msg.payloadDigest"
-          @replyClicked="
-            ({ address, payloadDigest }) => setReply(payloadDigest)
-          "
-          @replyDivClick="scrollToMessage"
-        />
-      </template>
-    </div>
-  </q-scroll-area>
-  <q-page-sticky position="bottom-right" :offset="[18, 18]" v-show="!bottom">
-    <q-btn
-      round
-      size="md"
-      icon="arrow_downward"
-      @mousedown.prevent="buttonScrollBottom"
-      color="accent"
-    />
-  </q-page-sticky>
-  <q-inner-loading
-    :dark="$q.dark.isActive"
-    :showing="!!scrollDigest"
-    size="md"
-    label="Loading more messages..."
-  />
-  <q-footer bordered>
-    <div v-if="!!replyDigest" class="q-px-md q-pt-sm" ref="replyBox">
-      <!-- Reply box -->
-      <div class="row justify-end">
-        <div class="col-auto">
+  <div>
+    <q-page-container>
+      <q-page>
+        <q-scroll-area
+          ref="chatScroll"
+          @scroll="scrollHandler"
+          class="q-px-none absolute full-width full-height column"
+        >
+          <div class="row q-px-lg">
+            <template
+              v-for="(msg, index) in chunkedMessages"
+              :key="msg.payloadDigest"
+            >
+              <chat-message
+                :index="index"
+                :message="msg"
+                :address="address"
+                :name="getContact(msg.outbound).name"
+                :chat-width="chatWidth"
+                :payload-digest="msg.payloadDigest"
+                :ref="msg.payloadDigest"
+                @replyClicked="
+                  ({ address, payloadDigest }) => setReply(payloadDigest)
+                "
+                @replyDivClick="scrollToMessage"
+              />
+            </template>
+          </div>
+        </q-scroll-area>
+        <q-page-sticky
+          position="bottom-right"
+          :offset="[18, 18]"
+          v-show="!bottom"
+        >
           <q-btn
-            dense
-            flat
+            round
+            size="md"
+            icon="arrow_downward"
+            @mousedown.prevent="buttonScrollBottom"
             color="accent"
-            icon="close"
-            @click="setReply(null)"
           />
+        </q-page-sticky>
+        <q-inner-loading
+          :dark="$q.dark.isActive"
+          :showing="!!scrollDigest"
+          size="md"
+          label="Loading more messages..."
+        />
+      </q-page>
+    </q-page-container>
+    <q-footer bordered>
+      <div v-if="!!replyDigest" class="q-px-md q-pt-sm" ref="replyBox">
+        <!-- Reply box -->
+        <div class="row justify-end">
+          <div class="col-auto">
+            <q-btn
+              dense
+              flat
+              color="accent"
+              icon="close"
+              @click="setReply(null)"
+            />
+          </div>
+        </div>
+        <div class="row q-px-sm q-pt-sm">
+          <div class="col-12">
+            <chat-message-reply :payload-digest="replyDigest" />
+          </div>
         </div>
       </div>
-      <div class="row q-px-sm q-pt-sm">
-        <div class="col-12">
-          <chat-message-reply :payload-digest="replyDigest" />
-        </div>
-      </div>
-    </div>
-    <!-- Message box -->
-    <chat-input
-      @sendFileClicked="toSendFileDialog"
-      @giveLotusClicked="$emit('giveLotusClicked')"
-      ref="chatInput"
-      v-model:message="message"
-      v-model:stamp-amount="stampAmount"
-      @sendMessage="sendMessage"
-    />
-  </q-footer>
+      <!-- Message box -->
+      <chat-input
+        @sendFileClicked="toSendFileDialog"
+        @giveLotusClicked="$emit('giveLotusClicked')"
+        ref="chatInput"
+        v-model:message="message"
+        v-model:stamp-amount="stampAmount"
+        @sendMessage="sendMessage"
+      />
+    </q-footer>
+  </div>
 </template>
 
 <script lang="ts">

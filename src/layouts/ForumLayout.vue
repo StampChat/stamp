@@ -1,9 +1,5 @@
 <template>
-  <q-layout
-    view="lhh LpR lff"
-    container
-    class="hide-scrollbar absolute full-width"
-  >
+  <div>
     <q-drawer v-model="showForumDrawer" side="right" :breakpoint="800">
       <forum-drawer />
     </q-drawer>
@@ -45,7 +41,7 @@
         </q-scroll-area>
       </q-page>
     </q-page-container>
-  </q-layout>
+  </div>
 </template>
 
 <script lang="ts">
