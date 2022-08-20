@@ -113,7 +113,7 @@ import { defineComponent } from 'vue'
 
 import ContactCard from './ContactCard.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
-import { openPage } from '../../utils/routes'
+import { openChat, openPage } from '../../utils/routes'
 import { useChatStore } from 'src/stores/chats'
 import { useProfileStore } from 'src/stores/my-profile'
 import { storeToRefs } from 'pinia'
@@ -125,7 +125,6 @@ export default defineComponent({
     const { profile, inbox } = storeToRefs(myProfile)
     return {
       deleteMessage: chats.deleteMessage,
-      setActiveChat: chats.setActiveChat,
       profile,
       inbox,
     }
@@ -158,22 +157,25 @@ export default defineComponent({
       this.contactBookOpen = false
     },
     openSettings() {
-      openPage(this.$router, this.$route.path, '/settings')
+      openPage(this.$router, '/settings')
     },
     openProfile() {
-      openPage(this.$router, this.$route.path, '/profile')
+      openPage(this.$router, '/profile')
     },
     receiveECash() {
-      openPage(this.$router, this.$route.path, '/receive')
+      openPage(this.$router, '/receive')
     },
     sendECash() {
-      openPage(this.$router, this.$route.path, '/send')
+      openPage(this.$router, '/send')
     },
     newContact() {
-      openPage(this.$router, this.$route.path, '/add-contact')
+      openPage(this.$router, '/add-contact')
     },
     deleteForever() {
-      openPage(this.$router, this.$route.path, '/wipe-wallet')
+      openPage(this.$router, '/wipe-wallet')
+    },
+    setActiveChat(address: string) {
+      openChat(this.$router, address)
     },
   },
   computed: {

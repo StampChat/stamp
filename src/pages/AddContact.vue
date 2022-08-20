@@ -84,7 +84,7 @@ import { KeyserverHandler } from '../cashweb/keyserver'
 import { toAPIAddress } from '../utils/address'
 import { keyservers, networkName } from '../utils/constants'
 import { PublicKey } from 'bitcore-lib-xpi'
-import { useChatStore } from 'src/stores/chats'
+import { openChat } from 'src/utils/routes'
 
 export default defineComponent({
   data() {
@@ -95,12 +95,10 @@ export default defineComponent({
   },
   setup() {
     const contactStore = useContactStore()
-    const chats = useChatStore()
 
     return {
       addressRef: ref<QInput | null>(null),
       addContactToStore: contactStore.addContact,
-      openChat: chats.openChat,
     }
   },
   computed: {
@@ -146,7 +144,7 @@ export default defineComponent({
         address: cashAddress,
         contact: this.contact,
       })
-      this.openChat(this.address)
+      openChat(this.$router, this.address)
     },
     cancel() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
