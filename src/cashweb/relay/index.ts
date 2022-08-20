@@ -44,6 +44,7 @@ import type {
   UIStampOutput,
 } from '../types/user-interface'
 import type {
+  ForwardItem,
   MessageItem,
   MessageWrapper,
   P2PKHSendItem,
@@ -462,6 +463,7 @@ export class RelayClient extends ReadOnlyRelayClient {
         encodeEntry(item, destinationPublicKey, {
           wallet,
           messageConstructor: this.messageConstructor,
+          getPubKey: this.getPubKey,
         })
       stagedUtxos.push(...entryUtxos)
       outpoints.push(...entryOutpoints)
@@ -634,6 +636,33 @@ export class RelayClient extends ReadOnlyRelayClient {
         payloadDigest: replyDigest,
       } as ReplyItem)
     }
+    await this.sendMessageImpl({ address, items, stampAmount })
+  }
+
+  async forwardMessage({
+    address,
+    senderName,
+    senderAddress,
+    receivedTime,
+    forwardedItems,
+    stampAmount,
+  }: {
+    address: string
+    senderName: string
+    senderAddress: string
+    forwardedItems: Array<MessageItem>
+    stampAmount: number
+    receivedTime: number
+  }) {
+    const items: MessageItem[] = [
+      {
+        type: 'forward',
+        senderAddress,
+        senderName,
+        items: forwardedItems,
+        receivedTime,
+      } as ForwardItem,
+    ]
     await this.sendMessageImpl({ address, items, stampAmount })
   }
 
@@ -939,7 +968,7 @@ export class RelayClient extends ReadOnlyRelayClient {
             publicKey,
             identityPrivateKey,
           ),
-        networkName: this.networkName,
+        networkName: this.displayNetwork,
         wallet: wallet,
       })
       if (entryData == null) {

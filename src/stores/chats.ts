@@ -254,6 +254,14 @@ export const useChatStore = defineStore('chats', {
         console.error(displayAddress)
         return null
       }
+      if (lastItem.type === 'forward') {
+        const info = {
+          outbound: lastMessage.outbound,
+          text: 'Forwarded from ' + lastItem.senderName,
+        }
+        return info
+      }
+
       if (lastItem.type === 'text') {
         const info = {
           outbound: lastMessage.outbound,
@@ -392,7 +400,7 @@ export const useChatStore = defineStore('chats', {
       if (payloadDigest in this.messages) {
         // we have the message already, just need to update some fields and return
         this.messages[payloadDigest] = Object.assign(
-          this.messages[payloadDigest],
+          this.messages[payloadDigest] as Message,
           message,
         )
         return
@@ -583,7 +591,10 @@ export const useChatStore = defineStore('chats', {
         const message = { payloadDigest: index, ...newMsg }
         if (index in this.messages) {
           // Mutate the object so that it striggers reactivity
-          this.messages[index] = Object.assign(this.messages[index], message)
+          this.messages[index] = Object.assign(
+            this.messages[index] as Message,
+            message,
+          )
           // We should already have created the chat if we have the message
           return
         }
