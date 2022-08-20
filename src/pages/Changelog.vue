@@ -20,6 +20,29 @@
           @scroll="scrollHandler"
           class="q-px-sm absolute full-width full-height"
         >
+          <div class="text-h6">v0.0.23 Changelog</div>
+          <div class="text-body1">
+            <ul>
+              <li>Convert everything from vuex to pinia</li>
+              <li>Convert most of the codebase to typescript</li>
+              <li>Fix various bugs associated with pinia upgrade</li>
+              <li>Retheme the form entirely</li>
+              <li>Remove nested QLayouts to fix rendering issues on mobile</li>
+              <li>Upgrade quasar to the latest version</li>
+              <li>
+                Fixed keyboard/input box rendering issues on mobile Safari
+              </li>
+              <li>
+                Fixed issue where in some cases clicking a contact was
+                unresponsive.
+              </li>
+              <li>
+                Update Workbox options to set that the PWA should auto update.
+                🤞
+              </li>
+            </ul>
+          </div>
+
           <div class="text-h6">v0.0.22 Changelog</div>
           <div class="text-body1">
             <ul>
