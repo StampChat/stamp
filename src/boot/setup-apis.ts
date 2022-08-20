@@ -155,8 +155,8 @@ export default boot(async ({ app }) => {
   const forumStore = useForumStore()
   await forumStore.restored
 
-  const topicSTore = useTopicStore()
-  await topicSTore.restored
+  const topicStore = useTopicStore()
+  await topicStore.restored
 
   app.config.globalProperties.$wallet = wallet
   app.config.globalProperties.$indexer = indexerObservables
