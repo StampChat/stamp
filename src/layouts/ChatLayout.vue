@@ -1,9 +1,5 @@
 <template>
-  <q-layout
-    view="lhh LpR lff"
-    container
-    class="hide-scrollbar absolute full-width"
-  >
+  <div>
     <q-drawer v-model="contactDrawerOpen" side="right" :breakpoint="800">
       <right-drawer
         v-if="address"
@@ -47,15 +43,11 @@
       </q-toolbar>
     </q-header>
 
-    <q-page-container>
-      <q-page class="q-pt-xs">
-        <router-view
-          @sendFileClicked="toSendFileDialog"
-          @giveLotusClicked="sendMoneyOpen = true"
-        />
-      </q-page>
-    </q-page-container>
-  </q-layout>
+    <router-view
+      @sendFileClicked="toSendFileDialog"
+      @giveLotusClicked="sendMoneyOpen = true"
+    />
+  </div>
 </template>
 
 <script lang="ts">

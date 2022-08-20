@@ -1,11 +1,8 @@
 <template>
-  <q-layout view="hHh Lpr fFf">
-    <q-page-container>
-      <router-view :is-basic="isBasic" />
-    </q-page-container>
-
+  <div>
+    <router-view :is-basic="isBasic" />
     <status-footer v-model="isBasic" />
-  </q-layout>
+  </div>
 </template>
 
 <script>

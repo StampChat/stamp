@@ -1,30 +1,34 @@
 <template>
-  <q-card class="q-ma-sm">
-    <q-card-section>
-      <div class="text-h6">WARNING!</div>
-    </q-card-section>
-    <q-card-section>
-      <div>
-        This will delete all messages from the remove server and consolidate any
-        funds associated with them back into your HD wallet.
-      </div>
-      <div>This cannot be undoned!</div>
-    </q-card-section>
-    <q-card-actions align="right">
-      <q-btn
-        @click="cancel"
-        :label="$t('wipeWallet.cancel')"
-        color="negative"
-        class="q-ma-sm"
-      />
-      <q-btn
-        @click="wipeWallet"
-        :label="$t('wipeWallet.wipe')"
-        color="primary"
-        class="q-ma-sm"
-      />
-    </q-card-actions>
-  </q-card>
+  <q-page-container>
+    <q-page class="q-ma-none q-pa-sm">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">WARNING!</div>
+        </q-card-section>
+        <q-card-section>
+          <div>
+            This will delete all messages from the remove server and consolidate
+            any funds associated with them back into your HD wallet.
+          </div>
+          <div>This cannot be undoned!</div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn
+            @click="cancel"
+            :label="$t('wipeWallet.cancel')"
+            color="negative"
+            class="q-ma-sm"
+          />
+          <q-btn
+            @click="wipeWallet"
+            :label="$t('wipeWallet.wipe')"
+            color="primary"
+            class="q-ma-sm"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-page>
+  </q-page-container>
 </template>
 
 <script lang="ts">
