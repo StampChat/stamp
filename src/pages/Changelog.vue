@@ -14,7 +14,7 @@
     </q-header>
 
     <q-page-container>
-      <q-page class="q-ma-none q-pa-sm">
+      <q-page>
         <q-scroll-area
           ref="chatScroll"
           @scroll="scrollHandler"
