@@ -2,22 +2,30 @@
   <div>
     <q-separator />
     <div class="row q-ml-sm q-mr-sm q-mb-sm">
-      <router-link
+      <q-btn
+        no-caps
+        flat
+        padding="0"
         :to="`/chat/${message.poster}`"
-        class="q-pa-none q-ma-none"
-        style="text-decoration: none"
+        class="q-pa-none q-mt-xs text-center"
       >
         <div v-if="haveContact(message.poster)">
           {{ getContactProfile(message.poster)?.name }}
         </div>
         <div v-else>{{ formatAddress(message.poster) }}</div>
-      </router-link>
+      </q-btn>
       <q-space />
-      <span class="q-ma-none q-pa-none q-pl-sm">{{ message.topic }}</span>
-      <span class="q-ma-none q-pa-none q-pl-sm"
-        >{{ formatSatoshis(message.satoshis) }} XPI</span
+      <span class="q-pa-none q-mt-xs text-center">{{ message.topic }}</span>
+      <q-card-section class="q-pa-none q-mt-xs text-center">
+        <q-btn flat icon="arrow_drop_up" padding="0" @click="addVotes(1)" />
+      </q-card-section>
+      <q-card-section class="q-pa-none q-mt-xs text-center"
+        >{{ formatSatoshis(message.satoshis) }} XPI</q-card-section
       >
-      <span class="q-ma-none q-pa-none q-pl-sm">
+      <q-card-section class="q-pa-none q-mt-xs text-center">
+        <q-btn flat icon="arrow_drop_down" padding="0" @click="addVotes(-1)" />
+      </q-card-section>
+      <span class="q-pa-none q-mt-xs text-center">
         {{ timestamp }}
         <q-tooltip>{{ fullTimestamp }}</q-tooltip>
       </span>
@@ -50,12 +58,15 @@ import { renderMarkdown } from '../../utils/markdown'
 import { useContactStore } from 'src/stores/contacts'
 
 import { ForumMessage } from '../../cashweb/types/forum'
+import { useTopicStore } from 'src/stores/topics'
 
 export default defineComponent({
   setup() {
     const contactStore = useContactStore()
 
     return {
+      timeoutId: null as ReturnType<typeof setTimeout> | null,
+      voteAmount: 0,
       getContactProfile: contactStore.getContactProfile,
       haveContact: contactStore.haveContact,
     }
@@ -82,6 +93,34 @@ export default defineComponent({
     },
     formatAddress(address: string) {
       return '...' + address.substring(address.length - 10, address.length)
+    },
+    // FIXME: We shouldn't need to have this as a method, but we need the wallet.
+    // Still need to implement a `useWallet` method.
+    addVotes(votes: number) {
+      const topicStore = useTopicStore()
+      const topic = this.message.topic
+      this.voteAmount += votes
+      console.log('adding votes', this.voteAmount)
+      if (this.timeoutId) {
+        clearTimeout(this.timeoutId)
+      }
+      this.timeoutId = setTimeout(() => {
+        if (this.voteAmount === 0) {
+          return
+        }
+        console.log('Adding votes', {
+          payloadDigest: this.message?.payloadDigest,
+          satoshis: this.voteAmount,
+        })
+        topicStore.addOffering({
+          wallet: this.$wallet,
+          payloadDigest: this.message?.payloadDigest,
+          satoshis:
+            this.voteAmount * (topicStore.topics[topic]?.offering ?? 1_000_000),
+          topic: this.message.topic,
+        })
+        this.voteAmount = 0
+      }, 1_000)
     },
   },
   computed: {
