@@ -4,6 +4,27 @@ import DOMPurify from 'dompurify'
 import { colors } from 'quasar'
 const { getPaletteColor } = colors
 
+export function renderForwardTitle(input: string, linkColor: boolean) {
+  const renderer = new marked.Renderer()
+  // linkColor boolean is true if dark, false otherwise
+  const linkColorName = linkColor ? 'blue-2' : 'blue'
+  const linkColorHex = getPaletteColor(linkColorName)
+  renderer.paragraph = (text: string) => text
+  renderer.link = (href, title, text) => {
+    let link = '<a '
+    // link
+    link += 'href="' + href + '" '
+    // style
+    link += 'style="color: ' + linkColorHex + '" '
+    // Close a tag and return with text
+    return link + '>' + text + '</a>'
+  }
+  return DOMPurify.sanitize(marked.marked(input, { renderer: renderer }), {
+    ADD_ATTR: ['target'],
+    RETURN_DOM: false,
+  })
+}
+
 export function renderMarkdown(input: string, linkColor: boolean) {
   const renderer = new marked.Renderer()
   // linkColor boolean is true if dark, false otherwise

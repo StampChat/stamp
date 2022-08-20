@@ -3,6 +3,7 @@ import { defaultRelayUrl, networkName } from '../utils/constants'
 import { store as levelDbStore } from './level-message-store'
 import { toRaw, reactive } from 'vue'
 import { Wallet } from 'src/cashweb/wallet'
+import { PublicKey } from 'bitcore-lib-xpi'
 import { useContactStore } from 'src/stores/contacts'
 import { useChatStore } from 'src/stores/chats'
 
@@ -20,7 +21,7 @@ export async function getRelayClient({
   const client = new RelayClient(relayUrl, wallet, {
     getPubKey: address => {
       const destPubKey = contacts.getPubKey(address)
-      return destPubKey ?? null
+      return destPubKey as PublicKey
     },
     networkName,
     messageStore: await levelDbStore,

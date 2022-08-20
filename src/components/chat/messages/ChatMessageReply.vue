@@ -2,7 +2,7 @@
   <div :class="replyOverlay" @click="$emit('replyDivClick', replyDigest)">
     <div class="q-mb-sm reply">
       <div class="row">
-        <div class="col q-px-sm q-py-sm">
+        <div class="col q-pa-sm">
           <!-- Sender Name -->
           <div class="q-mb-xs">
             <b>{{ name }}</b>
@@ -41,7 +41,7 @@ import ChatMessageImage from './ChatMessageImage.vue'
 import ChatMessageStealth from './ChatMessageStealth.vue'
 import { useChatStore } from 'src/stores/chats'
 import { useContactStore } from 'src/stores/contacts'
-import { MessageItem } from 'src/cashweb/types/messages'
+import { ForwardItem, MessageItem } from 'src/cashweb/types/messages'
 
 export default defineComponent({
   name: 'ChatMessageReply',
@@ -84,20 +84,32 @@ export default defineComponent({
     replyDigest() {
       return this.message.senderAddress ? this.payloadDigest : null
     },
+    forwardedMessage() {
+      return this.message.items.find(
+        item => item.type == 'forward',
+      ) as ForwardItem
+    },
     items() {
       const sorted: {
         text?: MessageItem
         image?: MessageItem
+        forward?: MessageItem
         reply?: MessageItem
         stealth?: MessageItem
         p2pkh?: MessageItem
       } = {}
-      this.message.items.map(item => (sorted[item.type] = item))
+      this.forwardedMessage
+        ? this.forwardedMessage.items.map(item => (sorted[item.type] = item))
+        : this.message.items.map(item => (sorted[item.type] = item))
       return sorted
     },
     name() {
-      // if senderAddress undefined, assume deleted message
+      // get sender name of forwarded message
+      if (this.forwardedMessage) {
+        return 'Forwarded from ' + this.forwardedMessage.senderName
+      }
       const sender = this.message.senderAddress
+      // if senderAddress undefined, assume deleted message
       if (!sender) {
         return 'Message not found'
       }

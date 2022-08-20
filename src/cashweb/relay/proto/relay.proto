@@ -31,6 +31,18 @@ message Profile {
   repeated ProfileEntry entries = 3;
 }
 
+message ForwardBody {
+  // The supposed name of the person who sent the message
+  string name = 1;
+  // The source public key (supposedly)
+  bytes source_public_key = 2;
+  // When the original message was supposedly sent
+  int64 timestamp = 3;
+  // Entries supposedly sent to another person by the source public key
+  // individuals
+  repeated PayloadEntry entries = 4;
+}
+
 // Entry is an individual piece of structured data.
 message PayloadEntry {
   // Informs the wallet what to do with this payload.

@@ -5,6 +5,14 @@ export interface ReplyItem {
   payloadDigest: string
 }
 
+export interface ForwardItem {
+  type: 'forward'
+  senderName: string
+  senderAddress: string
+  receivedTime: number
+  items: Array<MessageItem>
+}
+
 export interface TextItem {
   type: 'text'
   text: string
@@ -33,6 +41,7 @@ export type MessageItem =
   | P2PKHSendItem
   | TextItem
   | ReplyItem
+  | ForwardItem
   | ImageItem
 
 export interface Message {

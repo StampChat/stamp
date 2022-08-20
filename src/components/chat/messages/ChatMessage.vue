@@ -22,6 +22,14 @@
       />
     </q-dialog>
 
+    <!-- Forward Dialog -->
+    <q-dialog v-model="forwardDialog">
+      <forward-message-dialog
+        :payload-digest="payloadDigest"
+        :title="$t('forwardMessageDialog.title')"
+      />
+    </q-dialog>
+
     <template v-if="payloadDigest">
       <q-chat-message
         :sent="message.outbound"
@@ -33,8 +41,14 @@
         <!-- Wrap a div around the template to keep all items within 1 QChatMessasge -->
         <div>
           <template v-for="(item, subIndex) in message.items" :key="subIndex">
+            <chat-message-forward
+              v-if="item.type == 'forward'"
+              :sender-name="item.senderName"
+              :sender-address="item.senderAddress"
+              :items="item.items"
+            />
             <chat-message-reply
-              v-if="item.type == 'reply'"
+              v-else-if="item.type == 'reply'"
               :payload-digest="item.payloadDigest"
               @replyDivClick="handleReplyDivClick"
             />
@@ -60,6 +74,7 @@
             :outbound="message.outbound"
             @infoClick="transactionDialog = true"
             @deleteClick="deleteDialog = true"
+            @forwardClick="forwardDialog = true"
             @replyClick="replyClicked({ address, payloadDigest })"
             @resendClick="resend()"
           />
@@ -78,6 +93,7 @@ import { defineComponent, PropType } from 'vue'
 import { useChatStore } from '../../../stores/chats'
 
 import moment from 'moment'
+import ChatMessageForward from './ChatMessageForward.vue'
 import ChatMessageReply from './ChatMessageReply.vue'
 import ChatMessageText from './ChatMessageText.vue'
 import ChatMessageImage from './ChatMessageImage.vue'
@@ -85,13 +101,14 @@ import ChatMessageStealth from './ChatMessageStealth.vue'
 import ChatMessageSuffix from './ChatMessageSuffix.vue'
 import DeleteMessageDialog from '../../dialogs/DeleteMessageDialog.vue'
 import TransactionDialog from '../../dialogs/TransactionDialog.vue'
+import ForwardMessageDialog from '../../dialogs/ForwardMessageDialog.vue'
 import { stampPrice } from '../../../cashweb/wallet/helpers'
 import { Message, MessageItem } from 'src/cashweb/types/messages'
 
 export default defineComponent({
   name: 'ChatMessage',
   components: {
-    // ChatMessageMenu,
+    ChatMessageForward,
     ChatMessageReply,
     ChatMessageText,
     ChatMessageImage,
@@ -99,12 +116,14 @@ export default defineComponent({
     ChatMessageSuffix,
     TransactionDialog,
     DeleteMessageDialog,
+    ForwardMessageDialog,
   },
   emits: ['replyClicked', 'replyDivClick'],
   data() {
     return {
       transactionDialog: false,
       deleteDialog: false,
+      forwardDialog: false,
       provided: {
         mouseover: false,
       },
@@ -185,10 +204,14 @@ export default defineComponent({
     },
   },
   computed: {
+    forwardedMessage() {
+      return this.message.items.find(item => item.type == 'forward')
+    },
     items() {
       const sorted: {
         text?: MessageItem
         image?: MessageItem
+        forward?: MessageItem
         reply?: MessageItem
         stealth?: MessageItem
         p2pkh?: MessageItem

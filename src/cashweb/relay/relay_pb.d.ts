@@ -89,6 +89,42 @@ export namespace Profile {
   }
 }
 
+export class ForwardBody extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  getSourcePublicKey(): Uint8Array | string;
+  getSourcePublicKey_asU8(): Uint8Array;
+  getSourcePublicKey_asB64(): string;
+  setSourcePublicKey(value: Uint8Array | string): void;
+
+  getTimestamp(): number;
+  setTimestamp(value: number): void;
+
+  clearEntriesList(): void;
+  getEntriesList(): Array<PayloadEntry>;
+  setEntriesList(value: Array<PayloadEntry>): void;
+  addEntries(value?: PayloadEntry, index?: number): PayloadEntry;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ForwardBody.AsObject;
+  static toObject(includeInstance: boolean, msg: ForwardBody): ForwardBody.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ForwardBody, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ForwardBody;
+  static deserializeBinaryFromReader(message: ForwardBody, reader: jspb.BinaryReader): ForwardBody;
+}
+
+export namespace ForwardBody {
+  export type AsObject = {
+    name: string,
+    sourcePublicKey: Uint8Array | string,
+    timestamp: number,
+    entriesList: Array<PayloadEntry.AsObject>,
+  }
+}
+
 export class PayloadEntry extends jspb.Message {
   getKind(): string;
   setKind(value: string): void;
