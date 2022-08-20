@@ -9,7 +9,9 @@
         :to="`/chat/${message.poster}`"
         class="q-pa-none q-mt-xs text-center"
       >
-        <div v-if="haveContact(message.poster)">{{ getContactProfile(message.poster)?.name }}</div>
+        <div v-if="haveContact(message.poster)">
+          {{ getContactProfile(message.poster)?.name }}
+        </div>
         <div v-else>{{ formatAddress(message.poster) }}</div>
       </q-btn>
       <q-space />
@@ -17,9 +19,9 @@
       <q-card-section class="q-pa-none q-mt-xs text-center">
         <q-btn flat icon="arrow_drop_up" padding="0" @click="addVotes(1)" />
       </q-card-section>
-      <q-card-section
-        class="q-pa-none q-mt-xs text-center"
-      >{{ formatSatoshis(message.satoshis) }} XPI</q-card-section>
+      <q-card-section class="q-pa-none q-mt-xs text-center"
+        >{{ formatSatoshis(message.satoshis) }} XPI</q-card-section
+      >
       <q-card-section class="q-pa-none q-mt-xs text-center">
         <q-btn flat icon="arrow_drop_down" padding="0" @click="addVotes(-1)" />
       </q-card-section>
@@ -30,13 +32,17 @@
     </div>
 
     <template v-for="(entry, index) in message.entries" :key="index">
-      <div :v-if="entry.kind === 'post'" class="q-ma-none q-pa-none col-grow q-ml-lg">
+      <div
+        :v-if="entry.kind === 'post'"
+        class="q-ma-none q-pa-none col-grow q-ml-lg"
+      >
         <a
           :href="entry.url"
           target="_blank"
           v-if="entry.url"
           class="post-title"
-        >{{ entry.title || 'untitled' }}</a>
+          >{{ entry.title || 'untitled' }}</a
+        >
         <span class="mdstyle" v-html="markedMessage(entry.message)" />
       </div>
     </template>

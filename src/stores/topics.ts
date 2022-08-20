@@ -104,7 +104,7 @@ export const useTopicStore = defineStore('topics', {
 
       // Update votes for any messages we already had.
       const oldMessages = transformedMessages.filter(
-        m => (m.payloadDigest in this.messageIndex),
+        m => m.payloadDigest in this.messageIndex,
       )
       for (const newOldMessage of oldMessages) {
         const oldMessage = this.messageIndex[newOldMessage.payloadDigest]
