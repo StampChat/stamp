@@ -1,72 +1,78 @@
 <template>
-  <q-card class="q-ma-sm">
-    <q-card-section>
-      <div class="text-h6">{{ $t('newContactDialog.newContact') }}</div>
-    </q-card-section>
-    <q-card-section>
-      <q-input
-        class="text-bold text-h6"
-        v-model="address"
-        filled
-        dense
-        :placeholder="$t('newContactDialog.enterBitcoinCashAddress')"
-        ref="address"
-        @keydown.enter.prevent="addContact()"
-      />
-    </q-card-section>
-    <q-slide-transition>
-      <q-card-section
-        class="q-py-none"
-        v-if="contact === null && address !== ''"
-      >
-        <q-item>
-          <q-item-section avatar>
-            <q-icon color="negative" name="error" size="xl" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{ $t('newContactDialog.notFound') }}</q-item-label>
-            <!-- TODO: Error information here -->
-          </q-item-section>
-        </q-item>
-      </q-card-section>
-      <q-card-section class="q-py-none" v-else-if="loading">
-        <q-item>
-          <q-item-section avatar>
-            <q-skeleton type="QAvatar" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>
-              <q-skeleton type="text" />
-            </q-item-label>
-            <q-item-label caption>
-              <q-skeleton type="text" />
-            </q-item-label>
-          </q-item-section>
-        </q-item>
-      </q-card-section>
-      <q-card-section v-else-if="contact" class="q-py-none">
-        <q-item>
-          <q-item-section avatar v-if="contact?.profile?.avatar">
-            <q-avatar rounded>
-              <img :src="contact?.profile?.avatar" size="xl" />
-            </q-avatar>
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{ contact?.profile?.name }}</q-item-label>
-          </q-item-section>
-        </q-item>
-      </q-card-section>
-    </q-slide-transition>
-    <q-card-actions align="right">
-      <q-btn label="Cancel" color="negative" @click="cancel" />
-      <q-btn
-        :disable="contact === null"
-        label="Add"
-        color="primary"
-        @click="addContact()"
-      />
-    </q-card-actions>
-  </q-card>
+  <q-page-container>
+    <q-page class="q-ma-none q-pa-sm">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">{{ $t('newContactDialog.newContact') }}</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            class="text-bold text-h6"
+            v-model="address"
+            filled
+            dense
+            :placeholder="$t('newContactDialog.enterBitcoinCashAddress')"
+            ref="address"
+            @keydown.enter.prevent="addContact()"
+          />
+        </q-card-section>
+        <q-slide-transition>
+          <q-card-section
+            class="q-py-none"
+            v-if="contact === null && address !== ''"
+          >
+            <q-item>
+              <q-item-section avatar>
+                <q-icon color="negative" name="error" size="xl" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{
+                  $t('newContactDialog.notFound')
+                }}</q-item-label>
+                <!-- TODO: Error information here -->
+              </q-item-section>
+            </q-item>
+          </q-card-section>
+          <q-card-section class="q-py-none" v-else-if="loading">
+            <q-item>
+              <q-item-section avatar>
+                <q-skeleton type="QAvatar" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>
+                  <q-skeleton type="text" />
+                </q-item-label>
+                <q-item-label caption>
+                  <q-skeleton type="text" />
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-card-section>
+          <q-card-section v-else-if="contact" class="q-py-none">
+            <q-item>
+              <q-item-section avatar v-if="contact?.profile?.avatar">
+                <q-avatar rounded>
+                  <img :src="contact?.profile?.avatar" size="xl" />
+                </q-avatar>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ contact?.profile?.name }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-card-section>
+        </q-slide-transition>
+        <q-card-actions align="right">
+          <q-btn label="Cancel" color="negative" @click="cancel" />
+          <q-btn
+            :disable="contact === null"
+            label="Add"
+            color="primary"
+            @click="addContact()"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-page>
+  </q-page-container>
 </template>
 
 <script lang="ts">

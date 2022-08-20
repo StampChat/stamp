@@ -1,28 +1,32 @@
 <template>
-  <q-card class="q-ma-sm">
-    <q-card-section>
-      <div class="text-h6">Profile</div>
-    </q-card-section>
-    <profile
-      v-model:name="name"
-      v-model:bio="bio"
-      v-model:avatar="avatar"
-      v-model:acceptancePrice="acceptancePrice"
-    />
-    <q-card-actions align="right">
-      <q-btn
-        :label="$t('profileDialog.cancel')"
-        color="negative"
-        @click="cancel"
-      />
-      <q-btn
-        :disable="identical"
-        :label="$t('profileDialog.update')"
-        color="primary"
-        @click="updateRelayData"
-      />
-    </q-card-actions>
-  </q-card>
+  <q-page-container>
+    <q-page class="q-ma-none q-pa-sm">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">Profile</div>
+        </q-card-section>
+        <profile
+          v-model:name="name"
+          v-model:bio="bio"
+          v-model:avatar="avatar"
+          v-model:acceptancePrice="acceptancePrice"
+        />
+        <q-card-actions align="right">
+          <q-btn
+            :label="$t('profileDialog.cancel')"
+            color="negative"
+            @click="cancel"
+          />
+          <q-btn
+            :disable="identical"
+            :label="$t('profileDialog.update')"
+            color="primary"
+            @click="updateRelayData"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-page>
+  </q-page-container>
 </template>
 
 <script lang="ts">

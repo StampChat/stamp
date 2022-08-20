@@ -1,9 +1,5 @@
 <template>
-  <q-layout
-    view="lhh LpR lff"
-    container
-    class="hide-scrollbar absolute full-width"
-  >
+  <div>
     <q-header>
       <q-toolbar class="q-pl-sm">
         <q-btn
@@ -18,7 +14,7 @@
     </q-header>
 
     <q-page-container>
-      <q-page>
+      <q-page class="q-ma-none q-pa-sm">
         <q-stepper
           v-model="step"
           ref="stepper"
@@ -66,14 +62,14 @@
                 class="q-ml-sm"
               />
             </q-stepper-navigation>
-            <q-banner inline-actions class="text-white bg-red">{{
-              $t('setup.seedWarning')
-            }}</q-banner>
+            <q-banner inline-actions class="text-white bg-red">
+              {{ $t('setup.seedWarning') }}
+            </q-banner>
           </template>
         </q-stepper>
       </q-page>
     </q-page-container>
-  </q-layout>
+  </div>
 </template>
 
 <script lang="ts">

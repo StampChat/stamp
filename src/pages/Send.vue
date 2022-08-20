@@ -1,44 +1,46 @@
 <template>
-  <q-card class="q-ma-sm">
-    <q-card-section>
-      <div class="text-h6">
-        {{ $t('sendAddressDialog.sendToAddress') }}
-      </div>
-    </q-card-section>
-    <q-card-section>
-      <q-input
-        class="text-bold text-h6"
-        v-model="address"
-        filled
-        dense
-        :placeholder="$t('sendAddressDialog.enterBitcoinCashAddress')"
-        ref="address"
-      />
-    </q-card-section>
-    <q-card-section>
-      <q-input
-        class="text-bold text-h6"
-        v-model="amount"
-        type="number"
-        filled
-        dense
-        :placeholder="$t('sendAddressDialog.enterAmount')"
-      />
-    </q-card-section>
-    <q-card-actions align="right">
-      <q-btn
-        :label="$t('sendAddressDialog.cancel')"
-        color="negative"
-        @click="cancel"
-      />
-      <q-btn
-        :disable="!isValid"
-        :label="$t('sendAddressDialog.send')"
-        color="primary"
-        @click="send()"
-      />
-    </q-card-actions>
-  </q-card>
+  <q-page-container>
+    <q-page class="q-ma-none q-pa-sm">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">{{ $t('sendAddressDialog.sendToAddress') }}</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            class="text-bold text-h6"
+            v-model="address"
+            filled
+            dense
+            :placeholder="$t('sendAddressDialog.enterBitcoinCashAddress')"
+            ref="address"
+          />
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            class="text-bold text-h6"
+            v-model="amount"
+            type="number"
+            filled
+            dense
+            :placeholder="$t('sendAddressDialog.enterAmount')"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn
+            :label="$t('sendAddressDialog.cancel')"
+            color="negative"
+            @click="cancel"
+          />
+          <q-btn
+            :disable="!isValid"
+            :label="$t('sendAddressDialog.send')"
+            color="primary"
+            @click="send()"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-page>
+  </q-page-container>
 </template>
 
 <script>

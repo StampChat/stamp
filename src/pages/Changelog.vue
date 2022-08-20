@@ -1,9 +1,5 @@
 <template>
-  <q-layout
-    view="lhh LpR lff"
-    container
-    class="hide-scrollbar absolute full-width"
-  >
+  <div>
     <q-header>
       <q-toolbar class="q-pl-sm">
         <q-btn
@@ -13,12 +9,12 @@
           @click="toggleSettingsDrawerOpen"
           icon="menu"
         />
-        <q-toolbar-title class="h6"> Changelog </q-toolbar-title>
+        <q-toolbar-title class="h6">Changelog</q-toolbar-title>
       </q-toolbar>
     </q-header>
 
     <q-page-container>
-      <q-page>
+      <q-page class="q-ma-none q-pa-sm">
         <q-scroll-area
           ref="chatScroll"
           @scroll="scrollHandler"
@@ -281,7 +277,7 @@
         </q-page-sticky>
       </q-page>
     </q-page-container>
-  </q-layout>
+  </div>
 </template>
 
 <script>
