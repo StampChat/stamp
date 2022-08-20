@@ -102,6 +102,16 @@ export const useTopicStore = defineStore('topics', {
         m => !(m.payloadDigest in this.messageIndex),
       )
 
+      // Update votes for any messages we already had.
+      const oldMessages = transformedMessages.filter(
+        m => (m.payloadDigest in this.messageIndex),
+      )
+      for (const newOldMessage of oldMessages) {
+        const oldMessage = this.messageIndex[newOldMessage.payloadDigest]
+        assert(oldMessage, 'Not possible, typescript hole')
+        oldMessage.satoshis = newOldMessage.satoshis
+      }
+
       for (const message of newMessages) {
         this.messageIndex[message.payloadDigest] = message
       }
@@ -157,8 +167,10 @@ export const useTopicStore = defineStore('topics', {
         !topicData.messages.some(
           oldMessage => message.payloadDigest === oldMessage.payloadDigest,
         )
-      )
+      ) {
         topicData.messages.push(message)
+      }
+
       this.messageIndex[message.payloadDigest] = message
       if (!message.parentDigest) {
         return
