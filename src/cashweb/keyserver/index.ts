@@ -268,7 +268,7 @@ export class KeyserverHandler {
       textEntry.setKind(entry.kind)
       if (entry.kind === 'post') {
         const payload = new ForumPost()
-        payload.setTitle(entry.title)
+        entry.title && payload.setTitle(entry.title)
         entry.url && payload.setUrl(entry.url)
         entry.message && payload.setMessage(entry.message)
         textEntry.setPayload(payload.serializeBinary())

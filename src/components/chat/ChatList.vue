@@ -3,12 +3,24 @@
     <q-scroll-area class="q-px-none col">
       <q-list>
         <q-separator />
-        <chat-list-link
-          title="Forum"
-          route="/forum"
-          icon="forum"
-          @click="setActiveChat(undefined)"
-        />
+        <q-item>
+          <q-item-section>
+            <q-item-label>Topics</q-item-label>
+          </q-item-section>
+          <q-space />
+          <q-btn
+            dense
+            flat
+            icon="add"
+            @click="
+              () => openPage(this.$router, this.$route.path, '/add-topic')
+            "
+          />
+        </q-item>
+        <q-separator />
+        <template v-for="topic in topics" :key="topic">
+          <topic-list-link :topic="topic" icon="forum" />
+        </template>
         <chat-list-link
           title="Login/Sign Up"
           route="/setup"
@@ -16,6 +28,22 @@
           v-if="!$status.setup"
         />
         <q-separator />
+        <q-item>
+          <q-item-section>
+            <q-item-label>Direct Messages</q-item-label>
+          </q-item-section>
+          <q-space />
+          <q-btn
+            dense
+            flat
+            icon="add"
+            @click="
+              () => openPage(this.$router, this.$route.path, '/add-contact')
+            "
+          />
+        </q-item>
+        <q-separator />
+
         <template v-if="$status.setup">
           <chat-list-item
             v-for="contact in getSortedChatOrder"
@@ -27,6 +55,7 @@
             @click="setActiveChat(contact.address)"
           />
         </template>
+
         <q-item v-if="getSortedChatOrder.length === 0 && $status.setup">
           <q-item-section>
             <q-item-label>{{ $t('chatList.noContactMessage') }}</q-item-label>
@@ -43,9 +72,15 @@ import { storeToRefs } from 'pinia'
 
 import ChatListItem from './ChatListItem.vue'
 import ChatListLink from './ChatListLink.vue'
+// FIXME: The current file needs to be moved around and refactored to make sense
+// with topics system.
+import TopicListLink from '../topic/TopicListLink.vue'
 import { formatBalance } from '../../utils/formatting'
 import { useChatStore } from '../../stores/chats'
 import { useWalletStore } from '../../stores/wallet'
+import { useTopicStore } from 'src/stores/topics'
+
+import { openPage } from '../../utils/routes'
 
 export default defineComponent({
   setup() {
@@ -53,11 +88,14 @@ export default defineComponent({
     const { getSortedChatOrder } = storeToRefs(chatStore)
     const walletStore = useWalletStore()
     const { balance } = storeToRefs(walletStore)
+    const { getTopics } = storeToRefs(useTopicStore())
 
     return {
       getSortedChatOrder,
       balance,
       setStoredActiveChat: chatStore.setActiveChat,
+      topics: getTopics,
+      openPage,
     }
   },
   props: {
@@ -70,6 +108,7 @@ export default defineComponent({
   components: {
     ChatListItem,
     ChatListLink,
+    TopicListLink,
   },
   data() {
     return {}

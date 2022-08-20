@@ -1,6 +1,6 @@
 export type TextPost = {
   kind: 'post'
-  title: string
+  title?: string
   url?: string
   message?: string
 }

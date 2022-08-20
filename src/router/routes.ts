@@ -4,7 +4,7 @@ export function createRoutes(): RouteRecordRaw[] {
   const routes: RouteRecordRaw[] = [
     {
       path: '/',
-      redirect: '/agora',
+      redirect: '/topic/news',
       component: () => import('layouts/MainLayout.vue'),
       children: [
         {
@@ -26,6 +26,16 @@ export function createRoutes(): RouteRecordRaw[] {
             },
           ],
         },
+        {
+          path: 'topic',
+          component: () => import('layouts/TopicLayout.vue'),
+          children: [
+            {
+              path: ':topic',
+              component: () => import('pages/Topic.vue'),
+            },
+          ],
+        },
         { path: 'agora', redirect: '/forum' },
         { path: 'changelog', component: () => import('pages/Changelog.vue') },
         {
@@ -42,6 +52,10 @@ export function createRoutes(): RouteRecordRaw[] {
         {
           path: 'add-contact',
           component: () => import('pages/AddContact.vue'),
+        },
+        {
+          path: 'add-topic',
+          component: () => import('pages/AddTopic.vue'),
         },
         { path: 'setup', component: () => import('pages/Setup.vue') },
         {
