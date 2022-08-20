@@ -23,16 +23,6 @@
       />
     </q-dialog>
     -->
-    <!-- Contact book dialog -->
-    <q-dialog v-model="contactBookOpen">
-      <contact-book-dialog
-        :contact-click="
-          function (shareAddr, contact) {
-            return shareContact({ currentAddr: address, shareAddr })
-          }
-        "
-      />
-    </q-dialog>
 
     <!-- Contact card -->
     <contact-card
@@ -91,7 +81,6 @@
 import { defineComponent } from 'vue'
 
 import ContactCard from './ContactCard.vue'
-import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import SendLotusDialog from '../dialogs/SendLotusDialog.vue'
 import { useContactStore } from 'src/stores/contacts'
 import { useChatStore } from 'src/stores/chats'
@@ -102,7 +91,6 @@ export default defineComponent({
     const contactStore = useContactStore()
 
     return {
-      shareContact: chatsStore.shareContact,
       setStampAmount: chatsStore.setStampAmount,
       setNotify: contactStore.setNotify,
       getNotify: contactStore.getNotify,
@@ -111,7 +99,6 @@ export default defineComponent({
   },
   components: {
     ContactCard,
-    ContactBookDialog,
     SendLotusDialog,
   },
   props: {
@@ -155,7 +142,6 @@ export default defineComponent({
     return {
       confirmClearOpen: false,
       confirmDeleteOpen: false,
-      contactBookOpen: false,
       sendBitcoinOpen: false,
     }
   },

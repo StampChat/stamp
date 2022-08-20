@@ -339,18 +339,6 @@ export const useChatStore = defineStore('chats', {
       this.messages = {}
       this.lastReceived = null
     },
-    openChat(address: string) {
-      const displayAddress = toDisplayAddress(address)
-
-      if (!(displayAddress in this.chats)) {
-        this.chats[displayAddress] = {
-          ...defaultContactObject,
-          messages: [],
-          address: displayAddress,
-        }
-      }
-      this.activeChatAddr = displayAddress
-    },
     sendMessageLocal({
       address,
       senderAddress,
@@ -438,7 +426,6 @@ export const useChatStore = defineStore('chats', {
     },
     deleteChat(address: string) {
       const displayAddress = toDisplayAddress(address)
-
       if (this.activeChatAddr === displayAddress) {
         this.activeChatAddr = null
       }
@@ -458,21 +445,20 @@ export const useChatStore = defineStore('chats', {
       }
       chat.stampAmount = stampAmount
     },
-    shareContact({ shareAddr }: { shareAddr: string }) {
-      this.setActiveChat(shareAddr)
-    },
-    setActiveChat(address: string) {
+    setActiveChat(address: string | null) {
+      // make sure address is defined, e.g. Forum is undefined
+      if (!address) {
+        this.activeChatAddr = null
+        return
+      }
+
       // make sure address is defined, e.g. Forum is undefined
       if (address) {
         const contacts = useContactStore()
         contacts.refresh(address)
         this.readAll(address)
       }
-      // make sure address is defined, e.g. Forum is undefined
-      if (!address) {
-        this.activeChatAddr = null
-        return
-      }
+
       const displayAddress = toDisplayAddress(address)
       if (!(displayAddress in this.chats)) {
         this.chats[displayAddress] = {
@@ -554,7 +540,7 @@ export const useChatStore = defineStore('chats', {
             contact.profile.name ?? 'Unknown',
             body,
             contact.profile.avatar ?? '',
-            async () => this.setActiveChat(copartyAddress),
+            async () => (this.activeChatAddr = copartyAddress),
           )
         }
       }

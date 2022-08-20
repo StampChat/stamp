@@ -44,7 +44,7 @@ import ChatList from '../chat/ChatList.vue'
 import SettingsPanel from '../panels/SettingsPanel.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
 import { formatBalance } from '../../utils/formatting'
-import { openPage } from '../../utils/routes'
+import { openChat, openPage } from '../../utils/routes'
 import { useWalletStore } from 'src/stores/wallet'
 import { useChatStore } from 'src/stores/chats'
 import { useAppearanceStore } from 'src/stores/appearance'
@@ -62,10 +62,8 @@ export default defineComponent({
     const contacts = useContactStore()
 
     return {
-      setActiveChat: chats.setActiveChat,
       addDefaultContact: contacts.addDefaultContact,
       darkMode: computed(() => appearance.darkMode),
-      activeCharAddr: computed(() => chats.activeChatAddr),
       getContact: contacts.getContact,
       lastReceived: chats.getLastReceived,
       totalUnread: chats.totalUnread,
@@ -116,11 +114,10 @@ export default defineComponent({
     },
     contactClicked(address: string) {
       this.contactBookOpen = false
-
-      return this.setActiveChat(address)
+      openChat(this.$router, address)
     },
     receiveECash() {
-      openPage(this.$router, this.$route.path, '/receive')
+      openPage(this.$router, '/receive')
     },
   },
   computed: {

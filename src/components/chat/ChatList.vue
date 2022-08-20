@@ -12,9 +12,7 @@
             dense
             flat
             icon="add"
-            @click="
-              () => openPage(this.$router, this.$route.path, '/add-topic')
-            "
+            @click="() => openPage(this.$router, '/add-topic')"
           />
         </q-item>
         <q-separator />
@@ -37,9 +35,7 @@
             dense
             flat
             icon="add"
-            @click="
-              () => openPage(this.$router, this.$route.path, '/add-contact')
-            "
+            @click="() => openPage(this.$router, '/add-contact')"
           />
         </q-item>
         <q-separator />
@@ -80,7 +76,7 @@ import { useChatStore } from '../../stores/chats'
 import { useWalletStore } from '../../stores/wallet'
 import { useTopicStore } from 'src/stores/topics'
 
-import { openPage } from '../../utils/routes'
+import { openChat, openPage } from '../../utils/routes'
 
 export default defineComponent({
   setup() {
@@ -93,7 +89,6 @@ export default defineComponent({
     return {
       getSortedChatOrder,
       balance,
-      setStoredActiveChat: chatStore.setActiveChat,
       topics: getTopics,
       openPage,
     }
@@ -115,7 +110,7 @@ export default defineComponent({
   },
   methods: {
     setActiveChat(address: string) {
-      this.setStoredActiveChat(address)
+      openChat(this.$router, address)
     },
     toggleMyDrawerOpen() {
       this.$emit('toggleMyDrawerOpen')

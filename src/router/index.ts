@@ -8,14 +8,22 @@ import type { RouteLocationNormalized, NavigationGuardNext } from 'vue-router'
 import { createRoutes } from './routes'
 import { useContactStore } from 'src/stores/contacts'
 import { useProfileStore } from 'src/stores/my-profile'
+import { useChatStore } from 'src/stores/chats'
 
 const unprotectedRoutes = ['/', '/setup', '/forum', '/changelog']
 const protectedRoutes = ['/forum/new-post']
 
-async function addContactFromNavigation(address: string) {
-  const contacsStore = useContactStore()
+async function ensureChatState(address?: string) {
+  const chatStore = useChatStore()
+  if (!address) {
+    chatStore.setActiveChat(null)
+    return
+  }
+
   try {
-    contacsStore.fetchAndAddContact({ address, contact: {} })
+    const contactsStore = useContactStore()
+    contactsStore.fetchAndAddContact({ address, contact: {} })
+    chatStore.setActiveChat(address)
   } catch (ex) {
     console.error('addContactFromNavigation error:', ex)
   }
@@ -28,14 +36,17 @@ export default () => {
     from: RouteLocationNormalized,
     next: NavigationGuardNext,
   ) {
-    const profileStore = useProfileStore()
     if (
       to.fullPath.startsWith('/chat') &&
       to.params.address &&
       typeof to.params.address === 'string'
     ) {
-      addContactFromNavigation(to.params.address as string)
+      ensureChatState(to.params.address as string)
+    } else {
+      ensureChatState()
     }
+
+    const profileStore = useProfileStore()
     console.log(
       'Navigating to',
       to.fullPath,

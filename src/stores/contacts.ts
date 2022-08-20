@@ -312,8 +312,6 @@ export const useContactStore = defineStore('contacts', {
           contact,
         })
       }
-      const chats = useChatStore()
-      chats.setActiveChat(displayAddress)
     },
     addDefaultContact({ address, name }: { address: string; name: string }) {
       if (this.isContact(address)) {
@@ -332,7 +330,7 @@ export const useContactStore = defineStore('contacts', {
       }
       this.addContact({ address: address, contact })
       const chats = useChatStore()
-      chats.openChat(address)
+      chats.activeChatAddr = address
     },
     async refreshContacts() {
       for (const address of Object.keys(this.contacts)) {
