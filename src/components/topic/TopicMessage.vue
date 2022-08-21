@@ -20,7 +20,7 @@
         <q-btn flat icon="arrow_drop_up" padding="0" @click="addVotes(1)" />
       </q-card-section>
       <q-card-section class="q-pa-none q-mt-xs text-center"
-        >{{ formatSatoshis(message.satoshis) }} XPI</q-card-section
+        >{{ formttedAmount }} XPI</q-card-section
       >
       <q-card-section class="q-pa-none q-mt-xs text-center">
         <q-btn flat icon="arrow_drop_down" padding="0" @click="addVotes(-1)" />
@@ -51,7 +51,7 @@
 
 <script lang="ts">
 import moment from 'moment'
-import { defineComponent } from 'vue'
+import { computed, defineComponent } from 'vue'
 import type { PropType } from 'vue'
 
 import { renderMarkdown } from '../../utils/markdown'
@@ -61,7 +61,7 @@ import { ForumMessage } from '../../cashweb/types/forum'
 import { useTopicStore } from 'src/stores/topics'
 
 export default defineComponent({
-  setup() {
+  setup(props) {
     const contactStore = useContactStore()
 
     return {
@@ -69,6 +69,9 @@ export default defineComponent({
       voteAmount: 0,
       getContactProfile: contactStore.getContactProfile,
       haveContact: contactStore.haveContact,
+      formttedAmount: computed(() => {
+        return (props.message.satoshis / 1_000_000).toFixed(0)
+      }),
     }
   },
   props: {
@@ -82,12 +85,10 @@ export default defineComponent({
         topic: '',
       }),
       type: Object as PropType<ForumMessage>,
+      required: true,
     },
   },
   methods: {
-    formatSatoshis(value: number) {
-      return (value / 1_000_000).toFixed(0)
-    },
     markedMessage(text?: string) {
       return renderMarkdown(text ?? '', this.$q.dark.isActive)
     },

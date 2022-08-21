@@ -49,6 +49,21 @@ export interface State {
   messageIndex: Record<string, MessageWithReplies | undefined>
 }
 
+export type ReducedTopicData = {
+  threshold: number
+  offering: number
+  // These will be reborn from the messageIndex
+  messages: string[]
+  topic: string
+  // Last update from Epoch in seconds
+  lastUpdate?: number
+}
+
+interface ReducedState {
+  topics: ReducedTopicData[]
+  messageIndex: Record<string, MessageWithReplies | undefined>
+}
+
 export const useTopicStore = defineStore('topics', {
   state: (): State => ({
     topics: {},
@@ -151,9 +166,16 @@ export const useTopicStore = defineStore('topics', {
       topicState.messages.push(...messagesNewToTopic)
     },
     setMessage(topic: string, newMessage: ForumMessage) {
+      console.log('Updating topic message', newMessage.payloadDigest)
+
       if (newMessage.payloadDigest in this.messageIndex) {
         const oldMessage = this.messageIndex[newMessage.payloadDigest]
         assert(oldMessage, 'Not possible, typescript hole')
+        console.log(
+          'Updating votes for message',
+          newMessage.payloadDigest,
+          newMessage.satoshis / 1_000_000,
+        )
         oldMessage.satoshis = newMessage.satoshis
       } else {
         const mesageWithReplies = { ...newMessage, replies: [] }
@@ -171,7 +193,8 @@ export const useTopicStore = defineStore('topics', {
         topicData.messages.push(message)
       }
 
-      this.messageIndex[message.payloadDigest] = message
+      console.log('Updated a specific message', newMessage.payloadDigest)
+
       if (!message.parentDigest) {
         return
       }
@@ -290,38 +313,75 @@ export const useTopicStore = defineStore('topics', {
   },
   storage: {
     save(storage, _mutation, state): void {
-      storage.put('topics', JSON.stringify(state))
+      const reduceState = (): ReducedState => {
+        const topics: ReducedTopicData[] = []
+        for (const topic of Object.values(state.topics)) {
+          topics.push({
+            ...topic,
+            messages: topic.messages.map(message => message.payloadDigest),
+          })
+        }
+        return {
+          ...state,
+          topics,
+        }
+      }
+      const reducedState = reduceState()
+      storage.put('topics', JSON.stringify(reducedState))
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async restore(storage): Promise<Partial<State>> {
-      const addDefaultTopics = (newState: Partial<State>) => {
-        if (!('messageIndex' in newState)) {
-          newState.messageIndex = {}
+      const processSerializedTopics = (
+        deserializedState: Partial<ReducedState>,
+      ): State => {
+        const hydratedState: State = {
+          messageIndex: {},
+          // Add default topics
+          topics: Object.fromEntries(
+            defaultTopics.map(topic => {
+              return [topic.topic, topic]
+            }),
+          ),
         }
-        if (!('topics' in newState)) {
-          newState.topics = {}
+
+        if (!('messageIndex' in deserializedState)) {
+          deserializedState.messageIndex = {}
         }
-        for (const topic of defaultTopics) {
-          assert(newState.topics)
-          if (topic.topic in newState.topics) {
-            continue
+        const messageIndex = deserializedState.messageIndex
+        assert(messageIndex)
+
+        if (!('topics' in deserializedState)) {
+          deserializedState.topics = []
+        }
+        assert(deserializedState.topics)
+        // This should work on the old serialized state
+        for (const topic of Object.values(deserializedState.topics)) {
+          const validMessages = topic.messages.filter(
+            payloadDigest => payloadDigest in messageIndex,
+          )
+          hydratedState.topics[topic.topic] = {
+            ...topic,
+            // We know these messages will be defined as they existed in the index
+            messages: validMessages.map(
+              payloadDigest => messageIndex[payloadDigest],
+            ) as MessageWithReplies[],
           }
-          newState.topics[topic.topic] = { ...topic }
         }
-        return newState
+
+        return hydratedState
       }
 
       try {
         const topics = await storage.get('topics')
-        const deserializedTopics = JSON.parse(topics) as Partial<State>
+        const deserializedTopics = JSON.parse(topics) as Partial<ReducedState>
         console.log('loaded topics', deserializedTopics)
-        return addDefaultTopics(deserializedTopics)
+        return processSerializedTopics(deserializedTopics)
       } catch (err) {
         console.log('Unable to load topics store', err)
       }
-      return addDefaultTopics({
+      return processSerializedTopics({
         messageIndex: {},
-        topics: {},
+        topics: [],
       })
     },
   },
