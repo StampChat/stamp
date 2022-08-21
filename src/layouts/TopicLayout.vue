@@ -1,6 +1,11 @@
 <template>
   <div>
-    <q-drawer v-model="showTopicDrawer" side="right" :breakpoint="800">
+    <q-drawer
+      v-model="showTopicDrawer"
+      side="right"
+      :breakpoint="800"
+      show-if-above
+    >
       <topic-drawer :topic="topic" />
     </q-drawer>
 
@@ -64,7 +69,7 @@ export default defineComponent({
     const topicsStore = useTopicStore()
     const routeParams = router.currentRoute.value.params
     const topic = routeParams['topic']
-    const showTopicDrawer = ref(true)
+    const showTopicDrawer = ref(false)
     const toggleTopicDrawer = () => {
       showTopicDrawer.value = !showTopicDrawer.value
     }
