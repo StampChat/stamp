@@ -332,7 +332,7 @@ export const useTopicStore = defineStore('topics', {
         deserializedState: Partial<ReducedState>,
       ): State => {
         const hydratedState: State = {
-          messageIndex: {},
+          messageIndex: deserializedState.messageIndex ?? {},
           // Add default topics
           topics: Object.fromEntries(
             defaultTopics.map(topic => {
@@ -350,6 +350,10 @@ export const useTopicStore = defineStore('topics', {
         if (!('topics' in deserializedState)) {
           deserializedState.topics = []
         }
+        if (!(deserializedState.topics instanceof Array)) {
+          deserializedState.topics = []
+        }
+        console.log('deserializing topics', deserializedState.topics)
         assert(deserializedState.topics)
         // This should work on the old serialized state
         for (const topic of Object.values(deserializedState.topics)) {
