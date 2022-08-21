@@ -86,7 +86,7 @@ export const defaultContacts = [
 export const notificationTimeout = 4000
 
 // Contact defaults
-export const defaultUpdateInterval = 60 * 10 * 1_000
+export const defaultUpdateInterval = 1000 * 60 * 60 * 1 * 1
 
 // Formatting constants
 // TODO: Generate this
