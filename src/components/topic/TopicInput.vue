@@ -1,19 +1,22 @@
 <template>
-  <q-input
-    ref="inputBox"
-    class="full-width q-pl-md"
-    dense
-    borderless
-    autogrow
-    @paste="dp($event)"
-    @drop.prevent="dp($event)"
-    @blur.capture="focusInput($event)"
-    @keydown.enter.exact.prevent
-    @keydown.enter.exact="sendMessage"
-    @mousedown.self.stop
-    v-model="innerMessage"
-    :placeholder="$t('chatInput.placeHolder')"
-  />
+  <q-toolbar class="q-px-sm">
+    <q-input
+      ref="inputBox"
+      class="full-width q-pl-md"
+      dense
+      borderless
+      autogrow
+      @paste="dp($event)"
+      @drop.prevent="dp($event)"
+      @blur.capture="focusInput($event)"
+      @keydown.enter.exact.prevent
+      @keydown.enter.exact="sendMessage"
+      @mousedown.self.stop
+      v-model="innerMessage"
+      :placeholder="$t('chatInput.placeHolder')"
+    />
+    <q-btn dense flat icon="send" @mousedown.prevent="sendMessage" />
+  </q-toolbar>
 </template>
 
 <script lang="ts">

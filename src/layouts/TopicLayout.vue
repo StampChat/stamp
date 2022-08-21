@@ -31,7 +31,7 @@
       </q-page>
     </q-page-container>
 
-    <q-footer bordered v-if="$status.setup">
+    <q-footer bordered v-show="$status.setup">
       <topic-input @send-message="sendMessage" v-model:message="message" />
     </q-footer>
   </div>
