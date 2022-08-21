@@ -311,13 +311,12 @@ export const useTopicStore = defineStore('topics', {
   storage: {
     save(storage, _mutation, state): void {
       const reduceState = (): ReducedState => {
-        const topics: ReducedTopicData[] = []
-        for (const topic of Object.values(state.topics)) {
-          topics.push({
+        const topics: ReducedTopicData[] = Object.values(state.topics).map(
+          topic => ({
             ...topic,
             messages: topic.messages.map(message => message.payloadDigest),
-          })
-        }
+          }),
+        )
         return {
           ...state,
           topics,
@@ -332,7 +331,7 @@ export const useTopicStore = defineStore('topics', {
         deserializedState: Partial<ReducedState>,
       ): State => {
         const hydratedState: State = {
-          messageIndex: {},
+          messageIndex: deserializedState.messageIndex ?? {},
           // Add default topics
           topics: Object.fromEntries(
             defaultTopics.map(topic => {
@@ -340,12 +339,7 @@ export const useTopicStore = defineStore('topics', {
             }),
           ),
         }
-
-        if (!('messageIndex' in deserializedState)) {
-          deserializedState.messageIndex = {}
-        }
-        const messageIndex = deserializedState.messageIndex
-        assert(messageIndex)
+        const messageIndex = hydratedState.messageIndex
 
         if (!('topics' in deserializedState)) {
           deserializedState.topics = []
@@ -355,7 +349,7 @@ export const useTopicStore = defineStore('topics', {
         }
         assert(deserializedState.topics)
         // This should work on the old serialized state
-        for (const topic of Object.values(deserializedState.topics)) {
+        for (const topic of deserializedState.topics) {
           const validMessages = topic.messages.filter(
             payloadDigest => payloadDigest in messageIndex,
           )
