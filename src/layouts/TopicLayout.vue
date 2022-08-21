@@ -88,10 +88,14 @@ export default defineComponent({
   },
   methods: {
     async sendMessage(message: string) {
-      console.log(message)
+      if (!message) {
+        // Don't send blank messages
+        return
+      }
+
       const entry = {
         kind: 'post' as const,
-        message: this.message,
+        message: message,
       }
 
       console.log('posting message', entry)
