@@ -350,6 +350,9 @@ export const useTopicStore = defineStore('topics', {
         if (!('topics' in deserializedState)) {
           deserializedState.topics = []
         }
+        if (!(deserializedState.topics instanceof Array)) {
+          deserializedState.topics = []
+        }
         assert(deserializedState.topics)
         // This should work on the old serialized state
         for (const topic of Object.values(deserializedState.topics)) {
