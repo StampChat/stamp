@@ -14,6 +14,8 @@ export type MessageWithReplies = ForumMessage & {
 type Topic = string
 
 const defaultOffering = 100_000_000
+// How far back should we fetch messages if we have never fetched?
+const defaultFetchDuration = Date.now() - 1000 * 60 * 60 * 24 * 7
 const defaultTopics = [
   {
     topic: 'stamp',
@@ -97,7 +99,7 @@ export const useTopicStore = defineStore('topics', {
           messages: [],
           topic,
           offering: defaultOffering,
-          lastUpdate: 0,
+          lastUpdate: defaultFetchDuration,
         }
       }
       return this.topics[topic]
@@ -225,15 +227,10 @@ export const useTopicStore = defineStore('topics', {
       })
       // FIXME: We will not be aware of new votes. This will need to be handled
       // through websocket subscriptions on the backend in the future.
-      console.log('fetching messages')
-      const from = topicData.lastUpdate
+      const from = topicData.lastUpdate ?? defaultFetchDuration
       const to = Date.now()
-      console.log(from)
-      const entries = await keyserver.getBroadcastMessages(
-        topic,
-        topicData.lastUpdate,
-        to,
-      )
+      console.log('fetching messages', topic, from, to)
+      const entries = await keyserver.getBroadcastMessages(topic, from, to)
       if (!entries) {
         return
       }
