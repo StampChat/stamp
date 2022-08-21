@@ -332,7 +332,7 @@ export const useTopicStore = defineStore('topics', {
         deserializedState: Partial<ReducedState>,
       ): State => {
         const hydratedState: State = {
-          messageIndex: {},
+          messageIndex: deserializedState.messageIndex ?? {},
           // Add default topics
           topics: Object.fromEntries(
             defaultTopics.map(topic => {
@@ -344,7 +344,7 @@ export const useTopicStore = defineStore('topics', {
         if (!('messageIndex' in deserializedState)) {
           deserializedState.messageIndex = {}
         }
-        const messageIndex = deserializedState.messageIndex
+        const messageIndex = hydratedState.messageIndex
         assert(messageIndex)
 
         if (!('topics' in deserializedState)) {
