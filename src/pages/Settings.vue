@@ -75,17 +75,22 @@ import { QInput } from 'quasar'
 
 import { useAppearanceStore } from 'src/stores/appearance'
 import { useContactStore } from 'src/stores/contacts'
+import { storeToRefs } from 'pinia'
+const msToMinutes = 60000
 
 export default defineComponent({
   setup() {
     const appearanceStore = useAppearanceStore()
     const contactStore = useContactStore()
+    const { updateInterval: storeUpdateInterval } = storeToRefs(contactStore)
+    const { darkMode: storeDarkMode } = storeToRefs(appearanceStore)
+
     return {
-      darkMode: ref(appearanceStore.darkMode),
-      setDarkMode: appearanceStore.setDarkMode,
-      setUpdateInterval: contactStore.setUpdateInterval,
-      updateInterval: contactStore.updateInterval,
+      darkMode: ref(storeDarkMode.value),
+      updateInterval: ref(storeUpdateInterval.value / msToMinutes),
       contactRefreshInterval: ref<QInput | null>(null),
+      storeDarkMode,
+      storeUpdateInterval,
     }
   },
   data() {
@@ -95,9 +100,9 @@ export default defineComponent({
   },
   methods: {
     save() {
-      this.setDarkMode(this.darkMode)
+      this.storeDarkMode = this.darkMode
       this.$q.dark.set(this.darkMode)
-      this.setUpdateInterval(this.updateInterval * 60000)
+      this.storeUpdateInterval = this.updateInterval * msToMinutes
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
     },
     cancel() {
