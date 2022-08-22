@@ -88,8 +88,8 @@ export default {
   settings: {
     appearance: 'Appearance',
     networking: 'Networking',
-    contactRefreshInterval: 'Contact Refresh Interval *',
-    contactRefreshIntervalHint: 'Interval between contact updates',
+    contactRefreshInterval: 'Contact Refresh Interval (minutes)',
+    contactRefreshIntervalHint: 'Interval between contact updates (minutes)',
     darkMode: 'Dark Mode',
     saveSettings: 'Save',
     cancelSettings: 'Cancel',
