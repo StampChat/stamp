@@ -87,6 +87,10 @@ export default defineComponent({
       type: Object as PropType<ForumMessage>,
       required: true,
     },
+    topic: {
+      required: true,
+      type: String,
+    },
   },
   methods: {
     markedMessage(text?: string) {
@@ -99,7 +103,7 @@ export default defineComponent({
     // Still need to implement a `useWallet` method.
     addVotes(votes: number) {
       const topicStore = useTopicStore()
-      const topic = this.message.topic
+      const topic = this.topic
       this.voteAmount += votes
       console.log('adding votes', this.voteAmount)
       if (this.timeoutId) {
@@ -118,7 +122,7 @@ export default defineComponent({
           payloadDigest: this.message?.payloadDigest,
           satoshis:
             this.voteAmount * (topicStore.topics[topic]?.offering ?? 1_000_000),
-          topic: this.message.topic,
+          topic,
         })
         this.voteAmount = 0
       }, 1_000)
