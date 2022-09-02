@@ -25,7 +25,7 @@
           flat
           dense
           @click="toggleTopicDrawer"
-          icon="menu"
+          icon="settings"
         />
       </q-toolbar>
     </q-header>
