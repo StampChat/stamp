@@ -6,7 +6,7 @@
   >
     <template v-if="messages?.length > 0">
       <template v-for="message in messages" :key="message.payloadDigest">
-        <topic-message :message="message" />
+        <topic-message :message="message" :topic="topic" />
       </template>
     </template>
     <template v-else>
