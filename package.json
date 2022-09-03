@@ -33,7 +33,7 @@
   "dependencies": {
     "@capacitor/core": "2.5.0",
     "@electron/remote": "^2.0.8",
-    "@quasar/extras": "^1.15.1",
+    "@quasar/extras": "^1.15.2",
     "@vue/compiler-sfc": "^3.2.23",
     "atob": "^2.1.2",
     "axios": "^0.24.0",
@@ -90,7 +90,7 @@
     "babel-loader": "^8.2.3",
     "copy-webpack-plugin": "^10.0.0",
     "devtron": "^1.4.0",
-    "electron": "^16.2.6",
+    "electron": "^20.1.1",
     "electron-builder": "^23.3.3",
     "electron-debug": "^3.2.0",
     "electron-devtools-installer": "^3.2.0",
