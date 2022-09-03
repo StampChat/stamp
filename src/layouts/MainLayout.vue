@@ -32,6 +32,11 @@ import { QBtn } from 'quasar'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 
+import {
+  Client as GoogleMapsClient,
+  AddressType,
+} from '@googlemaps/google-maps-services-js'
+
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
 import { defaultContacts, keyservers, networkName } from '../utils/constants'
@@ -81,6 +86,52 @@ export default defineComponent({
 
     const contactClicked = (newAddress: string) => {
       openChat(router, newAddress)
+    }
+    if (navigator.geolocation) {
+      console.log('navigator.geolocation', navigator.geolocation)
+      const client = new GoogleMapsClient()
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          console.log('Where you are', pos)
+          const latlng = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          }
+          client
+            .reverseGeocode({
+              params: {
+                latlng,
+                client_id: 'fdsfdsa',
+                client_secret: 'fdsfads',
+              },
+            })
+            .then(response => {
+              if (response.status !== 200) {
+                return
+              }
+              const results = response.data.results
+              if (results.length <= 0) {
+                return
+              }
+              for (const result of results) {
+                const types = new Set(result.types)
+                if (
+                  (types.has(AddressType.locality) &&
+                    types.has(AddressType.political)) ||
+                  (types.has(AddressType.political) &&
+                    types.has(AddressType.administrative_area_level_1)) ||
+                  (types.has(AddressType.political) &&
+                    types.has(AddressType.country))
+                ) {
+                  console.log(result.formatted_address)
+                }
+              }
+            })
+        },
+        err => {
+          console.error('errored', err)
+        },
+      )
     }
 
     return {
