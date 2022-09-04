@@ -32,6 +32,7 @@ import { useTopicStore } from './stores/topics'
 import { openChat } from 'src/utils/routes'
 
 import ContactBookDialog from 'src/components/dialogs/ContactBookDialog.vue'
+import { useWallet } from './utils/clients'
 
 export default defineComponent({
   components: {
@@ -156,16 +157,15 @@ export default defineComponent({
         return
       }
       this.$status.setup = true
+      const wallet = useWallet()
 
       console.log('Loading')
       // Setup everything at once. This are independent processes
       try {
-        if (this.$wallet.myAddress) {
-          this.$relayClient.setUpWebsocket(this.$wallet.myAddress)
+        if (wallet.myAddress) {
+          this.$relayClient.setUpWebsocket(wallet.myAddress)
         } else {
-          console.error(
-            'this.$wallet.myAddress not setup yet in MainLayout.vue',
-          )
+          console.error('wallet.myAddress not setup yet in MainLayout.vue')
         }
       } catch (err) {
         console.error(err)
@@ -204,33 +204,30 @@ export default defineComponent({
       refreshMessages()
 
       const handler = new KeyserverHandler({
-        wallet: this.$wallet,
+        wallet: wallet,
         keyservers: keyservers,
         networkName,
       })
-      assert(this.$wallet.myAddress, 'Address not yet defined?')
+      assert(wallet.myAddress, 'Address not yet defined?')
 
       // Update keyserver data if it doesn't exist.
-      handler.getRelayUrl(this.$wallet.myAddress?.toXAddress()).catch(() => {
-        if (!this.$wallet.identityPrivKey) {
+      handler.getRelayUrl(wallet.myAddress?.toXAddress()).catch(() => {
+        if (!wallet.identityPrivKey) {
           return
         }
-        handler.updateKeyMetadata(
-          this.$relayClient.url,
-          this.$wallet.identityPrivKey,
-        )
+        handler.updateKeyMetadata(this.$relayClient.url, wallet.identityPrivKey)
       })
 
       // Update profile if it doesn't exist.
-      this.$relayClient.getRelayData(this.$wallet.myAddress).catch(() => {
-        if (!this.$wallet.identityPrivKey) {
+      this.$relayClient.getRelayData(wallet.myAddress).catch(() => {
+        if (!wallet.identityPrivKey) {
           return
         }
         const relayData = this.getRelayData
 
         this.$relayClient
           .updateProfile(
-            this.$wallet.identityPrivKey,
+            wallet.identityPrivKey,
             relayData.profile,
             relayData.inbox.acceptancePrice,
           )
