@@ -9,15 +9,19 @@
       @click="$emit('resendClick')"
     />
   </div>
-  <div v-else-if="status === 'confirmed'">
+  <div
+    v-else-if="status === 'confirmed'"
+    @mouseover="mouseoverCheckMobile()"
+    @mouseleave="mouseOver = false"
+  >
     <q-btn
       dense
       flat
       icon="more_vert"
-      class="q-btn mobile-only"
+      class="q-btn"
       padding="xs"
       @click="menuClicked"
-      v-show="!showMenu"
+      v-show="!showMenu && !mouseOver"
     />
     <template v-for="button in buttonNames" :key="button">
       <q-btn
@@ -27,14 +31,14 @@
         padding="xs"
         class="q-btn"
         @click="buttonClicked"
-        v-show="provided?.mouseover || showMenu"
+        v-show="mouseOver || showMenu"
       />
     </template>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, inject } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { useQuasar } from 'quasar'
 
 const ButtonNames = ['reply', 'forward', 'info', 'delete'] as const
@@ -54,11 +58,16 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const showMenu = ref(false)
-    const provided = inject<{ mouseover: boolean }>('provided')
+    const mouseOver = ref(false)
+    const $q = useQuasar()
     return {
-      provided,
+      mouseOver,
       showMenu,
       buttonNames: ButtonNames,
+      mouseoverCheckMobile() {
+        // only set mouseover if not on mobile
+        mouseOver.value = !$q.platform.is.mobile
+      },
       menuClicked() {
         showMenu.value = !showMenu.value
       },
@@ -69,7 +78,6 @@ export default defineComponent({
           const clickEvent = `${buttonType}Click` as const
           emit(clickEvent)
         }
-        const $q = useQuasar()
         // Only flip boolean state if using 3-dot menu button on mobile
         if ($q.platform.is.mobile) {
           showMenu.value = !showMenu.value

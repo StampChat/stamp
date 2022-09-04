@@ -1,9 +1,5 @@
 <template>
-  <div
-    style="width: 100%"
-    @mouseover="mouseoverCheckMobile()"
-    @mouseleave="provided.mouseover = false"
-  >
+  <div style="width: 100%">
     <!-- Transaction Dialog -->
     <q-dialog v-model="transactionDialog">
       <!-- Switch to outpoints -->
@@ -105,14 +101,10 @@ export default defineComponent({
     return {
       transactionDialog: false,
       deleteDialog: false,
-      provided: {
-        mouseover: false,
-      },
     }
   },
   setup() {
     const chats = useChatStore()
-
     return {
       deleteMessage: chats.deleteMessage,
       getStampAmount: chats.getStampAmount,
@@ -147,11 +139,6 @@ export default defineComponent({
       default: () => -1,
     },
   },
-  provide() {
-    return {
-      provided: this.provided,
-    }
-  },
   methods: {
     handleReplyDivClick(args: MouseEvent) {
       this.$emit('replyDivClick', args)
@@ -176,10 +163,6 @@ export default defineComponent({
     },
     replyClicked(args: { address: string; payloadDigest: string }) {
       this.$emit('replyClicked', args)
-    },
-    mouseoverCheckMobile() {
-      // only set mouseover if not on mobile
-      this.provided.mouseover = !this.$q.platform.is.mobile
     },
   },
   computed: {
@@ -217,12 +200,10 @@ export default defineComponent({
           : ''
       if ((text && text.length >= textLen) || image) {
         base += 1
-        return String(base)
       } else if (reply) {
         base -= 1
-        return String(base)
       }
-      return undefined
+      return String(base)
     },
     shortTimestamp() {
       switch (this.message.status) {
