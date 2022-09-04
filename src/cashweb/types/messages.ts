@@ -43,6 +43,7 @@ export interface Message {
   items: Array<MessageItem>
   outpoints: Array<Utxo>
   senderAddress: string
+  payloadDigest: string
 }
 
 export interface MessageWrapper {

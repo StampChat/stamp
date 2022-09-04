@@ -16,13 +16,11 @@
                 :index="index"
                 :message="msg"
                 :address="address"
-                :name="getContact(msg.outbound).name"
+                :name="getContact(msg.outbound).name ?? 'unknown'"
                 :chat-width="chatWidth"
                 :payload-digest="msg.payloadDigest"
                 :ref="msg.payloadDigest"
-                @replyClicked="
-                  ({ address, payloadDigest }) => setReply(payloadDigest)
-                "
+                @replyClicked="({ payloadDigest }) => setReply(payloadDigest)"
                 @replyDivClick="scrollToMessage"
               />
             </template>
