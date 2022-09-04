@@ -93,7 +93,6 @@ export default defineComponent({
   components: {},
   data() {
     return {
-      contactBookOpen: false,
       sortModes: sortModes,
       durations: DURATIONS,
     }

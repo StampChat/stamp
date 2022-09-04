@@ -87,7 +87,6 @@ export default defineComponent({
       newContactOpen: false,
       //
       trueSplitterRatio: compactCutoff,
-      contactBookOpen: false as boolean,
       compact: false as boolean,
       myDrawerOpen: false as boolean,
     }
@@ -97,9 +96,6 @@ export default defineComponent({
       const height = viewportHeight - offset + 'px'
       return { height, minHeight: height }
     },
-    toggleContactBookOpen() {
-      this.contactBookOpen = !this.contactBookOpen
-    },
     toggleMyDrawerOpen() {
       if (this.compact) {
         this.compact = false
@@ -107,13 +103,7 @@ export default defineComponent({
       }
       this.myDrawerOpen = !this.myDrawerOpen
     },
-    shortcutKeyListener(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        this.toggleContactBookOpen()
-      }
-    },
     contactClicked(address: string) {
-      this.contactBookOpen = false
       openChat(this.$router, address)
     },
     receiveECash() {
