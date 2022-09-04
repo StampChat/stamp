@@ -2,11 +2,13 @@ import { defineStore } from 'pinia'
 
 export interface State {
   darkMode: boolean
+  lastDismissed: number
 }
 
 export const useAppearanceStore = defineStore('appearance', {
   state: (): State => ({
     darkMode: false,
+    lastDismissed: 0,
   }),
   actions: {
     setDarkMode(darkMode: boolean) {

@@ -21,6 +21,7 @@
       @toggleMyDrawerOpen="toggleMyDrawerOpen"
       @setupCompleted="setupConnections"
     />
+    <subscribe-dialog />
   </q-layout>
 </template>
 
@@ -34,6 +35,8 @@ import { useRouter } from 'vue-router'
 
 import LeftDrawer from '../components/panels/LeftDrawer.vue'
 import ContactBookDialog from '../components/dialogs/ContactBookDialog.vue'
+import SubscribeDialog from '../components/SubscribeDialog.vue'
+
 import { defaultContacts, keyservers, networkName } from '../utils/constants'
 import { KeyserverHandler } from '../cashweb/keyserver'
 import { errorNotify } from '../utils/notifications'
@@ -52,6 +55,7 @@ export default defineComponent({
   components: {
     LeftDrawer,
     ContactBookDialog,
+    SubscribeDialog,
   },
   setup() {
     const chatStore = useChatStore()
