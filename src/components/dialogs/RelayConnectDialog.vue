@@ -20,12 +20,23 @@
   </q-card>
 </template>
 
-<script>
-export default {
-  methods: {
-    connect() {
-      this.$relayClient.setUpWebsocket(this.$wallet.myAddress)
-    },
+<script lang="ts">
+import { useRelayClient, useWallet } from 'src/utils/clients'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  setup() {
+    const wallet = useWallet()
+    const relayClient = useRelayClient()
+
+    return {
+      connect() {
+        if (!wallet.myAddress) {
+          return
+        }
+        relayClient.setUpWebsocket(wallet.myAddress)
+      },
+    }
   },
-}
+})
 </script>

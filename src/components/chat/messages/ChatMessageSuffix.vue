@@ -48,10 +48,12 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
+
 import ChatMessageSuffixButtons from './ChatMessageSuffixButtons.vue'
 
-export default {
+export default defineComponent({
   name: 'ChatMessageSuffix',
   components: {
     ChatMessageSuffixButtons,
@@ -82,14 +84,14 @@ export default {
     'resendClick',
   ],
   computed: {
-    suffixPlacement() {
+    suffixPlacement(): string {
       return this.outbound ? 'text-right' : 'text-left'
     },
-    buttonPlacement() {
+    buttonPlacement(): string[] {
       return this.outbound
         ? ['col-grow', 'q-mr-sm', 'text-left']
         : ['col-grow', 'q-ml-sm', 'text-right']
     },
   },
-}
+})
 </script>

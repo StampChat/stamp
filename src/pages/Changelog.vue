@@ -303,49 +303,55 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, nextTick, ref } from 'vue'
+import { QScrollArea } from 'quasar'
+
 const scrollDuration = 0
 
-export default {
+export default defineComponent({
   props: {},
   components: {},
-  data() {
+  emits: ['toggleMyDrawerOpen'],
+  setup(_, { emit }) {
+    const bottom = ref(false)
+    const chatScroll = ref<QScrollArea | null>(null)
+
     return {
-      bottom: null,
+      chatScroll,
+      scrollBottom() {
+        const scrollArea = chatScroll.value
+        if (!scrollArea) {
+          // Not mounted yet
+          return
+        }
+        nextTick(() =>
+          scrollArea.setScrollPercentage('vertical', 1.0, scrollDuration),
+        )
+      },
+      scrollHandler(details: {
+        verticalSize: number
+        verticalContainerSize: number
+        verticalPosition: number
+      }) {
+        if (
+          // Ten pixels from bottom
+          details.verticalSize -
+            details.verticalPosition -
+            details.verticalContainerSize <=
+          10
+        ) {
+          bottom.value = true
+        } else {
+          bottom.value = false
+        }
+      },
+      toggleSettingsDrawerOpen() {
+        emit('toggleMyDrawerOpen')
+      },
     }
   },
-  emits: ['toggleMyDrawerOpen'],
-  methods: {
-    scrollBottom() {
-      const scrollArea = this.$refs.chatScroll
-      if (!scrollArea) {
-        // Not mounted yet
-        return
-      }
-      this.$nextTick(() =>
-        scrollArea.setScrollPercentage('vertical', 1.0, scrollDuration),
-      )
-    },
-    scrollHandler(details) {
-      if (
-        // Ten pixels from bottom
-        details.verticalSize -
-          details.verticalPosition -
-          details.verticalContainerSize <=
-        10
-      ) {
-        this.bottom = true
-      } else {
-        this.bottom = false
-      }
-    },
-    toggleSettingsDrawerOpen() {
-      this.$emit('toggleMyDrawerOpen')
-    },
-  },
-  computed: {},
-  watch: {},
-}
+})
 </script>
 
 <style lang="scss" scoped>

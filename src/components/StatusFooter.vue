@@ -4,8 +4,8 @@
       <q-space />
       <q-btn
         flat
-        :color="connected ? 'white' : 'negative'"
-        :icon="connected ? 'account_balance_wallet' : 'error'"
+        :color="$indexer.connected ? 'white' : 'negative'"
+        :icon="$indexer.connected ? 'account_balance_wallet' : 'error'"
         label="Wallet"
       />
       <q-space />
@@ -13,19 +13,12 @@
   </q-footer>
 </template>
 
-<script>
-export default {
-  model: {
-    prop: 'isBasic',
-    event: 'input',
+<script lang="ts">
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  setup() {
+    return {}
   },
-  props: {
-    isBasic: Boolean,
-  },
-  computed: {
-    connected() {
-      return this.$indexer.connected
-    },
-  },
-}
+})
 </script>
