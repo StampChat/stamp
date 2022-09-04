@@ -60,7 +60,7 @@ export default defineComponent({
           const normalizedTopicPart = topicPart
             .trim()
             .toLowerCase()
-            .replace(/\s/, '-')
+            .replace(/\s/g, '-')
           const joinedTopic = [lastTopic, normalizedTopicPart].join('.')
           return [...topics, lastTopic, joinedTopic]
         },
