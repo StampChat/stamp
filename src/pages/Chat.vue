@@ -12,17 +12,15 @@
               v-for="(msg, index) in chunkedMessages"
               :key="msg.payloadDigest"
             >
-              <chat-message
+              <chat-message-component
                 :index="index"
                 :message="msg"
                 :address="address"
-                :name="getContact(msg.outbound).name"
+                :name="getContact(msg.outbound).name ?? 'unknown'"
                 :chat-width="chatWidth"
                 :payload-digest="msg.payloadDigest"
                 :ref="msg.payloadDigest"
-                @replyClicked="
-                  ({ address, payloadDigest }) => setReply(payloadDigest)
-                "
+                @replyClicked="({ payloadDigest }) => setReply(payloadDigest)"
                 @replyDivClick="scrollToMessage"
               />
             </template>
@@ -85,7 +83,7 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue'
 
-import ChatMessage from '../components/chat/messages/ChatMessage.vue'
+import ChatMessageComponent from '../components/chat/messages/ChatMessage.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import ChatMessageReply from '../components/chat/messages/ChatMessageReply.vue'
 
@@ -96,16 +94,15 @@ import { defaultAcceptancePrice, stampLowerLimit } from '../utils/constants'
 import { debounce, QScrollArea } from 'quasar'
 
 import { RouteLocationNormalized } from 'vue-router'
-import { Message } from 'src/cashweb/types/messages'
 import { useContactStore } from 'src/stores/contacts'
 import { useProfileStore } from 'src/stores/my-profile'
-import { useChatStore } from 'src/stores/chats'
+import { ChatMessage, useChatStore } from 'src/stores/chats'
 
 const scrollDuration = 0
 
 export default defineComponent({
   components: {
-    ChatMessage,
+    ChatMessageComponent,
     ChatMessageReply,
     ChatInput,
   },
@@ -289,7 +286,7 @@ export default defineComponent({
     },
   },
   computed: {
-    messages(): Message[] {
+    messages(): ChatMessage[] {
       const activeChat = this.chats[this.address]
       return activeChat ? activeChat.messages : []
     },

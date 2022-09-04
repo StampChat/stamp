@@ -21,7 +21,7 @@ import { useContactStore } from './contacts'
 import { mapObjIndexed, pathOr } from 'ramda'
 import { STORE_SCHEMA_VERSION } from 'src/boot/pinia'
 
-type ChatMessage = {
+export type ChatMessage = {
   outbound: boolean
   status: string
   receivedTime: number
