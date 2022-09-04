@@ -18,19 +18,23 @@
   </q-item>
 </template>
 
-<script>
-export default {
-  methods: {
-    setRoute() {
-      this.$router.push(this.route).catch(() => {
-        // Don't care. Probably duplicate route
-      })
-    },
-  },
-  computed: {
-    isActive() {
-      return this.$route.path === this.route
-    },
+<script lang="ts">
+import { computed, defineComponent } from 'vue'
+import { useRouter } from 'vue-router'
+
+export default defineComponent({
+  setup(props) {
+    const router = useRouter()
+    return {
+      isActive: computed(() => {
+        return router.currentRoute.value.path === props.route
+      }),
+      setRoute() {
+        router.push(props.route).catch(() => {
+          // Don't care. Probably duplicate route
+        })
+      },
+    }
   },
   props: {
     title: {
@@ -47,7 +51,7 @@ export default {
       default: () => null,
     },
   },
-}
+})
 </script>
 <style lang="scss" scoped>
 .active-chat-list-item {

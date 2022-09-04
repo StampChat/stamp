@@ -31,18 +31,20 @@
   </q-card>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, PropType } from 'vue'
 import { toDisplayAddress } from 'src/utils/address'
+import { Utxo } from 'src/cashweb/types/utxo'
 
-export default {
+export default defineComponent({
   props: {
     title: {
       type: String,
       default: () => '',
     },
     outpoints: {
-      type: Array,
-      default: () => [],
+      type: Object as PropType<Array<Utxo>>,
+      default: () => [] as Utxo[],
     },
   },
   data() {
@@ -52,9 +54,9 @@ export default {
     }
   },
   methods: {
-    extractAddress(outpointAddress) {
+    extractAddress(outpointAddress: string) {
       return toDisplayAddress(outpointAddress)
     },
   },
-}
+})
 </script>

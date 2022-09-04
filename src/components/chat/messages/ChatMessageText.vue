@@ -2,10 +2,11 @@
   <span v-html="markedMessage" />
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { renderMarkdown, purify } from '../../../utils/markdown'
 
-export default {
+export default defineComponent({
   name: 'ChatMessageText',
   props: {
     text: {
@@ -24,5 +25,5 @@ export default {
         : renderMarkdown(this.text, this.$q.dark.isActive)
     },
   },
-}
+})
 </script>

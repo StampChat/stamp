@@ -1,20 +1,16 @@
 <template>
   <div>
-    <router-view :is-basic="isBasic" />
-    <status-footer v-model="isBasic" />
+    <router-view />
+    <status-footer />
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
+
 import StatusFooter from '../components/StatusFooter.vue'
 
-export default {
+export default defineComponent({
   components: { StatusFooter },
-  data() {
-    return {
-      leftDrawer: true,
-      isBasic: true,
-    }
-  },
-}
+})
 </script>

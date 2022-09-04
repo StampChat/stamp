@@ -14,10 +14,11 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
 import ChatMessage from './ChatMessage.vue'
 
-export default {
+export default defineComponent({
   components: {
     ChatMessage,
   },
@@ -45,14 +46,14 @@ export default {
   },
   emits: ['replyClicked'],
   methods: {
-    replyClicked(args) {
+    replyClicked(args: unknown) {
       this.$emit('replyClicked', args)
     },
   },
   mounted() {
     console.log('ChatMessageStack mounted with globalIndex ', this.globalIndex)
   },
-}
+})
 </script>
 
 <style lang="scss">

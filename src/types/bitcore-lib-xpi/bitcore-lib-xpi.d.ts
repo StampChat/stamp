@@ -365,7 +365,7 @@ declare module 'bitcore-lib-xpi' {
 
     constructor(
       data: Buffer | Uint8Array | string | unknown,
-      network?: Networks.Network,
+      network?: Networks.Network | string,
       type?: string,
     )
 

@@ -12,7 +12,7 @@
             filled
             dense
             :placeholder="$t('sendAddressDialog.enterBitcoinCashAddress')"
-            ref="address"
+            ref="addressControl"
           />
         </q-card-section>
         <q-card-section>
@@ -43,59 +43,72 @@
   </q-page-container>
 </template>
 
-<script>
-import { Address } from 'bitcore-lib-xpi'
+<script lang="ts">
+import assert from 'assert'
+
+import { computed, defineComponent, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { QInput } from 'quasar'
+
+import { Address, Networks } from 'bitcore-lib-xpi'
 
 import { sentTransactionNotify, errorNotify } from '../utils/notifications'
 import { displayNetwork, networkName } from '../utils/constants'
+import { useRelayClient } from 'src/utils/clients'
 
-export default {
-  components: {},
-  data() {
+export default defineComponent({
+  setup() {
+    const address = ref('')
+    const amount = ref<number | null>(null)
+    const addressControl = ref<QInput | null>(null)
+    onMounted(() => {
+      assert(addressControl.value, 'addressControl not created?')
+      addressControl.value.$el.focus()
+    })
+
+    const router = useRouter()
     return {
-      address: '',
-      amount: null,
+      address,
+      addressControl,
+      isValid: computed(() => {
+        if (!amount.value) {
+          return false
+        }
+        for (const networkString of [displayNetwork, networkName]) {
+          try {
+            new Address(address.value, Networks.get(networkString)) // TODO: Make this generic
+            return true
+          } catch (err) {
+            console.log(`Address not for ${networkString}`)
+          }
+        }
+        return false
+      }),
+      send: async () => {
+        const relayClient = useRelayClient()
+        try {
+          if (!amount.value) {
+            errorNotify({ message: 'No amount specified' })
+            return
+          }
+          const satoshiAmount = Number(amount.value * 1000000)
+          await relayClient.sendToPubKeyHash({
+            address: address.value,
+            amount: satoshiAmount,
+          })
+          sentTransactionNotify()
+        } catch (err) {
+          console.error(err)
+          errorNotify(new Error('Failed to send transaction'))
+          // Unfreeze UTXOs if stealth tx broadcast fails
+        } finally {
+          window.history.length > 1 ? router.go(-1) : router.push('/')
+        }
+      },
+      cancel() {
+        window.history.length > 1 ? router.go(-1) : router.push('/')
+      },
     }
   },
-  computed: {
-    isValid() {
-      if (!this.amount) {
-        return false
-      }
-      for (const networkString of [displayNetwork, networkName]) {
-        try {
-          Address(this.address, networkString) // TODO: Make this generic
-          return true
-        } catch (err) {
-          console.log(`Address not for ${networkString}`)
-        }
-      }
-      return false
-    },
-  },
-  methods: {
-    async send() {
-      try {
-        const satoshiAmount = Number(this.amount * 1000000)
-        await this.$relayClient.sendToPubKeyHash({
-          address: this.address,
-          amount: satoshiAmount,
-        })
-        sentTransactionNotify()
-      } catch (err) {
-        console.error(err)
-        errorNotify(new Error('Failed to send transaction'))
-        // Unfreeze UTXOs if stealth tx broadcast fails
-      } finally {
-        window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
-      }
-    },
-    cancel() {
-      window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
-    },
-  },
-  mounted() {
-    this.$refs.address.$el.focus()
-  },
-}
+})
 </script>

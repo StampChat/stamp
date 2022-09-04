@@ -36,7 +36,6 @@
       <q-input
         :readonly="action === 'new'"
         v-model="seed"
-        ref="seedInput"
         :label="$t('profile.seedEntry')"
         type="textarea"
         filled
@@ -65,98 +64,97 @@
   </div>
 </template>
 
-<script>
-import { generateMnemonic, validateMnemonic } from 'bip39'
+<script lang="ts">
+import { computed, defineComponent, PropType, ref } from 'vue'
 import { copyToClipboard } from 'quasar'
+
+import { generateMnemonic, validateMnemonic } from 'bip39'
 import { seedCopiedNotify } from '../../utils/notifications'
 
-export default {
+export default defineComponent({
   model: {
     accountData: Object,
   },
   props: {
     accountData: {
-      type: Object,
+      type: Object as PropType<{ name: string; seed: string }>,
       required: true,
     },
   },
   emits: ['update:account-data'],
-  data() {
-    return {
-      action: 'none',
-      rawName: this.accountData.name,
-      rawSeed: this.accountData.seed,
-    }
-  },
-  methods: {
-    generateMnemonic() {
-      this.rawSeed = generateMnemonic()
-    },
-    copySeed() {
-      copyToClipboard(this.seed)
-        .then(() => {
-          seedCopiedNotify()
-        })
-        .catch(() => {
-          // fail
-        })
-    },
-    pasteImported() {
-      const el = document.createElement('textarea')
-      document.body.appendChild(el)
-      el.focus()
-      this.seed = ''
-      document.body.removeChild(el)
-      this.$nextTick(() => this.$refs.seedInput.select())
-    },
-    newAccount() {
-      this.action = 'new'
-      this.rawName = ''
-    },
-    importAccount() {
-      this.action = 'import'
-      this.rawSeed = ''
-    },
-  },
-  computed: {
-    seed: {
-      get() {
-        return this.rawSeed
-      },
-      set(val) {
-        this.rawSeed = val
-        this.$emit('update:account-data', {
-          name: this.rawName,
-          seed: this.rawSeed.toLowerCase().trim(),
-          valid: this.isValid,
-        })
-      },
-    },
-    isValid() {
-      if (this.action === 'new') {
-        return this.rawName.length > 0 && this.isSeedValid
+  setup(props, { emit }) {
+    const action = ref('none')
+    const rawName = ref(props.accountData.name)
+    const rawSeed = ref(props.accountData.seed)
+    const isSeedValid = computed(() => {
+      return validateMnemonic(rawSeed.value.toLowerCase().trim())
+    })
+    const isValid = computed(() => {
+      if (action.value === 'new') {
+        return rawName.value.length > 0 && isSeedValid.value
       }
-      if (this.action === 'import') {
-        return this.isSeedValid
+      if (action.value === 'import') {
+        return isSeedValid
       }
       return false
-    },
-    isSeedValid() {
-      return validateMnemonic(this.rawSeed.toLowerCase().trim())
-    },
-    name: {
+    })
+    const seed = computed({
       get() {
-        return this.rawName
+        return rawSeed.value
       },
-      set(val) {
-        this.rawName = val
-        this.$emit('update:account-data', {
-          name: this.rawName,
-          seed: this.rawSeed,
-          valid: this.isValid,
+      set(val: string) {
+        rawSeed.value = val
+        emit('update:account-data', {
+          name: rawName,
+          seed: rawSeed.value.toLowerCase().trim(),
+          valid: isValid,
         })
       },
-    },
+    })
+
+    const name = computed({
+      get() {
+        return rawName.value
+      },
+      set(val: string) {
+        rawName.value = val
+        emit('update:account-data', {
+          name: rawName.value,
+          seed: rawSeed.value,
+          valid: isValid.value,
+        })
+      },
+    })
+
+    return {
+      action,
+      rawName,
+      rawSeed,
+      isSeedValid,
+      isValid,
+      seed,
+      name,
+      copySeed() {
+        copyToClipboard(seed.value)
+          .then(() => {
+            seedCopiedNotify()
+          })
+          .catch(() => {
+            // fail
+          })
+      },
+      generateMnemonic() {
+        rawSeed.value = generateMnemonic()
+      },
+      newAccount() {
+        action.value = 'new'
+        rawName.value = ''
+      },
+      importAccount() {
+        action.value = 'import'
+        rawSeed.value = ''
+      },
+    }
   },
-}
+})
 </script>

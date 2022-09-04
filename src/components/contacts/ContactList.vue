@@ -12,10 +12,12 @@
   </q-list>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
+
 import ContactItem from './ContactItem.vue'
 
-export default {
+export default defineComponent({
   components: {
     ContactItem,
   },
@@ -42,7 +44,7 @@ export default {
     document.removeEventListener('keydown', this.navigateUsingArrowKeys)
   },
   methods: {
-    navigateUsingArrowKeys(e) {
+    navigateUsingArrowKeys(e: KeyboardEvent) {
       const addresses = Object.keys(this.contacts)
       if (e.key === 'ArrowUp') {
         this.activeAddress = addresses[this.nextAddressIndex({ direction: -1 })]
@@ -55,7 +57,7 @@ export default {
         this.contactClick(this.activeAddress, this.contacts[this.activeAddress])
       }
     },
-    nextAddressIndex({ direction }) {
+    nextAddressIndex({ direction }: { direction: number }) {
       const addresses = Object.keys(this.contacts)
       // Add addresses.length so that not found (-1) is the last item
       return (
@@ -63,7 +65,7 @@ export default {
         addresses.length
       )
     },
-    navigateUsingMouse(addressToBecomeFocused) {
+    navigateUsingMouse(addressToBecomeFocused: string) {
       this.activeAddress = addressToBecomeFocused
     },
   },
@@ -72,5 +74,5 @@ export default {
       this.activeAddress = Object.keys(this.contacts)[0]
     },
   },
-}
+})
 </script>

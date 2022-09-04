@@ -38,13 +38,15 @@
   </q-card>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { copyToClipboard } from 'quasar'
+
 import { addressCopiedNotify } from '../../utils/notifications'
 import { Address, Networks } from 'bitcore-lib-xpi'
 import { displayNetwork } from 'src/utils/constants'
 
-export default {
+export default defineComponent({
   props: {
     name: {
       type: String,
@@ -80,13 +82,13 @@ export default {
   },
   computed: {
     displayAddress() {
-      const address = Address(this.address)
-      const displayAddress = Address(
+      const address = new Address(this.address)
+      const displayAddress = new Address(
         address.hashBuffer,
         Networks.get(displayNetwork),
       ).toXAddress()
       return displayAddress
     },
   },
-}
+})
 </script>

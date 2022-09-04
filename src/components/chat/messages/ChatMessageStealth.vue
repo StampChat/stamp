@@ -1,33 +1,33 @@
 <template>
   <div class="q-mb-sm">
-    <q-banner rounded :class="[this.colors.banner, 'text-center']">
+    <q-banner rounded :class="[banner, 'text-center']">
       <q-icon name="local_florist" size="sm" />
       {{ formatSats(amount) }}
     </q-banner>
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { useQuasar } from 'quasar'
+import { defineComponent } from 'vue'
+
 import { formatBalance } from '../../../utils/formatting'
 
-export default {
+export default defineComponent({
   props: {
     amount: {
       type: Number,
       required: true,
     },
   },
-  data() {
+  setup() {
+    const $q = useQuasar()
     return {
-      colors: {
-        banner: this.$q.dark.isActive ? 'bg-pink-10' : 'bg-pink-2',
+      banner: $q.dark.isActive ? 'bg-pink-10' : 'bg-pink-2',
+      formatSats(value: number) {
+        return formatBalance(value)
       },
     }
   },
-  methods: {
-    formatSats(value) {
-      return formatBalance(value)
-    },
-  },
-}
+})
 </script>

@@ -16,8 +16,10 @@
   </template>
 </template>
 
-<script>
-import ImageDialog from '../../../components/dialogs/ImageDialog'
+<script lang="ts">
+import { ref } from 'vue'
+
+import ImageDialog from '../../../components/dialogs/ImageDialog.vue'
 
 export default {
   props: {
@@ -33,15 +35,14 @@ export default {
   components: {
     ImageDialog,
   },
-  data() {
+  setup() {
+    const imageDialog = ref(false)
     return {
-      imageDialog: false,
+      showImageDialog() {
+        imageDialog.value = true
+      },
+      imageDialog,
     }
-  },
-  methods: {
-    showImageDialog() {
-      this.imageDialog = true
-    },
   },
 }
 </script>

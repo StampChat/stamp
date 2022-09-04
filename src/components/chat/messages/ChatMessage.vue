@@ -108,8 +108,6 @@ export default defineComponent({
       provided: {
         mouseover: false,
       },
-      // reactiveTimestamp: this.howLongAgo(),
-      // reactiveTimestampInterval: null
     }
   },
   setup() {
@@ -224,7 +222,7 @@ export default defineComponent({
         base -= 1
         return String(base)
       }
-      return null
+      return undefined
     },
     shortTimestamp() {
       switch (this.message.status) {
