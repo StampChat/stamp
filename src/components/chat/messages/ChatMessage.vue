@@ -140,7 +140,7 @@ export default defineComponent({
     },
   },
   methods: {
-    handleReplyDivClick(args: MouseEvent) {
+    handleReplyDivClick(args: string) {
       this.$emit('replyDivClick', args)
     },
     swipeRight() {
