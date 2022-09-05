@@ -230,12 +230,25 @@ export default defineComponent({
     },
     scrollToMessage(digest: string) {
       return debounce(() => {
+        console.log('scrollToMessage', digest)
         // if no digest, it means message was deleted or otherwise can't be found
         if (!digest) {
           return
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const message = (this.$refs as any)[digest]?.$el
+        const message = (this.$refs[digest] as typeof ChatMessageComponent[])
+          .slice()
+          .shift()
+
+        if (
+          !message &&
+          !this.messages.some(message => message.payloadDigest === digest)
+        ) {
+          console.log('Reply was not found in messages')
+          this.scrollDigest = null
+          return
+        }
+
         // if no message, load more, then try again
         if (!message) {
           this.scrollDigest = digest
@@ -244,7 +257,7 @@ export default defineComponent({
         }
         // Scroll the message into view
         this.scrollDigest = null
-        this.$nextTick(() => message.scrollIntoView({ behavior: 'smooth' }))
+        this.$nextTick(() => message.$el.scrollIntoView({ behavior: 'smooth' }))
       }, 50)()
     },
     nameColor() {
