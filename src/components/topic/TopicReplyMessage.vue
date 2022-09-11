@@ -1,7 +1,6 @@
 <template>
   <div>
-    <q-separator />
-    <div class="row q-ml-sm q-mr-sm q-mb-sm">
+    <div class="row q-ma-none q-pa-none">
       <q-btn
         no-caps
         flat
@@ -15,22 +14,20 @@
         <div v-else>{{ formatAddress(message.poster) }}</div>
       </q-btn>
       <q-space />
-      <span class="q-pa-none q-mt-xs text-center">{{ message.topic }}</span>
-      <q-card-section class="q-pa-none q-mt-xs text-center">
-        <q-btn flat icon="arrow_drop_up" padding="0" @click="addVotes(1)" />
-      </q-card-section>
-      <q-card-section class="q-pa-none q-mt-xs text-center"
-        >{{ formttedAmount }} XPI</q-card-section
-      >
-      <q-card-section class="q-pa-none q-mt-xs text-center">
-        <q-btn flat icon="arrow_drop_down" padding="0" @click="addVotes(-1)" />
-      </q-card-section>
-      <span class="q-pa-none q-mt-xs text-center">
-        {{ timestamp }}
-        <q-tooltip>{{ fullTimestamp }}</q-tooltip>
-      </span>
+      <div class="row justify-end">
+        <div class="col-auto">
+          <q-btn
+            no-caps
+            flat
+            padding="0"
+            color="accent"
+            icon="close"
+            class="q-pa-none q-mt-xs text-center"
+            @click="$emit('close-reply')"
+          />
+        </div>
+      </div>
     </div>
-
     <template v-for="(entry, index) in message.entries" :key="index">
       <div
         :v-if="entry.kind === 'post'"
@@ -61,8 +58,10 @@ import { ForumMessage } from '../../cashweb/types/forum'
 import { useTopicStore } from 'src/stores/topics'
 
 export default defineComponent({
+  emits: ['close-reply'],
   setup(props) {
     const contactStore = useContactStore()
+
     return {
       timeoutId: null as ReturnType<typeof setTimeout> | null,
       voteAmount: 0,
@@ -82,10 +81,9 @@ export default defineComponent({
         entries: [],
         payloadDigest: undefined,
         topic: '',
-        parentDigest: undefined,
       }),
       type: Object as PropType<ForumMessage>,
-      required: false,
+      required: true,
     },
     topic: {
       required: true,

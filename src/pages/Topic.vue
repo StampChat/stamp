@@ -6,7 +6,18 @@
   >
     <template v-if="messages?.length > 0">
       <template v-for="message in messages" :key="message.payloadDigest">
-        <topic-message :message="message" :topic="topic" />
+        <topic-message
+          :message="message"
+          :topic="topic"
+          @click="$emit('set-reply', message)"
+        />
+        <div class="q-pa-md" v-if="!!getParentMessage(message.parentDigest)">
+          In reply to:
+          <topic-message
+            :message="getParentMessage(message.parentDigest) ?? undefined"
+            :topic="topic"
+          />
+        </div>
       </template>
     </template>
     <template v-else>
@@ -42,6 +53,7 @@ export default defineComponent({
   components: {
     TopicMessage,
   },
+  emits: ['set-reply'],
   setup() {
     const topicStore = useTopicStore()
     const router = useRouter()
@@ -82,7 +94,15 @@ export default defineComponent({
       })
     })
 
+    const getParentMessage = (parentDigest: string | undefined) => {
+      if (!parentDigest) {
+        return
+      }
+      return topicStore.getMessage(parentDigest)
+    }
+
     return {
+      getParentMessage,
       refreshMessages: topicStore.refreshMessages,
       messages,
       topic: ref(topic),
