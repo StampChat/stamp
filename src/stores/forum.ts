@@ -11,6 +11,7 @@ import { SortMode } from 'src/utils/sorting'
 
 export type MessageWithReplies = ForumMessage & {
   replies: MessageWithReplies[]
+  timestamp: Date | string
 }
 
 export interface State {
