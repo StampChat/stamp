@@ -39,22 +39,17 @@
               target="_blank"
               v-if="entry.url"
               class="text-h6 text-bold q-mr-md post-title"
-              >{{ entry.title || 'Untitled' }}</a
+              >{{ entry.title || 'untitled' }}</a
             >
             <span v-if="!entry.url" class="text-h6 text-bold q-mr-md">
-              {{ entry.title || 'Untitled' }}
+              {{ entry.title || 'untitled' }}
             </span>
-            <div class="q-mt-xs">
-              <q-btn
-                rounded
-                no-caps
-                unelevated
-                color="primary"
-                size="sm"
-                @click.prevent="$emit('set-topic', message.topic)"
-                :label="message.topic"
-              />
-            </div>
+            <q-space />
+            <a
+              class="q-pr-sm post-title"
+              @click.prevent="$emit('set-topic', message.topic)"
+              >{{ message.topic }}</a
+            >
           </q-card-section>
           <q-card-section
             class="q-ma-none q-px-sm q-pt-none q-pb-sm col-grow"
@@ -121,8 +116,7 @@ import { renderMarkdown } from '../../utils/markdown'
 
 import AMessageReplies from './ForumMessageReplies.vue'
 
-import { ForumMessage } from '../../cashweb/types/forum'
-import { useForumStore } from 'src/stores/forum'
+import { MessageWithReplies, useForumStore } from 'src/stores/forum'
 import { useContactStore } from 'src/stores/contacts'
 
 export default defineComponent({
@@ -151,7 +145,7 @@ export default defineComponent({
         payloadDigest: undefined,
         topic: '',
       }),
-      type: Object as PropType<ForumMessage>,
+      type: Object as PropType<MessageWithReplies>,
     },
     showParent: {
       default: false,
@@ -243,7 +237,7 @@ export default defineComponent({
       return this.getMessage(this.parentDigest)
     },
     messages() {
-      return this.storeMessages.filter((message: ForumMessage) =>
+      return this.storeMessages.filter((message: MessageWithReplies) =>
         message.entries.some(entry => entry.kind === 'post'),
       )
     },

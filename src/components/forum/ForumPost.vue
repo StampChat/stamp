@@ -45,6 +45,12 @@
               >{{ message.topic }}</a
             >
           </q-card-section>
+          <q-card-section
+            class="q-ma-none q-px-sm q-pt-none q-pb-sm col-grow"
+            v-if="renderBody"
+          >
+            <span class="mdstyle" v-html="markedMessage(entry.message)" />
+          </q-card-section>
         </template>
         <q-card-actions class="q-ma-none q-pa-none">
           <span>{{ formatSatoshis(message.satoshis) }} xpi by</span>
@@ -101,8 +107,7 @@ import { renderMarkdown } from '../../utils/markdown'
 
 import AMessageReplies from './ForumMessageReplies.vue'
 
-import { ForumMessage } from '../../cashweb/types/forum'
-import { useForumStore } from 'src/stores/forum'
+import { MessageWithReplies, useForumStore } from 'src/stores/forum'
 import { useContactStore } from 'src/stores/contacts'
 
 export default defineComponent({
@@ -131,7 +136,7 @@ export default defineComponent({
         payloadDigest: undefined,
         topic: '',
       }),
-      type: Object as PropType<ForumMessage>,
+      type: Object as PropType<MessageWithReplies>,
     },
     showParent: {
       default: false,
@@ -223,7 +228,7 @@ export default defineComponent({
       return this.getMessage(this.parentDigest)
     },
     messages() {
-      return this.storeMessages.filter((message: ForumMessage) =>
+      return this.storeMessages.filter((message: MessageWithReplies) =>
         message.entries.some(entry => entry.kind === 'post'),
       )
     },

@@ -1,4 +1,4 @@
-import { ForumMessage } from 'src/cashweb/types/forum'
+import { MessageWithReplies } from 'src/stores/forum'
 
 export const sortModes = <const>['hot', 'top', 'new']
 export type SortMode = typeof sortModes[number]
@@ -10,28 +10,31 @@ export function halfLife(satoshis: number, timestamp: Date, now: Date) {
   return halvedAmount
 }
 
-export function halfLifeSort(posts: ForumMessage[]) {
+export function halfLifeSort(posts: MessageWithReplies[]) {
   const now = new Date()
   return posts
     .slice()
     .sort(
       (a, b) =>
-        halfLife(b.satoshis, b.timestamp, now) -
-        halfLife(a.satoshis, a.timestamp, now),
+        halfLife(b.satoshis, new Date(b.timestamp), now) -
+        halfLife(a.satoshis, new Date(a.timestamp), now),
     )
 }
 
-export function timeSort(posts: ForumMessage[]) {
-  return posts
-    .slice()
-    .sort((a, b) => b.timestamp.valueOf() - a.timestamp.valueOf())
+export function timeSort(posts: MessageWithReplies[]) {
+  return posts.slice().sort((a, b) => {
+    return new Date(b.timestamp).valueOf() - new Date(a.timestamp).valueOf()
+  })
 }
 
-export function voteSort(posts: ForumMessage[]) {
+export function voteSort(posts: MessageWithReplies[]) {
   return posts.slice().sort((a, b) => b.satoshis - a.satoshis)
 }
 
-export function sortPostsByMode(posts: ForumMessage[], sortMode: SortMode) {
+export function sortPostsByMode(
+  posts: MessageWithReplies[],
+  sortMode: SortMode,
+) {
   switch (sortMode) {
     case 'hot':
       return halfLifeSort(posts)
