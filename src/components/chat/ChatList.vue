@@ -2,6 +2,12 @@
   <div class="full-width column col">
     <q-scroll-area class="q-px-none col">
       <q-list>
+        <chat-list-link
+          title="Login/Sign Up"
+          route="/setup"
+          icon="login"
+          v-if="!$status.setup"
+        />
         <q-separator />
         <q-item>
           <q-item-section>
@@ -19,12 +25,6 @@
         <template v-for="topic in topics" :key="topic">
           <topic-list-link :topic="topic" icon="forum" />
         </template>
-        <chat-list-link
-          title="Login/Sign Up"
-          route="/setup"
-          icon="login"
-          v-if="!$status.setup"
-        />
         <q-separator />
         <q-item>
           <q-item-section>
