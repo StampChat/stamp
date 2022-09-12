@@ -32,7 +32,7 @@
 
     <q-page-container>
       <q-page>
-        <router-view @set-reply="setReplyMessage" />
+        <router-view @set-selected-message="setReplyMessage" />
       </q-page>
     </q-page-container>
 
@@ -90,7 +90,7 @@ export default defineComponent({
 
     const replyMessage = ref<MessageWithReplies | null>(null)
     const setReplyMessage = (newReply: MessageWithReplies | null) => {
-      console.log('reply', newReply)
+      console.log('setting reply', newReply)
       replyMessage.value = newReply
     }
 

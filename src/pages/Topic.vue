@@ -6,17 +6,24 @@
   >
     <template v-if="messages?.length > 0">
       <template v-for="message in messages" :key="message.payloadDigest">
-        <topic-message
-          :message="message"
-          :topic="topic"
-          @click="$emit('set-reply', message)"
-        />
-        <div class="q-pa-md" v-if="!!getParentMessage(message.parentDigest)">
-          In reply to:
-          <topic-message
-            :message="getParentMessage(message.parentDigest) ?? undefined"
-            :topic="topic"
-          />
+        <div
+          :class="{
+            active: selectedMessage?.payloadDigest === message.payloadDigest,
+          }"
+        >
+          <topic-message :message="message" :topic="topic" />
+          <q-btn @click="setSelectedMessage(message)" icon="reply" />
+          <div
+            class="q-pa-md"
+            v-if="selectedMessage?.payloadDigest === message.payloadDigest"
+          >
+            <template
+              v-for="reply in message.replies"
+              :key="reply.payloadDigest"
+            >
+              <topic-message :message="reply" :topic="topic" />
+            </template>
+          </div>
         </div>
       </template>
     </template>
@@ -42,7 +49,7 @@ import { RouteLocationNormalized, useRouter } from 'vue-router'
 import assert from 'assert'
 import { QScrollArea } from 'quasar'
 
-import { useTopicStore } from 'src/stores/topics'
+import { useTopicStore, MessageWithReplies } from 'src/stores/topics'
 
 import TopicMessage from 'src/components/topic/TopicMessage.vue'
 
@@ -53,8 +60,8 @@ export default defineComponent({
   components: {
     TopicMessage,
   },
-  emits: ['set-reply'],
-  setup() {
+  emits: ['set-selected-message'],
+  setup(props, { emit }) {
     const topicStore = useTopicStore()
     const router = useRouter()
     const routeParams = router.currentRoute.value.params
@@ -101,7 +108,10 @@ export default defineComponent({
       return topicStore.getMessage(parentDigest)
     }
 
+    const selectedMessage = ref<MessageWithReplies | null>(null)
+
     return {
+      selectedMessage,
       getParentMessage,
       refreshMessages: topicStore.refreshMessages,
       messages,
@@ -161,6 +171,11 @@ export default defineComponent({
             details.verticalPosition -
             details.verticalContainerSize <=
           10
+      },
+      setSelectedMessage(message: MessageWithReplies) {
+        selectedMessage.value = message
+        console.log(selectedMessage.value)
+        emit('set-selected-message', message)
       },
     }
   },
