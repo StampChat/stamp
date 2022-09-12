@@ -7,17 +7,32 @@
 
     <q-tabs v-model="tab" v-if="$status.setup">
       <q-tab v-if="$status.setup" name="settings" icon="settings" />
-      <q-tab name="contacts" icon="contacts" />
+      <q-tab name="contacts" icon="contacts">
+        <q-badge
+          floating
+          color="secondary"
+          :label="totalUnread"
+          class="q-my-xs"
+          v-if="totalUnread !== 0"
+        />
+      </q-tab>
+
+      <q-tab name="topics" icon="forum" />
     </q-tabs>
 
     <settings-panel v-if="$status.setup" v-show="tab == 'settings'" />
+    <div v-if="!$status.setup">
+      <q-separator />
+      <chat-list-link title="Login/Sign Up" route="/setup" icon="login" />
+    </div>
 
     <chat-list v-show="tab == 'contacts'" v-bind="$attrs" :compact="false" />
+    <topic-list v-show="tab == 'topics'" v-bind="$attrs" :compact="false" />
 
     <q-list v-if="$status.setup">
       <q-separator />
       <q-item clickable>
-        <q-item-section @click="receiveECash">
+        <q-item-section @click="receiveLotus">
           <q-item-label>{{ $t('chatList.balance') }}</q-item-label>
           <q-item-label caption>{{ formattedBalance }}</q-item-label>
         </q-item-section>
@@ -39,17 +54,18 @@
 
 <script lang="ts">
 import { defineComponent, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 
 import ChatList from '../chat/ChatList.vue'
+import ChatListLink from '../chat/ChatListLink.vue'
+import TopicList from '../topic/TopicList.vue'
 import SettingsPanel from '../panels/SettingsPanel.vue'
 import RelayConnectDialog from '../dialogs/RelayConnectDialog.vue'
+
 import { formatBalance } from '../../utils/formatting'
 import { openChat, openPage } from '../../utils/routes'
 import { useWalletStore } from 'src/stores/wallet'
 import { useChatStore } from 'src/stores/chats'
-import { useAppearanceStore } from 'src/stores/appearance'
-import { useProfileStore } from 'src/stores/my-profile'
-import { useContactStore } from 'src/stores/contacts'
 
 const compactCutoff = 325
 
@@ -57,30 +73,23 @@ export default defineComponent({
   setup() {
     const chats = useChatStore()
     const wallet = useWalletStore()
-    const appearance = useAppearanceStore()
-    const myProfile = useProfileStore()
-    const contacts = useContactStore()
+    const { totalUnread } = storeToRefs(chats)
 
     return {
-      addDefaultContact: contacts.addDefaultContact,
-      darkMode: computed(() => appearance.darkMode),
-      getContact: contacts.getContact,
-      lastReceived: chats.getLastReceived,
-      totalUnread: chats.totalUnread,
-      getRelayData: myProfile,
-      getSortedChatOrder: chats.getSortedChatOrder,
-      getNumUnread: chats.getNumUnread,
+      totalUnread: totalUnread,
       formattedBalance: computed(() => formatBalance(wallet.balance)),
     }
   },
   components: {
+    ChatListLink,
     ChatList,
+    TopicList,
     SettingsPanel,
     RelayConnectDialog,
   },
   data() {
     return {
-      tab: 'contacts',
+      tab: 'topics',
       // My Drawer
       walletOpen: false,
       relayConnectOpen: false,
@@ -106,7 +115,7 @@ export default defineComponent({
     contactClicked(address: string) {
       openChat(this.$router, address)
     },
-    receiveECash() {
+    receiveLotus() {
       openPage(this.$router, '/receive')
     },
   },
