@@ -1,12 +1,6 @@
 <template>
   <!-- TODO: We need a better way to handle multiple pages and types of chats. -->
   <q-item :active="isActive" active-class="active-chat-list-item">
-    <q-item-section avatar clickable @click="setRoute()">
-      <q-avatar rounded>
-        <img src="~assets/stamp-icon.png" v-if="!icon" />
-        <q-icon :name="icon" v-if="icon" />
-      </q-avatar>
-    </q-item-section>
     <q-item-section clickable @click="setRoute()">
       <q-item-label>{{ topic }}</q-item-label>
     </q-item-section>
