@@ -35,6 +35,12 @@ const defaultTopics = [
     offering: defaultOffering,
     messages: [],
   },
+  {
+    topic: 'memes',
+    threshold: 0,
+    offering: defaultOffering,
+    messages: [],
+  },
 ]
 
 export type TopicData = {
