@@ -163,10 +163,10 @@ export default defineComponent({
     },
     innerStampAmount: {
       get() {
-        return Number(this.stampAmount / 1000000).toFixed(2)
+        return this.stampAmount
       },
       set(val: string) {
-        this.$emit('update:stampAmount', Number(val) * 1000000)
+        this.$emit('update:stampAmount', Number(val))
       },
     },
   },

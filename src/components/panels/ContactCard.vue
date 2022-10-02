@@ -60,10 +60,6 @@ export default defineComponent({
       type: String,
       default: () => '',
     },
-    acceptancePrice: {
-      type: Number,
-      default: () => 5000,
-    },
     avatar: {
       type: String,
       default: () => '',

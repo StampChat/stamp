@@ -68,8 +68,8 @@ export const defaultAvatars = [
 ]
 
 // Chat constants
-export const defaultStampAmount = 500000
-export const stampLowerLimit = 5000
+export const defaultStampAmount = 10
+export const stampLowerLimit = 10
 
 export const defaultContacts = [
   {

@@ -443,7 +443,7 @@ export const useChatStore = defineStore('chats', {
         console.error('attempting to set stamp amount for non-existant contact')
         return
       }
-      chat.stampAmount = stampAmount
+      chat.stampAmount = Math.trunc(stampAmount)
     },
     setActiveChat(address: string | null) {
       // make sure address is defined, e.g. Forum is undefined
