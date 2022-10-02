@@ -70,6 +70,7 @@ export default defineComponent({
     return {
       address,
       addressControl,
+      amount,
       isValid: computed(() => {
         if (!amount.value) {
           return false
