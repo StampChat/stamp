@@ -10,16 +10,24 @@
         <q-tab v-for="n in outpoints.length" :key="n" :name="n" :label="n" />
       </q-tabs>
       <q-tab-panels v-model="tab" animated>
-        <q-tab-panel v-for="n in outpoints.length" :key="n" :name="n">
+        <q-tab-panel
+          v-for="(outpoint, idx) in outpoints"
+          :key="outpoint.txId"
+          :name="idx + 1"
+        >
           <q-item-section class="q-py-lg">
             <span class="text-bold"> Transaction ID </span>
-            <q-item-label>{{ outpoints[n - 1].txId }}</q-item-label>
+            <q-item-label>
+              <a :href="`https://explorer.givelotus.org/tx/${outpoint.txId}`">{{
+                outpoint.txId
+              }}</a>
+            </q-item-label>
             <span class="text-bold"> Type </span>
-            <q-item-label>{{ outpoints[n - 1].type }}</q-item-label>
+            <q-item-label>{{ outpoint.type }}</q-item-label>
             <span class="text-bold"> Address </span>
-            {{ extractAddress(outpoints[n - 1].address) }}
+            {{ extractAddress(outpoint.address) }}
             <span class="text-bold"> Amount </span>
-            {{ outpoints[n - 1].satoshis }}
+            {{ outpoint.satoshis }}
           </q-item-section>
         </q-tab-panel>
       </q-tab-panels>
@@ -46,17 +54,22 @@ export default defineComponent({
       type: Object as PropType<Array<Utxo>>,
       default: () => [] as Utxo[],
     },
+    txid: {
+      type: String,
+      required: true,
+    },
   },
   data() {
     return {
-      outpoint: 1,
       tab: 1,
     }
   },
-  methods: {
-    extractAddress(outpointAddress: string) {
-      return toDisplayAddress(outpointAddress)
-    },
+  setup() {
+    return {
+      extractAddress(outpointAddress: string) {
+        return toDisplayAddress(outpointAddress)
+      },
+    }
   },
 })
 </script>
