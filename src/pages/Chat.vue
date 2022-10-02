@@ -321,11 +321,11 @@ export default defineComponent({
         const stampAmountNumber = Math.max(stampLowerLimit, Number(stampAmount))
         this.setStampAmount({
           address: this.address,
-          stampAmount: stampAmountNumber,
+          stampAmount: stampAmountNumber * 1_000_000,
         })
       },
       get() {
-        return Number(this.getStampAmount(this.address))
+        return Number(this.getStampAmount(this.address) / 1_000_000)
       },
     },
   },
