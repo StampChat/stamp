@@ -527,72 +527,83 @@ export class RelayClient extends ReadOnlyRelayClient {
       // Ensure all outpoints are on-chain before trying to send message. Don't
       // want to burn other transactions if our state is out of sync with the
       // blockchain.
-      wallet
-        .checkAndFixUtxos(stagedUtxos)
-        .then(checks => checks.every(c => c))
-        .then(o => {
-          if (!o) {
-            throw new Error(
-              'Invalid UTXOs found while trying to broadcast message',
-            )
-          }
-        })
-        .then(() =>
-          chronikClient.broadcastTxs(
-            transactions.map(tx => {
-              console.log('Broadcasting a transaction', tx.txid, tx.toString())
-              return tx.toString()
-            }),
-          ),
-        )
-        .then(() => this.pushMessages(destinationAddress, messageSet))
-        .then(async () => {
-          this.events.emit('messageSent', {
-            address,
-            senderAddress,
-            index: payloadDigestHex,
-            items,
-            outpoints,
-            transactions,
-          })
-          // TODO: we shouldn't be dealing with this here. Leaky abstraction
-          await Promise.all(
-            stagedUtxos.map(utxo => wallet.deleteUtxo(calcUtxoId(utxo))),
-          )
-        })
-        .catch(async err => {
-          console.error(err)
-          if (err.response) {
-            console.error(err.response)
-          }
-          stagedUtxos.forEach(utxo => {
-            wallet.unfreezeUtxo(calcUtxoId(utxo))
-          })
-          if (errCount >= 3) {
-            this.events.emit('messageSendError', {
-              address,
-              senderAddress,
-              index: payloadDigestHex,
-              items,
-              outpoints,
-              transactions,
+      return new Promise(
+        (resolve: (txIds: string[]) => void, reject: (err: unknown) => void) =>
+          wallet
+            .checkAndFixUtxos(stagedUtxos)
+            .then(checks => checks.every(c => c))
+            .then(o => {
+              if (!o) {
+                throw new Error(
+                  'Invalid UTXOs found while trying to broadcast message',
+                )
+              }
             })
-            console.log(`unable to send message after ${errCount} retries`)
-            return
-          }
-          console.log('error sending message', err)
+            .then(() =>
+              chronikClient.broadcastTxs(
+                transactions.map(tx => {
+                  console.log(
+                    'Broadcasting a transaction',
+                    tx.txid,
+                    tx.toString(),
+                  )
+                  return tx.toString()
+                }),
+              ),
+            )
+            .then(async result => {
+              await this.pushMessages(destinationAddress, messageSet)
+              resolve(result.txids)
+            })
+            .then(async () => {
+              this.events.emit('messageSent', {
+                address,
+                senderAddress,
+                index: payloadDigestHex,
+                items,
+                outpoints,
+                transactions,
+              })
+              // TODO: we shouldn't be dealing with this here. Leaky abstraction
+              await Promise.all(
+                stagedUtxos.map(utxo => wallet.deleteUtxo(calcUtxoId(utxo))),
+              )
+            })
+            .catch(async err => {
+              console.error(err)
+              if (err.response) {
+                console.error(err.response)
+              }
+              stagedUtxos.forEach(utxo => {
+                wallet.unfreezeUtxo(calcUtxoId(utxo))
+              })
+              if (errCount >= 3) {
+                this.events.emit('messageSendError', {
+                  address,
+                  senderAddress,
+                  index: payloadDigestHex,
+                  items,
+                  outpoints,
+                  transactions,
+                })
+                console.log(`unable to send message after ${errCount} retries`)
+                return
+              }
+              console.log('error sending message', err)
 
-          // TODO: Currently, we can lose stealth transaction data if the stamp inputs fail.
-          // Also, retries messages are not deleted from the message output window.
-          // Both of these issues need to be fixed.
-          await this.sendMessageImpl({
-            address,
-            items,
-            stampAmount,
-            errCount: errCount + 1,
-            previousHash: payloadDigestHex,
-          })
-        })
+              // TODO: Currently, we can lose stealth transaction data if the stamp inputs fail.
+              // Also, retries messages are not deleted from the message output window.
+              // Both of these issues need to be fixed.
+              await this.sendMessageImpl({
+                address,
+                items,
+                stampAmount,
+                errCount: errCount + 1,
+                previousHash: payloadDigestHex,
+              })
+              reject(err)
+            }),
+      )
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err)
@@ -719,7 +730,11 @@ export class RelayClient extends ReadOnlyRelayClient {
     console.log(items)
     const myAddressStr = this.wallet?.myAddress?.toXAddress()
     assert(myAddressStr, 'Unable to get myAddressString in sendToPubKeyHash')
-    await this.sendMessageImpl({ address: myAddressStr, items, stampAmount: 0 })
+    return this.sendMessageImpl({
+      address: myAddressStr,
+      items,
+      stampAmount: 0,
+    })
   }
 
   receiveSelfSend({ payload }: { payload: Payload }) {

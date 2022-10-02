@@ -93,15 +93,29 @@ export default defineComponent({
             return
           }
           const satoshiAmount = Number(amount.value * 1000000)
-          await relayClient.sendToPubKeyHash({
-            address: address.value,
-            amount: satoshiAmount,
-          })
-          sentTransactionNotify()
+          relayClient
+            .sendToPubKeyHash({
+              address: address.value,
+              amount: satoshiAmount,
+            })
+            .then(txIds => {
+              const txId = txIds ? txIds[0] : undefined
+              if (txId) {
+                sentTransactionNotify(txId)
+
+                return
+              }
+              sentTransactionNotify()
+            })
+            .catch(err => {
+              console.error(err)
+              errorNotify(new Error('Failed to send transaction'))
+              // Unfreeze UTXOs if stealth tx broadcast fails
+              window.history.length > 1 ? router.go(-1) : router.push('/')
+            })
         } catch (err) {
           console.error(err)
           errorNotify(new Error('Failed to send transaction'))
-          // Unfreeze UTXOs if stealth tx broadcast fails
         } finally {
           window.history.length > 1 ? router.go(-1) : router.push('/')
         }

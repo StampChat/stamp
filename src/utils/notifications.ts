@@ -40,20 +40,23 @@ export function seedCopiedNotify() {
   infoNotify('Your secret name has been saved to your clipboard.')
 }
 
-export function sentTransactionNotify() {
+export function sentTransactionNotify(txId?: string) {
+  const action = {
+    label: 'View',
+    color: 'secondary',
+    handler: () => {
+      if (txId) {
+        window.url.open(`https://explorer.givelotus.org/tx/${txId}`)
+      }
+    },
+  }
+  const actions = txId ? [action] : []
+
   Notify.create({
     message: '<div class="text-center"> Sent transaction </div>',
     html: true,
     color: 'accent',
-    actions: [
-      {
-        label: 'View',
-        color: 'secondary',
-        handler: () => {
-          /* ... */
-        },
-      },
-    ],
+    actions,
   })
 }
 export function desktopNotify(
