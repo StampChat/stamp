@@ -68,8 +68,8 @@ export const defaultAvatars = [
 ]
 
 // Chat constants
-export const defaultStampAmount = 10
-export const stampLowerLimit = 10
+export const defaultStampAmount = 1_000_000 // Sats
+export const stampLowerLimit = 1 // XPI
 
 export const defaultContacts = [
   {
