@@ -802,9 +802,9 @@ export class Wallet {
     const signingKeys = []
 
     const amountRequired = transaction.outputAmount
-    const sortedUtxos: BuildableUtxo[] = [
-      ...this.storage.getUtxoMap().values(),
-    ].sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis)
+    const sortedUtxos: BuildableUtxo[] = [...this.storage.getUtxoMap().values()]
+      .filter(utxo => !utxo.frozen)
+      .sort((utxoA, utxoB) => utxoB.satoshis - utxoA.satoshis)
 
     const biggerUtxos = sortedUtxos.filter(
       a =>
@@ -815,6 +815,7 @@ export class Wallet {
             standardInputSize) *
             minFeePerByte,
     )
+
     const utxoSetToUse =
       biggerUtxos.length !== 0
         ? [biggerUtxos[biggerUtxos.length - 1]]

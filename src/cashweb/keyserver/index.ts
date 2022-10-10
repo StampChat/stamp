@@ -219,14 +219,19 @@ export class KeyserverHandler {
       await pop.constructPaymentTransaction(this.wallet, paymentDetails)
 
     const paymentUrlFull = new URL(paymentUrl, serverUrl)
-    const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
-    await Promise.all(
-      usedUtxos.map((id: Utxo) =>
-        this.wallet?.storage.deleteById(calcUtxoId(id)),
-      ),
-    )
+    try {
+      const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+      await Promise.all(
+        usedUtxos.map((id: Utxo) =>
+          this.wallet?.storage.deleteById(calcUtxoId(id)),
+        ),
+      )
 
-    await this.putMetadata(idAddress, serverUrl, authWrapper, token)
+      await this.putMetadata(idAddress, serverUrl, authWrapper, token)
+    } catch (err) {
+      this.wallet.fixUtxos(usedUtxos)
+      throw err
+    }
   }
 
   private constructBurnTransaction(wallet: Wallet, hash: Buffer, vote: number) {
