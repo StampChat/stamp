@@ -208,13 +208,9 @@ export class Wallet {
     const chronikClient = this.chronikClient
     assert(chronikClient, 'missing client in updateUTXOsFromTxid')
     const tx = await chronikClient.tx(txid)
-    const txScripts = new Set<string>()
-    tx.inputs.forEach(
-      input => input.outputScript && txScripts.add(input.outputScript),
-    )
-    tx.outputs.forEach(output => txScripts.add(output.outputScript))
-    for (const scriptHex of txScripts) {
-      const script = new Script(scriptHex)
+    // Add new outputs that we subscribed tol
+    for (const [outIdx, txOutput] of tx.outputs.entries()) {
+      const script = new Script(txOutput.outputScript)
       if (!script.isPublicKeyHashOut()) {
         continue
       }
@@ -222,7 +218,41 @@ export class Wallet {
       if (!this.addressDataByPkh.has(pkh)) {
         continue
       }
-      await this.updateUTXOsFromPkh(pkh)
+      const addressData = this.addressDataByPkh.get(pkh)
+      assert(addressData, `missing addressData for pkh ${pkh}`)
+      const utxo: Utxo = {
+        txId: txid,
+        outputIndex: outIdx,
+        satoshis: txOutput.value.toNumber(),
+        type: 'p2pkh',
+        address: addressData.address,
+        privKey: addressData.privKey,
+      }
+      this.putUtxo(utxo)
+    }
+
+    // Delete spent inputs
+    for (const txInput of tx.inputs) {
+      const script = new Script(txInput.outputScript)
+      if (!script.isPublicKeyHashOut()) {
+        continue
+      }
+      const pkh = script.getPublicKeyHash().toString('hex')
+      if (!this.addressDataByPkh.has(pkh)) {
+        continue
+      }
+      const addressData = this.addressDataByPkh.get(pkh)
+      assert(addressData, `missing addressData for pkh ${pkh}`)
+      const utxo: Utxo = {
+        txId: txInput.prevOut.txid,
+        outputIndex: txInput.prevOut.outIdx,
+        satoshis: txInput.value.toNumber(),
+        type: 'p2pkh',
+        address: addressData.address,
+        privKey: addressData.privKey,
+      }
+      const utxoId = calcUtxoId(utxo)
+      this.deleteUtxo(utxoId)
     }
   }
 
