@@ -75,7 +75,7 @@
 <script lang="ts">
 import assert from 'assert'
 
-import { defineComponent, computed } from 'vue'
+import { defineComponent } from 'vue'
 import { QStepper } from 'quasar'
 
 import { HDPrivateKey } from 'bitcore-lib-xpi'
@@ -99,13 +99,13 @@ import DepositStep from '../components/setup/DepositStep.vue'
 import EulaStep from '../components/setup/EULAStep.vue'
 
 import WalletGenWorker from 'worker-loader!../workers/xpriv_generate'
-import { calcUtxoId } from 'src/cashweb/wallet/helpers'
 import { useRelayClientStore } from 'src/stores/relay-client'
 import { useWalletStore } from 'src/stores/wallet'
 import { useChatStore } from 'src/stores/chats'
 import { useAppearanceStore } from 'src/stores/appearance'
 import { useProfileStore } from 'src/stores/my-profile'
 import { useContactStore } from 'src/stores/contacts'
+import { storeToRefs } from 'pinia'
 
 export default defineComponent({
   components: {
@@ -117,9 +117,11 @@ export default defineComponent({
     const relayClient = useRelayClientStore()
     const chats = useChatStore()
     const wallet = useWalletStore()
+    const { balance, seedPhrase } = storeToRefs(wallet)
     const appearance = useAppearanceStore()
     const myProfile = useProfileStore()
     const contacts = useContactStore()
+    const { updateInterval } = storeToRefs(contacts)
     if (!wallet.seedPhrase) {
       wallet.setSeedPhrase(generateMnemonic())
     }
@@ -128,14 +130,14 @@ export default defineComponent({
       setRelayToken: relayClient.setToken,
       resetChats: chats.reset,
       darkMode: appearance.setDarkMode,
-      updateInterval: computed(() => contacts.updateInterval),
+      updateInterval: updateInterval,
       setUpdateInterval: contacts.setUpdateInterval,
-      seedPhrase: computed(() => wallet.seedPhrase),
+      seedPhrase: seedPhrase,
       setRelayData: myProfile.setRelayData,
       resetWallet: wallet.reset,
       setXPrivKey: wallet.setXPrivKey,
       setSeedPhrase: wallet.setSeedPhrase,
-      balance: computed(() => wallet.balance),
+      balance: balance,
     }
   },
   data() {
@@ -304,12 +306,17 @@ export default defineComponent({
 
         assert(idPrivKey, 'Wallet not initialized')
 
+        console.log('Updating keyserver metadata')
         await ksHandler.updateKeyMetadata(this.relayUrl, idPrivKey)
+        console.log('Metadata updated')
+
         this.$q.loading.hide()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         errorNotify(err)
         throw err
+      } finally {
+        this.$q.loading.hide()
       }
     },
     async setupRelay() {
@@ -344,6 +351,7 @@ export default defineComponent({
             message: this.$t('setup.sendingPayment'),
           })
 
+          console.log('Constructing relay payment transaction')
           // Get token from relay server
           const { paymentUrl, payment, usedUtxos } =
             await pop.constructPaymentTransaction(
@@ -352,23 +360,27 @@ export default defineComponent({
             )
 
           const paymentUrlFull = new URL(paymentUrl, this.relayUrl)
-          console.log('Sending payment to', paymentUrlFull.href)
-          const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
-          relayClient.setToken(token)
-          this.setRelayToken(token)
-          this.$relayClient.setToken(token)
-          await Promise.all(
-            // TODO: This should not be touching wallet storage directly.
-            usedUtxos.map(utxo =>
-              this.$wallet.storage.deleteById(calcUtxoId(utxo)),
-            ),
-          )
+          console.log('Sending relay profile payment to', paymentUrlFull.href)
+          try {
+            const { token } = await pop.sendPayment(
+              paymentUrlFull.href,
+              payment,
+            )
+            relayClient.setToken(token)
+            this.setRelayToken(token)
+            this.$relayClient.setToken(token)
+          } catch (err) {
+            console.log('Relay payment failed')
+            this.$wallet.fixUtxos(usedUtxos)
+            throw err
+          }
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           // TODO: errors should not be stringly typed. Fix this
           // later. Also retry here should be more explicit. This is
           // basically so that things work when the person only had one UTXO to begin with.
           if (err.message === 'insufficient funds') {
+            console.log('insufficient funds')
             triesLeft--
             await new Promise<void>(resolve => {
               setTimeout(() => resolve(), 1000)
