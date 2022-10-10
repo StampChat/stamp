@@ -564,10 +564,6 @@ export class RelayClient extends ReadOnlyRelayClient {
                 outpoints,
                 transactions,
               })
-              // TODO: we shouldn't be dealing with this here. Leaky abstraction
-              await Promise.all(
-                stagedUtxos.map(utxo => wallet.deleteUtxo(calcUtxoId(utxo))),
-              )
             })
             .catch(async err => {
               console.error(err)
