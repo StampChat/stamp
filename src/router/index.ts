@@ -1,3 +1,4 @@
+import { route } from 'quasar/wrappers'
 import {
   createRouter,
   createMemoryHistory,
@@ -30,7 +31,7 @@ async function ensureChatState(address?: string) {
 }
 
 // Note: ssrContext is also available
-export default () => {
+export default route(function (/* { ssrContext } */) {
   async function redirectIfNoProfile(
     to: RouteLocationNormalized,
     from: RouteLocationNormalized,
@@ -73,17 +74,16 @@ export default () => {
     : createWebHashHistory
 
   const Router = createRouter({
-    routes,
     scrollBehavior: () => ({ left: 0, top: 0 }),
+    routes,
 
     // Leave this as is and make changes in quasar.conf.js instead!
     // quasar.conf.js -> build -> vueRouterMode
     // quasar.conf.js -> build -> publicPath
-    history: createHistory(
-      process.env.MODE === 'ssr' ? undefined : process.env.VUE_ROUTER_BASE,
-    ),
+    history: createHistory(process.env.VUE_ROUTER_BASE),
   })
+
   Router.beforeEach(redirectIfNoProfile)
 
   return Router
-}
+})

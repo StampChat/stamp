@@ -10,6 +10,11 @@
 const path = require('path')
 const { configure } = require('quasar/wrappers')
 
+// import { defineConfig } from 'vite';
+const { NodeGlobalsPolyfillPlugin } = require('@esbuild-plugins/node-globals-polyfill');
+const { NodeModulesPolyfillPlugin } = require('@esbuild-plugins/node-modules-polyfill');
+const rollupNodePolyFill = require('rollup-plugin-node-polyfills')
+
 module.exports = configure(function (ctx) {
   return {
     // app boot file (/src/boot)
@@ -83,74 +88,101 @@ module.exports = configure(function (ctx) {
 
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
-      // this is a configuration passed on
-      // to the underlying Webpack
-      devtool: 'source-map',
+      target: {
+        browser: ['es2019', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
+        node: 'node16'
+      },
 
       vueRouterMode: 'hash', // available values: 'hash', 'history'
+      // vueRouterBase,
+      // vueDevtools,
+      // vueOptionsAPI: false,
 
-      // rtl: false, // https://quasar.dev/options/rtl-support
-      // preloadChunks: true,
-      // showProgress: false,
-      // gzip: true,
+      // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
+
+      // publicPath: '/',
       // analyze: true,
+      // env: {},
+      // rawDefine: {}
+      // ignorePublicFolder: true,
+      // minify: false,
+      // polyfillModulePreload: true,
+      // distDir
 
-      // Options below are automatically set depending on the env, set them if you want to override
-      // extractCSS: false,
-
-      // https://quasar.dev/quasar-cli/cli-documentation/handling-webpack
-      chainWebpack(chain) {
-        const nodePolyfillWebpackPlugin = require('node-polyfill-webpack-plugin')
-        chain.plugin('node-polyfill').use(nodePolyfillWebpackPlugin)
-        // example for its content (adds linting)
-        const ESLintPlugin = require('eslint-webpack-plugin')
-        chain
-          .plugin('eslint-webpack-plugin')
-          .use(ESLintPlugin, [{ extensions: ['js'] }])
+      // extendViteConf (viteConf) {},
+      // viteVuePluginOptions: {},
+      resolve: {
+        alias: {
+          // This Rollup aliases are extracted from @esbuild-plugins/node-modules-polyfill,
+          // see https://github.com/remorses/esbuild-plugins/blob/master/node-modules-polyfill/src/polyfills.ts
+          // process and buffer are excluded because already managed
+          // by node-globals-polyfill
+          util: 'rollup-plugin-node-polyfills/polyfills/util',
+          sys: 'util',
+          events: 'rollup-plugin-node-polyfills/polyfills/events',
+          stream: 'rollup-plugin-node-polyfills/polyfills/stream',
+          path: 'rollup-plugin-node-polyfills/polyfills/path',
+          querystring: 'rollup-plugin-node-polyfills/polyfills/qs',
+          punycode: 'rollup-plugin-node-polyfills/polyfills/punycode',
+          url: 'rollup-plugin-node-polyfills/polyfills/url',
+          string_decoder: 'rollup-plugin-node-polyfills/polyfills/string-decoder',
+          http: 'rollup-plugin-node-polyfills/polyfills/http',
+          https: 'rollup-plugin-node-polyfills/polyfills/http',
+          os: 'rollup-plugin-node-polyfills/polyfills/os',
+          assert: 'rollup-plugin-node-polyfills/polyfills/assert',
+          constants: 'rollup-plugin-node-polyfills/polyfills/constants',
+          _stream_duplex:
+            'rollup-plugin-node-polyfills/polyfills/readable-stream/duplex',
+          _stream_passthrough:
+            'rollup-plugin-node-polyfills/polyfills/readable-stream/passthrough',
+          _stream_readable:
+            'rollup-plugin-node-polyfills/polyfills/readable-stream/readable',
+          _stream_writable:
+            'rollup-plugin-node-polyfills/polyfills/readable-stream/writable',
+          _stream_transform:
+            'rollup-plugin-node-polyfills/polyfills/readable-stream/transform',
+          timers: 'rollup-plugin-node-polyfills/polyfills/timers',
+          console: 'rollup-plugin-node-polyfills/polyfills/console',
+          vm: 'rollup-plugin-node-polyfills/polyfills/vm',
+          zlib: 'rollup-plugin-node-polyfills/polyfills/zlib',
+          tty: 'rollup-plugin-node-polyfills/polyfills/tty',
+          domain: 'rollup-plugin-node-polyfills/polyfills/domain',
+          crypto: 'rollup-plugin-node-polyfills/polyfills/empty'
+        },
       },
-
-      extendWebpack(cfg) {
-        cfg.resolve.modules = [
-          path.resolve(__dirname, 'local_modules'),
-          ...cfg.resolve.modules,
-        ]
-        // linting is slow in TS projects, we execute it only for production builds
-        cfg.resolve.fallback = {
-          fs: false,
-          tls: false,
-          net: false,
-        }
-
-        if (ctx.prod) {
-          // Ensure we are copying our local_modules folder into place
-          // before yarn install --production runs. Otherwise, we
-          // will have issues.
-          const CopyWebpackPlugin = require('copy-webpack-plugin')
-          cfg.plugins.push(
-            new CopyWebpackPlugin({
-              patterns: [
-                {
-                  from: 'local_modules',
-                  to: path.join(cfg.output.path, 'local_modules'),
-                },
-              ],
+      optimizeDeps: {
+        esbuildOptions: {
+          // Node.js global to browser globalThis
+          define: {
+            global: 'globalThis',
+          },
+          // Enable esbuild polyfill plugins
+          plugins: [
+            NodeGlobalsPolyfillPlugin({
+              process: true,
+              buffer: true,
             }),
-          )
-
-          cfg.module.rules.push({
-            test: /\.xpriv_generate\.js$/,
-            loader: 'worker-loader',
-            exclude: /node_modules/,
-          })
-        }
+            NodeModulesPolyfillPlugin(),
+          ],
+        },
       },
+
+      vitePlugins: [
+        ['@intlify/vite-plugin-vue-i18n', {
+          // if you want to use Vue I18n Legacy API, you need to set `compositionOnly: false`
+          // compositionOnly: false,
+
+          // you need to set i18n resource including paths !
+          include: path.resolve(__dirname, './src/i18n/**')
+        },],
+        rollupNodePolyFill(),
+      ]
     },
 
-    // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
+    // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#devServer
     devServer: {
-      https: false,
-      port: 8080,
-      open: true, // opens browser window automatically
+      // https: true
+      open: true // opens browser window automatically
     },
 
     // animations: 'all', // --- includes all animations
@@ -170,42 +202,8 @@ module.exports = configure(function (ctx) {
         clientsClaim: true,
         cleanupOutdatedCaches: true,
       },
-      manifest: {
-        name: 'Stamp',
-        short_name: 'Stamp',
-        description: ' A Lotus powered internet cryptomessenger',
-        display: 'standalone',
-        orientation: 'portrait',
-        background_color: '#ffffff',
-        theme_color: '#027be3',
-        icons: [
-          {
-            src: 'icons/icon-128x128.png',
-            sizes: '128x128',
-            type: 'image/png',
-          },
-          {
-            src: 'icons/icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'icons/icon-256x256.png',
-            sizes: '256x256',
-            type: 'image/png',
-          },
-          {
-            src: 'icons/icon-384x384.png',
-            sizes: '384x384',
-            type: 'image/png',
-          },
-          {
-            src: 'icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-        ],
-      },
+      injectPwaMetaTags: true,
+      useCredentialsForManifestTag: false,
     },
 
     // Full list of options: https://quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
@@ -236,12 +234,6 @@ module.exports = configure(function (ctx) {
           icon: 'src-electron/icons/linux-512x512.png',
         },
       },
-
-      // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
-
-      extendWebpackMain(cfg) {},
-
-      extendWebpackPreload(cfg) {},
     },
   }
 })

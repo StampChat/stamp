@@ -72,6 +72,8 @@
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-typescript": "^7.16.0",
     "@capacitor/android": "^2.5.0",
+    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
     "@quasar/app-webpack": "^3.6.1",
     "@types/atob": "^2.1.2",
     "@types/bluebird": "^3.5.36",
