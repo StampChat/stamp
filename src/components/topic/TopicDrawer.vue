@@ -10,7 +10,7 @@
         <q-separator />
         <q-item>
           <q-item-section>
-            <q-item-label>Filter:</q-item-label>
+            <q-item-label>{{ $t('topicDrawer.filter') }}</q-item-label>
             <q-item-label caption>({{ transformedFilter }} XPI)</q-item-label>
           </q-item-section>
           <q-item-section>
@@ -25,7 +25,7 @@
         <q-separator />
         <q-item>
           <q-item-section>
-            <q-item-label>Offering:</q-item-label>
+            <q-item-label>{{ $t('topicDrawer.offering') }}</q-item-label>
             <q-item-label caption>({{ transformedOffering }} XPI)</q-item-label>
           </q-item-section>
           <q-item-section>

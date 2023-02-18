@@ -25,10 +25,14 @@
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn label="Cancel" color="negative" @click="cancel" />
+          <q-btn
+            :label="$t('newTopicDialog.cancel')"
+            color="negative"
+            @click="cancel"
+          />
           <q-btn
             :disable="topic === ''"
-            label="Add"
+            :label="$t('newTopicDialog.add')"
             color="primary"
             @click="addTopic()"
           />
