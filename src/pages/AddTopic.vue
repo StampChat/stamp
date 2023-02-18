@@ -14,10 +14,10 @@
             dense
             reactive-rules
             :rules="[
-              val => val.length > 3 || 'Please use minimum of 3 characters',
+              val => val.length > 3 || $t('newTopicDialog.topicNameMinLength'),
               val =>
                 /^[a-zA-Z0-9.]+$/.test(val) ||
-                'A-Z, a-z, 0-9, and periods are the only valid characters',
+                $t('newTopicDialog.topicNameRules'),
             ]"
             :placeholder="$t('newTopicDialog.enterTopic')"
             ref="topicInput"
