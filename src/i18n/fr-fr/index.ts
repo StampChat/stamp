@@ -78,8 +78,8 @@ export default {
     gatheringBalances: 'Récupération du solde...',
     watchingWallet: 'Surveillance du wallet...', //?
     searchingExistingMetaData:
-      'Recherche des métadonnées du serveur de clés...',
-    errorContactKeyServer: 'Impossible de se connecter au serveur de clés',
+      'Recherche des métadonnées dans le registre...',
+    errorContactRegistry: 'Impossible de se connecter au registre',
     accountSetupNext: 'Suivant',
     depositStepNext: 'Suivant',
   },
