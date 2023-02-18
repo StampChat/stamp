@@ -19,6 +19,9 @@ export default {
     balance: 'Balance',
     directMessages: 'Direct Messages',
   },
+  chatMessage: {
+    noPayloadFound: 'Unable to find message payload',
+  },
   chatRightDrawer: {
     stampPrice: 'Stamp Price',
     sendLotus: 'Send Lotus',
@@ -182,5 +185,13 @@ export default {
   seedPhraseDialog: {
     seedPhrase: 'Seed Phrase',
     close: 'Close',
+  },
+  transactionDialog: {
+    backingTransactions: 'Backing Transactions',
+    txId: 'Transaction ID',
+    txType: 'Type',
+    txAddress: 'Address',
+    txAmount: 'Amount',
+    close: 'Fermer',
   },
 }

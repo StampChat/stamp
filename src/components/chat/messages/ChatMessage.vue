@@ -4,7 +4,7 @@
     <q-dialog v-model="transactionDialog">
       <!-- Switch to outpoints -->
       <transaction-dialog
-        title="Backing Transactions"
+        :title="$t('transactionDialog.backingTransactions')"
         :outpoints="message.outpoints"
       />
     </q-dialog>
@@ -63,7 +63,7 @@
       </q-chat-message>
     </template>
     <div class="col" v-else-if="!payloadDigest">
-      Unable to find message payload
+      {{ $t('chatMessage.noPayloadFound') }}
     </div>
   </div>
 </template>
