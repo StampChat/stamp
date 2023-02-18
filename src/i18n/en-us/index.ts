@@ -89,6 +89,8 @@ export default {
   newTopicDialog: {
     newTopic: 'Add Topic',
     enterTopic: 'Enter topic...',
+    topicNameMinLength: 'Please use minimum of 3 characters',
+    topicNameRules: 'A-Z, a-z, 0-9, and periods are the only valid characters',
     add: 'Add',
     cancel: 'Cancel',
   },

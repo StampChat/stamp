@@ -93,8 +93,11 @@ export default {
     notFound: 'Non trouvé',
   },
   newTopicDialog: {
-    newTopic: 'Ajouter un nouveau sujet',
-    enterTopic: 'Entrez le sujet...', //?
+    newTopic: 'Créer un nouveau topic',
+    enterTopic: 'Entrez le nom du topic...',
+    topicNameMinLength: 'Minimum 3 caractères',
+    topicNameRules:
+      'Seuls sont autorisés les caractères alphanumériques et les points',
     add: 'Ajouter',
     cancel: 'Annuler',
   },
