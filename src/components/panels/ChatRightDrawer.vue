@@ -115,15 +115,15 @@ export default defineComponent({
   },
   computed: {
     notifications: {
-      get() {
-        return this.getNotify(this.address)
+      get(): boolean {
+        return this.getNotify(this.address) ?? false
       },
       set(value: string) {
         this.setNotify({ address: this.address, value: Boolean(value) })
       },
     },
     stampAmount: {
-      get() {
+      get(): string {
         return Number(this.getStampAmount(this.address) / 1000000).toFixed(2)
       },
       set(amount: string) {

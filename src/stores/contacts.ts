@@ -180,7 +180,7 @@ export const useContactStore = defineStore('contacts', {
       }
 
       if ('buffer' in pubKey) {
-        return markRaw(PublicKey.fromBuffer(pubKey))
+        return markRaw(PublicKey.fromBuffer(pubKey as unknown as Buffer))
       }
 
       if ('point' in pubKey) {

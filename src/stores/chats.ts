@@ -378,11 +378,10 @@ export const useChatStore = defineStore('chats', {
 
       const message = { payloadDigest: payloadDigest, ...newMsg }
       if (payloadDigest in this.messages) {
+        const existingMessage = this.messages[payloadDigest]
+        assert(existingMessage, 'For great typescript')
         // we have the message already, just need to update some fields and return
-        this.messages[payloadDigest] = Object.assign(
-          this.messages[payloadDigest],
-          message,
-        )
+        this.messages[payloadDigest] = Object.assign(existingMessage, message)
         return
       }
 
@@ -568,8 +567,10 @@ export const useChatStore = defineStore('chats', {
 
         const message = { payloadDigest: index, ...newMsg }
         if (index in this.messages) {
+          const existingMessage = this.messages[index]
+          assert(existingMessage, 'For great typescript')
           // Mutate the object so that it striggers reactivity
-          this.messages[index] = Object.assign(this.messages[index], message)
+          this.messages[index] = Object.assign(existingMessage, message)
           // We should already have created the chat if we have the message
           return
         }
