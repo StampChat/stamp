@@ -171,25 +171,11 @@ export class RegistryHandler {
     return relayUrl
   }
 
-  async putMetadata(
-    address: string,
-    server: string,
-    metadata: SignedPayload,
-    token: string,
+  async updateKeyMetadata(
+    relayUrl: string,
+    idPrivKey: PrivateKey,
+    sats = 1000000,
   ) {
-    const rawMetadata = metadata.serializeBinary()
-    const url = `${server}/keys/${address}`
-    await axios({
-      method: 'put',
-      url: url,
-      headers: {
-        Authorization: token,
-      },
-      data: rawMetadata,
-    })
-  }
-
-  async updateKeyMetadata(relayUrl: string, idPrivKey: PrivateKey) {
     assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
     const idAddress = idPrivKey.toAddress(this.networkName).toCashAddress()
     // Construct metadata
@@ -198,36 +184,29 @@ export class RegistryHandler {
     const serverUrl = this.chooseServer()
     const payloadRaw = signedPayload.getPayload()
     assert(typeof payloadRaw !== 'string', 'payloadRaw is a string?')
-    const payload = Buffer.from(payloadRaw)
-    const payloadDigest = crypto.Hash.sha256(payload)
-    const truncatedSignedPayload = new SignedPayload()
     const publicKey = signedPayload.getPublicKey()
     assert(typeof publicKey !== 'string', 'publicKey is a string?')
+    const rawMetadata = signedPayload.serializeBinary()
+    const payloadDigest = crypto.Hash.sha256(Buffer.from(rawMetadata))
+    const { transaction: burnTransaction, usedUtxos } =
+      this.constructBurnTransaction(this.wallet, payloadDigest, sats)
 
-    truncatedSignedPayload.setPublicKey(publicKey)
-    const payloadBuf = payloadDigest.buffer
-    truncatedSignedPayload.setPayloadDigest(new Uint8Array(payloadBuf))
-
-    const { paymentDetails } = (await this.paymentRequest(
-      serverUrl,
-      idAddress,
-      truncatedSignedPayload,
-    )) ?? { paymentDetails: undefined }
-    assert(paymentDetails, 'Missing payment details')
-    // Construct payment
-    const { paymentUrl, payment, usedUtxos } =
-      await pop.constructPaymentTransaction(this.wallet, paymentDetails)
-
-    const paymentUrlFull = new URL(paymentUrl, serverUrl)
     try {
-      const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+      signedPayload.setBurnAmount(sats)
+      const burnOutput = new BurnOutputs()
+      burnOutput.setTx(burnTransaction.toBuffer())
+      burnOutput.setIndex(0)
+      const url = `${serverUrl}/metadata/${idAddress}`
+      await axios({
+        method: 'put',
+        url: url,
+        data: rawMetadata,
+      })
       await Promise.all(
         usedUtxos.map((id: Utxo) =>
           this.wallet?.storage.deleteById(calcUtxoId(id)),
         ),
       )
-
-      await this.putMetadata(idAddress, serverUrl, signedPayload, token)
     } catch (err) {
       this.wallet.fixUtxos(usedUtxos)
       throw err
