@@ -23,7 +23,7 @@ import p2pkh from './p2pkh_pb'
 import filters, { PriceFilter } from './filters_pb'
 import { PayloadConstructor } from './crypto'
 import VCard from 'vcf'
-import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
+import { SignedPayload } from '../signed_payload/payload_pb'
 import { Wallet } from '../wallet'
 
 export class MessageConstructor {
@@ -380,13 +380,13 @@ export class MessageConstructor {
     const hashbuf = crypto.Hash.sha256(Buffer.from(rawProfile))
     const sig = crypto.ECDSA.sign(hashbuf, privKey)
 
-    const authWrapper = new AuthWrapper()
+    const signedPayload = new SignedPayload()
     const rawSig = sig.toCompact(1, true).slice(1)
-    authWrapper.setPublicKey(privKey.toPublicKey().toBuffer())
-    authWrapper.setSignature(rawSig)
-    authWrapper.setScheme(1)
-    authWrapper.setPayload(rawProfile)
+    signedPayload.setPublicKey(privKey.toPublicKey().toBuffer())
+    signedPayload.setSignature(rawSig)
+    signedPayload.setScheme(1)
+    signedPayload.setPayload(rawProfile)
 
-    return authWrapper
+    return signedPayload
   }
 }

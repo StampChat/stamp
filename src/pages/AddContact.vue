@@ -80,9 +80,9 @@ import { defineComponent, markRaw, ref } from 'vue'
 import { QInput } from 'quasar'
 
 import { ContactState, useContactStore } from 'src/stores/contacts'
-import { KeyserverHandler } from '../cashweb/keyserver'
+import { RegistryHandler } from '../cashweb/registry'
 import { toAPIAddress } from '../utils/address'
-import { keyservers, networkName } from '../utils/constants'
+import { registrys, networkName } from '../utils/constants'
 import { PublicKey } from 'bitcore-lib-xpi'
 import { openChat } from 'src/utils/routes'
 
@@ -116,8 +116,8 @@ export default defineComponent({
         // Validate address
         const address = toAPIAddress(newAddress.trim()) // TODO: Make generic
 
-        // Pull information from keyserver then relay server
-        const ksHandler = new KeyserverHandler({ keyservers, networkName })
+        // Pull information from registry then relay server
+        const ksHandler = new RegistryHandler({ registrys, networkName })
         const relayURL = await ksHandler.getRelayUrl(address)
         const relayData = await this.$relayClient.getRelayData(address)
         relayData.notify = true

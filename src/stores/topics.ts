@@ -1,9 +1,9 @@
 import assert from 'assert'
 import { defineStore } from 'pinia'
 
-import { KeyserverHandler } from 'src/cashweb/keyserver'
+import { RegistryHandler } from 'src/cashweb/registry'
 import { Wallet } from 'src/cashweb/wallet'
-import { displayNetwork, keyservers } from '../utils/constants'
+import { displayNetwork, registrys } from '../utils/constants'
 
 import { ForumMessage, ForumMessageEntry } from 'src/cashweb/types/forum'
 
@@ -226,17 +226,17 @@ export const useTopicStore = defineStore('topics', {
       wallet: Wallet
     }) {
       const topicData = this.ensureTopic(topic)
-      const keyserver = new KeyserverHandler({
+      const registry = new RegistryHandler({
         wallet,
         networkName: displayNetwork,
-        keyservers,
+        registrys,
       })
       // FIXME: We will not be aware of new votes. This will need to be handled
       // through websocket subscriptions on the backend in the future.
       const from = topicData.lastUpdate ?? defaultFetchDuration
       const to = Date.now()
       console.log('fetching messages', topic, from, to)
-      const entries = await keyserver.getBroadcastMessages(topic, from, to)
+      const entries = await registry.getBroadcastMessages(topic, from, to)
       if (!entries) {
         return
       }
@@ -256,12 +256,12 @@ export const useTopicStore = defineStore('topics', {
     }) {
       const topicData = this.ensureTopic(topic)
       const satoshis = topicData.offering
-      const keyserver = new KeyserverHandler({
+      const registry = new RegistryHandler({
         wallet,
         networkName: displayNetwork,
-        keyservers,
+        registrys,
       })
-      const payloadDigest = await keyserver.createBroadcast(
+      const payloadDigest = await registry.createBroadcast(
         topic,
         [entry],
         satoshis,
@@ -278,13 +278,13 @@ export const useTopicStore = defineStore('topics', {
       payloadDigest: string
       topic: string
     }) {
-      const keyserver = new KeyserverHandler({
+      const registry = new RegistryHandler({
         wallet,
         networkName: displayNetwork,
-        keyservers,
+        registrys,
       })
       console.log('fetching message', payloadDigest)
-      const message = await keyserver.getBroadcastMessage(payloadDigest)
+      const message = await registry.getBroadcastMessage(payloadDigest)
       if (!message) {
         console.log('could not fetch message', payloadDigest)
         return
@@ -304,13 +304,13 @@ export const useTopicStore = defineStore('topics', {
       satoshis: number
       topic: string
     }) {
-      const keyserver = new KeyserverHandler({
+      const registry = new RegistryHandler({
         wallet,
         networkName: displayNetwork,
-        keyservers,
+        registrys,
       })
       console.log('voting towards message', payloadDigest, satoshis)
-      await keyserver.addOfferings(payloadDigest, satoshis)
+      await registry.addOfferings(payloadDigest, satoshis)
       await this.fetchMessage({ topic, payloadDigest, wallet })
     },
   },

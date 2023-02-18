@@ -7,13 +7,14 @@ package wrapper;
 message BurnOutputs {
   // Transaction which burns some XPI to commit to the message
   bytes tx = 1;
-  // Index of the op_return which contains the commitment to for the authwrapper
+  // Index of the op_return which contains the commitment to for the
+  // SignedPayload
   uint32 index = 2;
 }
 
-// AuthWrapper provides integrity, authentication, and non-repuditation by
+// SignedPayload provides integrity, authentication, and non-repuditation by
 // providing a standard structure for covering blobs with signatures.
-message AuthWrapper {
+message SignedPayload {
   // The public key associated with the signature.
   bytes public_key = 1;
   // The signature by public key covering the payload.
@@ -39,7 +40,7 @@ message AuthWrapper {
 }
 
 // Set of auth wrappers for returning multiple items to the client as needed.
-message AuthWrapperSet {
+message SignedPayloadSet {
   // Set of auth wrappers that can be used in certain get responses
-  repeated AuthWrapper items = 1;
+  repeated SignedPayload items = 1;
 }

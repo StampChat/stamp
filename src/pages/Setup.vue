@@ -81,7 +81,7 @@ import { QStepper } from 'quasar'
 import { HDPrivateKey } from 'bitcore-lib-xpi'
 import { generateMnemonic } from 'bip39'
 
-import { KeyserverHandler } from '../cashweb/keyserver'
+import { RegistryHandler } from '../cashweb/registry'
 import pop from '../cashweb/pop'
 import { getRelayClient } from '../adapters/pinia-relay-adapter'
 import {
@@ -89,7 +89,7 @@ import {
   defaultRelayUrl,
   defaultAvatars,
   recomendedBalance,
-  keyservers,
+  registrys,
   networkName,
 } from '../utils/constants'
 import { errorNotify } from '../utils/notifications'
@@ -223,9 +223,9 @@ export default defineComponent({
     },
     async setupRelayData() {
       // Set profile
-      const ksHandler = new KeyserverHandler({
+      const ksHandler = new RegistryHandler({
         wallet: this.$wallet,
-        keyservers: keyservers,
+        registrys: registrys,
         networkName,
       })
       const idAddress = this.$wallet.myAddress?.toCashAddress() ?? ''
@@ -236,7 +236,7 @@ export default defineComponent({
         message: this.$t('setup.searchingExistingMetaData'),
       })
 
-      // Try find relay URL on keyserver
+      // Try find relay URL on registry
       try {
         const foundRelayUrl = await ksHandler.getRelayUrl(idAddress)
         this.relayUrl = foundRelayUrl ?? defaultRelayUrl
@@ -248,8 +248,8 @@ export default defineComponent({
           const stepper = this.$refs.stepper as QStepper
           stepper.next()
         } else {
-          const keyserverErr = new Error(this.$t('setup.errorContactKeyServer'))
-          errorNotify(keyserverErr)
+          const registryErr = new Error(this.$t('setup.errorContactRegistry'))
+          errorNotify(registryErr)
         }
       } finally {
         this.$q.loading.hide()
@@ -261,7 +261,7 @@ export default defineComponent({
         message: this.$t('setup.searchingRelay'),
       })
       // Get profile from relay server
-      // We do this first to prevent uploading broken URL to keyserver
+      // We do this first to prevent uploading broken URL to registry
       const { client: relayClient } = await getRelayClient({
         relayUrl: this.relayUrl,
         wallet: this.$wallet,
@@ -289,12 +289,12 @@ export default defineComponent({
         this.$q.loading.hide()
       }
     },
-    async setUpKeyserver() {
+    async setUpRegistry() {
       // Set profile
-      const ksHandler = new KeyserverHandler({
+      const ksHandler = new RegistryHandler({
         wallet: this.$wallet,
         networkName,
-        keyservers: keyservers,
+        registrys: registrys,
       })
 
       try {
@@ -306,7 +306,7 @@ export default defineComponent({
 
         assert(idPrivKey, 'Wallet not initialized')
 
-        console.log('Updating keyserver metadata')
+        console.log('Updating registry metadata')
         await ksHandler.updateKeyMetadata(this.relayUrl, idPrivKey)
         console.log('Metadata updated')
 
@@ -435,7 +435,7 @@ export default defineComponent({
     async setupSettings() {
       // Reset all messaging
       await this.resetChats()
-      await this.setUpKeyserver()
+      await this.setUpRegistry()
       await this.setupRelay()
       await this.setUpdateInterval(
         this.settings.networking.updateInterval * 1_000,

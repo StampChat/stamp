@@ -1,4 +1,4 @@
-// source: keyserver.proto
+// source: metadata.proto
 /**
  * @fileoverview
  * @enhanceable

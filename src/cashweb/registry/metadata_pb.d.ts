@@ -1,5 +1,5 @@
 // package: keyserver
-// file: keyserver.proto
+// file: metadata.proto
 
 import * as jspb from "google-protobuf";
 
