@@ -6,7 +6,7 @@
         <q-btn
           class="q-ma-xs q-ma-xsrow"
           color="primary"
-          label="New Account"
+          :label="$t('accountStep.newAccount')"
           @click="newAccount"
         />
         <q-space />
@@ -16,7 +16,7 @@
         <q-btn
           class="row q-ma-xs q-ma-xs"
           color="primary"
-          label="Import Account"
+          :label="$t('accountStep.importAccount')"
           @click="importAccount"
         />
         <q-space />

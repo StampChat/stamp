@@ -2,20 +2,16 @@
   <div class="col q-gutter-y-md">
     <div class="row p-mx-sm text-h6">
       <q-space />
-      Welcome to StampChat
+      {{ $t('setup.welcomeToStampChat') }}
       <q-space />
     </div>
 
     <div class="row q-gutter-y-md">
-      This software is very prototype cryptomessenger, and may lose funds. Keep
-      larger amounts of Lotus in more established wallets.
+      {{ $t('setup.eulaDisclaimer') }}
     </div>
 
     <div class="row q-gutter-y-md">
-      By clicking "Agree", you understand that this software is provided "As
-      is", without warranty of any kind, express or implied, including but not
-      limited to the warranties of merchantability, fitness for a particular
-      purpose and non-infringement.
+      {{ $t('setup.eulaYouUnderstand') }}
     </div>
   </div>
 </template>
