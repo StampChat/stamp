@@ -8,15 +8,46 @@ export default {
       'Thank you for participating in our vision of the future of online communications. Please consider donating to our efforts by sending real BCH to bitcoincash:qq7vt04md0pt6fk5szhcx4cgsfuzmppy5u4hxshr4a',
   },
   chatInput: {
+    giveLotusSecretly: 'Give Lotus Secretly',
+    attachImage: 'Attach Image',
     placeHolder: 'Write a message...',
     emojiPickerTitle: 'Select an emoji',
+    stampPrice: 'Stamp Price',
   },
   chatList: {
     noContactMessage: 'Add contacts from the drawer above...',
     balance: 'Balance',
+    directMessages: 'Direct Messages',
+  },
+  chatRightDrawer: {
+    stampPrice: 'Stamp Price',
+    sendLotus: 'Send Lotus',
+    notifications: 'Notifications',
+  },
+  sendLotusDialog: {
+    sendLotusTo: 'Send Lotus to',
+    amountHint: 'Set the amount of Lotus to be sent.',
+    amountPlaceholder: 'Enter number of Lotus...',
+    memoHint: 'Attach a memo to the payment.',
+    memoPlaceholder: 'Enter the memo...',
+    sendBtnLabel: 'Send',
+    cancelBtnLabel: 'Cancel',
+  },
+  sendFileDialog: {
+    sendFile: 'Send File',
+    captionHint: 'Attach a memo to the payment.',
+    captionPlaceholder: 'Enter the memo...',
+    sendBtnLabel: 'Send',
+    cancelBtnLabel: 'Cancel',
   },
   setup: {
+    loginOrSignUp: 'Login/Sign Up',
     welcome: 'Welcome',
+    welcomeToStampChat: 'StampChat - Bienvenue !',
+    eulaDisclaimer:
+      'This software is very prototype cryptomessenger, and may lose funds. Keep larger amounts of Lotus in more established wallets.',
+    eulaYouUnderstand:
+      'By clicking "Agree", you understand that this software is provided "As is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and non- infringement.',
     setupWallet: 'Character Setup',
     eula: 'EULA',
     deposit: 'Deposit Lotus',
@@ -38,10 +69,14 @@ export default {
     generatingWallet: 'Generating wallet...',
     gatheringBalances: 'Gathering balances...',
     watchingWallet: 'Watching wallet...',
-    searchingExistingMetaData: 'Searching for existing registry metadata...',
-    errorContactRegistry: 'Unable to contact registry',
+    searchingExistingMetaData: 'Searching for existing keyserver metadata...',
+    errorContactKeyServer: 'Unable to contact keyserver',
     accountSetupNext: 'Next',
     depositStepNext: 'Next',
+  },
+  accountStep: {
+    newAccount: 'New Account',
+    importAccount: 'Import Account',
   },
   newContactDialog: {
     newContact: 'New Contact',
@@ -51,6 +86,12 @@ export default {
   newTopicDialog: {
     newTopic: 'Add Topic',
     enterTopic: 'Enter topic...',
+    add: 'Add',
+    cancel: 'Cancel',
+  },
+  topicDrawer: {
+    offering: 'Offering:',
+    filter: 'Filter:',
   },
   SettingPanel: {
     newContact: 'New Contact',
@@ -93,6 +134,7 @@ export default {
     darkMode: 'Dark Mode',
     saveSettings: 'Save',
     cancelSettings: 'Cancel',
+    languageSelectorCaption: 'Language',
   },
   profile: {
     name: "Character's Public Name",
