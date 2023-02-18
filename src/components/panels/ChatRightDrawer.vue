@@ -39,7 +39,9 @@
           <q-item-section avatar>
             <q-icon name="post_add" />
           </q-item-section>
-          <q-item-section>Stamp Price</q-item-section>
+          <q-item-section>
+            {{ $t('chatRightDrawer.stampPrice') }}
+          </q-item-section>
           <q-item-section>
             <q-input
               dense
@@ -54,7 +56,9 @@
           <q-item-section avatar>
             <q-icon name="attach_money" />
           </q-item-section>
-          <q-item-section>Send Lotus</q-item-section>
+          <q-item-section>
+            {{ $t('chatRightDrawer.sendLotus') }}
+          </q-item-section>
         </q-item>
 
         <q-separator />
@@ -67,7 +71,9 @@
           <q-item-section avatar>
             <q-icon name="notifications_none" />
           </q-item-section>
-          <q-item-section>Notifications</q-item-section>
+          <q-item-section>
+            {{ $t('chatRightDrawer.notifications') }}
+          </q-item-section>
           <q-item-section side>
             <q-toggle v-model="notifications" />
           </q-item-section>

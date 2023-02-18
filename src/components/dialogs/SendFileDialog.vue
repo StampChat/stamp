@@ -1,7 +1,9 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section class="row items-center q-pb-none">
-      <div class="text-h6">Send File</div>
+      <div class="text-h6">
+        {{ $t('sendFileDialog.sendFile') }}
+      </div>
       <q-space />
       <q-btn
         flat
@@ -26,15 +28,20 @@
         v-model="caption"
         filled
         dense
-        hint="Attach a caption to the image."
-        placeholder="Enter the caption..."
+        :hint="$t('sendFileDialog.captionHint')"
+        :placeholder="$t('sendFileDialog.captionPlaceholder')"
       />
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn flat label="Cancel" color="primary" v-close-popup />
       <q-btn
         flat
-        label="Send"
+        :label="$t('sendFileDialog.cancelBtnLabel')"
+        color="primary"
+        v-close-popup
+      />
+      <q-btn
+        flat
+        :label="$t('sendFileDialog.sendBtnLabel')"
         color="primary"
         v-close-popup
         :disable="filePath === null"

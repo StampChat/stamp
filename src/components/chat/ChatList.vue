@@ -5,7 +5,7 @@
         <q-separator />
         <q-item>
           <q-item-section>
-            <q-item-label>Direct Messages</q-item-label>
+            <q-item-label>{{ $t('chatList.directMessages') }}</q-item-label>
           </q-item-section>
           <q-space />
           <q-btn

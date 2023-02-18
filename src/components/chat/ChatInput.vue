@@ -8,14 +8,18 @@
               <q-item-section avatar side>
                 <q-icon name="local_florist" />
               </q-item-section>
-              <q-item-section>Give Lotus Secretly</q-item-section>
+              <q-item-section>
+                {{ $t('chatInput.giveLotusSecretly') }}
+              </q-item-section>
             </q-item>
 
             <q-item clickable v-close-popup @click="sendFileClicked">
               <q-item-section avatar side>
                 <q-icon name="attach_file" />
               </q-item-section>
-              <q-item-section>Attach Image</q-item-section>
+              <q-item-section>
+                {{ $t('chatInput.attachImage') }}
+              </q-item-section>
             </q-item>
 
             <!-- <q-item clickable>
@@ -42,7 +46,7 @@
                   dense
                   outlined
                   style="width: 150px"
-                  label="Stamp Price"
+                  :label="$t('chatInput.stampPrice')"
                   suffix="XPI"
                   v-model="innerStampAmount"
                   input-class="text-right"
