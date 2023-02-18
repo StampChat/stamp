@@ -172,6 +172,7 @@ export default {
     avatarTooLarge: 'Profile avatar is too large, select a smaller image.',
     unableContactRelay: 'Unable to contact relay server.',
     pushingProfile: 'Pushing new Profile...',
+    profile: 'Profile',
   },
   wipeWallet: {
     cancel: 'Cancel',

@@ -3,7 +3,11 @@
     <q-splitter v-model="splitterSize" unit="px" disable>
       <template #before>
         <q-tabs v-model="tab" vertical class="text-primary">
-          <q-tab name="profile" icon="person" label="Profile" />
+          <q-tab
+            name="profile"
+            icon="person"
+            :label="$t('profileDialog.profile')"
+          />
         </q-tabs>
       </template>
       <template #after>

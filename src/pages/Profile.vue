@@ -3,7 +3,9 @@
     <q-page class="q-ma-none q-pa-sm">
       <q-card>
         <q-card-section>
-          <div class="text-h6">Profile</div>
+          <div class="text-h6">
+            {{ $t('profileDialog.profile') }}
+          </div>
         </q-card-section>
         <profile
           v-model:name="name"
