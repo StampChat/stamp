@@ -9,7 +9,9 @@
           @click="$emit('toggleMyDrawerOpen')"
           icon="menu"
         />
-        <q-toolbar-title class="h6">Welcome</q-toolbar-title>
+        <q-toolbar-title class="h6">
+          {{ $t('setup.welcome') }}
+        </q-toolbar-title>
       </q-toolbar>
     </q-header>
 
