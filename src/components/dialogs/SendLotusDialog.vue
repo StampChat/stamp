@@ -1,7 +1,9 @@
 <template>
   <q-card class="q-px-sm q-pb-md dialog-medium">
     <q-card-section>
-      <div class="text-h6">Send Lotus to {{ contact.name }}</div>
+      <div class="text-h6">
+        {{ $t('sendLotusDialog.sendLotusTo') + ' ' + contact.name }}
+      </div>
     </q-card-section>
     <q-card-section>
       <q-input
@@ -10,8 +12,8 @@
         type="number"
         filled
         dense
-        hint="Set the amount of Lotus to be sent."
-        placeholder="Enter number of Lotus..."
+        :hint="$t('sendLotusDialog.amountHint')"
+        :placeholder="$t('sendLotusDialog.amountPlaceholder')"
         ref="amount"
       />
     </q-card-section>
@@ -21,16 +23,21 @@
         v-model="memo"
         filled
         dense
-        hint="Attach a memo to the payment."
-        placeholder="Enter the memo..."
+        :hint="$t('sendLotusDialog.memoHint')"
+        :placeholder="$t('sendLotusDialog.memoPlaceholder')"
       />
     </q-card-section>
     <q-card-actions align="right">
-      <q-btn flat label="Cancel" color="primary" v-close-popup />
+      <q-btn
+        flat
+        :label="$t('sendLotusDialog.cancelBtnLabel')"
+        color="primary"
+        v-close-popup
+      />
       <q-btn
         flat
         :disable="amount == ''"
-        label="Send"
+        :label="$t('sendLotusDialog.sendBtnLabel')"
         color="primary"
         v-close-popup
         @click="sendStealthPayment()"
