@@ -179,6 +179,7 @@ export default {
       "L'image de votre avatar est trop volumineuse, choisissez en une plus petite.",
     unableContactRelay: 'Impossible de contacter le serveur-relai.',
     pushingProfile: 'Envoi du nouveau profil..',
+    profile: 'Profil',
   },
   wipeWallet: {
     cancel: 'Annuler',
