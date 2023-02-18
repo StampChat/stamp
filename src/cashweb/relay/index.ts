@@ -9,7 +9,7 @@ import {
 } from './relay_pb'
 import p2pkh from './p2pkh_pb'
 
-import { AuthWrapper } from '../auth_wrapper/wrapper_pb'
+import { SignedPayload } from '../signed_payload/payload_pb'
 import pop from '../pop'
 // TODO: Relay code should not depend on Stamp base code. Fix this import
 import VCard from 'vcf'
@@ -89,7 +89,7 @@ export class ReadOnlyRelayClient {
       url,
       responseType: 'arraybuffer',
     })
-    const metadata = AuthWrapper.deserializeBinary(response.data)
+    const metadata = SignedPayload.deserializeBinary(response.data)
 
     // Get PubKey
     const pubKey = metadata.getPublicKey()
@@ -319,7 +319,7 @@ export class RelayClient extends ReadOnlyRelayClient {
     this.messageStore.deleteMessage(digest)
   }
 
-  async putProfile(address: string, metadata: AuthWrapper) {
+  async putProfile(address: string, metadata: SignedPayload) {
     const addressLegacy = this.toAPIAddress(address)
 
     const rawProfile = metadata.serializeBinary()

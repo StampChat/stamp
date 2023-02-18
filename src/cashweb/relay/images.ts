@@ -1,6 +1,6 @@
 import assert from 'assert'
 import btoa from 'btoa'
-import { Entry } from '../keyserver/keyserver_pb'
+import { Entry } from '../registry/metadata_pb'
 
 export function arrayBufferToBase64(buffer: Uint8Array) {
   let binary = ''

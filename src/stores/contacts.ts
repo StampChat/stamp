@@ -8,12 +8,12 @@ import {
   defaultUpdateInterval,
   pendingRelayData,
   defaultRelayUrl,
-  keyservers,
+  registrys,
   networkName,
   displayNetwork,
   defaultAcceptancePrice,
 } from '../utils/constants'
-import { KeyserverHandler } from '../cashweb/keyserver'
+import { RegistryHandler } from '../cashweb/registry'
 import moment from 'moment'
 import { toAPIAddress, toDisplayAddress } from '../utils/address'
 import { mapObjIndexed } from 'ramda'
@@ -280,8 +280,8 @@ export const useContactStore = defineStore('contacts', {
         // Validate address
         const apiAddress = toAPIAddress(address) // TODO: Make generic
 
-        // Pull information from keyserver then relay server
-        const ksHandler = new KeyserverHandler({ keyservers, networkName })
+        // Pull information from registry then relay server
+        const ksHandler = new RegistryHandler({ registrys, networkName })
         const relayURL = await ksHandler.getRelayUrl(apiAddress)
         if (!relayURL) {
           return
@@ -356,7 +356,7 @@ export const useContactStore = defineStore('contacts', {
 
       // Get metadata
       try {
-        const handler = new KeyserverHandler({ networkName, keyservers })
+        const handler = new RegistryHandler({ networkName, registrys })
         const relayURL = await handler.getRelayUrl(address)
         if (!relayURL) {
           throw new Error(`Unable to find relay url for ${address}`)

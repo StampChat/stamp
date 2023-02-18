@@ -1,12 +1,12 @@
 import axios from 'axios'
 import assert from 'assert'
 
-import { Entry, AddressMetadata } from './keyserver_pb'
+import { Entry, AddressMetadata } from './metadata_pb'
 import {
-  AuthWrapper,
-  AuthWrapperSet,
+  SignedPayload,
+  SignedPayloadSet,
   BurnOutputs,
-} from '../auth_wrapper/wrapper_pb'
+} from '../signed_payload/payload_pb'
 import pop from '../pop'
 import {
   crypto,
@@ -46,8 +46,8 @@ function calculateBurnAmount(burnOutputs: BurnOutputs[]) {
   }, 0)
 }
 
-export class KeyserverHandler {
-  keyservers: string[]
+export class RegistryHandler {
+  registrys: string[]
   networkName: string
   defaultSampleSize: number
   wallet?: Wallet
@@ -55,20 +55,20 @@ export class KeyserverHandler {
   constructor({
     wallet,
     defaultSampleSize = 3,
-    keyservers,
+    registrys,
     networkName,
   }: {
     wallet?: Wallet
     defaultSampleSize?: number
-    keyservers: string[]
+    registrys: string[]
     networkName: string
   }) {
     assert(
       networkName,
-      'Missing networkName while initializing KeyserverHandler',
+      'Missing networkName while initializing RegistryHandler',
     )
-    assert(keyservers, 'Missing keyservers while initializing KeyserverHandler')
-    this.keyservers = keyservers
+    assert(registrys, 'Missing registrys while initializing RegistryHandler')
+    this.registrys = registrys
     this.networkName = networkName
     this.defaultSampleSize = defaultSampleSize
     this.wallet = wallet
@@ -97,44 +97,44 @@ export class KeyserverHandler {
     const hashbuf = crypto.Hash.sha256(Buffer.from(serializedPayload))
     const signature = crypto.ECDSA.sign(hashbuf, privKey)
 
-    const authWrapper = new AuthWrapper()
+    const signedPayload = new SignedPayload()
     const sig = signature.toCompact(1, true).slice(1)
-    authWrapper.setPublicKey(privKey.toPublicKey().toBuffer())
-    authWrapper.setSignature(sig)
-    authWrapper.setScheme(1)
-    authWrapper.setPayload(serializedPayload)
+    signedPayload.setPublicKey(privKey.toPublicKey().toBuffer())
+    signedPayload.setSignature(sig)
+    signedPayload.setScheme(1)
+    signedPayload.setPayload(serializedPayload)
 
-    return authWrapper
+    return signedPayload
   }
 
-  async fetchMetadata(keyserver: string, address: string) {
+  async fetchMetadata(registry: string, address: string) {
     const legacyAddress = this.toAPIAddressString(address)
-    const url = `${keyserver}/keys/${legacyAddress}`
+    const url = `${registry}/keys/${legacyAddress}`
     const response = await axios({
       method: 'get',
       url: url,
       responseType: 'arraybuffer',
     })
     if (response.status === 200) {
-      const metadata = AuthWrapper.deserializeBinary(response.data)
+      const metadata = SignedPayload.deserializeBinary(response.data)
       return metadata
     }
   }
 
   chooseServer() {
     // TODO: Sample correctly
-    return this.keyservers[0]
+    return this.registrys[0]
   }
 
   async paymentRequest(
     serverUrl: string,
     address: string,
-    truncatedAuthWrapper: AuthWrapper,
+    truncatedSignedPayload: SignedPayload,
   ) {
     const legacyAddress = this.toAPIAddressString(address)
-    const rawAuthWrapper = truncatedAuthWrapper.serializeBinary()
+    const rawSignedPayload = truncatedSignedPayload.serializeBinary()
     const url = `${serverUrl}/keys/${legacyAddress}`
-    return pop.getPaymentRequest(url, 'put', rawAuthWrapper)
+    return pop.getPaymentRequest(url, 'put', rawSignedPayload)
   }
 
   async _uniformSample(address: string) {
@@ -148,7 +148,7 @@ export class KeyserverHandler {
 
     // Get metadata
     const metadata = await this._uniformSample(legacyAddress)
-    assert(metadata, 'Missing metadata from keyserver')
+    assert(metadata, 'Missing metadata from registry')
     const rawAddressMetadata = metadata.getPayload()
     assert(
       typeof rawAddressMetadata !== 'string',
@@ -174,7 +174,7 @@ export class KeyserverHandler {
   async putMetadata(
     address: string,
     server: string,
-    metadata: AuthWrapper,
+    metadata: SignedPayload,
     token: string,
   ) {
     const rawMetadata = metadata.serializeBinary()
@@ -193,25 +193,25 @@ export class KeyserverHandler {
     assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
     const idAddress = idPrivKey.toAddress(this.networkName).toCashAddress()
     // Construct metadata
-    const authWrapper = this.constructRelayUrlMetadata(relayUrl, idPrivKey)
+    const signedPayload = this.constructRelayUrlMetadata(relayUrl, idPrivKey)
 
     const serverUrl = this.chooseServer()
-    const payloadRaw = authWrapper.getPayload()
+    const payloadRaw = signedPayload.getPayload()
     assert(typeof payloadRaw !== 'string', 'payloadRaw is a string?')
     const payload = Buffer.from(payloadRaw)
     const payloadDigest = crypto.Hash.sha256(payload)
-    const truncatedAuthWrapper = new AuthWrapper()
-    const publicKey = authWrapper.getPublicKey()
+    const truncatedSignedPayload = new SignedPayload()
+    const publicKey = signedPayload.getPublicKey()
     assert(typeof publicKey !== 'string', 'publicKey is a string?')
 
-    truncatedAuthWrapper.setPublicKey(publicKey)
+    truncatedSignedPayload.setPublicKey(publicKey)
     const payloadBuf = payloadDigest.buffer
-    truncatedAuthWrapper.setPayloadDigest(new Uint8Array(payloadBuf))
+    truncatedSignedPayload.setPayloadDigest(new Uint8Array(payloadBuf))
 
     const { paymentDetails } = (await this.paymentRequest(
       serverUrl,
       idAddress,
-      truncatedAuthWrapper,
+      truncatedSignedPayload,
     )) ?? { paymentDetails: undefined }
     assert(paymentDetails, 'Missing payment details')
     // Construct payment
@@ -227,7 +227,7 @@ export class KeyserverHandler {
         ),
       )
 
-      await this.putMetadata(idAddress, serverUrl, authWrapper, token)
+      await this.putMetadata(idAddress, serverUrl, signedPayload, token)
     } catch (err) {
       this.wallet.fixUtxos(usedUtxos)
       throw err
@@ -300,15 +300,15 @@ export class KeyserverHandler {
     const signature = crypto.ECDSA.sign(payloadDigest, idPrivKey)
     const sig = signature.toCompact(1, true).slice(1)
 
-    const authWrapper = new AuthWrapper()
-    authWrapper.setPublicKey(idPubKey)
-    authWrapper.setSignature(sig)
+    const signedPayload = new SignedPayload()
+    signedPayload.setPublicKey(idPubKey)
+    signedPayload.setSignature(sig)
 
-    authWrapper.setPublicKey(idPubKey)
-    authWrapper.setPayload(serializedMessage)
-    authWrapper.setBurnAmount(vote)
-    authWrapper.setScheme(AuthWrapper.SignatureScheme.ECDSA)
-    authWrapper.setTransactionsList([burnOutput])
+    signedPayload.setPublicKey(idPubKey)
+    signedPayload.setPayload(serializedMessage)
+    signedPayload.setBurnAmount(vote)
+    signedPayload.setScheme(SignedPayload.SignatureScheme.ECDSA)
+    signedPayload.setTransactionsList([burnOutput])
     const server = this.chooseServer()
 
     try {
@@ -316,7 +316,7 @@ export class KeyserverHandler {
       await axios({
         method: 'put',
         url: url,
-        data: authWrapper.serializeBinary(),
+        data: signedPayload.serializeBinary(),
       })
       await Promise.all(
         usedUtxos.map((id: Utxo) =>
@@ -350,21 +350,21 @@ export class KeyserverHandler {
     const signature = crypto.ECDSA.sign(payloadDigestBinary, idPrivKey)
     const sig = signature.toCompact(1, true).slice(1)
 
-    const authWrapper = new AuthWrapper()
-    authWrapper.setPublicKey(idPubKey)
-    authWrapper.setSignature(sig)
+    const signedPayload = new SignedPayload()
+    signedPayload.setPublicKey(idPubKey)
+    signedPayload.setSignature(sig)
 
-    authWrapper.setPublicKey(idPubKey)
-    authWrapper.setPayloadDigest(payloadDigestBinary)
-    authWrapper.setBurnAmount(vote)
-    authWrapper.setScheme(AuthWrapper.SignatureScheme.ECDSA)
-    authWrapper.setTransactionsList([burnOutput])
+    signedPayload.setPublicKey(idPubKey)
+    signedPayload.setPayloadDigest(payloadDigestBinary)
+    signedPayload.setBurnAmount(vote)
+    signedPayload.setScheme(SignedPayload.SignatureScheme.ECDSA)
+    signedPayload.setTransactionsList([burnOutput])
     const server = this.chooseServer()
     const url = `${server}/messages`
     await axios({
       method: 'put',
       url: url,
-      data: authWrapper.serializeBinary(),
+      data: signedPayload.serializeBinary(),
     })
     await Promise.all(
       usedUtxos.map((id: Utxo) =>
@@ -373,7 +373,7 @@ export class KeyserverHandler {
     )
   }
 
-  parseWrapper(wrapper: AuthWrapper) {
+  parseWrapper(wrapper: SignedPayload) {
     const payload = wrapper.getPayload()
     assert(typeof payload !== 'string', 'payload type should not be a string')
     const message = BroadcastMessage.deserializeBinary(payload)
@@ -445,8 +445,8 @@ export class KeyserverHandler {
     if (response.status !== 200) {
       throw new Error('unable to fetch broadcast messages')
     }
-    const authwrapperSet = AuthWrapperSet.deserializeBinary(response.data)
-    const wrappers = authwrapperSet.getItemsList()
+    const signedpayloadSet = SignedPayloadSet.deserializeBinary(response.data)
+    const wrappers = signedpayloadSet.getItemsList()
     const messages: ForumMessage[] = []
     for (const wrapper of wrappers) {
       const message = this.parseWrapper(wrapper)
@@ -469,8 +469,8 @@ export class KeyserverHandler {
     if (response.status !== 200) {
       throw new Error('unable to fetch broadcast messages')
     }
-    const authWrapper = AuthWrapper.deserializeBinary(response.data)
-    const message = this.parseWrapper(authWrapper)
+    const signedPayload = SignedPayload.deserializeBinary(response.data)
+    const message = this.parseWrapper(signedPayload)
     return message
   }
 }

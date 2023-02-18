@@ -2,9 +2,9 @@ import assert from 'assert'
 import { defineStore } from 'pinia'
 import { indexBy, uniq } from 'ramda'
 
-import { KeyserverHandler } from 'src/cashweb/keyserver'
+import { RegistryHandler } from 'src/cashweb/registry'
 import { Wallet } from 'src/cashweb/wallet'
-import { displayNetwork, keyservers } from '../utils/constants'
+import { displayNetwork, registrys } from '../utils/constants'
 
 import { ForumMessage, ForumMessageEntry } from 'src/cashweb/types/forum'
 import { SortMode } from 'src/utils/sorting'
@@ -124,15 +124,15 @@ export const useForumStore = defineStore('forum', {
       this.topics.push(topic)
     },
     async refreshMessages({ wallet }: { topic: string; wallet: Wallet }) {
-      const keyserver = new KeyserverHandler({
+      const registry = new RegistryHandler({
         wallet,
         networkName: displayNetwork,
-        keyservers,
+        registrys,
       })
       console.log('fetching messages')
       const from = Date.now() - this.duration
       console.log(from)
-      const entries = await keyserver.getBroadcastMessages('', from)
+      const entries = await registry.getBroadcastMessages('', from)
       if (!entries) {
         return
       }
@@ -151,13 +151,13 @@ export const useForumStore = defineStore('forum', {
       topic: string
       parentDigest?: string
     }) {
-      const keyserver = new KeyserverHandler({
+      const registry = new RegistryHandler({
         wallet,
         networkName: displayNetwork,
-        keyservers,
+        registrys,
       })
       console.log('fetching messages')
-      const payloadDigest = await keyserver.createBroadcast(
+      const payloadDigest = await registry.createBroadcast(
         topic,
         [entry],
         satoshis,
@@ -172,13 +172,13 @@ export const useForumStore = defineStore('forum', {
       wallet: Wallet
       payloadDigest: string
     }) {
-      const keyserver = new KeyserverHandler({
+      const registry = new RegistryHandler({
         wallet,
         networkName: displayNetwork,
-        keyservers,
+        registrys,
       })
       console.log('fetching message', payloadDigest)
-      const message = await keyserver.getBroadcastMessage(payloadDigest)
+      const message = await registry.getBroadcastMessage(payloadDigest)
       if (!message) {
         console.log('could not fetch message', payloadDigest)
         return
@@ -196,13 +196,13 @@ export const useForumStore = defineStore('forum', {
       payloadDigest: string
       satoshis: number
     }) {
-      const keyserver = new KeyserverHandler({
+      const registry = new RegistryHandler({
         wallet,
         networkName: displayNetwork,
-        keyservers,
+        registrys,
       })
       console.log('voting towards message', payloadDigest, satoshis)
-      await keyserver.addOfferings(payloadDigest, satoshis)
+      await registry.addOfferings(payloadDigest, satoshis)
       await this.fetchMessage({ payloadDigest, wallet })
     },
   },

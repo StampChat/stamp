@@ -1,5 +1,5 @@
 // package: wrapper
-// file: wrapper.proto
+// file: payload.proto
 
 import * as jspb from "google-protobuf";
 
@@ -29,7 +29,7 @@ export namespace BurnOutputs {
   }
 }
 
-export class AuthWrapper extends jspb.Message {
+export class SignedPayload extends jspb.Message {
   getPublicKey(): Uint8Array | string;
   getPublicKey_asU8(): Uint8Array;
   getPublicKey_asB64(): string;
@@ -40,8 +40,8 @@ export class AuthWrapper extends jspb.Message {
   getSignature_asB64(): string;
   setSignature(value: Uint8Array | string): void;
 
-  getScheme(): AuthWrapper.SignatureSchemeMap[keyof AuthWrapper.SignatureSchemeMap];
-  setScheme(value: AuthWrapper.SignatureSchemeMap[keyof AuthWrapper.SignatureSchemeMap]): void;
+  getScheme(): SignedPayload.SignatureSchemeMap[keyof SignedPayload.SignatureSchemeMap];
+  setScheme(value: SignedPayload.SignatureSchemeMap[keyof SignedPayload.SignatureSchemeMap]): void;
 
   getPayload(): Uint8Array | string;
   getPayload_asU8(): Uint8Array;
@@ -62,20 +62,20 @@ export class AuthWrapper extends jspb.Message {
   addTransactions(value?: BurnOutputs, index?: number): BurnOutputs;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): AuthWrapper.AsObject;
-  static toObject(includeInstance: boolean, msg: AuthWrapper): AuthWrapper.AsObject;
+  toObject(includeInstance?: boolean): SignedPayload.AsObject;
+  static toObject(includeInstance: boolean, msg: SignedPayload): SignedPayload.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: AuthWrapper, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): AuthWrapper;
-  static deserializeBinaryFromReader(message: AuthWrapper, reader: jspb.BinaryReader): AuthWrapper;
+  static serializeBinaryToWriter(message: SignedPayload, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SignedPayload;
+  static deserializeBinaryFromReader(message: SignedPayload, reader: jspb.BinaryReader): SignedPayload;
 }
 
-export namespace AuthWrapper {
+export namespace SignedPayload {
   export type AsObject = {
     publicKey: Uint8Array | string,
     signature: Uint8Array | string,
-    scheme: AuthWrapper.SignatureSchemeMap[keyof AuthWrapper.SignatureSchemeMap],
+    scheme: SignedPayload.SignatureSchemeMap[keyof SignedPayload.SignatureSchemeMap],
     payload: Uint8Array | string,
     payloadDigest: Uint8Array | string,
     burnAmount: number,
@@ -90,25 +90,25 @@ export namespace AuthWrapper {
   export const SignatureScheme: SignatureSchemeMap;
 }
 
-export class AuthWrapperSet extends jspb.Message {
+export class SignedPayloadSet extends jspb.Message {
   clearItemsList(): void;
-  getItemsList(): Array<AuthWrapper>;
-  setItemsList(value: Array<AuthWrapper>): void;
-  addItems(value?: AuthWrapper, index?: number): AuthWrapper;
+  getItemsList(): Array<SignedPayload>;
+  setItemsList(value: Array<SignedPayload>): void;
+  addItems(value?: SignedPayload, index?: number): SignedPayload;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): AuthWrapperSet.AsObject;
-  static toObject(includeInstance: boolean, msg: AuthWrapperSet): AuthWrapperSet.AsObject;
+  toObject(includeInstance?: boolean): SignedPayloadSet.AsObject;
+  static toObject(includeInstance: boolean, msg: SignedPayloadSet): SignedPayloadSet.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: AuthWrapperSet, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): AuthWrapperSet;
-  static deserializeBinaryFromReader(message: AuthWrapperSet, reader: jspb.BinaryReader): AuthWrapperSet;
+  static serializeBinaryToWriter(message: SignedPayloadSet, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SignedPayloadSet;
+  static deserializeBinaryFromReader(message: SignedPayloadSet, reader: jspb.BinaryReader): SignedPayloadSet;
 }
 
-export namespace AuthWrapperSet {
+export namespace SignedPayloadSet {
   export type AsObject = {
-    itemsList: Array<AuthWrapper.AsObject>,
+    itemsList: Array<SignedPayload.AsObject>,
   }
 }
 

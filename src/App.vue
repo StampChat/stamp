@@ -20,8 +20,8 @@ import { QBtn } from 'quasar'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 
-import { defaultContacts, keyservers, networkName } from 'src/utils/constants'
-import { KeyserverHandler } from 'src/cashweb/keyserver'
+import { defaultContacts, registrys, networkName } from 'src/utils/constants'
+import { RegistryHandler } from 'src/cashweb/registry'
 import { errorNotify } from 'src/utils/notifications'
 import { useRelayClientStore } from 'src/stores/relay-client'
 import { useAppearanceStore } from 'src/stores/appearance'
@@ -203,14 +203,14 @@ export default defineComponent({
       }
       refreshMessages()
 
-      const handler = new KeyserverHandler({
+      const handler = new RegistryHandler({
         wallet: wallet,
-        keyservers: keyservers,
+        registrys: registrys,
         networkName,
       })
       assert(wallet.myAddress, 'Address not yet defined?')
 
-      // Update keyserver data if it doesn't exist.
+      // Update registry data if it doesn't exist.
       handler.getRelayUrl(wallet.myAddress?.toXAddress()).catch(() => {
         if (!wallet.identityPrivKey) {
           return

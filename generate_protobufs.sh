@@ -1,8 +1,8 @@
-cd ./src/cashweb/keyserver
+cd ./src/cashweb/registry
 bash ./generate_protobufs.sh
 cd ../relay
 bash ./generate_protobufs.sh
 cd ../bip70
 bash ./generate_protobufs.sh
-cd ../auth_wrapper
+cd ../signed_payload
 bash ./generate_protobufs.sh

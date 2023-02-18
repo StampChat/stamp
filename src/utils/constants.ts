@@ -14,8 +14,8 @@ export const nUtxoGoal = 10
 export const feeUpdateTimerMilliseconds = 60_000
 export const defaultFeePerByte = 2
 
-// Keyserver constants
-export const keyservers = ['https://mainnet-keyserver.cashweb.io']
+// Registry constants
+export const registrys = ['https://mainnet-registry.cashweb.io']
 
 // Relay constants
 export const pingTimeout = 20_000
