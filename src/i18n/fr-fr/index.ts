@@ -19,6 +19,9 @@ export default {
     balance: 'Crédit',
     directMessages: 'Messages privés',
   },
+  chatMessage: {
+    noPayloadFound: 'Impossible de trouver les données pour ce message',
+  },
   chatRightDrawer: {
     stampPrice: 'Prix du timbre',
     sendLotus: 'Envoyer des Lotus',
@@ -188,6 +191,14 @@ export default {
   },
   seedPhraseDialog: {
     seedPhrase: 'Phrase de passe',
+    close: 'Fermer',
+  },
+  transactionDialog: {
+    backingTransactions: 'Transactions',
+    txId: 'Transaction ID',
+    txType: 'Type',
+    txAddress: 'Adresse',
+    txAmount: 'Montant',
     close: 'Fermer',
   },
 }

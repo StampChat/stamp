@@ -16,17 +16,25 @@
           :name="idx + 1"
         >
           <q-item-section class="q-py-lg">
-            <span class="text-bold"> Transaction ID </span>
+            <span class="text-bold">
+              {{ $t('transactionDialog.txId') }}
+            </span>
             <q-item-label>
               <a :href="`https://explorer.givelotus.org/tx/${outpoint.txId}`">{{
                 outpoint.txId
               }}</a>
             </q-item-label>
-            <span class="text-bold"> Type </span>
+            <span class="text-bold">
+              {{ $t('transactionDialog.txType') }}
+            </span>
             <q-item-label>{{ outpoint.type }}</q-item-label>
-            <span class="text-bold"> Address </span>
+            <span class="text-bold">
+              {{ $t('transactionDialog.txAddress') }}
+            </span>
             {{ extractAddress(outpoint.address) }}
-            <span class="text-bold"> Amount </span>
+            <span class="text-bold">
+              {{ $t('transactionDialog.txAmount') }}
+            </span>
             {{ outpoint.satoshis }}
           </q-item-section>
         </q-tab-panel>
@@ -34,7 +42,12 @@
     </q-card-section>
 
     <q-card-actions align="right">
-      <q-btn flat label="Close" color="primary" v-close-popup />
+      <q-btn
+        flat
+        :label="$t('transactionDialog.close')"
+        color="primary"
+        v-close-popup
+      />
     </q-card-actions>
   </q-card>
 </template>
