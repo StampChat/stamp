@@ -46,6 +46,20 @@
                     v-model="darkMode"
                   />
                 </div>
+                <div style="height: 2rem"></div>
+                <div class="row">
+                  <q-select
+                    v-model="locale"
+                    :options="localeOptions"
+                    :label="$t('settings.languageSelectorCaption')"
+                    dense
+                    borderless
+                    emit-value
+                    map-options
+                    options-dense
+                    style="min-width: 150px"
+                  />
+                </div>
               </q-tab-panel>
             </q-tab-panels>
           </template>
@@ -70,6 +84,8 @@
 </template>
 
 <script lang="ts">
+import { useI18n } from 'vue-i18n'
+
 import { defineComponent, ref } from 'vue'
 import { QInput } from 'quasar'
 
@@ -80,6 +96,8 @@ const msToMinutes = 60000
 
 export default defineComponent({
   setup() {
+    const { locale, fallbackLocale } = useI18n({ useScope: 'global' })
+
     const appearanceStore = useAppearanceStore()
     const contactStore = useContactStore()
     const { updateInterval: storeUpdateInterval } = storeToRefs(contactStore)
@@ -91,6 +109,12 @@ export default defineComponent({
       contactRefreshInterval: ref<QInput | null>(null),
       storeDarkMode,
       storeUpdateInterval,
+      locale,
+      localeOptions: [
+        { value: 'en-us', label: 'English' },
+        { value: 'fr-fr', label: 'Français' },
+      ],
+      lang: fallbackLocale,
     }
   },
   data() {
@@ -111,6 +135,17 @@ export default defineComponent({
   },
   mounted() {
     this.contactRefreshInterval?.focus()
+  },
+  watch: {
+    lang(lang) {
+      console.log('## language set to:', lang)
+      this.$i18n.locale = lang.value
+
+      import(`quasar/lang/${lang.value}`).then(language => {
+        console.log('## language set to:', lang, 'language=', language)
+        this.$q.lang.set(language.default)
+      })
+    },
   },
 })
 </script>
