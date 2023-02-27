@@ -85,6 +85,7 @@
 
 <script lang="ts">
 import { useI18n } from 'vue-i18n'
+import { localeOptions } from 'src/i18n'
 
 import { defineComponent, ref } from 'vue'
 import { QInput } from 'quasar'
@@ -110,10 +111,7 @@ export default defineComponent({
       storeDarkMode,
       storeUpdateInterval,
       locale,
-      localeOptions: [
-        { value: 'en-us', label: 'English' },
-        { value: 'fr-fr', label: 'Français' },
-      ],
+      localeOptions,
       lang: fallbackLocale,
     }
   },

@@ -1,11 +1,11 @@
-import messages from 'src/i18n'
+import { messages, defaultLocale } from 'src/i18n'
 import { boot } from 'quasar/wrappers'
 import { createI18n } from 'vue-i18n'
 // you'll need to create the src/i18n/index.js file too
 
 const i18n = createI18n({
-  locale: 'en-us',
-  fallbackLocale: 'en-us',
+  locale: defaultLocale,
+  fallbackLocale: defaultLocale,
   globalInjection: true,
   messages,
 })
