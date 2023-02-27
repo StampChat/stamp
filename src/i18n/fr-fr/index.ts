@@ -77,8 +77,7 @@ export default {
     generatingWallet: 'Generation de votre wallet...',
     gatheringBalances: 'Récupération du solde...',
     watchingWallet: 'Surveillance du wallet...', //?
-    searchingExistingMetaData:
-      'Recherche des métadonnées dans le registre...',
+    searchingExistingMetaData: 'Recherche des métadonnées dans le registre...',
     errorContactRegistry: 'Impossible de se connecter au registre',
     accountSetupNext: 'Suivant',
     depositStepNext: 'Suivant',
@@ -108,7 +107,7 @@ export default {
     recieveBitcoinCash: 'Reçevoir des Lotus',
     profile: 'Profil',
     settings: 'Configuration',
-    wipeAndSave: 'Effacement de Wallet à distance', //? Remote Wipe Wallet
+    wipeAndSave: 'Consolidation du portefeuille',
     changeLog: 'Changelog',
   },
   receiveBitcoinDialog: {
@@ -188,6 +187,10 @@ export default {
     profile: 'Profil',
   },
   wipeWallet: {
+    warning: 'ATTENTION!',
+    warningMsg:
+      'Cette opération va effacer tous les messages du serveur et consolider les fonds associés dans votre wallet (celui dont vous avez la phrase de passe)',
+    cannotBeUndone: 'Cette opération ne peut pas être annulée !',
     cancel: 'Annuler',
     wipe: 'Effacer tout le contenu distant', //?Wipe All Remote Content
     spinnerText: 'Effacer tous les messages',

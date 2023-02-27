@@ -180,6 +180,10 @@ export default {
     profile: 'Profile',
   },
   wipeWallet: {
+    warning: 'WARNING!',
+    warningMsg:
+      'This will delete all messages from the remove server and consolidate any funds associated with them back into your HD wallet.',
+    cannotBeUndone: 'This cannot be undoned!',
     cancel: 'Cancel',
     wipe: 'Wipe All Remote Content',
     spinnerText: 'Deleting All Messages',

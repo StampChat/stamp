@@ -3,14 +3,11 @@
     <q-page class="q-ma-none q-pa-sm">
       <q-card>
         <q-card-section>
-          <div class="text-h6">WARNING!</div>
+          <div class="text-h6">{{ $t('wipeWallet.warning') }}</div>
         </q-card-section>
         <q-card-section>
-          <div>
-            This will delete all messages from the remove server and consolidate
-            any funds associated with them back into your HD wallet.
-          </div>
-          <div>This cannot be undoned!</div>
+          <div>{{ $t('wipeWallet.warningMsg') }}</div>
+          <div>{{ $t('wipeWallet.cannotBeUndone') }}</div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn
