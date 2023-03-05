@@ -1,7 +1,7 @@
 import enUS from './en-us'
 import frFR from './fr-fr'
 
-const defaultLocale = 'en-us';
+const defaultLocale = 'en-us'
 
 const messages = {
   'en-us': enUS,
@@ -13,8 +13,4 @@ const translatedLocaleOptions = [
   { value: 'fr-fr', label: 'Français' },
 ]
 
-export {
-  messages,
-  defaultLocale,
-  translatedLocaleOptions as localeOptions
-}
+export { messages, defaultLocale, translatedLocaleOptions as localeOptions }
