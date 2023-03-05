@@ -955,9 +955,6 @@ export class Wallet {
   // This needs to happen when the seed has potentially changed after
   // the UTXOs have been refreshed.
   clearUtxos() {
-    const outpoints = this.storage.getUtxoMap()
-    for (const [outpointId] of outpoints) {
-      this.deleteUtxo(outpointId)
-    }
+    this.storage.clear()
   }
 }

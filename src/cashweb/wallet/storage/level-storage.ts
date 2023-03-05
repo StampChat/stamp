@@ -212,6 +212,8 @@ export class LevelUtxoStore implements UtxoStore {
    * This will delete everything in the store! Don't call it by accident!
    */
   async clear() {
+    this.cache = new Map<UtxoId, Utxo>()
+    this.deletedUtxos = new Set<UtxoId>()
     await this.db.clear()
     await this.getMetadataDatabase().clear()
   }
