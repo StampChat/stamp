@@ -1,7 +1,7 @@
 import axios from 'axios'
 import assert from 'assert'
 
-import { Entry, AddressMetadata } from './metadata_pb'
+import { AddressEntry, AddressMetadata } from './metadata_pb'
 import {
   SignedPayload,
   SignedPayloadSet,
@@ -69,47 +69,47 @@ export class RegistryHandler {
     )
     assert(registrys, 'Missing registrys while initializing RegistryHandler')
     this.registrys = registrys
-    this.networkName = networkName
+    this.networkName = 'livenet'
     this.defaultSampleSize = defaultSampleSize
     this.wallet = wallet
   }
 
-  toAPIAddressString(address: string) {
+  toAPIAddressString(address: string | Address | PrivateKey) {
     return new Address(
       new Address(address).hashBuffer,
       Networks.get(this.networkName, undefined),
-    ).toCashAddress()
+    ).toXAddress()
   }
 
   constructRelayUrlMetadata(relayUrl: string, privKey: PrivateKey) {
-    const relayUrlEntry = new Entry()
+    const relayUrlEntry = new AddressEntry()
     relayUrlEntry.setKind('relay-server')
     const rawRelayUrl = new TextEncoder().encode(relayUrl)
     relayUrlEntry.setBody(rawRelayUrl)
 
+    const pubkey = privKey.toPublicKey().toBuffer()
     // Construct payload
     const metadata = new AddressMetadata()
     metadata.setTimestamp(Math.floor(Date.now() / 1000))
     metadata.setTtl(31556952) // 1 year
     metadata.addEntries(relayUrlEntry)
+    metadata.setPubkey(pubkey)
 
     const serializedPayload = metadata.serializeBinary()
     const hashbuf = crypto.Hash.sha256(Buffer.from(serializedPayload))
     const signature = crypto.ECDSA.sign(hashbuf, privKey)
-
     const signedPayload = new SignedPayload()
-    const sig = signature.toCompact(1, true).slice(1)
-    signedPayload.setPublicKey(privKey.toPublicKey().toBuffer())
-    signedPayload.setSignature(sig)
+    signedPayload.setPublicKey(pubkey)
+    signedPayload.setSignature(signature.toDER())
     signedPayload.setScheme(1)
     signedPayload.setPayload(serializedPayload)
 
-    return signedPayload
+    return { signedPayload, serializedPayload }
   }
 
   async fetchMetadata(registry: string, address: string) {
     const legacyAddress = this.toAPIAddressString(address)
-    const url = `${registry}/keys/${legacyAddress}`
+    const url = `${registry}/metadata/${legacyAddress}`
     const response = await axios({
       method: 'get',
       url: url,
@@ -133,7 +133,7 @@ export class RegistryHandler {
   ) {
     const legacyAddress = this.toAPIAddressString(address)
     const rawSignedPayload = truncatedSignedPayload.serializeBinary()
-    const url = `${serverUrl}/keys/${legacyAddress}`
+    const url = `${serverUrl}/metadata/${legacyAddress}`
     return pop.getPaymentRequest(url, 'put', rawSignedPayload)
   }
 
@@ -157,7 +157,7 @@ export class RegistryHandler {
     const payload = AddressMetadata.deserializeBinary(rawAddressMetadata)
 
     // Find vCard
-    function isRelay(entry: Entry) {
+    function isRelay(entry: AddressEntry) {
       return entry.getKind() === 'relay-server'
     }
     const entryList = payload.getEntriesList()
@@ -171,77 +171,71 @@ export class RegistryHandler {
     return relayUrl
   }
 
-  async putMetadata(
-    address: string,
-    server: string,
-    metadata: SignedPayload,
-    token: string,
+  async updateKeyMetadata(
+    relayUrl: string,
+    idPrivKey: PrivateKey,
+    sats = 1000000,
   ) {
-    const rawMetadata = metadata.serializeBinary()
-    const url = `${server}/keys/${address}`
-    await axios({
-      method: 'put',
-      url: url,
-      headers: {
-        Authorization: token,
-      },
-      data: rawMetadata,
-    })
-  }
-
-  async updateKeyMetadata(relayUrl: string, idPrivKey: PrivateKey) {
     assert(this.wallet, 'Missing wallet while running updateKeyMetadata')
-    const idAddress = idPrivKey.toAddress(this.networkName).toCashAddress()
+    const idAddress = this.toAPIAddressString(
+      idPrivKey.toAddress(this.networkName),
+    )
     // Construct metadata
-    const signedPayload = this.constructRelayUrlMetadata(relayUrl, idPrivKey)
+    const { signedPayload, serializedPayload } = this.constructRelayUrlMetadata(
+      relayUrl,
+      idPrivKey,
+    )
 
     const serverUrl = this.chooseServer()
     const payloadRaw = signedPayload.getPayload()
     assert(typeof payloadRaw !== 'string', 'payloadRaw is a string?')
-    const payload = Buffer.from(payloadRaw)
-    const payloadDigest = crypto.Hash.sha256(payload)
-    const truncatedSignedPayload = new SignedPayload()
     const publicKey = signedPayload.getPublicKey()
     assert(typeof publicKey !== 'string', 'publicKey is a string?')
-
-    truncatedSignedPayload.setPublicKey(publicKey)
-    const payloadBuf = payloadDigest.buffer
-    truncatedSignedPayload.setPayloadDigest(new Uint8Array(payloadBuf))
-
-    const { paymentDetails } = (await this.paymentRequest(
-      serverUrl,
-      idAddress,
-      truncatedSignedPayload,
-    )) ?? { paymentDetails: undefined }
-    assert(paymentDetails, 'Missing payment details')
-    // Construct payment
-    const { paymentUrl, payment, usedUtxos } =
-      await pop.constructPaymentTransaction(this.wallet, paymentDetails)
-
-    const paymentUrlFull = new URL(paymentUrl, serverUrl)
+    const payloadDigest = crypto.Hash.sha256(Buffer.from(serializedPayload))
+    const { transaction: burnTransaction, usedUtxos } =
+      this.constructBurnTransaction(
+        this.wallet,
+        payloadDigest,
+        sats,
+        [83, 84, 77, 80], // 'STMP'
+      )
     try {
-      const { token } = await pop.sendPayment(paymentUrlFull.href, payment)
+      signedPayload.setBurnAmount(sats)
+      const burnOutput = new BurnOutputs()
+      burnOutput.setTx(burnTransaction.toBuffer())
+      burnOutput.setIndex(0)
+      signedPayload.addTransactions(burnOutput)
+      const url = `${serverUrl}/metadata/${idAddress}`
+      await axios({
+        headers: { 'content-type': 'application/x-protobuf' },
+        method: 'put',
+        url: url,
+        data: signedPayload.serializeBinary(),
+      })
       await Promise.all(
         usedUtxos.map((id: Utxo) =>
           this.wallet?.storage.deleteById(calcUtxoId(id)),
         ),
       )
-
-      await this.putMetadata(idAddress, serverUrl, signedPayload, token)
     } catch (err) {
       this.wallet.fixUtxos(usedUtxos)
       throw err
     }
   }
 
-  private constructBurnTransaction(wallet: Wallet, hash: Buffer, vote: number) {
+  private constructBurnTransaction(
+    wallet: Wallet,
+    hash: Buffer,
+    vote: number,
+    lokadId = [80, 79, 78, 68], // 'POND'
+  ) {
     const upvote = vote > 0
     const satoshis = vote < 0 ? -vote : vote
 
     // Create burn output
     const script = new Script(undefined)
       .add(Opcode.map.OP_RETURN)
-      .add(Buffer.from([80, 79, 78, 68])) // POND
+      .add(Buffer.from(lokadId))
       .add(upvote ? Opcode.map.OP_1 : Opcode.map.OP_0)
       .add(hash)
 

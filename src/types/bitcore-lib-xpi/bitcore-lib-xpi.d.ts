@@ -52,6 +52,7 @@ declare module 'bitcore-lib-xpi' {
       static fromString(data: string): Signature
       SIGHASH_ALL: number
       toCompact(i: number, compressed: boolean): Buffer
+      toDER(format?: 'ecdsa' | 'schnorr'): Buffer
       toString(): string
     }
   }

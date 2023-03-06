@@ -27,39 +27,41 @@ export namespace Header {
   }
 }
 
-export class Entry extends jspb.Message {
+export class AddressEntry extends jspb.Message {
   getKind(): string;
   setKind(value: string): void;
 
-  clearHeadersList(): void;
-  getHeadersList(): Array<Header>;
-  setHeadersList(value: Array<Header>): void;
-  addHeaders(value?: Header, index?: number): Header;
-
+  getHeadersMap(): jspb.Map<string, string>;
+  clearHeadersMap(): void;
   getBody(): Uint8Array | string;
   getBody_asU8(): Uint8Array;
   getBody_asB64(): string;
   setBody(value: Uint8Array | string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Entry.AsObject;
-  static toObject(includeInstance: boolean, msg: Entry): Entry.AsObject;
+  toObject(includeInstance?: boolean): AddressEntry.AsObject;
+  static toObject(includeInstance: boolean, msg: AddressEntry): AddressEntry.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Entry, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Entry;
-  static deserializeBinaryFromReader(message: Entry, reader: jspb.BinaryReader): Entry;
+  static serializeBinaryToWriter(message: AddressEntry, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AddressEntry;
+  static deserializeBinaryFromReader(message: AddressEntry, reader: jspb.BinaryReader): AddressEntry;
 }
 
-export namespace Entry {
+export namespace AddressEntry {
   export type AsObject = {
     kind: string,
-    headersList: Array<Header.AsObject>,
+    headersMap: Array<[string, string]>,
     body: Uint8Array | string,
   }
 }
 
 export class AddressMetadata extends jspb.Message {
+  getPubkey(): Uint8Array | string;
+  getPubkey_asU8(): Uint8Array;
+  getPubkey_asB64(): string;
+  setPubkey(value: Uint8Array | string): void;
+
   getTimestamp(): number;
   setTimestamp(value: number): void;
 
@@ -67,9 +69,9 @@ export class AddressMetadata extends jspb.Message {
   setTtl(value: number): void;
 
   clearEntriesList(): void;
-  getEntriesList(): Array<Entry>;
-  setEntriesList(value: Array<Entry>): void;
-  addEntries(value?: Entry, index?: number): Entry;
+  getEntriesList(): Array<AddressEntry>;
+  setEntriesList(value: Array<AddressEntry>): void;
+  addEntries(value?: AddressEntry, index?: number): AddressEntry;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AddressMetadata.AsObject;
@@ -83,9 +85,10 @@ export class AddressMetadata extends jspb.Message {
 
 export namespace AddressMetadata {
   export type AsObject = {
+    pubkey: Uint8Array | string,
     timestamp: number,
     ttl: number,
-    entriesList: Array<Entry.AsObject>,
+    entriesList: Array<AddressEntry.AsObject>,
   }
 }
 

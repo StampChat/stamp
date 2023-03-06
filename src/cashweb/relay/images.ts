@@ -1,6 +1,6 @@
 import assert from 'assert'
 import btoa from 'btoa'
-import { Entry } from '../registry/metadata_pb'
+import { PayloadEntry } from './relay_pb'
 
 export function arrayBufferToBase64(buffer: Uint8Array) {
   let binary = ''
@@ -12,7 +12,7 @@ export function arrayBufferToBase64(buffer: Uint8Array) {
   return btoa(binary)
 }
 
-export function entryToImage(entry: Entry) {
+export function entryToImage(entry: PayloadEntry) {
   const rawAvatar = entry.getBody()
   const value = entry.getHeadersList()[0].getValue()
   assert(
