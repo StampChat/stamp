@@ -15,7 +15,7 @@ export const feeUpdateTimerMilliseconds = 60_000
 export const defaultFeePerByte = 2
 
 // Registry constants
-export const registrys = ['https://mainnet-registry.cashweb.io']
+export const registrys = ['https://mainnet-keyserver.cashweb.io']
 
 // Relay constants
 export const pingTimeout = 20_000
