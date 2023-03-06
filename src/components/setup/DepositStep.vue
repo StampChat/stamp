@@ -9,7 +9,6 @@
         :size="150"
       />
     </div>
-    <q-btn class="center" label="Get Free Lotus" @click="openFaucet" />
     <q-input class="fit" filled auto-grow v-model="displayAddress" readonly>
       <template #after>
         <q-btn
@@ -88,16 +87,6 @@ export default defineComponent({
     },
     setQRSize(size: { height: number; width: number }) {
       this.qrSize = size.height
-    },
-    openFaucet() {
-      if (!this.$wallet.myAddress) {
-        return
-      }
-      this.openURL(
-        `https://faucet.lotuslounge.org/?address=${toDisplayAddress(
-          this.$wallet.myAddress?.toXAddress(),
-        )}`,
-      )
     },
   },
   computed: {
