@@ -6,7 +6,6 @@ import { useChatStore } from './chats'
 import { ReadOnlyRelayClient } from '../cashweb/relay'
 import {
   defaultUpdateInterval,
-  pendingRelayData,
   defaultRelayUrl,
   registrys,
   networkName,
@@ -20,6 +19,42 @@ import { mapObjIndexed } from 'ramda'
 import assert from 'assert'
 import { STORE_SCHEMA_VERSION } from 'src/boot/pinia'
 import { markRaw } from 'vue'
+
+export const defaultRelayData: {
+  profile: {
+    name: string
+    bio: string
+    avatar: string
+    pubKey?: Uint8Array
+  }
+  inbox: {
+    acceptancePrice?: number
+  }
+  notify: boolean
+} = {
+  profile: {
+    name: '',
+    bio: '',
+    avatar: '',
+  },
+  inbox: {
+    acceptancePrice: defaultAcceptancePrice,
+  },
+  notify: true,
+}
+
+export const pendingRelayData = {
+  profile: {
+    name: 'Loading...',
+    bio: '',
+    avatar: '',
+  },
+  inbox: {
+    acceptancePrice: NaN,
+  },
+  notify: true,
+  lastUpdateTime: 0,
+}
 
 type Profile = {
   name: string | null
