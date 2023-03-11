@@ -30,13 +30,19 @@ const defaultTopics = [
     messages: [],
   },
   {
-    topic: 'crypto',
+    topic: 'trading',
     threshold: 0,
     offering: defaultOffering,
     messages: [],
   },
   {
     topic: 'memes',
+    threshold: 0,
+    offering: defaultOffering,
+    messages: [],
+  },
+  {
+    topic: 'help',
     threshold: 0,
     offering: defaultOffering,
     messages: [],
