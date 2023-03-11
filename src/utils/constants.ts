@@ -73,10 +73,6 @@ export const stampLowerLimit = 1 // XPI
 
 export const defaultContacts = [
   {
-    name: 'Give Lotus Chat',
-    address: 'lotus_16PSJJK5XfnDCV3sdi3BsgDTa1dS4xezFuH6duwbo',
-  },
-  {
     name: 'Shammah',
     address: 'lotus_16PSJPAVocAM5behRWxqwQnpEVRPJrV4XxbthBhJR',
   },
