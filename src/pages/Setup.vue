@@ -87,7 +87,6 @@ import { RegistryHandler } from '../cashweb/registry'
 import pop from '../cashweb/pop'
 import { getRelayClient } from '../adapters/pinia-relay-adapter'
 import {
-  defaultRelayData,
   defaultRelayUrl,
   defaultAvatars,
   recomendedBalance,
@@ -106,7 +105,7 @@ import { useWalletStore } from 'src/stores/wallet'
 import { useChatStore } from 'src/stores/chats'
 import { useAppearanceStore } from 'src/stores/appearance'
 import { useProfileStore } from 'src/stores/my-profile'
-import { useContactStore } from 'src/stores/contacts'
+import { defaultRelayData, useContactStore } from 'src/stores/contacts'
 import { storeToRefs } from 'pinia'
 
 export default defineComponent({
