@@ -58,6 +58,7 @@ export class Wallet {
   walletKeys: PrivateKeyData[] = []
   changeKeys: PrivateKeyData[] = []
   addressDataByPkh: Map<string, AddressData> = new Map()
+  txIdHandled: Set<string> = new Set()
 
   constructor(
     storage: UtxoStore,
@@ -104,6 +105,7 @@ export class Wallet {
     if (!this.xPrivKey) {
       return
     }
+    this.txIdHandled = new Set()
     const t0 = Date.now()
     this.initAddresses()
     const initAddressTime = Date.now()
@@ -205,54 +207,67 @@ export class Wallet {
   }
 
   async updateUTXOsFromTxid(txid: string) {
-    const chronikClient = this.chronikClient
-    assert(chronikClient, 'missing client in updateUTXOsFromTxid')
-    const tx = await chronikClient.tx(txid)
-    // Add new outputs that we subscribed tol
-    for (const [outIdx, txOutput] of tx.outputs.entries()) {
-      const script = new Script(txOutput.outputScript)
-      if (!script.isPublicKeyHashOut()) {
-        continue
-      }
-      const pkh = script.getPublicKeyHash().toString('hex')
-      if (!this.addressDataByPkh.has(pkh)) {
-        continue
-      }
-      const addressData = this.addressDataByPkh.get(pkh)
-      assert(addressData, `missing addressData for pkh ${pkh}`)
-      const utxo: Utxo = {
-        txId: txid,
-        outputIndex: outIdx,
-        satoshis: txOutput.value.toNumber(),
-        type: 'p2pkh',
-        address: addressData.address,
-        privKey: addressData.privKey,
-      }
-      this.putUtxo(utxo)
+    // FIXME: Chronik sends out subscription hits on the same txid multiple
+    // times if there are multiple addresses on it that you've subscribed to. it
+    // causes a bunch of log spam. We don't need to handle them multiple times.
+    if (this.txIdHandled.has(txid)) {
+      return
     }
+    this.txIdHandled.add(txid)
+    try {
+      const chronikClient = this.chronikClient
+      assert(chronikClient, 'missing client in updateUTXOsFromTxid')
+      const tx = await chronikClient.tx(txid)
+      // Add new outputs that we subscribed tol
+      for (const [outIdx, txOutput] of tx.outputs.entries()) {
+        const script = new Script(txOutput.outputScript)
+        if (!script.isPublicKeyHashOut()) {
+          continue
+        }
+        const pkh = script.getPublicKeyHash().toString('hex')
+        if (!this.addressDataByPkh.has(pkh)) {
+          continue
+        }
+        const addressData = this.addressDataByPkh.get(pkh)
+        assert(addressData, `missing addressData for pkh ${pkh}`)
+        const utxo: Utxo = {
+          txId: txid,
+          outputIndex: outIdx,
+          satoshis: txOutput.value.toNumber(),
+          type: 'p2pkh',
+          address: addressData.address,
+          privKey: addressData.privKey,
+        }
+        this.putUtxo(utxo)
+      }
 
-    // Delete spent inputs
-    for (const txInput of tx.inputs) {
-      const script = new Script(txInput.outputScript)
-      if (!script.isPublicKeyHashOut()) {
-        continue
+      // Delete spent inputs
+      for (const txInput of tx.inputs) {
+        const script = new Script(txInput.outputScript)
+        if (!script.isPublicKeyHashOut()) {
+          continue
+        }
+        const pkh = script.getPublicKeyHash().toString('hex')
+        if (!this.addressDataByPkh.has(pkh)) {
+          continue
+        }
+        const addressData = this.addressDataByPkh.get(pkh)
+        assert(addressData, `missing addressData for pkh ${pkh}`)
+        const utxo: Utxo = {
+          txId: txInput.prevOut.txid,
+          outputIndex: txInput.prevOut.outIdx,
+          satoshis: txInput.value.toNumber(),
+          type: 'p2pkh',
+          address: addressData.address,
+          privKey: addressData.privKey,
+        }
+        const utxoId = calcUtxoId(utxo)
+        this.deleteUtxo(utxoId)
       }
-      const pkh = script.getPublicKeyHash().toString('hex')
-      if (!this.addressDataByPkh.has(pkh)) {
-        continue
-      }
-      const addressData = this.addressDataByPkh.get(pkh)
-      assert(addressData, `missing addressData for pkh ${pkh}`)
-      const utxo: Utxo = {
-        txId: txInput.prevOut.txid,
-        outputIndex: txInput.prevOut.outIdx,
-        satoshis: txInput.value.toNumber(),
-        type: 'p2pkh',
-        address: addressData.address,
-        privKey: addressData.privKey,
-      }
-      const utxoId = calcUtxoId(utxo)
-      this.deleteUtxo(utxoId)
+    } catch (err) {
+      // make sure we clean up incase we fail and need to run this again.
+      this.txIdHandled.delete(txid)
+      throw err
     }
   }
 
