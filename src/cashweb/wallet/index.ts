@@ -326,7 +326,7 @@ export class Wallet {
     await this.fixUtxos(utxos)
   }
 
-  async checkAndFixUtxos(utxos: Utxo[]): Promise<boolean[]> {
+  async checkAndFixUtxos(utxos: Utxo[], unfreeze = false): Promise<boolean[]> {
     const utxoIds = utxos.map(calcUtxoId)
     console.log(`Checking UTXOs ${utxoIds}`)
     const chronikClient = this.chronikClient
@@ -342,6 +342,9 @@ export class Wallet {
       switch (utxoState.state) {
         case 'UNSPENT':
           console.log('UTXO is valid', utxoId)
+          if (unfreeze) {
+            this.unfreezeUtxo(utxoId)
+          }
           return true
         case 'SPENT':
           console.log('UTXO spent on-chain, deleting spent UTXO', utxoId)
@@ -823,9 +826,7 @@ export class Wallet {
       }),
     )
     for (const transaction of transactionBundle) {
-      transaction.usedUtxos.forEach(utxoId =>
-        this.storage.freezeById(calcUtxoId(utxoId)),
-      )
+      transaction.usedUtxos.forEach(utxo => this.freezeUtxo(utxo))
     }
     return transactionBundle
   }
@@ -932,6 +933,16 @@ export class Wallet {
     // TODO: This should be in the relay client, not the wallet...
     // TODO: Not just testnet
     return this.identityPrivKey?.toAddress(this.networkName).toXAddress()
+  }
+
+  freezeUtxo(utxo: Utxo) {
+    // TODO: Nobody should be calling this outside of the wallet
+    try {
+      return this.storage.freezeById(calcUtxoId(utxo))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.log('non-existant utxo being unfrozen')
+    }
   }
 
   unfreezeUtxo(id: string) {
