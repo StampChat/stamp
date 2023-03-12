@@ -109,10 +109,10 @@ export default {
     settings: 'Configuration',
     wipeAndSave: 'Consolidation du portefeuille',
     changeLog: 'Changelog',
+    showSeed: 'Montrer la phrase de passe',
   },
   receiveBitcoinDialog: {
     walletStatus: 'Etat du wallet',
-    showSeed: 'Montrer la phrase de passe',
     close: 'Fermer',
     addressCopied: 'Adresse copiée dans le presse papier',
   },
