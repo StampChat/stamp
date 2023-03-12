@@ -67,10 +67,6 @@ export default defineComponent({
       type: Object as PropType<Array<Utxo>>,
       default: () => [] as Utxo[],
     },
-    txid: {
-      type: String,
-      required: true,
-    },
   },
   data() {
     return {
