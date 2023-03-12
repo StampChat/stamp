@@ -4313,16 +4313,15 @@ chromium-pickle-js@^0.2.0:
   resolved "https://registry.yarnpkg.com/chromium-pickle-js/-/chromium-pickle-js-0.2.0.tgz#04a106672c18b085ab774d983dfa3ea138f22205"
   integrity sha1-BKEGZywYsIWrd02YPfo+oTjyIgU=
 
-chronik-client@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/chronik-client/-/chronik-client-0.4.0.tgz#ff7c0527fca983d55ccc54b09ed6c1e9e049666d"
-  integrity sha512-VgxGHPYN3rlRcn7g1gEh562Tj/2dEDlXQnbhU3qQYgfFIRnBt80TP4Rq2raek7nUy+TIen0d4JK7zxoSK5Kauw==
+chronik-client@^0.8.2:
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/chronik-client/-/chronik-client-0.8.2.tgz#c6f56028dfc3c83255424bb9c721536f191fd41f"
+  integrity sha512-Icr4U3SFx7jRjBDea+FP4Lv2bq09iC5Kn2UKI9fMNas4vLZGDTtEgyS9d7QATC7DtLWt0QgmLGJbh04I8l5F6g==
   dependencies:
     "@types/ws" "^8.2.1"
     axios "^0.21.1"
     isomorphic-ws "^4.0.1"
-    long "^5.2.0"
-    protobufjs "^6.11.2"
+    protobufjs "^6.8.8"
     ws "^8.3.0"
 
 ci-info@3.7.1:
@@ -7756,11 +7755,6 @@ long@^4.0.0:
   resolved "https://registry.yarnpkg.com/long/-/long-4.0.0.tgz#9a7b71cfb7d361a194ea555241c92f7468d5bf28"
   integrity sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==
 
-long@^5.2.0:
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/long/-/long-5.2.0.tgz#2696dadf4b4da2ce3f6f6b89186085d94d52fd61"
-  integrity sha512-9RTUNjK60eJbx3uz+TEGF7fUr29ZDxR5QzXcyDpeSfeH28S9ycINflOgOlppit5U+4kNTe83KQnMEerw7GmE8w==
-
 lower-case@^1.1.1:
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/lower-case/-/lower-case-1.1.4.tgz#9a2cabd1b9e8e0ae993a4bf7d5875c39c42e8eac"
@@ -8956,7 +8950,7 @@ proto-list@~1.2.1:
   resolved "https://registry.yarnpkg.com/proto-list/-/proto-list-1.2.4.tgz#212d5bfe1318306a420f6402b8e26ff39647a849"
   integrity sha1-IS1b/hMYMGpCD2QCuOJv85ZHqEk=
 
-protobufjs@^6.11.2:
+protobufjs@^6.8.8:
   version "6.11.3"
   resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-6.11.3.tgz#637a527205a35caa4f3e2a9a4a13ddffe0e7af74"
   integrity sha512-xL96WDdCZYdU7Slin569tFX712BxsxslWwAfAhCYjQKGTq7dAU91Lomy6nLLhh/dyGhk/YH4TwTSRxTzhuHyZg==
