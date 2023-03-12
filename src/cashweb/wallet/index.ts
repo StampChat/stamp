@@ -233,7 +233,7 @@ export class Wallet {
         const utxo: Utxo = {
           txId: txid,
           outputIndex: outIdx,
-          satoshis: txOutput.value.toNumber(),
+          satoshis: Number(txOutput.value),
           type: 'p2pkh',
           address: addressData.address,
           privKey: addressData.privKey,
@@ -256,7 +256,7 @@ export class Wallet {
         const utxo: Utxo = {
           txId: txInput.prevOut.txid,
           outputIndex: txInput.prevOut.outIdx,
-          satoshis: txInput.value.toNumber(),
+          satoshis: Number(txInput.value),
           type: 'p2pkh',
           address: addressData.address,
           privKey: addressData.privKey,
@@ -282,7 +282,7 @@ export class Wallet {
         return scriptUtxos.utxos.map(utxo => ({
           txId: utxo.outpoint.txid,
           outputIndex: utxo.outpoint.outIdx,
-          satoshis: utxo.value.toNumber(),
+          satoshis: Number(utxo.value),
           type: 'p2pkh',
           address: addressData.address,
           privKey: addressData.privKey,
