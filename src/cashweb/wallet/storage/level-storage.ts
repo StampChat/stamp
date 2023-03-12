@@ -122,9 +122,11 @@ export class LevelUtxoStore implements UtxoStore {
 
   deleteById(id: UtxoId) {
     this.cache.delete(id)
-    // TODO: Handle errors here.
-    this.db.del(id)
     this.deletedUtxos.add(id)
+    // TODO: Handle errors here.
+    this.db
+      .del(id)
+      .catch(err => console.error('Trying to delete already deleted utxo', err))
   }
 
   put(outpoint: Utxo) {
