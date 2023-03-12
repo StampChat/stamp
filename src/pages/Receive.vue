@@ -2,11 +2,6 @@
   <q-page-container>
     <q-page class="q-ma-none q-pa-sm">
       <q-card>
-        <!-- New contact dialog -->
-        <q-dialog v-model="seedPhraseOpen">
-          <seed-phrase-dialog />
-        </q-dialog>
-
         <q-card-section>
           <div class="text-h6">
             {{ $t('receiveBitcoinDialog.walletStatus') }}
@@ -55,9 +50,6 @@
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn color="warning" @click="seedPhraseOpen = true">{{
-            $t('receiveBitcoinDialog.showSeed')
-          }}</q-btn>
           <q-btn
             :label="$t('receiveBitcoinDialog.close')"
             color="primary"
@@ -73,7 +65,6 @@
 import { defineComponent, computed } from 'vue'
 
 import QrcodeVue from 'qrcode.vue'
-import SeedPhraseDialog from '../components/dialogs/SeedPhraseDialog.vue'
 import { formatBalance } from '../utils/formatting'
 import { copyToClipboard } from 'quasar'
 import { useWalletStore } from 'src/stores/wallet'
@@ -88,7 +79,6 @@ export default defineComponent({
     }
   },
   components: {
-    SeedPhraseDialog,
     QrcodeVue,
   },
   data() {

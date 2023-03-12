@@ -20,6 +20,11 @@
       />
     </q-dialog>
 
+    <!-- Seed phrase dialog -->
+    <q-dialog v-model="seedPhraseOpen">
+      <seed-phrase-dialog />
+    </q-dialog>
+
     <div class="flex-break" />
     <!-- Drawer -->
     <q-scroll-area class="col">
@@ -103,14 +108,21 @@
 
           <q-item-section>{{ $t('SettingPanel.changeLog') }}</q-item-section>
         </q-item>
+        <q-item clickable v-ripple @click="seedPhraseOpen = true">
+          <q-item-section avatar>
+            <q-icon name="compost" />
+          </q-item-section>
+          <q-item-section>{{ $t('SettingPanel.showSeed') }}</q-item-section>
+        </q-item>
       </q-list>
     </q-scroll-area>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 
+import SeedPhraseDialog from '../dialogs/SeedPhraseDialog.vue'
 import ContactCard from './ContactCard.vue'
 import ContactBookDialog from '../dialogs/ContactBookDialog.vue'
 import { openChat, openPage } from '../../utils/routes'
@@ -123,15 +135,18 @@ export default defineComponent({
     const chats = useChatStore()
     const myProfile = useProfileStore()
     const { profile, inbox } = storeToRefs(myProfile)
+    const seedPhraseOpen = ref(false)
     return {
       deleteMessage: chats.deleteMessage,
       profile,
       inbox,
+      seedPhraseOpen,
     }
   },
   components: {
     ContactCard,
     ContactBookDialog,
+    SeedPhraseDialog,
   },
   data() {
     return {
