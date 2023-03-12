@@ -198,6 +198,6 @@ export default {
     txType: 'Type',
     txAddress: 'Address',
     txAmount: 'Amount',
-    close: 'Fermer',
   },
+  close: 'Close',
 }
