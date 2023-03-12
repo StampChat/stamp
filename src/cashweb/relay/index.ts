@@ -528,7 +528,10 @@ export class RelayClient extends ReadOnlyRelayClient {
       // want to burn other transactions if our state is out of sync with the
       // blockchain.
       return new Promise(
-        (resolve: (txIds: string[]) => void, reject: (err: unknown) => void) =>
+        (
+          resolve: (txIds: string[] | undefined) => void,
+          reject: (err: unknown) => void,
+        ) =>
           wallet
             .checkAndFixUtxos(stagedUtxos)
             .then(checks => checks.every(c => c))
@@ -574,9 +577,6 @@ export class RelayClient extends ReadOnlyRelayClient {
               if (err.response) {
                 console.error(err.response)
               }
-              stagedUtxos.forEach(utxo => {
-                wallet.unfreezeUtxo(calcUtxoId(utxo))
-              })
               if (errCount >= 3) {
                 this.events.emit('messageSendError', {
                   address,
@@ -587,21 +587,23 @@ export class RelayClient extends ReadOnlyRelayClient {
                   transactions,
                 })
                 console.log(`unable to send message after ${errCount} retries`)
-                return
+                reject(err)
               }
               console.log('error sending message', err)
 
-              // TODO: Currently, we can lose stealth transaction data if the stamp inputs fail.
-              // Also, retries messages are not deleted from the message output window.
-              // Both of these issues need to be fixed.
-              await this.sendMessageImpl({
-                address,
-                items,
-                stampAmount,
-                errCount: errCount + 1,
-                previousHash: payloadDigestHex,
-              })
-              reject(err)
+              try {
+                await wallet.checkAndFixUtxos(stagedUtxos, true)
+                const txids = await this.sendMessageImpl({
+                  address,
+                  items,
+                  stampAmount,
+                  errCount: errCount + 1,
+                  previousHash: payloadDigestHex,
+                })
+                resolve(txids)
+              } catch (err) {
+                reject(err)
+              }
             }),
       )
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
