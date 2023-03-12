@@ -50,11 +50,7 @@
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn
-            :label="$t('receiveBitcoinDialog.close')"
-            color="primary"
-            @click="close"
-          />
+          <q-btn :label="$t('close')" color="primary" @click="close" />
         </q-card-actions>
       </q-card>
     </q-page>

@@ -113,7 +113,6 @@ export default {
   },
   receiveBitcoinDialog: {
     walletStatus: 'Etat du wallet',
-    close: 'Fermer',
     addressCopied: 'Adresse copiée dans le presse papier',
   },
   sendAddressDialog: {
@@ -126,7 +125,6 @@ export default {
   contactBookDialog: {
     contacts: 'Contacts',
     search: 'Recherche...',
-    close: 'Fermer',
   },
   contactItem: {
     address: 'Adresse',
@@ -174,9 +172,7 @@ export default {
     delete: 'Effacer',
     message: 'Etes vous sûr de vouloir effacer ce message ?',
   },
-  imageDialog: {
-    close: 'Fermer',
-  },
+
   profileDialog: {
     cancel: 'Annuler',
     update: 'Mettre à jour',
@@ -197,7 +193,6 @@ export default {
   },
   seedPhraseDialog: {
     seedPhrase: 'Phrase de passe',
-    close: 'Fermer',
   },
   transactionDialog: {
     backingTransactions: 'Transactions',
@@ -205,6 +200,6 @@ export default {
     txType: 'Type',
     txAddress: 'Adresse',
     txAmount: 'Montant',
-    close: 'Fermer',
   },
+  close: 'Fermer',
 }
