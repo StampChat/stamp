@@ -588,6 +588,7 @@ export class RelayClient extends ReadOnlyRelayClient {
                 })
                 console.log(`unable to send message after ${errCount} retries`)
                 reject(err)
+                return
               }
               console.log('error sending message', err)
 
