@@ -24,7 +24,7 @@
         <q-btn
           dense
           flat
-          href="https://www.patreon.com/micropresident"
+          href="https://www.patreon.com/shammahchancellor"
           color="primary"
           target="_blank"
         >
@@ -33,11 +33,11 @@
         <q-btn
           dense
           flat
-          href="https://discord.gg/KECbh3JEmm"
+          href="https://t.me/givelotus"
           color="primary"
           target="_blank"
         >
-          Dev Discord
+          Telegram Group
         </q-btn>
         <q-space />
         <q-btn dense label="Dismiss" v-close-popup color="secondary" />
