@@ -208,7 +208,7 @@ export default defineComponent({
     shortTimestamp() {
       switch (this.message.status) {
         case 'confirmed': {
-          const timestamp = this.message.receivedTime || this.message.serverTime
+          const timestamp = this.message.serverTime
           // return moment(timestamp).fromNow(true)
           const howLongAgo = moment(timestamp)
           return howLongAgo.calendar(null, {
