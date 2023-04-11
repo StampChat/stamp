@@ -17,6 +17,7 @@ import { useAppearanceStore } from 'src/stores/appearance'
 import { useForumStore } from 'src/stores/forum'
 import { useTopicStore } from 'src/stores/topics'
 import { useRelayClient, useWallet } from 'src/utils/clients'
+import { useChatStore } from 'src/stores/chats'
 
 function instrumentIndexerClient({
   chronikWs,
@@ -155,6 +156,9 @@ export default boot(async ({ app }) => {
 
   const forumStore = useForumStore()
   await forumStore.restored
+
+  const chatStore = useChatStore()
+  await chatStore.restored
 
   const topicStore = useTopicStore()
   await topicStore.restored
