@@ -36,7 +36,7 @@
     "@quasar/extras": "^1.15.11",
     "@vue/compiler-sfc": "^3.2.23",
     "atob": "^2.1.2",
-    "axios": "^0.24.0",
+    "axios": "^0.28.0",
     "bip39": "^3.0.2",
     "bitcore-lib-xpi": "file:./local_modules/bitcore-lib-xpi",
     "bluebird": "^3.7.2",
